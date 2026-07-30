@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "greenshift",
+  "compatibility_date": "2025-09-02",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "@tanstack/react-start/server-entry",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "greenshift-db",
+      "database_id": "c53fef9b-f9dc-4993-9633-3956759c8fa3"
+    }
+  ]
+}
