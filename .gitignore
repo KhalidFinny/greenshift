@@ -30,3 +30,9 @@ pnpm-debug.log*
 Thumbs.db
 *.tmp
 
+
+# Generated
+scripts/seed.sql
+
+# Agent context (local only)
+CLAUDE.md

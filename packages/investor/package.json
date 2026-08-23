@@ -1,0 +1,8 @@
+{
+	"name": "@greenshift/investor",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	}
+}

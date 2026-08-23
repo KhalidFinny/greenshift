@@ -3,12 +3,25 @@
   "name": "greenshift",
   "compatibility_date": "2025-09-02",
   "compatibility_flags": ["nodejs_compat"],
-  "main": "@tanstack/react-start/server-entry",
+  "main": "./src/server.ts",
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "greenshift-db",
-      "database_id": "c53fef9b-f9dc-4993-9633-3956759c8fa3"
+      "database_id": "c53fef9b-f9dc-4993-9633-3956759c8fa3",
+      "migrations_dir": "./drizzle"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "d7dcd9559f954b9eafd2972cc006e7e5"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "R2",
+      "bucket_name": "greenshift-assets"
     }
   ]
 }

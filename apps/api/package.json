@@ -1,0 +1,10 @@
+{
+	"name": "@greenshift/api",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./lib/session": "./src/lib/session.ts",
+		"./lib/password": "./src/lib/password.ts"
+	}
+}

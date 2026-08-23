@@ -10,33 +10,171 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthRouteImport } from './routes/_auth'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as AuthAdminRouteImport } from './routes/_auth.admin'
+import { Route as AuthBusinessRouteImport } from './routes/_auth.business'
+import { Route as AuthInvestorRouteImport } from './routes/_auth.investor'
+import { Route as AuthProfileRouteImport } from './routes/_auth.profile'
+import { Route as AuthVendorRouteImport } from './routes/_auth.vendor'
+import { Route as AuthAdminIndexRouteImport } from './routes/_auth.admin.index'
+import { Route as AuthBusinessIndexRouteImport } from './routes/_auth.business.index'
+import { Route as AuthInvestorIndexRouteImport } from './routes/_auth.investor.index'
+import { Route as AuthVendorIndexRouteImport } from './routes/_auth.vendor.index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/_auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthAdminRoute = AuthAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthBusinessRoute = AuthBusinessRouteImport.update({
+  id: '/business',
+  path: '/business',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthInvestorRoute = AuthInvestorRouteImport.update({
+  id: '/investor',
+  path: '/investor',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthProfileRoute = AuthProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthVendorRoute = AuthVendorRouteImport.update({
+  id: '/vendor',
+  path: '/vendor',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthAdminIndexRoute = AuthAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthAdminRoute,
+} as any)
+const AuthBusinessIndexRoute = AuthBusinessIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthBusinessRoute,
+} as any)
+const AuthInvestorIndexRoute = AuthInvestorIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthInvestorRoute,
+} as any)
+const AuthVendorIndexRoute = AuthVendorIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthVendorRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/admin': typeof AuthAdminRouteWithChildren
+  '/business': typeof AuthBusinessRouteWithChildren
+  '/investor': typeof AuthInvestorRouteWithChildren
+  '/profile': typeof AuthProfileRoute
+  '/vendor': typeof AuthVendorRouteWithChildren
+  '/admin/': typeof AuthAdminIndexRoute
+  '/business/': typeof AuthBusinessIndexRoute
+  '/investor/': typeof AuthInvestorIndexRoute
+  '/vendor/': typeof AuthVendorIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/profile': typeof AuthProfileRoute
+  '/admin': typeof AuthAdminIndexRoute
+  '/business': typeof AuthBusinessIndexRoute
+  '/investor': typeof AuthInvestorIndexRoute
+  '/vendor': typeof AuthVendorIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_auth': typeof AuthRouteWithChildren
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/_auth/admin': typeof AuthAdminRouteWithChildren
+  '/_auth/business': typeof AuthBusinessRouteWithChildren
+  '/_auth/investor': typeof AuthInvestorRouteWithChildren
+  '/_auth/profile': typeof AuthProfileRoute
+  '/_auth/vendor': typeof AuthVendorRouteWithChildren
+  '/_auth/admin/': typeof AuthAdminIndexRoute
+  '/_auth/business/': typeof AuthBusinessIndexRoute
+  '/_auth/investor/': typeof AuthInvestorIndexRoute
+  '/_auth/vendor/': typeof AuthVendorIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/register'
+    | '/admin'
+    | '/business'
+    | '/investor'
+    | '/profile'
+    | '/vendor'
+    | '/admin/'
+    | '/business/'
+    | '/investor/'
+    | '/vendor/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/login'
+    | '/register'
+    | '/profile'
+    | '/admin'
+    | '/business'
+    | '/investor'
+    | '/vendor'
+  id:
+    | '__root__'
+    | '/'
+    | '/_auth'
+    | '/login'
+    | '/register'
+    | '/_auth/admin'
+    | '/_auth/business'
+    | '/_auth/investor'
+    | '/_auth/profile'
+    | '/_auth/vendor'
+    | '/_auth/admin/'
+    | '/_auth/business/'
+    | '/_auth/investor/'
+    | '/_auth/vendor/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRouteWithChildren
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +186,164 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_auth': {
+      id: '/_auth'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_auth/admin': {
+      id: '/_auth/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthAdminRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/business': {
+      id: '/_auth/business'
+      path: '/business'
+      fullPath: '/business'
+      preLoaderRoute: typeof AuthBusinessRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/investor': {
+      id: '/_auth/investor'
+      path: '/investor'
+      fullPath: '/investor'
+      preLoaderRoute: typeof AuthInvestorRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/profile': {
+      id: '/_auth/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthProfileRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/vendor': {
+      id: '/_auth/vendor'
+      path: '/vendor'
+      fullPath: '/vendor'
+      preLoaderRoute: typeof AuthVendorRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/admin/': {
+      id: '/_auth/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthAdminIndexRouteImport
+      parentRoute: typeof AuthAdminRoute
+    }
+    '/_auth/business/': {
+      id: '/_auth/business/'
+      path: '/'
+      fullPath: '/business/'
+      preLoaderRoute: typeof AuthBusinessIndexRouteImport
+      parentRoute: typeof AuthBusinessRoute
+    }
+    '/_auth/investor/': {
+      id: '/_auth/investor/'
+      path: '/'
+      fullPath: '/investor/'
+      preLoaderRoute: typeof AuthInvestorIndexRouteImport
+      parentRoute: typeof AuthInvestorRoute
+    }
+    '/_auth/vendor/': {
+      id: '/_auth/vendor/'
+      path: '/'
+      fullPath: '/vendor/'
+      preLoaderRoute: typeof AuthVendorIndexRouteImport
+      parentRoute: typeof AuthVendorRoute
+    }
   }
 }
 
+interface AuthAdminRouteChildren {
+  AuthAdminIndexRoute: typeof AuthAdminIndexRoute
+}
+
+const AuthAdminRouteChildren: AuthAdminRouteChildren = {
+  AuthAdminIndexRoute: AuthAdminIndexRoute,
+}
+
+const AuthAdminRouteWithChildren = AuthAdminRoute._addFileChildren(
+  AuthAdminRouteChildren,
+)
+
+interface AuthBusinessRouteChildren {
+  AuthBusinessIndexRoute: typeof AuthBusinessIndexRoute
+}
+
+const AuthBusinessRouteChildren: AuthBusinessRouteChildren = {
+  AuthBusinessIndexRoute: AuthBusinessIndexRoute,
+}
+
+const AuthBusinessRouteWithChildren = AuthBusinessRoute._addFileChildren(
+  AuthBusinessRouteChildren,
+)
+
+interface AuthInvestorRouteChildren {
+  AuthInvestorIndexRoute: typeof AuthInvestorIndexRoute
+}
+
+const AuthInvestorRouteChildren: AuthInvestorRouteChildren = {
+  AuthInvestorIndexRoute: AuthInvestorIndexRoute,
+}
+
+const AuthInvestorRouteWithChildren = AuthInvestorRoute._addFileChildren(
+  AuthInvestorRouteChildren,
+)
+
+interface AuthVendorRouteChildren {
+  AuthVendorIndexRoute: typeof AuthVendorIndexRoute
+}
+
+const AuthVendorRouteChildren: AuthVendorRouteChildren = {
+  AuthVendorIndexRoute: AuthVendorIndexRoute,
+}
+
+const AuthVendorRouteWithChildren = AuthVendorRoute._addFileChildren(
+  AuthVendorRouteChildren,
+)
+
+interface AuthRouteChildren {
+  AuthAdminRoute: typeof AuthAdminRouteWithChildren
+  AuthBusinessRoute: typeof AuthBusinessRouteWithChildren
+  AuthInvestorRoute: typeof AuthInvestorRouteWithChildren
+  AuthProfileRoute: typeof AuthProfileRoute
+  AuthVendorRoute: typeof AuthVendorRouteWithChildren
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthAdminRoute: AuthAdminRouteWithChildren,
+  AuthBusinessRoute: AuthBusinessRouteWithChildren,
+  AuthInvestorRoute: AuthInvestorRouteWithChildren,
+  AuthProfileRoute: AuthProfileRoute,
+  AuthVendorRoute: AuthVendorRouteWithChildren,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRouteWithChildren,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
