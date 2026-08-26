@@ -1,21 +1,39 @@
-import { Button } from "@greenshift/ui";
+import { buttonVariants, cn } from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
-import { useInView } from "../../hooks/useInView";
+import { useEffect, useState } from "react";
 import { useParallax } from "../../hooks/useParallax";
 import FloatingPill from "../atoms/FloatingPill";
 import DashboardShowcase from "../molecules/DashboardShowcase";
 
+// Background images render immediately on load; only the title (first) and
+// the floating pills + dashboard (after) animate in.
 export default function HeroSection() {
 	const yBg = useParallax(0.08);
 	const yDashboard = useParallax(0.12, 60);
 	const yFg = useParallax(0.15);
-	const { ref, isVisible } = useInView<HTMLElement>({ threshold: 0 });
+
+	const [titleIn, setTitleIn] = useState(false);
+	const [decorIn, setDecorIn] = useState(false);
+
+	useEffect(() => {
+		if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+			setTitleIn(true);
+			setDecorIn(true);
+			return;
+		}
+
+		const raf = requestAnimationFrame(() => setTitleIn(true));
+		const decorTimer = setTimeout(() => setDecorIn(true), 850);
+		return () => {
+			cancelAnimationFrame(raf);
+			clearTimeout(decorTimer);
+		};
+	}, []);
 
 	return (
 		<section
 			id="hero"
-			ref={ref}
-			className="relative h-screen overflow-hidden bg-[#121212]"
+			className="relative min-h-screen overflow-hidden bg-[#121212]"
 		>
 			<div
 				className="pointer-events-none absolute inset-0"
@@ -26,17 +44,18 @@ export default function HeroSection() {
 				}}
 			>
 				<img
-					src="/green 2.png"
+					src="/green-2.webp"
 					alt=""
 					className="h-[120%] w-[110%] object-cover"
 				/>
 			</div>
 
 			<div
-				className="pointer-events-none absolute bottom-0 left-0 right-0 z-2 flex justify-center px-8"
+				className="pointer-events-none absolute bottom-0 left-0 right-0 z-2 flex justify-center px-8 transition-opacity duration-1000 motion-reduce:transition-none"
 				style={{
 					transform: `translateY(${yDashboard}px)`,
 					willChange: "transform",
+					opacity: decorIn ? 1 : 0,
 				}}
 			>
 				<DashboardShowcase />
@@ -50,38 +69,44 @@ export default function HeroSection() {
 				}}
 			>
 				<img
-					src="/green 1.png"
+					src="/green-1.webp"
 					alt=""
 					className="h-[50%] w-[110%] object-cover"
 				/>
 			</div>
 
-			<ul className="pointer-events-none absolute inset-0 z-4 m-0 list-none p-0">
+			<ul
+				className={cn(
+					"pointer-events-none absolute inset-0 z-4 m-0 hidden list-none p-0 transition-opacity duration-1000 motion-reduce:transition-none lg:block",
+					decorIn ? "opacity-100" : "opacity-0",
+				)}
+			>
 				<li className="absolute left-[8%] top-[42%]">
-					<FloatingPill animation="float">Project Risk Assessment</FloatingPill>
+					<FloatingPill animation="float">Penilaian Risiko Proyek</FloatingPill>
 				</li>
 				<li className="absolute right-[8%] top-[48%]">
 					<FloatingPill animation="float-delayed">
-						Smart Vendor Match
+						Pencocokan Vendor Cerdas
 					</FloatingPill>
 				</li>
 				<li className="absolute left-[8%] top-[58%]">
-					<FloatingPill animation="float-slow">ROI Tracking</FloatingPill>
+					<FloatingPill animation="float-slow">Pelacakan ROI</FloatingPill>
 				</li>
 				<li className="absolute right-[8%] top-[65%]">
 					<FloatingPill animation="float-slow-delayed">
-						Green Market
+						Pasar Hijau
 					</FloatingPill>
 				</li>
 			</ul>
 
 			<div
-				className={`pointer-events-none relative z-10 flex h-full flex-col items-center pt-[14vh] text-center transition-all duration-1000 ${
-					isVisible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-				}`}
+				className={cn(
+					"pointer-events-none relative z-10 flex h-full flex-col items-center px-6 pt-24 text-center transition-all duration-700 motion-reduce:transition-none",
+					titleIn ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0",
+				)}
 			>
 				<h1
-					className="text-[65px] font-bold leading-[1.05] text-white"
+					className="text-[clamp(2.5rem,6vw,4.0625rem)] font-bold leading-[1.05] text-white"
 					style={{
 						fontFamily: "'IBM Plex Sans Variable', sans-serif",
 						textShadow: "0 4px 40px rgba(0,0,0,0.8)",
@@ -91,14 +116,14 @@ export default function HeroSection() {
 				</h1>
 
 				<p
-					className="mt-6 max-w-[1200px] font-medium text-[24px] leading-snug text-white/90"
+					className="mt-6 max-w-[1200px] font-medium text-lg leading-snug text-white/90 md:text-[24px]"
 					style={{
 						fontFamily: "'DM Sans Variable', sans-serif",
 						textShadow: "0 4px 40px rgba(0,0,0,0.8)",
 					}}
 				>
 					<img
-						src="/logo-white.png"
+						src="/logo-white.webp"
 						alt="GreenShift"
 						className="mr-3 inline-block h-[42px] align-middle"
 					/>
@@ -108,22 +133,27 @@ export default function HeroSection() {
 				</p>
 
 				<nav
-					className="pointer-events-auto mt-10 flex gap-[46px]"
+					className="pointer-events-auto mt-10 flex flex-col items-center gap-4 sm:flex-row sm:gap-[46px]"
 					aria-label="Hero actions"
 				>
-					<Button className="h-[42px] w-[180px] cursor-pointer rounded-[10px] bg-[#f7f7f9] text-[14px] text-[#1a1a1a] normal-case tracking-normal hover:bg-white">
-						<Link to="/login" className="no-underline">
-							Ajukan Proyek
-						</Link>
-					</Button>
-					<Button
-						variant="outline"
-						className="h-[42px] w-[180px] cursor-pointer rounded-[10px] border-[3px] border-white bg-transparent text-[14px] text-white normal-case tracking-normal hover:bg-white hover:text-[#1a1a1a]"
+					<Link
+						to="/register"
+						className={cn(
+							buttonVariants({ variant: "default" }),
+							"h-[42px] w-[180px] cursor-pointer rounded-[10px] bg-[#f7f7f9] text-base text-[#1a1a1a] normal-case tracking-normal hover:bg-white",
+						)}
 					>
-						<a href="#cara-kerja" className="no-underline">
-							Lihat Cara Kerja
-						</a>
-					</Button>
+						Mulai Gratis
+					</Link>
+					<a
+						href="mailto:contact@greenshift.com?subject=Proyek%20%26%20Investasi"
+						className={cn(
+							buttonVariants({ variant: "outline" }),
+							"h-[42px] w-[180px] cursor-pointer rounded-[10px] border-[3px] border-white bg-transparent text-base text-white normal-case tracking-normal hover:bg-white hover:text-[#1a1a1a]",
+						)}
+					>
+						Hubungi Kami
+					</a>
 				</nav>
 			</div>
 

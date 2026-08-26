@@ -13,10 +13,26 @@ export function useAuth() {
 		return loggedIn;
 	}
 
+	async function register(
+		name: string,
+		email: string,
+		password: string,
+		companyName: string,
+	): Promise<AuthUser> {
+		const { user: registered } = await api.auth.register(
+			name,
+			email,
+			password,
+			companyName,
+		);
+		await router.invalidate();
+		return registered;
+	}
+
 	async function logout(): Promise<void> {
 		await api.auth.logout();
 		await router.invalidate();
 	}
 
-	return { user, login, logout };
+	return { user, login, register, logout };
 }

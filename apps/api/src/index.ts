@@ -1,15 +1,35 @@
 import { Hono } from "hono";
 
-import type { Env } from "./env";
+import type { ApiEnv } from "./env";
+import { adminRoutes } from "./routes/admin";
 import { authRoutes } from "./routes/auth";
 import { healthRoutes } from "./routes/health";
+import { investorRoutes } from "./routes/investor";
 
-export const app = new Hono<{ Bindings: Env }>();
+export const app = new Hono<ApiEnv>();
+
+app.onError((err, c) => {
+	console.error("[api]", err);
+	return c.json(
+		{ error: { code: "INTERNAL", message: "Terjadi kesalahan internal" } },
+		500,
+	);
+});
+
+app.notFound((c) =>
+	c.json(
+		{ error: { code: "NOT_FOUND", message: "Endpoint tidak ditemukan" } },
+		404,
+	),
+);
 
 app.route("/api", healthRoutes);
 app.route("/api/auth", authRoutes);
+app.route("/api/investor", investorRoutes);
+app.route("/api/admin", adminRoutes);
 
 export type AppType = typeof app;
 
+export * from "./contracts";
 export * from "./db";
 export * from "./env";

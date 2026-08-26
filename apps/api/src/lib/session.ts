@@ -1,9 +1,14 @@
-import type { AuthUser } from "@greenshift/core";
 import type { Env } from "../env";
 
-export const SESSION_COOKIE = "greenshift_session";
+export const SESSION_COOKIE = "__Host-greenshift_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
 const SESSION_PREFIX = "greenshift:session:";
+
+// Sessions store only the user id; the full user (and role) is re-resolved
+// from D1 on every request so privilege changes take effect immediately.
+export interface SessionPayload {
+	userId: number;
+}
 
 export function readCookie(
 	cookieHeader: string | null | undefined,
@@ -22,22 +27,41 @@ function newSessionToken(): string {
 	return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-export async function createSession(env: Env, user: AuthUser): Promise<string> {
+export async function createSession(env: Env, userId: number): Promise<string> {
 	const token = newSessionToken();
-	await env.KV.put(SESSION_PREFIX + token, JSON.stringify(user), {
-		expirationTtl: SESSION_TTL_SECONDS,
-	});
+	await env.KV.put(
+		SESSION_PREFIX + token,
+		JSON.stringify({ userId } satisfies SessionPayload),
+		{ expirationTtl: SESSION_TTL_SECONDS },
+	);
 	return token;
 }
 
 export async function getSessionUser(
 	env: Env,
 	token: string | null,
-): Promise<AuthUser | null> {
+): Promise<SessionPayload | null> {
 	if (!token) return null;
-	const raw = await env.KV.get(SESSION_PREFIX + token);
+	const key = SESSION_PREFIX + token;
+	const raw = await env.KV.get(key);
 	if (!raw) return null;
-	return JSON.parse(raw) as AuthUser;
+	try {
+		const parsed = JSON.parse(raw) as Partial<SessionPayload>;
+		const userId = parsed.userId;
+		if (
+			typeof userId !== "number" ||
+			!Number.isInteger(userId) ||
+			userId <= 0
+		) {
+			await env.KV.delete(key);
+			return null;
+		}
+		return { userId };
+	} catch {
+		// Corrupt session value — treat as unauthenticated and drop it.
+		await env.KV.delete(key);
+		return null;
+	}
 }
 
 export async function destroySession(
@@ -48,9 +72,9 @@ export async function destroySession(
 }
 
 export function sessionCookie(token: string): string {
-	return `${SESSION_COOKIE}=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${SESSION_TTL_SECONDS}`;
+	return `${SESSION_COOKIE}=${token}; HttpOnly; Secure; Path=/; SameSite=Lax; Max-Age=${SESSION_TTL_SECONDS}`;
 }
 
 export function clearSessionCookie(): string {
-	return `${SESSION_COOKIE}=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0`;
+	return `${SESSION_COOKIE}=; HttpOnly; Secure; Path=/; SameSite=Lax; Max-Age=0`;
 }

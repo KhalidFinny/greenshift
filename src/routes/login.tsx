@@ -30,7 +30,9 @@ function resolveEmail(input: string): string {
 	return trimmed.includes("@") ? trimmed : `${trimmed}@greenshift.dev`;
 }
 
-const DEV_PASSWORD = "12345678";
+// Only ever defined in dev builds; constant-folded to "" in production so
+// the credential never ships in the client bundle.
+const DEV_PASSWORD = import.meta.env.DEV ? "12345678" : "";
 
 function LoginPage() {
 	const { login } = useAuth();
@@ -73,7 +75,7 @@ function LoginPage() {
 	}
 
 	async function handleDevLogin() {
-		if (!devUsername) return;
+		if (!import.meta.env.DEV || !devUsername) return;
 		setIdentifier(devUsername);
 		setPassword(DEV_PASSWORD);
 		await loginWith(devUsername, DEV_PASSWORD);
@@ -83,7 +85,7 @@ function LoginPage() {
 		<div className="grid min-h-screen lg:grid-cols-2">
 			<section className="hidden flex-col justify-between bg-[#03442C] p-12 lg:flex">
 				<Link to="/" className="no-underline">
-					<img src="/logo-white.png" alt="GreenShift" className="h-12" />
+					<img src="/logo-white.webp" alt="GreenShift" className="h-12" />
 				</Link>
 				<div className="max-w-md">
 					<h2 className="text-4xl font-semibold leading-tight text-white">
@@ -156,7 +158,7 @@ function LoginPage() {
 							)}
 						</Button>
 					</form>
-					{devRole && devUsername && (
+					{import.meta.env.DEV && devRole && devUsername && (
 						<div className="mt-6 rounded-lg border border-dashed border-border p-4">
 							<p className="text-sm font-medium">Dev mode — {devRole}</p>
 							<p className="mt-1 text-sm text-muted-foreground">

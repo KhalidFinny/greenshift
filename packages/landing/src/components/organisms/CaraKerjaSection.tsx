@@ -45,7 +45,7 @@ export default function CaraKerjaSection() {
 			className="relative overflow-hidden bg-white"
 		>
 			<div className="page-wrap relative z-10 py-24">
-				<header className="mb-12 text-center">
+				<header className="mb-12 max-w-2xl">
 					<p className="text-sm font-bold uppercase tracking-[0.2em] text-[#03442C]">
 						Cara Kerja
 					</p>
@@ -55,7 +55,7 @@ export default function CaraKerjaSection() {
 				</header>
 
 				<nav
-					className="flex items-start justify-center mb-20"
+					className="mb-20 flex flex-wrap items-start"
 					aria-label="Langkah proses"
 				>
 					{steps.map((step, index) => (
@@ -67,7 +67,7 @@ export default function CaraKerjaSection() {
 								className="flex flex-col items-center cursor-pointer px-4"
 							>
 								<span
-									className="flex h-12 w-12 items-center justify-center rounded-full text-[15px] font-bold transition-all duration-500 motion-reduce:transition-none"
+									className="flex h-12 w-12 items-center justify-center rounded-full text-base font-bold transition-all duration-500 motion-reduce:transition-none"
 									style={{
 										backgroundColor:
 											activeStep === index ? "#00712D" : "transparent",
@@ -78,9 +78,9 @@ export default function CaraKerjaSection() {
 									{step.id}
 								</span>
 								<span
-									className="mt-3 text-[14px] font-semibold transition-colors duration-300 motion-reduce:transition-none"
+									className="mt-3 text-base font-semibold transition-colors duration-300 motion-reduce:transition-none"
 									style={{
-										color: activeStep === index ? "#03442C" : "#6B6B6B",
+										color: activeStep === index ? "#03442C" : "#555555",
 									}}
 								>
 									{step.stepLabel}
@@ -97,7 +97,7 @@ export default function CaraKerjaSection() {
 				</nav>
 
 				<div
-					className={`grid grid-cols-[1fr_1.5fr] gap-20 items-start transition-all duration-700 motion-reduce:transition-none ${
+					className={`grid grid-cols-1 items-start gap-12 transition-all duration-700 motion-reduce:transition-none lg:grid-cols-[1fr_1.5fr] lg:gap-20 ${
 						isVisible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
 					}`}
 				>
@@ -113,11 +113,13 @@ export default function CaraKerjaSection() {
 					<figure className="m-0">
 						<div
 							ref={imageRef}
-							className="rounded-[16px] border border-[#03442C]/20 bg-white p-2 shadow-[0_8px_32px_rgba(0,0,0,0.08)] will-change-transform motion-reduce:!transform-none"
+							className="rounded-[16px] border border-[#03442C]/20 bg-white p-2 will-change-transform motion-reduce:!transform-none"
 						>
 							<img
-								src="/CompanyProjectSubmissionDashboard.png"
+								src="/dashboard.webp"
 								alt="Dasbor GreenShift menampilkan visualisasi data proyek efisiensi energi"
+								loading="lazy"
+								decoding="async"
 								className="w-full rounded-[12px]"
 							/>
 						</div>

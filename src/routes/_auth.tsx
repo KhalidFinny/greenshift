@@ -1,5 +1,6 @@
 import { getDevRole, getDevScope } from "@greenshift/core";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { NotFoundComponent } from "../components/not-found";
 
 export const Route = createFileRoute("/_auth")({
 	beforeLoad: ({ context }) => {
@@ -10,4 +11,5 @@ export const Route = createFileRoute("/_auth")({
 			throw redirect({ to: "/login" });
 	},
 	component: () => <Outlet />,
+	notFoundComponent: NotFoundComponent,
 });

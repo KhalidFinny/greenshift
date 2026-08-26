@@ -6,41 +6,36 @@ const factory = createFactory<{ Bindings: Env }>();
 
 export const healthRoutes = new Hono<{ Bindings: Env }>();
 
+// Read-only probes only: no KV/R2 writes (avoids unauthenticated write
+// amplification) and no error-string leakage (details go to server logs).
 healthRoutes.get(
 	"/health",
 	...factory.createHandlers(async (c) => {
 		const env = c.env;
-		const checks: Record<string, { status: "ok" | "error"; error?: string }> =
-			{};
+		const checks: Record<string, { status: "ok" | "error" }> = {};
 
 		try {
 			await env.DB.prepare("SELECT 1").first();
 			checks.d1 = { status: "ok" };
 		} catch (err) {
-			checks.d1 = { status: "error", error: String(err) };
+			console.error("[health] d1", err);
+			checks.d1 = { status: "error" };
 		}
 
 		try {
-			await env.KV.put("health:check", "ok", { expirationTtl: 60 });
-			const value = await env.KV.get("health:check");
-			await env.KV.delete("health:check");
-			checks.kv =
-				value === "ok"
-					? { status: "ok" }
-					: { status: "error", error: "roundtrip mismatch" };
+			await env.KV.get("health:check");
+			checks.kv = { status: "ok" };
 		} catch (err) {
-			checks.kv = { status: "error", error: String(err) };
+			console.error("[health] kv", err);
+			checks.kv = { status: "error" };
 		}
 
 		try {
-			await env.R2.put("health/check.txt", "ok");
-			const object = await env.R2.head("health/check.txt");
-			await env.R2.delete("health/check.txt");
-			checks.r2 = object
-				? { status: "ok" }
-				: { status: "error", error: "head returned null" };
+			await env.R2.head("health/check.txt");
+			checks.r2 = { status: "ok" };
 		} catch (err) {
-			checks.r2 = { status: "error", error: String(err) };
+			console.error("[health] r2", err);
+			checks.r2 = { status: "error" };
 		}
 
 		const allOk = Object.values(checks).every((check) => check.status === "ok");

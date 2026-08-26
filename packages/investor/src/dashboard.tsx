@@ -1,8 +1,10 @@
 import { useAuth } from "@greenshift/core";
-import { EmptyState } from "@greenshift/ui";
+import { Button, EmptyState } from "@greenshift/ui";
+import { useRouter } from "@tanstack/react-router";
 
 export function InvestorDashboard() {
 	const { user } = useAuth();
+	const router = useRouter();
 
 	return (
 		<div className="space-y-6">
@@ -13,6 +15,15 @@ export function InvestorDashboard() {
 				</p>
 			</div>
 			<EmptyState description="Run the package to run this" />
+			<div>
+				<Button
+					variant="outline"
+					onPress={() => router.navigate({ href: "/investor/404-test" })}
+					className="cursor-pointer"
+				>
+					404
+				</Button>
+			</div>
 		</div>
 	);
 }

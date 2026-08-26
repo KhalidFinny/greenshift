@@ -92,8 +92,10 @@ export default function EkosistemSection() {
 	const selected = actors[active];
 	const Icon = selected.icon;
 
-	// Orbital animation loop
+	// Orbital animation loop (static under prefers-reduced-motion)
 	useEffect(() => {
+		if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
 		let raf: number;
 
 		const tick = (now: number) => {
@@ -158,7 +160,7 @@ export default function EkosistemSection() {
 			className="relative overflow-hidden bg-white"
 		>
 			<div className="page-wrap relative z-10 py-24">
-				<header className="mb-16 text-center">
+				<header className="mb-16 max-w-2xl">
 					<p className="text-sm font-bold uppercase tracking-[0.2em] text-[#03442C]">
 						Ekosistem
 					</p>
@@ -168,12 +170,12 @@ export default function EkosistemSection() {
 				</header>
 
 				<div
-					className={`grid grid-cols-[1fr_1fr] gap-16 items-center transition-all duration-700 motion-reduce:transition-none ${
+					className={`grid grid-cols-1 items-center gap-16 transition-all duration-700 motion-reduce:transition-none lg:grid-cols-[1fr_1fr] ${
 						isVisible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
 					}`}
 				>
 					{/* Left: Circular ecosystem */}
-					<div className="flex justify-center">
+					<div className="hidden lg:flex lg:justify-center">
 						<div
 							className="relative"
 							style={{
@@ -245,9 +247,7 @@ export default function EkosistemSection() {
 										type="button"
 										key={actor.label}
 										onClick={() => handleNodeClick(i)}
-										className={`absolute flex flex-col items-center text-center cursor-pointer transition-all duration-500 motion-reduce:transition-none ${
-											isActive ? "opacity-100" : "opacity-45 hover:opacity-75"
-										}`}
+										className="group absolute flex cursor-pointer flex-col items-center text-center transition-all duration-500 motion-reduce:transition-none"
 										style={{
 											left: `calc(50% + ${x}px - 60px)`,
 											top: `calc(50% + ${y}px - 44px)`,
@@ -257,8 +257,8 @@ export default function EkosistemSection() {
 										<div
 											className={`flex h-[60px] w-[60px] items-center justify-center rounded-full border transition-all duration-500 motion-reduce:transition-none ${
 												isActive
-													? "border-[#03442C]/30 bg-[#03442C] shadow-[0_2px_16px_rgba(3,68,44,0.15)]"
-													: "border-[#03442C]/15 bg-white shadow-[0_1px_8px_rgba(0,0,0,0.04)]"
+													? "border-[#03442C]/30 bg-[#03442C]"
+													: "border-[#03442C]/15 bg-white opacity-60 group-hover:opacity-90"
 											}`}
 										>
 											<NodeIcon
@@ -269,8 +269,8 @@ export default function EkosistemSection() {
 											/>
 										</div>
 										<p
-											className={`mt-2 text-[13px] font-semibold leading-tight transition-colors duration-500 motion-reduce:transition-none ${
-												isActive ? "text-[#1C1C1C]" : "text-[#999]"
+											className={`mt-2 text-base font-semibold leading-tight transition-colors duration-500 motion-reduce:transition-none ${
+												isActive ? "text-[#1C1C1C]" : "text-[#4A4A4A]"
 											}`}
 										>
 											{actor.label}
@@ -281,7 +281,7 @@ export default function EkosistemSection() {
 
 							{/* Center logo */}
 							<div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-								<div className="flex h-[100px] w-[100px] items-center justify-center rounded-full border border-[#03442C]/20 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]">
+								<div className="flex h-[100px] w-[100px] items-center justify-center rounded-full border border-[#03442C]/20 bg-white">
 									<img
 										src="/logo-short.svg"
 										alt="GreenShift"
