@@ -1,11 +1,18 @@
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { createFactory } from "hono/factory";
-import type { LoginBody, RegisterBody } from "../contracts";
+import type {
+	CsrfResponse,
+	LoginBody,
+	RegisterBody,
+	StepUpBody,
+	StepUpResponse,
+} from "../contracts";
 import { createDb } from "../db";
-import { users } from "../db/schema";
+import { auditLogs, users } from "../db/schema";
 import type { ApiEnv } from "../env";
 import { authUserFrom, requireSession } from "../lib/authz";
+import { requireCsrf } from "../lib/csrf";
 import { rateLimited, requireJson } from "../lib/http";
 import {
 	hashPassword,
@@ -17,9 +24,11 @@ import {
 	clearSessionCookie,
 	createSession,
 	destroySession,
+	elevateSession,
 	readCookie,
 	SESSION_COOKIE,
 	sessionCookie,
+	STEP_UP_TTL_MS,
 } from "../lib/session";
 
 const factory = createFactory<ApiEnv>();
@@ -32,8 +41,9 @@ const MAX_NAME = 120;
 const MAX_COMPANY = 200;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Equalize PBKDF2 timing between known and unknown emails (lazily computed).
 let dummyHashPromise: Promise<string> | null = null;
+
+
 
 authRoutes.post(
 	"/login",
@@ -85,7 +95,6 @@ authRoutes.post(
 			.limit(1);
 
 		if (!user?.hashedPassword) {
-			// Keep the response time indistinguishable from a wrong password.
 			dummyHashPromise ??= hashPassword("dummy-password");
 			await verifyPassword(password, await dummyHashPromise);
 			return c.json(
@@ -186,7 +195,6 @@ authRoutes.post(
 		if (!ipCheck.ok) return rateLimited(c, ipCheck.retryAfter);
 
 		const db = createDb(c.env.DB);
-
 		const [existing] = await db
 			.select({ id: users.id })
 			.from(users)
@@ -247,13 +255,100 @@ authRoutes.get(
 	}),
 );
 
+authRoutes.get(
+	"/csrf",
+	requireSession,
+	...factory.createHandlers(async (c) => {
+		const session = c.get("session");
+		const response: CsrfResponse = {
+			csrfToken: session.csrfToken,
+			stepUpUntil:
+				typeof session.stepUpUntil === "number"
+					? new Date(session.stepUpUntil).toISOString()
+					: null,
+		};
+		return c.json(response);
+	}),
+);
+
+authRoutes.post(
+	"/step-up",
+	requireSession,
+	requireCsrf,
+	...factory.createHandlers(async (c) => {
+		const mediaTypeError = requireJson(c);
+		if (mediaTypeError) return mediaTypeError;
+
+		const body = (await c.req
+			.json()
+			.catch(() => null)) as Partial<StepUpBody> | null;
+		const password = typeof body?.password === "string" ? body.password : "";
+		if (!password || password.length > MAX_PASSWORD) {
+			return c.json(
+				{ error: { code: "VALIDATION", message: "Password tidak valid" } },
+				400,
+			);
+		}
+
+		const ip = clientIp(c.req.raw);
+		const ipCheck = await checkRateLimit(c.env, `stepup:ip:${ip}`, 10, 600);
+		if (!ipCheck.ok) return rateLimited(c, ipCheck.retryAfter);
+		const userCheck = await checkRateLimit(
+			c.env,
+			`stepup:user:${c.get("user").id}`,
+			5,
+			600,
+		);
+		if (!userCheck.ok) return rateLimited(c, userCheck.retryAfter);
+
+		const db = createDb(c.env.DB);
+		const [user] = await db
+			.select({ id: users.id, hashedPassword: users.hashedPassword })
+			.from(users)
+			.where(eq(users.id, c.get("user").id))
+			.limit(1);
+		if (!user?.hashedPassword) {
+			return c.json(
+				{ error: { code: "UNAUTHORIZED", message: "Sesi tidak valid" } },
+				401,
+			);
+		}
+		if (!(await verifyPassword(password, user.hashedPassword))) {
+			return c.json(
+				{
+					error: {
+						code: "INVALID_CREDENTIALS",
+						message: "Password konfirmasi salah",
+					},
+				},
+				401,
+			);
+		}
+
+		const elevatedUntil = Date.now() + STEP_UP_TTL_MS;
+		await elevateSession(c.env, c.get("sessionToken"), elevatedUntil);
+		await db.insert(auditLogs).values({
+			userId: c.get("user").id,
+			action: "auth.step_up",
+			entityType: "session",
+			entityId: c.get("user").id,
+			metadata: { elevatedUntil: new Date(elevatedUntil).toISOString() },
+		});
+
+		const response: StepUpResponse = {
+			ok: true,
+			elevatedUntil: new Date(elevatedUntil).toISOString(),
+		};
+		return c.json(response);
+	}),
+);
+
 authRoutes.post(
 	"/logout",
+	requireSession,
+	requireCsrf,
 	...factory.createHandlers(async (c) => {
-		await destroySession(
-			c.env,
-			readCookie(c.req.header("cookie"), SESSION_COOKIE),
-		);
+		await destroySession(c.env, readCookie(c.req.header("cookie"), SESSION_COOKIE));
 		c.header("Set-Cookie", clearSessionCookie());
 		return c.json({ ok: true });
 	}),

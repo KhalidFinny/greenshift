@@ -20,6 +20,7 @@ import {
 } from "../db/schema";
 import type { ApiEnv } from "../env";
 import { requireRole, requireSession } from "../lib/authz";
+import { requireCsrf } from "../lib/csrf";
 import { rateLimited, requireJson } from "../lib/http";
 import { checkRateLimit, clientIp } from "../lib/rate-limit";
 
@@ -28,7 +29,7 @@ const factory = createFactory<ApiEnv>();
 export const investorRoutes = new Hono<ApiEnv>();
 
 // Every investor endpoint requires an investor session.
-investorRoutes.use("*", requireSession, requireRole("investor"));
+investorRoutes.use("*", requireSession, requireRole("investor"), requireCsrf);
 
 function blueprintSummary(
 	bp: typeof blueprints.$inferSelect,

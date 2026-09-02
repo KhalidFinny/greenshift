@@ -5,6 +5,7 @@ import { adminRoutes } from "./routes/admin";
 import { authRoutes } from "./routes/auth";
 import { healthRoutes } from "./routes/health";
 import { investorRoutes } from "./routes/investor";
+import { vendorRoutes } from "./routes/vendor";
 
 export const app = new Hono<ApiEnv>();
 
@@ -27,6 +28,7 @@ app.route("/api", healthRoutes);
 app.route("/api/auth", authRoutes);
 app.route("/api/investor", investorRoutes);
 app.route("/api/admin", adminRoutes);
+app.route("/api/vendor", vendorRoutes);
 
 export type AppType = typeof app;
 

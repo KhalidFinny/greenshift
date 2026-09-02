@@ -3,11 +3,12 @@ import type { Env } from "../env";
 export const SESSION_COOKIE = "__Host-greenshift_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
 const SESSION_PREFIX = "greenshift:session:";
+export const STEP_UP_TTL_MS = 10 * 60 * 1000;
 
-// Sessions store only the user id; the full user (and role) is re-resolved
-// from D1 on every request so privilege changes take effect immediately.
 export interface SessionPayload {
 	userId: number;
+	csrfToken: string;
+	stepUpUntil: number | null;
 }
 
 export function readCookie(
@@ -22,18 +23,54 @@ export function readCookie(
 	return null;
 }
 
-function newSessionToken(): string {
-	const bytes = crypto.getRandomValues(new Uint8Array(32));
-	return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+function newHexToken(bytes = 32): string {
+	const raw = crypto.getRandomValues(new Uint8Array(bytes));
+	return Array.from(raw, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function normalizeSession(
+	parsed: Partial<SessionPayload>,
+): SessionPayload | null {
+	const userId = parsed.userId;
+	if (
+		typeof userId !== "number" ||
+		!Number.isInteger(userId) ||
+		userId <= 0
+	) {
+		return null;
+	}
+
+	const csrfToken =
+		typeof parsed.csrfToken === "string" && parsed.csrfToken.length >= 16
+			? parsed.csrfToken
+			: newHexToken(16);
+	const stepUpUntil =
+		typeof parsed.stepUpUntil === "number" &&
+		Number.isFinite(parsed.stepUpUntil) &&
+		parsed.stepUpUntil > Date.now()
+			? parsed.stepUpUntil
+			: null;
+
+	return { userId, csrfToken, stepUpUntil };
+}
+
+async function writeSession(
+	env: Env,
+	token: string,
+	payload: SessionPayload,
+): Promise<void> {
+	await env.KV.put(SESSION_PREFIX + token, JSON.stringify(payload), {
+		expirationTtl: SESSION_TTL_SECONDS,
+	});
 }
 
 export async function createSession(env: Env, userId: number): Promise<string> {
-	const token = newSessionToken();
-	await env.KV.put(
-		SESSION_PREFIX + token,
-		JSON.stringify({ userId } satisfies SessionPayload),
-		{ expirationTtl: SESSION_TTL_SECONDS },
-	);
+	const token = newHexToken();
+	await writeSession(env, token, {
+		userId,
+		csrfToken: newHexToken(16),
+		stepUpUntil: null,
+	});
 	return token;
 }
 
@@ -46,22 +83,39 @@ export async function getSessionUser(
 	const raw = await env.KV.get(key);
 	if (!raw) return null;
 	try {
-		const parsed = JSON.parse(raw) as Partial<SessionPayload>;
-		const userId = parsed.userId;
-		if (
-			typeof userId !== "number" ||
-			!Number.isInteger(userId) ||
-			userId <= 0
-		) {
+		const parsed = normalizeSession(JSON.parse(raw) as Partial<SessionPayload>);
+		if (!parsed) {
 			await env.KV.delete(key);
 			return null;
 		}
-		return { userId };
+		const needsUpgrade = raw !== JSON.stringify(parsed);
+		if (needsUpgrade) {
+			await writeSession(env, token, parsed);
+		}
+		return parsed;
 	} catch {
-		// Corrupt session value — treat as unauthenticated and drop it.
 		await env.KV.delete(key);
 		return null;
 	}
+}
+
+export async function elevateSession(
+	env: Env,
+	token: string,
+	elevatedUntil = Date.now() + STEP_UP_TTL_MS,
+): Promise<SessionPayload | null> {
+	const session = await getSessionUser(env, token);
+	if (!session) return null;
+	const next = { ...session, stepUpUntil: elevatedUntil };
+	await writeSession(env, token, next);
+	return next;
+}
+
+export function isStepUpFresh(
+	session: SessionPayload,
+	now = Date.now(),
+): boolean {
+	return typeof session.stepUpUntil === "number" && session.stepUpUntil > now;
 }
 
 export async function destroySession(

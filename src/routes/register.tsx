@@ -148,7 +148,7 @@ function RegisterPage() {
 						)}
 						<Button
 							type="submit"
-							isDisabled={submitting}
+							disabled={submitting}
 							className="w-full cursor-pointer"
 						>
 							{submitting ? (

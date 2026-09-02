@@ -1,16 +1,16 @@
 {
   "$schema": "https://ui.shadcn.com/schema.json",
-  "style": "aria-sera",
+  "style": "radix-mira",
   "rsc": false,
   "tsx": true,
   "tailwind": {
     "config": "",
     "css": "src/styles.css",
-    "baseColor": "mist",
+    "baseColor": "neutral",
     "cssVariables": true,
     "prefix": ""
   },
-  "iconLibrary": "hugeicons",
+  "iconLibrary": "lucide",
   "rtl": false,
   "aliases": {
     "components": "#/components",
@@ -20,6 +20,8 @@
     "hooks": "#/hooks"
   },
   "menuColor": "default",
-  "menuAccent": "bold",
-  "registries": {}
+  "menuAccent": "subtle",
+  "registries": {
+    "@bklit": "https://ui.bklit.com/r/{name}.json"
+  }
 }

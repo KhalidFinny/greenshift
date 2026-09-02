@@ -1,12 +1,15 @@
 import { useAuth } from "@greenshift/core";
 import { Link } from "@tanstack/react-router";
+import { useIsHome } from "../../hooks/useIsHome";
 
 export default function Footer() {
 	const { user } = useAuth();
+	const isHome = useIsHome();
 	const year = new Date().getFullYear();
 
-	// Authenticated (role) pages have no footer.
-	if (user) return null;
+	// Role pages have no footer; the public landing keeps it even when logged
+	// in (same exception as the header).
+	if (user && !isHome) return null;
 
 	return (
 		<footer className="bg-[#03442C] text-white">

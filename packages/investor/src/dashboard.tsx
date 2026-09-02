@@ -18,7 +18,7 @@ export function InvestorDashboard() {
 			<div>
 				<Button
 					variant="outline"
-					onPress={() => router.navigate({ href: "/investor/404-test" })}
+					onClick={() => router.navigate({ href: "/investor/404-test" })}
 					className="cursor-pointer"
 				>
 					404

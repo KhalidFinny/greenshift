@@ -10,11 +10,15 @@ export interface Env {
 	R2: R2Bucket;
 }
 
-// Hono context for the API: bindings plus the authenticated user, populated
-// by the requireSession middleware (apps/api/src/lib/authz.ts).
+// Hono context for the API: bindings plus the authenticated user/session,
+// populated by the requireSession middleware.
 export interface ApiEnv {
 	Bindings: Env;
-	Variables: { user: AuthUser };
+	Variables: {
+		user: AuthUser;
+		session: { userId: number; csrfToken: string; stepUpUntil: number | null };
+		sessionToken: string;
+	};
 }
 
 declare module "@tanstack/router-core" {

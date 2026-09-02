@@ -31,7 +31,7 @@ export function NotFoundComponent() {
 				pernah ada.
 			</p>
 			<Button
-				onPress={handleBack}
+				onClick={handleBack}
 				className="mt-10 h-[42px] cursor-pointer rounded-[10px] px-8 text-base normal-case tracking-normal"
 			>
 				Kembali

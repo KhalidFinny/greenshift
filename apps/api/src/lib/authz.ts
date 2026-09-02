@@ -5,21 +5,22 @@ import { createMiddleware } from "hono/factory";
 import { createDb } from "../db";
 import { users } from "../db/schema";
 import type { ApiEnv } from "../env";
-import { getSessionUser, readCookie, SESSION_COOKIE } from "./session";
+import {
+	getSessionUser,
+	isStepUpFresh,
+	readCookie,
+	SESSION_COOKIE,
+} from "./session";
 
 export function authUserFrom(user: typeof users.$inferSelect): AuthUser {
 	return { id: user.id, email: user.email, name: user.name, role: user.role };
 }
 
-// Resolves the session to a live user row (fresh role every request) so a
-// demoted or deleted account loses access immediately.
 export const requireSession = createMiddleware<ApiEnv>(
 	async (c: Context<ApiEnv>, next: Next) => {
-		const session = await getSessionUser(
-			c.env,
-			readCookie(c.req.header("cookie"), SESSION_COOKIE),
-		);
-		if (!session) {
+		const token = readCookie(c.req.header("cookie"), SESSION_COOKIE);
+		const session = await getSessionUser(c.env, token);
+		if (!session || !token) {
 			return c.json(
 				{ error: { code: "UNAUTHORIZED", message: "Sesi tidak valid" } },
 				401,
@@ -33,7 +34,6 @@ export const requireSession = createMiddleware<ApiEnv>(
 			.where(eq(users.id, session.userId))
 			.limit(1);
 		if (!user) {
-			// Account deleted — the session is dead.
 			return c.json(
 				{ error: { code: "UNAUTHORIZED", message: "Sesi tidak valid" } },
 				401,
@@ -41,11 +41,12 @@ export const requireSession = createMiddleware<ApiEnv>(
 		}
 
 		c.set("user", authUserFrom(user));
+		c.set("session", session);
+		c.set("sessionToken", token);
 		await next();
 	},
 );
 
-// Requires an authenticated session whose role matches one of `roles`.
 export function requireRole(...roles: AuthUser["role"][]) {
 	return createMiddleware<ApiEnv>(async (c: Context<ApiEnv>, next: Next) => {
 		const user = c.get("user");
@@ -63,3 +64,21 @@ export function requireRole(...roles: AuthUser["role"][]) {
 		await next();
 	});
 }
+
+export const requireRecentStepUp = createMiddleware<ApiEnv>(
+	async (c: Context<ApiEnv>, next: Next) => {
+		const session = c.get("session");
+		if (!session || !isStepUpFresh(session)) {
+			return c.json(
+				{
+					error: {
+						code: "STEP_UP_REQUIRED",
+						message: "Konfirmasi kata sandi diperlukan untuk aksi sensitif ini",
+					},
+				},
+				428,
+			);
+		}
+		await next();
+	},
+);

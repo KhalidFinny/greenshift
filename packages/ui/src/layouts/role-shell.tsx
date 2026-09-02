@@ -1,12 +1,17 @@
 import {
-	BellIcon,
-	ChevronDownIcon,
-	ChevronUpIcon,
-	DashboardSquare01Icon,
-	Logout01Icon,
-	UserCircleIcon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+	faBell,
+	faBriefcase,
+	faChartLine,
+	faChevronDown,
+	faChevronUp,
+	faCircleUser,
+	faFileLines,
+	faGauge,
+	faRightFromBracket,
+	faServer,
+	faTruck,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
@@ -50,27 +55,30 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 					</div>
 
 					<nav
-						className="flex-1 space-y-1 px-3 pb-3 pt-8"
+						className="flex-1 space-y-4 px-3 pb-3 pt-8"
 						aria-label="Menu sidebar"
 					>
 						{navItems.map((item) => {
 							const isActive = activePath === item.to;
+							const icon = item.label === "Dashboard" ? faGauge :
+										 item.label === "Analytics" ? faChartLine :
+										 item.label === "Projects" ? faBriefcase :
+										 item.label === "Vendors" ? faTruck :
+										 item.label === "System" ? faServer :
+										 faFileLines;
 							return (
 								<Link
 									key={item.to}
 									to={item.to}
 									aria-current={isActive ? "page" : undefined}
 									className={cn(
-										"flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground transition-colors",
+										"flex items-center gap-3 rounded-lg px-3 py-2 text-base font-medium text-sidebar-foreground transition-colors",
 										isActive
 											? "bg-primary font-semibold text-primary-foreground"
 											: "hover:bg-foreground/5 hover:text-foreground",
 									)}
 								>
-									<HugeiconsIcon
-										icon={DashboardSquare01Icon}
-										className="size-4 shrink-0"
-									/>
+									<FontAwesomeIcon icon={icon} className="size-4 shrink-0" />
 									{item.label}
 								</Link>
 							);
@@ -97,7 +105,7 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 							aria-label="Notifikasi"
 							className="flex size-10 items-center justify-center rounded-lg text-sidebar-foreground/70 transition-colors hover:bg-foreground/5 hover:text-foreground"
 						>
-							<HugeiconsIcon icon={BellIcon} className="size-5" />
+							<FontAwesomeIcon icon={faBell} className="size-5" />
 						</button>
 
 						<div ref={accountRef} className="relative">
@@ -118,8 +126,8 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 										{name || "Pengguna"}
 									</span>
 								</span>
-								<HugeiconsIcon
-									icon={accountMenuOpen ? ChevronUpIcon : ChevronDownIcon}
+								<FontAwesomeIcon
+									icon={accountMenuOpen ? faChevronUp : faChevronDown}
 									className="hidden size-4 shrink-0 text-sidebar-foreground/60 md:block"
 								/>
 							</button>
@@ -141,8 +149,8 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 										onClick={openProfile}
 										className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
 									>
-										<HugeiconsIcon
-											icon={UserCircleIcon}
+										<FontAwesomeIcon
+											icon={faCircleUser}
 											className="size-4 shrink-0"
 										/>
 										Profile
@@ -153,8 +161,8 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 										onClick={handleLogout}
 										className="flex w-full items-center gap-3 border-t border-border px-4 py-2.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/5"
 									>
-										<HugeiconsIcon
-											icon={Logout01Icon}
+										<FontAwesomeIcon
+											icon={faRightFromBracket}
 											className="size-4 shrink-0"
 										/>
 										Logout
@@ -165,7 +173,7 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 					</div>
 				</header>
 
-				<div className="flex-1 px-6 py-8">{children}</div>
+				<div className="flex-1 overflow-y-auto px-6 py-8">{children}</div>
 			</main>
 		</div>
 	);

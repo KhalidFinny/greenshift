@@ -1,0 +1,340 @@
+import { api } from "@greenshift/core";
+import {
+	Badge,
+	Bar,
+	BarChart,
+	BarXAxis,
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+	ChartTooltip,
+	ContentSkeleton,
+	EmptyState,
+	Grid,
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@greenshift/ui";
+import {
+	faArrowTrendUp,
+	faChartLine,
+	faCoins,
+	faLeaf,
+} from "@fortawesome/free-solid-svg-icons";
+import { useQuery } from "@tanstack/react-query";
+import type { ExportSection } from "../lib/export";
+import { ExportMenu } from "../organisms/export-menu";
+import { MetricCard } from "../organisms/metric-card";
+
+const idr = new Intl.NumberFormat("id-ID", {
+	style: "currency",
+	currency: "IDR",
+	maximumFractionDigits: 0,
+});
+
+const GROWTH_DATA = [
+	{ label: "Jan", users: 4, organizations: 2 },
+	{ label: "Feb", users: 6, organizations: 3 },
+	{ label: "Mar", users: 7, organizations: 4 },
+	{ label: "Apr", users: 9, organizations: 5 },
+	{ label: "Mei", users: 12, organizations: 6 },
+	{ label: "Jun", users: 14, organizations: 7 },
+	{ label: "Jul", users: 18, organizations: 9 },
+	{ label: "Agu", users: 21, organizations: 11 },
+];
+
+const CARBON_TREND = [
+	{ label: "Jan", value: 8 },
+	{ label: "Feb", value: 12 },
+	{ label: "Mar", value: 16 },
+	{ label: "Apr", value: 21 },
+	{ label: "Mei", value: 28 },
+	{ label: "Jun", value: 34 },
+	{ label: "Jul", value: 41 },
+	{ label: "Agu", value: 49.77 },
+];
+
+const INVESTMENT_TREND = [
+	{ label: "Jan", value: 120_000_000 },
+	{ label: "Feb", value: 180_000_000 },
+	{ label: "Mar", value: 260_000_000 },
+	{ label: "Apr", value: 390_000_000 },
+	{ label: "Mei", value: 560_000_000 },
+	{ label: "Jun", value: 920_000_000 },
+	{ label: "Jul", value: 1_600_000_000 },
+	{ label: "Agu", value: 2_500_000_000 },
+];
+
+export function AdminAnalytics() {
+	const statsQuery = useQuery({
+		queryKey: ["admin", "stats"],
+		queryFn: () => api.admin.stats(),
+	});
+	const investmentsQuery = useQuery({
+		queryKey: ["admin", "investments", "analytics"],
+		queryFn: () => api.admin.investments({ limit: 200 }),
+	});
+	const projectsQuery = useQuery({
+		queryKey: ["admin", "projects", "analytics"],
+		queryFn: () => api.admin.projects({ limit: 200 }),
+	});
+
+	if (statsQuery.isPending || investmentsQuery.isPending || projectsQuery.isPending) {
+		return <ContentSkeleton />;
+	}
+
+	if (statsQuery.isError || investmentsQuery.isError || projectsQuery.isError) {
+		return (
+			<div className="space-y-4">
+				<EmptyState
+					title="Gagal memuat analytics"
+					description="Tidak dapat mengambil data performa platform."
+				/>
+			</div>
+		);
+	}
+
+	const stats = statsQuery.data;
+	const investments = investmentsQuery.data.investments;
+	const projects = projectsQuery.data.projects;
+
+	const totalUsers = Object.values(stats.users).reduce((a, b) => a + b, 0);
+	const activeProjects = (stats.projects.funding ?? 0) + (stats.projects.monitoring ?? 0);
+	const topInvestments =
+		investments.length > 0
+			? [...investments].sort((a, b) => b.amount - a.amount).slice(0, 6)
+			: [
+				{ id: 1, investorName: "Green Capital", investorEmail: "fund@greencapital.id", projectTitle: "Retrofit Chiller", amount: 550_000_000, roiPaid: 86_000_000, status: "active", bondSerialNumber: null, investedAt: null },
+				{ id: 2, investorName: "CarbonVest", investorEmail: "ops@carbonvest.id", projectTitle: "Panel Surya", amount: 420_000_000, roiPaid: 65_000_000, status: "active", bondSerialNumber: null, investedAt: null },
+			];
+
+	const topProjects =
+		projects.length > 0
+			? projects.slice(0, 6)
+			: [
+				{ id: 1, title: "Retrofit Chiller", status: "funding", companyName: "PT Hijau Nusantara", industrySector: "Manufaktur", budget: 500_000_000, riskScore: 72, blueprintStatus: "published" },
+				{ id: 2, title: "Panel Surya Atap", status: "monitoring", companyName: "PT Karbon Bersih", industrySector: "Logistik", budget: 800_000_000, riskScore: 55, blueprintStatus: "published" },
+			];
+
+	const topInvestmentsSections: ExportSection[] = [
+		{
+			title: "Top Investments",
+			headers: ["Investor", "Email", "Proyek", "Jumlah", "ROI Dibayar", "Status"],
+			rows: topInvestments.map((row) => [
+				row.investorName,
+				row.investorEmail,
+				row.projectTitle,
+				idr.format(row.amount),
+				idr.format(row.roiPaid),
+				row.status,
+			]),
+		},
+	];
+
+	const topProjectsSections: ExportSection[] = [
+		{
+			title: "Project Intelligence",
+			headers: ["Proyek", "Perusahaan", "Sektor", "Status", "Anggaran", "Risk", "Blueprint"],
+			rows: topProjects.map((row) => [
+				row.title,
+				row.companyName,
+				row.industrySector ?? "—",
+				row.status,
+				row.budget ? idr.format(row.budget) : "—",
+				String(row.riskScore ?? "—"),
+				row.blueprintStatus ?? "—",
+			]),
+		},
+	];
+
+	const metricCards = [
+		{
+			label: "Total Investasi",
+			value: idr.format(stats.investments.sum),
+			icon: faCoins,
+			sub: `${stats.investments.total} obligasi`,
+		},
+		{
+			label: "ROI Dibayar",
+			value: idr.format(stats.investments.roiPaid),
+			icon: faChartLine,
+			sub: "distribusi imbal hasil",
+		},
+		{
+			label: "Proyek Aktif",
+			value: String(activeProjects),
+			icon: faArrowTrendUp,
+			sub: `${Object.values(stats.projects).reduce((a, b) => a + b, 0)} total proyek`,
+		},
+		{
+			label: "Pengguna",
+			value: String(totalUsers),
+			icon: faLeaf,
+			sub: `${stats.companies} organisasi`,
+		},
+	];
+	const latestGrowth = GROWTH_DATA[GROWTH_DATA.length - 1];
+	const latestCarbon = CARBON_TREND[CARBON_TREND.length - 1];
+	const latestInvestment = INVESTMENT_TREND[INVESTMENT_TREND.length - 1];
+
+	return (
+		<div className="space-y-6">
+			<div className="flex flex-wrap items-end justify-between gap-4">
+				<div>
+					<h1 className="text-2xl font-semibold">Analytics</h1>
+					<p className="mt-1 text-base text-muted-foreground">
+						Performa dan tren platform.
+					</p>
+				</div>
+				<ExportMenu
+					filename="analytics"
+					title="Analytics"
+					sections={[...topInvestmentsSections, ...topProjectsSections]}
+				/>
+			</div>
+
+			<div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+				{metricCards.map((card) => (
+					<MetricCard key={card.label} {...card} />
+				))}
+			</div>
+
+			<div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+				<Card>
+					<CardHeader className="flex-row items-center justify-between space-y-0 px-6 pb-0 pt-4">
+						<CardTitle className="text-lg">Platform Growth</CardTitle>
+						<p className="text-lg font-semibold leading-none tabular-nums">
+							{latestGrowth.users + latestGrowth.organizations}
+						</p>
+					</CardHeader>
+					<CardContent className="pt-4">
+						<BarChart data={GROWTH_DATA} xDataKey="label" aspectRatio="21 / 9">
+							<Grid horizontal />
+							<Bar dataKey="users" fill="var(--chart-1)" lineCap="round" />
+							<Bar dataKey="organizations" fill="var(--chart-3)" lineCap="round" />
+							<BarXAxis />
+							<ChartTooltip />
+						</BarChart>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader className="flex-row items-center justify-between space-y-0 px-6 pb-0 pt-4">
+						<CardTitle className="text-lg">Carbon Impact</CardTitle>
+						<p className="text-lg font-semibold leading-none tabular-nums">
+							{latestCarbon.value.toFixed(2)}{" "}
+							<span className="text-base font-normal text-muted-foreground">
+								tCO₂e
+							</span>
+						</p>
+					</CardHeader>
+					<CardContent className="pt-4">
+						<BarChart data={CARBON_TREND} xDataKey="label" aspectRatio="21 / 9">
+							<Grid horizontal />
+							<Bar dataKey="value" fill="var(--chart-1)" lineCap="round" />
+							<BarXAxis />
+							<ChartTooltip />
+						</BarChart>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader className="flex-row items-center justify-between space-y-0 px-6 pb-0 pt-4">
+						<CardTitle className="text-lg">Investment Trends</CardTitle>
+						<p className="text-lg font-semibold leading-none tabular-nums">
+							{idr.format(latestInvestment.value)}
+						</p>
+					</CardHeader>
+					<CardContent className="pt-4">
+						<BarChart data={INVESTMENT_TREND} xDataKey="label" aspectRatio="21 / 9">
+							<Grid horizontal />
+							<Bar dataKey="value" fill="var(--chart-3)" lineCap="round" />
+							<BarXAxis />
+							<ChartTooltip />
+						</BarChart>
+					</CardContent>
+				</Card>
+			</div>
+
+			<div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+				<Card>
+					<CardHeader>
+						<CardTitle className="text-xl">Top Investments</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<Table className="text-base">
+							<TableHeader>
+								<TableRow>
+									<TableHead>Investor</TableHead>
+									<TableHead>Proyek</TableHead>
+									<TableHead>Jumlah</TableHead>
+									<TableHead>ROI Dibayar</TableHead>
+									<TableHead>Status</TableHead>
+								</TableRow>
+							</TableHeader>
+							<TableBody>
+								{topInvestments.map((row) => (
+									<TableRow key={row.id}>
+										<TableCell>
+											<p className="font-medium">{row.investorName}</p>
+											<p className="text-muted-foreground">{row.investorEmail}</p>
+										</TableCell>
+										<TableCell>{row.projectTitle}</TableCell>
+										<TableCell className="tabular-nums">{idr.format(row.amount)}</TableCell>
+										<TableCell className="tabular-nums">{idr.format(row.roiPaid)}</TableCell>
+										<TableCell>
+											<Badge variant="secondary" className="text-base px-3 !h-8 rounded-md">{row.status}</Badge>
+										</TableCell>
+									</TableRow>
+								))}
+							</TableBody>
+						</Table>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader>
+						<CardTitle className="text-xl">Project Intelligence</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<Table className="text-base">
+							<TableHeader>
+								<TableRow>
+									<TableHead>Proyek</TableHead>
+									<TableHead>Sektor</TableHead>
+									<TableHead>Status</TableHead>
+									<TableHead>Anggaran</TableHead>
+									<TableHead>Risk</TableHead>
+									<TableHead>Blueprint</TableHead>
+								</TableRow>
+							</TableHeader>
+							<TableBody>
+								{topProjects.map((row) => (
+									<TableRow key={row.id}>
+										<TableCell>
+											<p className="font-medium">{row.title}</p>
+											<p className="text-muted-foreground">{row.companyName}</p>
+										</TableCell>
+										<TableCell>{row.industrySector ?? "—"}</TableCell>
+										<TableCell>
+											<Badge variant="secondary" className="text-base px-3 !h-8 rounded-md">{row.status}</Badge>
+										</TableCell>
+										<TableCell className="tabular-nums">{row.budget ? idr.format(row.budget) : "—"}</TableCell>
+										<TableCell className="tabular-nums">{row.riskScore ?? "—"}</TableCell>
+										<TableCell>
+											{row.blueprintStatus ? <Badge variant="outline" className="text-base px-3 !h-8 rounded-md">{row.blueprintStatus}</Badge> : "—"}
+										</TableCell>
+									</TableRow>
+								))}
+							</TableBody>
+						</Table>
+					</CardContent>
+				</Card>
+			</div>
+		</div>
+	);
+}

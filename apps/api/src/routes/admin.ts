@@ -1,39 +1,59 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import {
+	and,
+	desc,
+	eq,
+	inArray,
+	isNotNull,
+	isNull,
+	lt,
+	notLike,
+	or,
+	sql,
+} from "drizzle-orm";
 import { Hono } from "hono";
 import { createFactory } from "hono/factory";
 import type {
+	AdminAnomaly,
 	AdminBlueprint,
 	AdminInvestment,
 	AdminProject,
 	AdminRoiPayment,
 	AdminStats,
 	AdminUser,
+	AdminVendor,
 	AuditLogEntry,
 	BlueprintUpdateBody,
 	UpdateStatusBody,
 	VerifyUserBody,
+	VerifyVendorBody,
 } from "../contracts";
 import { createDb } from "../db";
 import {
 	auditLogs,
 	blueprints,
+	emissionReports,
 	investments,
 	projectStatuses,
 	projects,
+	proposals,
 	roiPayments,
+	tenders,
 	userRoles,
 	users,
+	vendors,
 } from "../db/schema";
 import type { ApiEnv } from "../env";
-import { requireRole, requireSession } from "../lib/authz";
+import { requireRecentStepUp, requireRole, requireSession } from "../lib/authz";
+import { requireCsrf } from "../lib/csrf";
 import { requireJson } from "../lib/http";
 
 const factory = createFactory<ApiEnv>();
 
 export const adminRoutes = new Hono<ApiEnv>();
 
-// Every admin endpoint requires an admin session.
-adminRoutes.use("*", requireSession, requireRole("admin"));
+// Every admin endpoint requires an admin session. CSRF is enforced only for
+// unsafe methods inside the middleware.
+adminRoutes.use("*", requireSession, requireRole("admin"), requireCsrf);
 
 const blueprintStatuses = [
 	"draft",
@@ -91,20 +111,25 @@ adminRoutes.get(
 		}
 		const limit = parseLimit(c.req.query("limit"));
 
-		const query = db.select().from(users).$dynamic();
+		const query = db
+			.select({ user: users, vendorId: vendors.id })
+			.from(users)
+			.leftJoin(vendors, eq(vendors.userId, users.id))
+			.$dynamic();
 		if (role) {
 			query.where(eq(users.role, role as (typeof userRoles)[number]));
 		}
 		query.orderBy(desc(users.id)).limit(limit);
 		const rows = await query;
 
-		const list: AdminUser[] = rows.map((user) => ({
+		const list: AdminUser[] = rows.map(({ user, vendorId }) => ({
 			id: user.id,
 			email: user.email,
 			name: user.name,
 			role: user.role,
 			companyName: user.companyName,
 			verifiedAt: iso(user.verifiedAt),
+			vendorProfile: vendorId !== null,
 			createdAt: iso(user.createdAt),
 		}));
 		return c.json({ users: list });
@@ -113,6 +138,7 @@ adminRoutes.get(
 
 adminRoutes.patch(
 	"/users/:id/verify",
+	requireRecentStepUp,
 	...factory.createHandlers(async (c) => {
 		const mediaTypeError = requireJson(c);
 		if (mediaTypeError) return mediaTypeError;
@@ -223,9 +249,9 @@ adminRoutes.get(
 		return c.json({ projects: list });
 	}),
 );
-
 adminRoutes.patch(
 	"/projects/:id/status",
+	requireRecentStepUp,
 	...factory.createHandlers(async (c) => {
 		const mediaTypeError = requireJson(c);
 		if (mediaTypeError) return mediaTypeError;
@@ -319,6 +345,7 @@ adminRoutes.get(
 
 adminRoutes.patch(
 	"/blueprints/:id",
+	requireRecentStepUp,
 	...factory.createHandlers(async (c) => {
 		const mediaTypeError = requireJson(c);
 		if (mediaTypeError) return mediaTypeError;
@@ -537,6 +564,7 @@ adminRoutes.get(
 // investment's roiPaid. No real money moves (MVP simulation).
 adminRoutes.post(
 	"/roi-payments/:id/payout",
+	requireRecentStepUp,
 	...factory.createHandlers(async (c) => {
 		const id = Number(c.req.param("id"));
 		if (!Number.isInteger(id) || id <= 0) {
@@ -674,6 +702,46 @@ adminRoutes.get(
 					.groupBy(roiPayments.status),
 			]);
 
+		const [
+			verificationAgg,
+			companiesAgg,
+			investorsAgg,
+			blueprintsByStatus,
+			fundingRows,
+		] = await Promise.all([
+			db
+				.select({
+					verified: sql<number>`coalesce(sum(case when ${users.verifiedAt} is not null then 1 else 0 end), 0)`,
+					unverified: sql<number>`coalesce(sum(case when ${users.verifiedAt} is null then 1 else 0 end), 0)`,
+				})
+				.from(users),
+			db
+				.select({ count: sql<number>`count(distinct ${users.companyName})` })
+				.from(users)
+				.where(isNotNull(users.companyName)),
+			db
+				.select({
+					count: sql<number>`count(distinct ${investments.investorId})`,
+				})
+				.from(investments),
+			db
+				.select({ status: blueprints.status, count: sql<number>`count(*)` })
+				.from(blueprints)
+				.groupBy(blueprints.status),
+			db
+				.select({
+					id: projects.id,
+					title: projects.title,
+					budget: projects.budget,
+					funded: sql<number>`coalesce(sum(${investments.amount}), 0)`,
+				})
+				.from(projects)
+				.leftJoin(investments, eq(investments.projectId, projects.id))
+				.groupBy(projects.id, projects.title, projects.budget)
+				.orderBy(desc(sql`coalesce(sum(${investments.amount}), 0)`))
+				.limit(5),
+		]);
+
 		const toRecord = (
 			rows: { role?: string; status?: string; count: number }[],
 		) =>
@@ -691,7 +759,485 @@ adminRoutes.get(
 				roiPaid: investmentAgg[0]?.roiPaid ?? 0,
 			},
 			payments: toRecord(paymentsByStatus),
+			usersVerified: {
+				verified: verificationAgg[0]?.verified ?? 0,
+				unverified: verificationAgg[0]?.unverified ?? 0,
+			},
+			companies: companiesAgg[0]?.count ?? 0,
+			investorsActive: investorsAgg[0]?.count ?? 0,
+			blueprints: toRecord(blueprintsByStatus),
+			funding: fundingRows.map((row) => ({
+				id: row.id,
+				title: row.title,
+				budget: row.budget,
+				funded: row.funded,
+				progress: row.budget ? Math.min(row.funded / row.budget, 1) : 0,
+			})),
 		};
 		return c.json(stats);
+	}),
+);
+
+// ── vendors (certification & portfolio verification) ─────
+adminRoutes.get(
+	"/vendors",
+	...factory.createHandlers(async (c) => {
+		const db = createDb(c.env.DB);
+		const limit = parseLimit(c.req.query("limit"));
+
+		const rows = await db
+			.select({
+				vendor: vendors,
+				user: users,
+			})
+			.from(vendors)
+			.innerJoin(users, eq(vendors.userId, users.id))
+			.orderBy(desc(vendors.createdAt))
+			.limit(limit);
+
+		const list: AdminVendor[] = rows.map(({ vendor, user }) => ({
+			id: vendor.id,
+			userId: vendor.userId,
+			email: user.email,
+			userName: user.name,
+			companyName: vendor.companyName,
+			description: vendor.description,
+			certifications: (vendor.certifications as string[]) ?? [],
+			portfolio: (vendor.portfolio as string[]) ?? [],
+			rating: vendor.rating ?? 0,
+			totalProjects: vendor.totalProjects ?? 0,
+			verifiedAt: iso(vendor.verifiedAt),
+			createdAt: iso(vendor.createdAt),
+		}));
+		return c.json({ vendors: list });
+	}),
+);
+
+adminRoutes.patch(
+	"/vendors/:id/verify",
+	requireRecentStepUp,
+	...factory.createHandlers(async (c) => {
+		const mediaTypeError = requireJson(c);
+		if (mediaTypeError) return mediaTypeError;
+
+		const id = Number(c.req.param("id"));
+		const body = (await c.req
+			.json()
+			.catch(() => null)) as Partial<VerifyVendorBody> | null;
+		if (
+			!Number.isInteger(id) ||
+			id <= 0 ||
+			typeof body?.verified !== "boolean"
+		) {
+			return c.json(
+				{ error: { code: "VALIDATION", message: "Input tidak valid" } },
+				400,
+			);
+		}
+
+		const db = createDb(c.env.DB);
+		const [vendor] = await db
+			.select({ id: vendors.id, verifiedAt: vendors.verifiedAt })
+			.from(vendors)
+			.where(eq(vendors.id, id))
+			.limit(1);
+		if (!vendor) {
+			return c.json(
+				{ error: { code: "NOT_FOUND", message: "Vendor tidak ditemukan" } },
+				404,
+			);
+		}
+
+		await db.batch([
+			db
+				.update(vendors)
+				.set({ verifiedAt: body.verified ? new Date() : null })
+				.where(eq(vendors.id, id)),
+			db.insert(auditLogs).values({
+				userId: c.get("user").id,
+				action: "vendor.verified",
+				entityType: "vendor_profile",
+				entityId: id,
+				metadata: {
+					from: iso(vendor.verifiedAt),
+					to: body.verified ? "verified" : null,
+				},
+			}),
+		]);
+		return c.json({ ok: true });
+	}),
+);
+
+// ── monitoring: red flags (read-only rule engine) ────────
+// Surfaces rule breaches and anomalies across the database for platform
+// oversight. Read-only: admin monitors, never mutates operational state.
+const SEVERITY_RANK: Record<AdminAnomaly["severity"], number> = {
+	critical: 0,
+	high: 1,
+	medium: 2,
+	low: 3,
+};
+
+adminRoutes.get(
+	"/anomalies",
+	...factory.createHandlers(async (c) => {
+		const db = createDb(c.env.DB);
+		const flags: AdminAnomaly[] = [];
+
+		const push = (
+			category: string,
+			kind: string,
+			severity: AdminAnomaly["severity"],
+			title: string,
+			detail: string,
+			entityType: string | null,
+			entityId: number | null,
+			entityLabel: string | null,
+			createdAt: Date | null,
+		) => {
+			flags.push({
+				id: `${category}.${kind}-${entityId ?? flags.length}`,
+				category,
+				severity,
+				title,
+				detail,
+				entityType,
+				entityId,
+				entityLabel,
+				createdAt: iso(createdAt),
+			});
+		};
+
+		// Blueprint published without a validation trail (governance breach)
+		const rogueBlueprints = await db
+			.select({
+				blueprint: blueprints,
+				projectTitle: projects.title,
+			})
+			.from(blueprints)
+			.innerJoin(projects, eq(blueprints.projectId, projects.id))
+			.where(
+				and(
+					eq(blueprints.status, "published"),
+					or(isNull(blueprints.validatedAt), isNull(blueprints.auditorId)),
+				),
+			)
+			.limit(50);
+		for (const { blueprint, projectTitle } of rogueBlueprints) {
+			push(
+				"blueprint",
+				"published_invalid",
+				"critical",
+				"Blueprint dipublikasikan tanpa validasi",
+				`Blueprint proyek "${projectTitle}" berstatus published tanpa jejak validasi auditor.`,
+				"blueprint",
+				blueprint.id,
+				projectTitle,
+				blueprint.publishedAt,
+			);
+		}
+
+		// MRV anomaly: actual consumption deviates from promised savings
+		const emissionFlags = await db
+			.select({
+				report: emissionReports,
+				projectTitle: projects.title,
+			})
+			.from(emissionReports)
+			.innerJoin(projects, eq(emissionReports.projectId, projects.id))
+			.where(eq(emissionReports.anomalyFlagged, true))
+			.orderBy(desc(emissionReports.createdAt))
+			.limit(100);
+		for (const { report, projectTitle } of emissionFlags) {
+			push(
+				"emission",
+				"anomaly",
+				"high",
+				"Anomali laporan emisi terdeteksi",
+				report.anomalyNote ??
+					`Konsumsi aktual menyimpang dari baseline (skor ${report.anomalyScore ?? "?"}).`,
+				"emission_report",
+				report.id,
+				projectTitle,
+				report.createdAt,
+			);
+		}
+
+		// Payout integrity: failed payments, paid without escrow reference,
+		// or the same escrow transaction used twice
+		const failedPayments = await db
+			.select({
+				payment: roiPayments,
+				investorEmail: users.email,
+				projectTitle: projects.title,
+			})
+			.from(roiPayments)
+			.innerJoin(investments, eq(roiPayments.investmentId, investments.id))
+			.innerJoin(users, eq(investments.investorId, users.id))
+			.innerJoin(projects, eq(investments.projectId, projects.id))
+			.where(eq(roiPayments.status, "failed"))
+			.orderBy(desc(roiPayments.createdAt))
+			.limit(100);
+		for (const { payment, investorEmail, projectTitle } of failedPayments) {
+			push(
+				"payout",
+				"failed",
+				"high",
+				"Pembayaran ROI gagal",
+				`Pembayaran ${projectTitle} untuk ${investorEmail} berstatus failed.`,
+				"roi_payment",
+				payment.id,
+				investorEmail,
+				payment.createdAt,
+			);
+		}
+
+		const paidPayments = await db
+			.select()
+			.from(roiPayments)
+			.where(isNotNull(roiPayments.escrowTxId))
+			.orderBy(desc(roiPayments.createdAt))
+			.limit(500);
+		const seenTx = new Map<string, (typeof paidPayments)[number]>();
+		for (const payment of paidPayments) {
+			if (payment.status !== "paid") continue;
+			if (!payment.escrowTxId) {
+				push(
+					"payout",
+					"no_tx",
+					"high",
+					"Pembayaran tanpa referensi escrow",
+					`Pembayaran ROI ${payment.period ?? `#${payment.id}`} berstatus paid tanpa escrowTxId.`,
+					"roi_payment",
+					payment.id,
+					null,
+					payment.paidAt,
+				);
+				continue;
+			}
+			const seen = seenTx.get(payment.escrowTxId);
+			if (seen) {
+				push(
+					"payout",
+					"dup_tx",
+					"high",
+					"Transaksi escrow digunakan dua kali",
+					`${payment.escrowTxId} dipakai oleh pembayaran #${seen.id} dan #${payment.id}.`,
+					"roi_payment",
+					payment.id,
+					payment.escrowTxId,
+					payment.paidAt,
+				);
+			} else {
+				seenTx.set(payment.escrowTxId, payment);
+			}
+		}
+
+		// Funding integrity: investments exceeding the project budget
+		const overfunded = await db
+			.select({
+				projectId: projects.id,
+				projectTitle: projects.title,
+				budget: projects.budget,
+				funded: sql<number>`coalesce(sum(${investments.amount}), 0)`,
+			})
+			.from(investments)
+			.innerJoin(projects, eq(investments.projectId, projects.id))
+			.where(isNotNull(projects.budget))
+			.groupBy(projects.id, projects.title, projects.budget)
+			.having(sql`sum(${investments.amount}) > ${projects.budget}`)
+			.limit(50);
+		for (const row of overfunded) {
+			push(
+				"funding",
+				"overcap",
+				"high",
+				"Pendanaan melebihi anggaran",
+				`Proyek "${row.projectTitle}" terdanai ${row.funded.toLocaleString("id-ID")} dari anggaran ${row.budget?.toLocaleString("id-ID")}.`,
+				"project",
+				row.projectId,
+				row.projectTitle,
+				null,
+			);
+		}
+
+		// Bond serials not matching the GS-* convention
+		const badSerials = await db
+			.select({
+				investment: investments,
+				investorEmail: users.email,
+				projectTitle: projects.title,
+			})
+			.from(investments)
+			.innerJoin(users, eq(investments.investorId, users.id))
+			.innerJoin(projects, eq(investments.projectId, projects.id))
+			.where(
+				and(
+					isNotNull(investments.bondSerialNumber),
+					notLike(investments.bondSerialNumber, "GS-%"),
+				),
+			)
+			.limit(100);
+		for (const { investment, investorEmail, projectTitle } of badSerials) {
+			push(
+				"bond",
+				"bad_serial",
+				"low",
+				"Nomor seri obligasi tidak sesuai format",
+				`Obligasi ${investment.bondSerialNumber} (${investorEmail}, ${projectTitle}) di luar format GS-*.`,
+				"investment",
+				investment.id,
+				investment.bondSerialNumber,
+				investment.investedAt,
+			);
+		}
+
+		// Proposal revision limit breached (max 3 revisions)
+		const overRevised = await db
+			.select({
+				proposal: proposals,
+				projectTitle: projects.title,
+			})
+			.from(proposals)
+			.innerJoin(tenders, eq(proposals.tenderId, tenders.id))
+			.innerJoin(projects, eq(tenders.projectId, projects.id))
+			.where(sql`${proposals.revisionCount} >= 3`)
+			.orderBy(desc(proposals.updatedAt))
+			.limit(100);
+		for (const { proposal, projectTitle } of overRevised) {
+			push(
+				"proposal",
+				"revision_limit",
+				"medium",
+				"Proposal melewati batas revisi",
+				`Proposal ${projectTitle} mencapai ${proposal.revisionCount} revisi (batas 3).`,
+				"proposal",
+				proposal.id,
+				projectTitle,
+				proposal.updatedAt,
+			);
+		}
+
+		// Tenders still open past their deadline
+		const staleTenders = await db
+			.select({
+				tender: tenders,
+				projectTitle: projects.title,
+			})
+			.from(tenders)
+			.innerJoin(projects, eq(tenders.projectId, projects.id))
+			.where(
+				and(
+					eq(tenders.status, "open"),
+					isNotNull(tenders.deadlineAt),
+					lt(tenders.deadlineAt, new Date()),
+				),
+			)
+			.orderBy(desc(tenders.deadlineAt))
+			.limit(100);
+		for (const { tender, projectTitle } of staleTenders) {
+			push(
+				"tender",
+				"stale",
+				"medium",
+				"Tender melewati tenggat",
+				`Tender ${projectTitle} masih open setelah tenggat ${iso(tender.deadlineAt)?.slice(0, 10)}.`,
+				"tender",
+				tender.id,
+				projectTitle,
+				tender.deadlineAt,
+			);
+		}
+
+		// Accounts: business/vendor operating unverified
+		const unverifiedUsers = await db
+			.select()
+			.from(users)
+			.where(
+				and(
+					inArray(users.role, ["business", "vendor"]),
+					isNull(users.verifiedAt),
+				),
+			)
+			.orderBy(desc(users.createdAt))
+			.limit(100);
+		for (const user of unverifiedUsers) {
+			push(
+				"user",
+				"unverified",
+				"medium",
+				"Akun belum diverifikasi",
+				`Akun ${user.role} ${user.email} aktif tanpa verifikasi.`,
+				"user",
+				user.id,
+				user.email,
+				user.createdAt,
+			);
+		}
+
+		// Vendors without a vendor profile
+		const profilessVendors = await db
+			.select({ user: users })
+			.from(users)
+			.leftJoin(vendors, eq(vendors.userId, users.id))
+			.where(and(eq(users.role, "vendor"), isNull(vendors.id)))
+			.limit(100);
+		for (const { user } of profilessVendors) {
+			push(
+				"vendor",
+				"no_profile",
+				"medium",
+				"Vendor tanpa profil",
+				`Akun vendor ${user.email} tidak memiliki profil vendor.`,
+				"user",
+				user.id,
+				user.email,
+				user.createdAt,
+			);
+		}
+
+		// Funded/monitoring projects with no MRV reports at all
+		const mrvlessProjects = await db
+			.select({ project: projects })
+			.from(projects)
+			.leftJoin(emissionReports, eq(emissionReports.projectId, projects.id))
+			.where(
+				and(
+					inArray(projects.status, ["funding", "monitoring"]),
+					isNull(emissionReports.id),
+				),
+			)
+			.orderBy(desc(projects.createdAt))
+			.limit(100);
+		for (const { project } of mrvlessProjects) {
+			push(
+				"project",
+				"no_mrv",
+				"low",
+				"Proyek tanpa laporan MRV",
+				`Proyek "${project.title}" berstatus ${project.status} tanpa laporan emisi.`,
+				"project",
+				project.id,
+				project.title,
+				project.createdAt,
+			);
+		}
+
+		flags.sort(
+			(a, b) =>
+				SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity] ||
+				(b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
+		);
+
+		const counts = {
+			critical: 0,
+			high: 0,
+			medium: 0,
+			low: 0,
+			total: flags.length,
+		};
+		for (const flag of flags) counts[flag.severity]++;
+
+		return c.json({ flags: flags.slice(0, 100), counts });
 	}),
 );

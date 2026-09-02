@@ -33,8 +33,8 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-	const isHome = useIsHome();
 	const pathname = useRouterState({ select: (s) => s.location.pathname });
+	const isHome = useIsHome();
 	const isAuthPage = pathname === "/login" || pathname === "/register";
 
 	return (

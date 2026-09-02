@@ -1,9 +1,47 @@
 import { ApiError } from "./errors";
 
 type ErrorBody = { error?: { code?: string; message?: string } } | null;
+type CsrfBody = { csrfToken?: string } | null;
 
-// Abort requests that hang longer than this (2 minutes).
 const REQUEST_TIMEOUT_MS = 2 * 60 * 1000;
+const SAFE_METHODS: Record<string, true> = {
+	GET: true,
+	HEAD: true,
+	OPTIONS: true,
+};
+
+function shouldAttachCsrf(path: string, method: string): boolean {
+	if (SAFE_METHODS[method]) return false;
+	return !(
+		path === "/api/auth/login" ||
+		path === "/api/auth/register" ||
+		path === "/api/auth/csrf"
+	);
+}
+
+async function fetchCsrfToken(signal?: AbortSignal): Promise<string | null> {
+	const controller = new AbortController();
+	const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+	try {
+		const res = await fetch("/api/auth/csrf", {
+			credentials: "same-origin",
+			headers: { Accept: "application/json" },
+			signal: signal ?? controller.signal,
+		});
+		if (res.status === 401) return null;
+		if (!res.ok) {
+			const body = (await res.json().catch(() => null)) as ErrorBody;
+			throw new ApiError(
+				res.status,
+				body?.error?.message ?? `Permintaan gagal (${res.status})`,
+			);
+		}
+		const body = (await res.json().catch(() => null)) as CsrfBody;
+		return typeof body?.csrfToken === "string" ? body.csrfToken : null;
+		} finally {
+		clearTimeout(timeout);
+	}
+}
 
 /**
  * Shared network helper for the single GreenShift API (same origin).
@@ -15,10 +53,20 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
 	const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
 	try {
+		const method = (init?.method ?? "GET").toUpperCase();
+		const headers = new Headers(init?.headers);
+		if (!headers.has("Content-Type") && !SAFE_METHODS[method]) {
+			headers.set("Content-Type", "application/json");
+		}
+		if (shouldAttachCsrf(path, method) && !headers.has("x-csrf-token")) {
+			const token = await fetchCsrfToken(init?.signal ?? controller.signal);
+			if (token) headers.set("x-csrf-token", token);
+		}
+
 		const res = await fetch(path, {
 			...init,
 			credentials: "same-origin",
-			headers: { "Content-Type": "application/json", ...init?.headers },
+			headers,
 			signal: init?.signal ?? controller.signal,
 		});
 		if (!res.ok) {

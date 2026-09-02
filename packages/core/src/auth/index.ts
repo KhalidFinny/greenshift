@@ -21,7 +21,14 @@ export const roleNav: Record<UserRole, NavItem[]> = {
 	business: [{ to: "/business", label: "Business menu1" }],
 	investor: [{ to: "/investor", label: "Investor menu1" }],
 	vendor: [{ to: "/vendor", label: "Vendor menu1" }],
-	admin: [{ to: "/admin", label: "Admin menu1" }],
+	admin: [
+		{ to: "/admin", label: "Dashboard" },
+		{ to: "/admin/analytics", label: "Analytics" },
+		{ to: "/admin/projects", label: "Projects" },
+		{ to: "/admin/vendors", label: "Vendors" },
+		{ to: "/admin/system", label: "System" },
+		{ to: "/admin/audit-logs", label: "Audit" },
+	],
 };
 
 export function requireRole(role: UserRole) {

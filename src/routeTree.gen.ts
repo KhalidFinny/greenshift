@@ -19,6 +19,12 @@ import { Route as AuthInvestorRouteImport } from './routes/_auth.investor'
 import { Route as AuthProfileRouteImport } from './routes/_auth.profile'
 import { Route as AuthVendorRouteImport } from './routes/_auth.vendor'
 import { Route as AuthAdminIndexRouteImport } from './routes/_auth.admin.index'
+import { Route as AuthAdminAnalyticsRouteImport } from './routes/_auth.admin.analytics'
+import { Route as AuthAdminAuditLogsRouteImport } from './routes/_auth.admin.audit-logs'
+import { Route as AuthAdminProjectsRouteImport } from './routes/_auth.admin.projects'
+import { Route as AuthAdminSystemRouteImport } from './routes/_auth.admin.system'
+import { Route as AuthAdminUsersRouteImport } from './routes/_auth.admin.users'
+import { Route as AuthAdminVendorsRouteImport } from './routes/_auth.admin.vendors'
 import { Route as AuthBusinessIndexRouteImport } from './routes/_auth.business.index'
 import { Route as AuthInvestorIndexRouteImport } from './routes/_auth.investor.index'
 import { Route as AuthVendorIndexRouteImport } from './routes/_auth.vendor.index'
@@ -72,6 +78,36 @@ const AuthAdminIndexRoute = AuthAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthAdminRoute,
 } as any)
+const AuthAdminAnalyticsRoute = AuthAdminAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AuthAdminRoute,
+} as any)
+const AuthAdminAuditLogsRoute = AuthAdminAuditLogsRouteImport.update({
+  id: '/audit-logs',
+  path: '/audit-logs',
+  getParentRoute: () => AuthAdminRoute,
+} as any)
+const AuthAdminProjectsRoute = AuthAdminProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => AuthAdminRoute,
+} as any)
+const AuthAdminSystemRoute = AuthAdminSystemRouteImport.update({
+  id: '/system',
+  path: '/system',
+  getParentRoute: () => AuthAdminRoute,
+} as any)
+const AuthAdminUsersRoute = AuthAdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AuthAdminRoute,
+} as any)
+const AuthAdminVendorsRoute = AuthAdminVendorsRouteImport.update({
+  id: '/vendors',
+  path: '/vendors',
+  getParentRoute: () => AuthAdminRoute,
+} as any)
 const AuthBusinessIndexRoute = AuthBusinessIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -97,6 +133,12 @@ export interface FileRoutesByFullPath {
   '/investor': typeof AuthInvestorRouteWithChildren
   '/profile': typeof AuthProfileRoute
   '/vendor': typeof AuthVendorRouteWithChildren
+  '/admin/analytics': typeof AuthAdminAnalyticsRoute
+  '/admin/audit-logs': typeof AuthAdminAuditLogsRoute
+  '/admin/projects': typeof AuthAdminProjectsRoute
+  '/admin/system': typeof AuthAdminSystemRoute
+  '/admin/users': typeof AuthAdminUsersRoute
+  '/admin/vendors': typeof AuthAdminVendorsRoute
   '/admin/': typeof AuthAdminIndexRoute
   '/business/': typeof AuthBusinessIndexRoute
   '/investor/': typeof AuthInvestorIndexRoute
@@ -107,6 +149,12 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/profile': typeof AuthProfileRoute
+  '/admin/analytics': typeof AuthAdminAnalyticsRoute
+  '/admin/audit-logs': typeof AuthAdminAuditLogsRoute
+  '/admin/projects': typeof AuthAdminProjectsRoute
+  '/admin/system': typeof AuthAdminSystemRoute
+  '/admin/users': typeof AuthAdminUsersRoute
+  '/admin/vendors': typeof AuthAdminVendorsRoute
   '/admin': typeof AuthAdminIndexRoute
   '/business': typeof AuthBusinessIndexRoute
   '/investor': typeof AuthInvestorIndexRoute
@@ -123,6 +171,12 @@ export interface FileRoutesById {
   '/_auth/investor': typeof AuthInvestorRouteWithChildren
   '/_auth/profile': typeof AuthProfileRoute
   '/_auth/vendor': typeof AuthVendorRouteWithChildren
+  '/_auth/admin/analytics': typeof AuthAdminAnalyticsRoute
+  '/_auth/admin/audit-logs': typeof AuthAdminAuditLogsRoute
+  '/_auth/admin/projects': typeof AuthAdminProjectsRoute
+  '/_auth/admin/system': typeof AuthAdminSystemRoute
+  '/_auth/admin/users': typeof AuthAdminUsersRoute
+  '/_auth/admin/vendors': typeof AuthAdminVendorsRoute
   '/_auth/admin/': typeof AuthAdminIndexRoute
   '/_auth/business/': typeof AuthBusinessIndexRoute
   '/_auth/investor/': typeof AuthInvestorIndexRoute
@@ -139,6 +193,12 @@ export interface FileRouteTypes {
     | '/investor'
     | '/profile'
     | '/vendor'
+    | '/admin/analytics'
+    | '/admin/audit-logs'
+    | '/admin/projects'
+    | '/admin/system'
+    | '/admin/users'
+    | '/admin/vendors'
     | '/admin/'
     | '/business/'
     | '/investor/'
@@ -149,6 +209,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/profile'
+    | '/admin/analytics'
+    | '/admin/audit-logs'
+    | '/admin/projects'
+    | '/admin/system'
+    | '/admin/users'
+    | '/admin/vendors'
     | '/admin'
     | '/business'
     | '/investor'
@@ -164,6 +230,12 @@ export interface FileRouteTypes {
     | '/_auth/investor'
     | '/_auth/profile'
     | '/_auth/vendor'
+    | '/_auth/admin/analytics'
+    | '/_auth/admin/audit-logs'
+    | '/_auth/admin/projects'
+    | '/_auth/admin/system'
+    | '/_auth/admin/users'
+    | '/_auth/admin/vendors'
     | '/_auth/admin/'
     | '/_auth/business/'
     | '/_auth/investor/'
@@ -249,6 +321,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthAdminIndexRouteImport
       parentRoute: typeof AuthAdminRoute
     }
+    '/_auth/admin/analytics': {
+      id: '/_auth/admin/analytics'
+      path: '/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AuthAdminAnalyticsRouteImport
+      parentRoute: typeof AuthAdminRoute
+    }
+    '/_auth/admin/audit-logs': {
+      id: '/_auth/admin/audit-logs'
+      path: '/audit-logs'
+      fullPath: '/admin/audit-logs'
+      preLoaderRoute: typeof AuthAdminAuditLogsRouteImport
+      parentRoute: typeof AuthAdminRoute
+    }
+    '/_auth/admin/projects': {
+      id: '/_auth/admin/projects'
+      path: '/projects'
+      fullPath: '/admin/projects'
+      preLoaderRoute: typeof AuthAdminProjectsRouteImport
+      parentRoute: typeof AuthAdminRoute
+    }
+    '/_auth/admin/system': {
+      id: '/_auth/admin/system'
+      path: '/system'
+      fullPath: '/admin/system'
+      preLoaderRoute: typeof AuthAdminSystemRouteImport
+      parentRoute: typeof AuthAdminRoute
+    }
+    '/_auth/admin/users': {
+      id: '/_auth/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AuthAdminUsersRouteImport
+      parentRoute: typeof AuthAdminRoute
+    }
+    '/_auth/admin/vendors': {
+      id: '/_auth/admin/vendors'
+      path: '/vendors'
+      fullPath: '/admin/vendors'
+      preLoaderRoute: typeof AuthAdminVendorsRouteImport
+      parentRoute: typeof AuthAdminRoute
+    }
     '/_auth/business/': {
       id: '/_auth/business/'
       path: '/'
@@ -274,10 +388,22 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthAdminRouteChildren {
+  AuthAdminAnalyticsRoute: typeof AuthAdminAnalyticsRoute
+  AuthAdminAuditLogsRoute: typeof AuthAdminAuditLogsRoute
+  AuthAdminProjectsRoute: typeof AuthAdminProjectsRoute
+  AuthAdminSystemRoute: typeof AuthAdminSystemRoute
+  AuthAdminUsersRoute: typeof AuthAdminUsersRoute
+  AuthAdminVendorsRoute: typeof AuthAdminVendorsRoute
   AuthAdminIndexRoute: typeof AuthAdminIndexRoute
 }
 
 const AuthAdminRouteChildren: AuthAdminRouteChildren = {
+  AuthAdminAnalyticsRoute: AuthAdminAnalyticsRoute,
+  AuthAdminAuditLogsRoute: AuthAdminAuditLogsRoute,
+  AuthAdminProjectsRoute: AuthAdminProjectsRoute,
+  AuthAdminSystemRoute: AuthAdminSystemRoute,
+  AuthAdminUsersRoute: AuthAdminUsersRoute,
+  AuthAdminVendorsRoute: AuthAdminVendorsRoute,
   AuthAdminIndexRoute: AuthAdminIndexRoute,
 }
 

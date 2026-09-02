@@ -145,7 +145,7 @@ function LoginPage() {
 						)}
 						<Button
 							type="submit"
-							isDisabled={submitting}
+							disabled={submitting}
 							className="w-full cursor-pointer"
 						>
 							{submitting ? (
@@ -166,7 +166,7 @@ function LoginPage() {
 							</p>
 							<Button
 								variant="outline"
-								isDisabled={submitting}
+								disabled={submitting}
 								onClick={handleDevLogin}
 								className="mt-3 w-full cursor-pointer"
 							>
