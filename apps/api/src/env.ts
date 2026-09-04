@@ -1,4 +1,5 @@
 import type { AuthUser } from "@greenshift/core";
+import type { SessionPayload } from "./lib/session";
 
 /**
  * Cloudflare Worker bindings for the GreenShift worker.
@@ -8,6 +9,11 @@ export interface Env {
 	DB: D1Database;
 	KV: KVNamespace;
 	R2: R2Bucket;
+	/**
+	 * Inactivity timeout in minutes before a session is invalidated.
+	 * Optional — defaults to 2 minutes when unset (see lib/session.ts).
+	 */
+	SESSION_IDLE_MINUTES?: string;
 }
 
 // Hono context for the API: bindings plus the authenticated user/session,
@@ -16,7 +22,7 @@ export interface ApiEnv {
 	Bindings: Env;
 	Variables: {
 		user: AuthUser;
-		session: { userId: number; csrfToken: string; stepUpUntil: number | null };
+		session: SessionPayload;
 		sessionToken: string;
 	};
 }

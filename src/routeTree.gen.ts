@@ -27,7 +27,10 @@ import { Route as AuthAdminUsersRouteImport } from './routes/_auth.admin.users'
 import { Route as AuthAdminVendorsRouteImport } from './routes/_auth.admin.vendors'
 import { Route as AuthBusinessIndexRouteImport } from './routes/_auth.business.index'
 import { Route as AuthInvestorIndexRouteImport } from './routes/_auth.investor.index'
+import { Route as AuthInvestorMarketRouteImport } from './routes/_auth.investor.market'
+import { Route as AuthInvestorPortfolioRouteImport } from './routes/_auth.investor.portfolio'
 import { Route as AuthVendorIndexRouteImport } from './routes/_auth.vendor.index'
+import { Route as AuthInvestorPortfolioIdRouteImport } from './routes/_auth.investor.portfolio.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -118,10 +121,25 @@ const AuthInvestorIndexRoute = AuthInvestorIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthInvestorRoute,
 } as any)
+const AuthInvestorMarketRoute = AuthInvestorMarketRouteImport.update({
+  id: '/market',
+  path: '/market',
+  getParentRoute: () => AuthInvestorRoute,
+} as any)
+const AuthInvestorPortfolioRoute = AuthInvestorPortfolioRouteImport.update({
+  id: '/portfolio',
+  path: '/portfolio',
+  getParentRoute: () => AuthInvestorRoute,
+} as any)
 const AuthVendorIndexRoute = AuthVendorIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthVendorRoute,
+} as any)
+const AuthInvestorPortfolioIdRoute = AuthInvestorPortfolioIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthInvestorPortfolioRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -139,10 +157,13 @@ export interface FileRoutesByFullPath {
   '/admin/system': typeof AuthAdminSystemRoute
   '/admin/users': typeof AuthAdminUsersRoute
   '/admin/vendors': typeof AuthAdminVendorsRoute
+  '/investor/market': typeof AuthInvestorMarketRoute
+  '/investor/portfolio': typeof AuthInvestorPortfolioRouteWithChildren
   '/admin/': typeof AuthAdminIndexRoute
   '/business/': typeof AuthBusinessIndexRoute
   '/investor/': typeof AuthInvestorIndexRoute
   '/vendor/': typeof AuthVendorIndexRoute
+  '/investor/portfolio/$id': typeof AuthInvestorPortfolioIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -155,10 +176,13 @@ export interface FileRoutesByTo {
   '/admin/system': typeof AuthAdminSystemRoute
   '/admin/users': typeof AuthAdminUsersRoute
   '/admin/vendors': typeof AuthAdminVendorsRoute
+  '/investor/market': typeof AuthInvestorMarketRoute
+  '/investor/portfolio': typeof AuthInvestorPortfolioRouteWithChildren
   '/admin': typeof AuthAdminIndexRoute
   '/business': typeof AuthBusinessIndexRoute
   '/investor': typeof AuthInvestorIndexRoute
   '/vendor': typeof AuthVendorIndexRoute
+  '/investor/portfolio/$id': typeof AuthInvestorPortfolioIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -177,10 +201,13 @@ export interface FileRoutesById {
   '/_auth/admin/system': typeof AuthAdminSystemRoute
   '/_auth/admin/users': typeof AuthAdminUsersRoute
   '/_auth/admin/vendors': typeof AuthAdminVendorsRoute
+  '/_auth/investor/market': typeof AuthInvestorMarketRoute
+  '/_auth/investor/portfolio': typeof AuthInvestorPortfolioRouteWithChildren
   '/_auth/admin/': typeof AuthAdminIndexRoute
   '/_auth/business/': typeof AuthBusinessIndexRoute
   '/_auth/investor/': typeof AuthInvestorIndexRoute
   '/_auth/vendor/': typeof AuthVendorIndexRoute
+  '/_auth/investor/portfolio/$id': typeof AuthInvestorPortfolioIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -199,10 +226,13 @@ export interface FileRouteTypes {
     | '/admin/system'
     | '/admin/users'
     | '/admin/vendors'
+    | '/investor/market'
+    | '/investor/portfolio'
     | '/admin/'
     | '/business/'
     | '/investor/'
     | '/vendor/'
+    | '/investor/portfolio/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -215,10 +245,13 @@ export interface FileRouteTypes {
     | '/admin/system'
     | '/admin/users'
     | '/admin/vendors'
+    | '/investor/market'
+    | '/investor/portfolio'
     | '/admin'
     | '/business'
     | '/investor'
     | '/vendor'
+    | '/investor/portfolio/$id'
   id:
     | '__root__'
     | '/'
@@ -236,10 +269,13 @@ export interface FileRouteTypes {
     | '/_auth/admin/system'
     | '/_auth/admin/users'
     | '/_auth/admin/vendors'
+    | '/_auth/investor/market'
+    | '/_auth/investor/portfolio'
     | '/_auth/admin/'
     | '/_auth/business/'
     | '/_auth/investor/'
     | '/_auth/vendor/'
+    | '/_auth/investor/portfolio/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -377,12 +413,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthInvestorIndexRouteImport
       parentRoute: typeof AuthInvestorRoute
     }
+    '/_auth/investor/market': {
+      id: '/_auth/investor/market'
+      path: '/market'
+      fullPath: '/investor/market'
+      preLoaderRoute: typeof AuthInvestorMarketRouteImport
+      parentRoute: typeof AuthInvestorRoute
+    }
+    '/_auth/investor/portfolio': {
+      id: '/_auth/investor/portfolio'
+      path: '/portfolio'
+      fullPath: '/investor/portfolio'
+      preLoaderRoute: typeof AuthInvestorPortfolioRouteImport
+      parentRoute: typeof AuthInvestorRoute
+    }
     '/_auth/vendor/': {
       id: '/_auth/vendor/'
       path: '/'
       fullPath: '/vendor/'
       preLoaderRoute: typeof AuthVendorIndexRouteImport
       parentRoute: typeof AuthVendorRoute
+    }
+    '/_auth/investor/portfolio/$id': {
+      id: '/_auth/investor/portfolio/$id'
+      path: '/$id'
+      fullPath: '/investor/portfolio/$id'
+      preLoaderRoute: typeof AuthInvestorPortfolioIdRouteImport
+      parentRoute: typeof AuthInvestorPortfolioRoute
     }
   }
 }
@@ -423,11 +480,28 @@ const AuthBusinessRouteWithChildren = AuthBusinessRoute._addFileChildren(
   AuthBusinessRouteChildren,
 )
 
+interface AuthInvestorPortfolioRouteChildren {
+  AuthInvestorPortfolioIdRoute: typeof AuthInvestorPortfolioIdRoute
+}
+
+const AuthInvestorPortfolioRouteChildren: AuthInvestorPortfolioRouteChildren = {
+  AuthInvestorPortfolioIdRoute: AuthInvestorPortfolioIdRoute,
+}
+
+const AuthInvestorPortfolioRouteWithChildren =
+  AuthInvestorPortfolioRoute._addFileChildren(
+    AuthInvestorPortfolioRouteChildren,
+  )
+
 interface AuthInvestorRouteChildren {
+  AuthInvestorMarketRoute: typeof AuthInvestorMarketRoute
+  AuthInvestorPortfolioRoute: typeof AuthInvestorPortfolioRouteWithChildren
   AuthInvestorIndexRoute: typeof AuthInvestorIndexRoute
 }
 
 const AuthInvestorRouteChildren: AuthInvestorRouteChildren = {
+  AuthInvestorMarketRoute: AuthInvestorMarketRoute,
+  AuthInvestorPortfolioRoute: AuthInvestorPortfolioRouteWithChildren,
   AuthInvestorIndexRoute: AuthInvestorIndexRoute,
 }
 

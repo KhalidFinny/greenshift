@@ -2,5 +2,6 @@ export * from "./api/client";
 export * from "./api/errors";
 export * from "./api/http";
 export * from "./auth";
+export * from "./toast-bus";
 export { default as TanStackQueryDevtools } from "./query/devtools";
 export { getContext } from "./query/root-provider";

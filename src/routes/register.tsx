@@ -51,9 +51,10 @@ function RegisterPage() {
 		}
 
 		try {
-			const user = await register(name, email, password, companyName);
-			// Full page load so the dashboard boots fresh (same as login).
-			window.location.assign(roleHome[user.role]);
+			await register(name, email, password, companyName);
+			// SPA transition: register() invalidates the router and the
+			// register route's beforeLoad redirects to the role home with the
+			// fresh session — no full page load, so toasts stay visible.
 		} catch (err) {
 			setError(
 				err instanceof ApiError ? err.message : "Terjadi kesalahan, coba lagi",

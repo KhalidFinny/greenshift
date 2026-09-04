@@ -107,4 +107,103 @@ VALUES ((SELECT id FROM proposals WHERE tender_id = ${tenderId("Optimasi Compres
 WHERE project_id = ${projectId("Boiler Biomassa")};`,
 );
 
+const INVESTOR =
+	"(SELECT id FROM users WHERE email = 'investor1@greenshift.dev')";
+const investmentId = (serial: string) =>
+	`(SELECT id FROM investments WHERE bond_serial_number = '${serial}')`;
+const verifiedBy = "(SELECT id FROM users WHERE email = 'admin@greenshift.dev')";
+
+// Investor-domain fixtures so the investor dashboard + Green Market are
+// exercisable: two projects already past procurement (funding + published
+// blueprint), investor1's bonds with sandbox ROI schedules, and MRV emission
+// reports — one anomaly-flagged to demo the anomaly badge.
+lines.push(
+	// funded projects (published blueprint + funding status)
+	`INSERT INTO projects (company_id, title, description, status, budget, location, industry_sector, target_emission_reduction, estimated_energy_saving, risk_score, created_at, updated_at)
+VALUES (${BUSINESS}, 'Retrofit Chiller Pabrik', 'Penggantian chiller lama dengan unit efisiensi tinggi dan kontrol beban otomatis.', 'funding', 500000000, 'Sidoarjo', 'logam dasar', 320, 420000, 24, ${nowTs(-120)}, ${nowTs(-120)});`,
+	`INSERT INTO projects (company_id, title, description, status, budget, location, industry_sector, target_emission_reduction, estimated_energy_saving, risk_score, created_at, updated_at)
+VALUES (${BUSINESS}, 'Efisiensi Motor Listrik', 'Retrofit motor listrik standar menjadi motor premium IE3 dengan VSD.', 'funding', 300000000, 'Gresik', 'manufaktur', 180, 260000, 18, ${nowTs(-90)}, ${nowTs(-90)});`,
+
+	// published blueprints (validated before publication, per lifecycle)
+	`INSERT INTO blueprints (project_id, status, document, validated_at, published_at, created_at, updated_at)
+VALUES (${projectId("Retrofit Chiller Pabrik")}, 'published', '{"financialProjections":{"npv":98000000,"irr":12,"paybackPeriod":4}}', ${nowTs(-115)}, ${nowTs(-112)}, ${nowTs(-120)}, ${nowTs(-112)});`,
+	`INSERT INTO blueprints (project_id, status, document, validated_at, published_at, created_at, updated_at)
+VALUES (${projectId("Efisiensi Motor Listrik")}, 'published', '{"financialProjections":{"npv":61000000,"irr":16,"paybackPeriod":3}}', ${nowTs(-85)}, ${nowTs(-82)}, ${nowTs(-90)}, ${nowTs(-82)});`,
+);
+
+// ROI schedule generator mirrors the API sandbox: quarterly payments at
+// irr/4, term = paybackPeriod years (capped 20 quarters), paid rows carry an
+// escrow reference and count toward investments.roi_paid.
+const bondSeeds = [
+	{
+		serial: "GS-6-SEED0001",
+		project: "Retrofit Chiller Pabrik",
+		amount: 100_000_000,
+		investedDaysAgo: 365,
+		rate: 12,
+		paybackYears: 4,
+		paidQuarters: 4,
+	},
+	{
+		serial: "GS-7-SEED0002",
+		project: "Efisiensi Motor Listrik",
+		amount: 75_000_000,
+		investedDaysAgo: 275,
+		rate: 16,
+		paybackYears: 3,
+		paidQuarters: 3,
+	},
+];
+
+const addMonths = (from: Date, months: number): Date =>
+	new Date(from.getFullYear(), from.getMonth() + months, 1);
+
+const quarterLabel = (date: Date): string =>
+	`${date.getFullYear()}-Q${Math.floor(date.getMonth() / 3) + 1}`;
+
+for (const bond of bondSeeds) {
+	const quarterly = Math.round((bond.amount * (bond.rate / 100)) / 4);
+	const totalQuarters = bond.paybackYears * 4;
+	const paid = Math.min(bond.paidQuarters, totalQuarters);
+	const roiPaid = quarterly * paid;
+	const investedDate = new Date(Date.now() - bond.investedDaysAgo * 86400000);
+
+	lines.push(
+		`INSERT INTO investments (project_id, investor_id, amount, roi_paid, status, bond_serial_number, invested_at, created_at)
+VALUES (${projectId(bond.project)}, ${INVESTOR}, ${bond.amount}, ${roiPaid}, 'active', '${bond.serial}', ${Date.now() - bond.investedDaysAgo * 86400000}, ${Date.now() - bond.investedDaysAgo * 86400000});`,
+	);
+
+	for (let quarter = 1; quarter <= totalQuarters; quarter++) {
+		const due = addMonths(investedDate, quarter * 3);
+		const isPaid = quarter <= paid;
+		const escrow = isPaid
+			? `'ESC-SBX-${bond.serial.replace("GS-", "")}-${String(quarter).padStart(2, "0")}'`
+			: "NULL";
+		// Paid rows settle a few days before their nominal due date.
+		const paidAt = isPaid ? `${due.getTime() - 5 * 86400000}` : "NULL";
+		lines.push(
+			`INSERT INTO roi_payments (investment_id, amount, period, status, escrow_tx_id, paid_at, created_at)
+VALUES (${investmentId(bond.serial)}, ${quarterly}, '${quarterLabel(due)}', '${isPaid ? "paid" : "scheduled"}', ${escrow}, ${paidAt}, ${Date.now()});`,
+		);
+	}
+}
+
+lines.push(
+	// MRV emission reports — Chiller project ends with an anomaly flag
+	`INSERT INTO emission_reports (project_id, period_start, period_end, actual_consumption, baseline_consumption, emission_reduction, anomaly_flagged, report_data, verified_by, verified_at, created_at)
+VALUES (${projectId("Retrofit Chiller Pabrik")}, ${nowTs(-125)}, ${nowTs(-95)}, 108000, 120000, 9.48, 0, '{}', ${verifiedBy}, ${nowTs(-92)}, ${nowTs(-95)});`,
+	`INSERT INTO emission_reports (project_id, period_start, period_end, actual_consumption, baseline_consumption, emission_reduction, anomaly_flagged, report_data, verified_by, verified_at, created_at)
+VALUES (${projectId("Retrofit Chiller Pabrik")}, ${nowTs(-95)}, ${nowTs(-65)}, 105000, 120000, 11.85, 0, '{}', ${verifiedBy}, ${nowTs(-62)}, ${nowTs(-65)});`,
+	`INSERT INTO emission_reports (project_id, period_start, period_end, actual_consumption, baseline_consumption, emission_reduction, anomaly_flagged, report_data, verified_by, verified_at, created_at)
+VALUES (${projectId("Retrofit Chiller Pabrik")}, ${nowTs(-65)}, ${nowTs(-35)}, 104500, 120000, 12.25, 0, '{}', ${verifiedBy}, ${nowTs(-32)}, ${nowTs(-35)});`,
+	`INSERT INTO emission_reports (project_id, period_start, period_end, actual_consumption, baseline_consumption, emission_reduction, anomaly_flagged, anomaly_score, anomaly_note, report_data, verified_by, verified_at, created_at)
+VALUES (${projectId("Retrofit Chiller Pabrik")}, ${nowTs(-35)}, ${nowTs(-5)}, 112000, 120000, 6.32, 1, 0.82, 'Konsumsi aktual naik vs kuartal sebelumnya; penghematan di bawah ekspektasi blueprint.', '{}', ${verifiedBy}, ${nowTs(-2)}, ${nowTs(-5)});`,
+	`INSERT INTO emission_reports (project_id, period_start, period_end, actual_consumption, baseline_consumption, emission_reduction, anomaly_flagged, report_data, verified_by, verified_at, created_at)
+VALUES (${projectId("Efisiensi Motor Listrik")}, ${nowTs(-90)}, ${nowTs(-60)}, 74000, 85000, 8.69, 0, '{}', ${verifiedBy}, ${nowTs(-57)}, ${nowTs(-60)});`,
+	`INSERT INTO emission_reports (project_id, period_start, period_end, actual_consumption, baseline_consumption, emission_reduction, anomaly_flagged, report_data, verified_by, verified_at, created_at)
+VALUES (${projectId("Efisiensi Motor Listrik")}, ${nowTs(-60)}, ${nowTs(-30)}, 70500, 85000, 11.46, 0, '{}', ${verifiedBy}, ${nowTs(-27)}, ${nowTs(-30)});`,
+	`INSERT INTO emission_reports (project_id, period_start, period_end, actual_consumption, baseline_consumption, emission_reduction, anomaly_flagged, report_data, verified_by, verified_at, created_at)
+VALUES (${projectId("Efisiensi Motor Listrik")}, ${nowTs(-30)}, ${nowTs(0)}, 72900, 85000, 9.56, 0, '{}', ${verifiedBy}, ${nowTs(3)}, ${nowTs(0)});`,
+);
+
 console.log(lines.join("\n"));

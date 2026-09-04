@@ -1,5 +1,5 @@
 import { TanStackQueryDevtools } from "@greenshift/core";
-import { Footer, Header, useIsHome } from "@greenshift/ui";
+import { Footer, Header, ToastProvider, useIsHome } from "@greenshift/ui";
 import appCss from "@greenshift/ui/styles.css?url";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import {
@@ -33,9 +33,19 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-	const pathname = useRouterState({ select: (s) => s.location.pathname });
 	const isHome = useIsHome();
-	const isAuthPage = pathname === "/login" || pathname === "/register";
+	// Decide public chrome from the committed route tree, not from pathname +
+	// auth context: during a transition out of an authed page the session is
+	// already cleared while the route is still the old one — a pathname/user
+	// mix would flash the public header for a frame.
+	const activeRouteId = useRouterState({
+		select: (state) => state.matches[state.matches.length - 1]?.routeId,
+	});
+	const isPublicPage = activeRouteId
+		? !activeRouteId.startsWith("/_auth") &&
+			activeRouteId !== "/login" &&
+			activeRouteId !== "/register"
+		: true;
 
 	return (
 		<html lang="id" suppressHydrationWarning>
@@ -43,11 +53,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<HeadContent />
 			</head>
 			<body className="bg-background font-sans text-foreground antialiased [overflow-wrap:anywhere] selection:bg-secondary selection:text-foreground">
-				{isAuthPage ? null : (
+				{isPublicPage ? (
 					<Header variant={isHome ? "transparent" : "default"} />
-				)}
-				{children}
-				{isAuthPage ? null : <Footer />}
+				) : null}
+				<ToastProvider>{children}</ToastProvider>
+				{isPublicPage ? <Footer /> : null}
 				{import.meta.env.DEV && (
 					<TanStackDevtools
 						config={{ position: "bottom-right" }}

@@ -17,6 +17,7 @@ import {
 	investments,
 	projects,
 	roiPayments,
+	users,
 } from "../db/schema";
 import type { ApiEnv } from "../env";
 import { requireRole, requireSession } from "../lib/authz";
@@ -63,21 +64,24 @@ investorRoutes.get(
 		const rows = await db
 			.select({
 				project: projects,
+				companyName: users.companyName,
 				blueprint: blueprints,
 				funded: sql<number>`coalesce(sum(case when ${investments.status} = 'active' then ${investments.amount} else 0 end), 0)`,
 			})
 			.from(blueprints)
 			.innerJoin(projects, eq(blueprints.projectId, projects.id))
+			.innerJoin(users, eq(projects.companyId, users.id))
 			.leftJoin(investments, eq(investments.projectId, projects.id))
 			.where(
 				and(eq(blueprints.status, "published"), eq(projects.status, "funding")),
 			)
-			.groupBy(projects.id)
+			.groupBy(projects.id, users.companyName)
 			.orderBy(desc(projects.id));
 
-		const market = rows.map(({ project, blueprint, funded }) => ({
+		const market = rows.map(({ project, companyName, blueprint, funded }) => ({
 			id: project.id,
 			title: project.title,
+			companyName,
 			industrySector: project.industrySector,
 			location: project.location,
 			budget: project.budget,
@@ -324,6 +328,10 @@ investorRoutes.get(
 					id: project.id,
 					title: project.title,
 					status: project.status,
+					industrySector: project.industrySector,
+					location: project.location,
+					targetEmissionReduction: project.targetEmissionReduction,
+					estimatedEnergySaving: project.estimatedEnergySaving,
 				},
 				blueprint: blueprint ? blueprintSummary(blueprint) : {},
 			}),
@@ -413,6 +421,10 @@ investorRoutes.get(
 				id: row.project.id,
 				title: row.project.title,
 				status: row.project.status,
+				industrySector: row.project.industrySector,
+				location: row.project.location,
+				targetEmissionReduction: row.project.targetEmissionReduction,
+				estimatedEnergySaving: row.project.estimatedEnergySaving,
 			},
 			blueprint: row.blueprint ? blueprintSummary(row.blueprint) : {},
 			payments: paymentSummaries,

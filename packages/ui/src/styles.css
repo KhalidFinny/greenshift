@@ -217,3 +217,16 @@ body {
     @apply font-sans;
 	}
 }
+
+/*
+ * Same-origin cross-document view transitions (Chromium): when a real page
+ * load does happen (manual refresh / hard navigation), the outgoing page is
+ * cross-faded to the incoming one instead of flashing white. Combined with
+ * the toast's synchronous sessionStorage rehydrate (no re-entry animation)
+ * a visible toast reads as continuous across the reload.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+}

@@ -123,6 +123,7 @@ export interface BlueprintSummary {
 export interface MarketProject {
 	id: number;
 	title: string;
+	companyName: string | null;
 	industrySector: string | null;
 	location: string | null;
 	budget: number | null;
@@ -130,7 +131,7 @@ export interface MarketProject {
 	targetEmissionReduction: number | null;
 	estimatedEnergySaving: number | null;
 	funded: number;
-	fundingProgress: number; // 0..1
+	fundingProgress: number;
 	blueprint: BlueprintSummary;
 }
 
@@ -144,14 +145,28 @@ export interface BondSummary {
 	investedAt: string | null;
 }
 
+export interface PortfolioProject {
+	id: number;
+	title: string;
+	status: string;
+	industrySector: string | null;
+	location: string | null;
+	targetEmissionReduction: number | null;
+	estimatedEnergySaving: number | null;
+}
+
 export interface PortfolioItem {
 	investment: BondSummary;
-	project: {
-		id: number;
-		title: string;
-		status: string;
-	};
+	project: PortfolioProject;
 	blueprint: BlueprintSummary;
+}
+
+export interface PortfolioDetail {
+	investment: BondSummary;
+	project: PortfolioProject;
+	blueprint: BlueprintSummary;
+	payments: RoiPaymentSummary[];
+	emissionReports: EmissionSummary[];
 }
 
 export interface RoiPaymentSummary {
@@ -205,15 +220,27 @@ export interface BlueprintUpdateBody {
 	auditNote?: string;
 }
 
+export interface AuditLogEntry {
+	id: number;
+	action: string;
+	entityType: string | null;
+	entityId: number | null;
+	projectId?: number | null;
+	userId?: number | null;
+	userEmail?: string | null;
+	metadata: unknown;
+	createdAt: string | null;
+}
+
 export interface AdminUser {
 	id: number;
 	email: string;
-	name: string;
 	role: string;
+	name: string;
 	companyName: string | null;
 	verifiedAt: string | null;
-	vendorProfile: boolean;
 	createdAt: string | null;
+	vendorProfile: boolean;
 }
 
 export interface AdminProject {
@@ -232,6 +259,7 @@ export interface AdminBlueprint {
 	projectId: number;
 	projectTitle: string;
 	status: string;
+	auditorId?: number | null;
 	auditNote: string | null;
 	validatedAt: string | null;
 	publishedAt: string | null;
@@ -261,22 +289,34 @@ export interface AdminRoiPayment {
 	paidAt: string | null;
 }
 
-export interface AuditLogEntry {
-	id: number;
-	action: string;
+export interface AdminAnomaly {
+	id?: string | number;
+	code: string;
+	severity: "critical" | "high" | "medium" | "low";
+	category: string;
+	title: string;
+	description: string;
+	detail?: string;
+	entityLabel?: string | null;
+	projectId: number | null;
 	entityType: string | null;
 	entityId: number | null;
-	metadata: unknown;
-	createdAt: string | null;
-	userEmail: string | null;
+	createdAt?: string | null;
+}
+
+export interface AdminAnomalyResponse {
+	items: AdminAnomaly[];
 }
 
 export interface AdminStats {
 	users: Record<string, number>;
+	usersVerified?: number | { verified: number; unverified: number };
 	projects: Record<string, number>;
-	investments: { total: number; sum: number; roiPaid: number };
-	payments: Record<string, number>;
-	usersVerified: { verified: number; unverified: number };
+	investments: {
+		total: number;
+		sum: number;
+		roiPaid: number;
+	};
 	companies: number;
 	investorsActive: number;
 	blueprints: Record<string, number>;
@@ -285,56 +325,32 @@ export interface AdminStats {
 		title: string;
 		budget: number | null;
 		funded: number;
-		progress: number; // 0..1
+		progress?: number;
 	}>;
+	payments: Record<string, number>;
 }
 
-export type AnomalySeverity = "critical" | "high" | "medium" | "low";
-
-export interface AdminAnomaly {
-	id: string;
-	category: string;
-	severity: AnomalySeverity;
-	title: string;
-	detail: string;
-	entityType: string | null;
-	entityId: number | null;
-	entityLabel: string | null;
-	createdAt: string | null;
+export interface VendorProfileBody {
+	companyName: string;
+	description: string;
+	certifications: string[];
+	portfolio: string[];
 }
 
-export interface AdminAnomalyResponse {
-	flags: AdminAnomaly[];
-	counts: {
-		critical: number;
-		high: number;
-		medium: number;
-		low: number;
-		total: number;
-	};
-}
-
-// ── vendor ────────────────────────────────────────────────
 export interface VendorProfile {
 	id: number;
-	userId: number;
+	userId?: number;
+	userName?: string | null;
+	userEmail?: string | null;
+	verified?: boolean;
 	companyName: string;
 	description: string | null;
 	certifications: string[];
 	portfolio: string[];
 	rating: number;
 	totalProjects: number;
-	verified: boolean;
-	userEmail: string;
-	userName: string;
-	createdAt: string | null;
-}
-
-export interface VendorProfileBody {
-	companyName: string;
-	description?: string;
-	certifications?: string[];
-	portfolio?: string[];
+	verifiedAt: string | null;
+	createdAt?: string | null;
 }
 
 export interface VendorTenderSummary {
@@ -344,130 +360,34 @@ export interface VendorTenderSummary {
 	budgetMin: number | null;
 	budgetMax: number | null;
 	deadlineAt: string | null;
-	awardedProposalId: number | null;
+	awardedProposalId?: number | null;
 }
 
 export interface VendorProjectListItem {
 	id: number;
 	title: string;
-	companyName: string;
+	companyName?: string | null;
+	status?: string;
 	industrySector: string | null;
 	location: string | null;
 	budget: number | null;
-	status: string;
-	tender: VendorTenderSummary;
-	myProposalId: number | null;
-}
-
-export interface VendorProjectDetail {
-	id: number;
-	title: string;
-	description: string | null;
-	companyName: string;
-	industrySector: string | null;
-	location: string | null;
-	budget: number | null;
-	status: string;
-	targetEmissionReduction: number | null;
-	estimatedEnergySaving: number | null;
-	riskScore: number | null;
+	riskScore?: number | null;
 	tender: VendorTenderSummary | null;
-	blueprint: BlueprintSummary;
-	canSubmit: boolean;
-}
-
-export interface VendorMyProject {
-	project: {
-		id: number;
-		title: string;
-		status: string;
-		companyName: string;
-		location: string | null;
-		industrySector: string | null;
-		budget: number | null;
-	};
-	tender: VendorTenderSummary;
-	proposal: {
-		id: number;
-		amount: number;
-		status: string;
-		revisionCount: number;
-		submittedAt: string | null;
-	};
-}
-
-export interface VendorProposalSummary {
-	id: number;
-	amount: number;
-	technicalSpec: string | null;
-	operationalCost: number | null;
-	projectedRoi: number | null;
-	warrantyPeriod: number | null;
-	status: string;
-	revisionCount: number;
-	submittedAt: string | null;
-	reviewedAt: string | null;
-}
-
-export interface VendorMyProjectDetail {
-	id: number;
-	title: string;
-	description: string | null;
-	status: string;
-	companyName: string;
-	location: string | null;
-	industrySector: string | null;
-	budget: number | null;
-	tender: VendorTenderSummary;
-	proposal: VendorProposalSummary;
-	revisions: ProposalRevisionEntry[];
-}
-
-export interface VendorProcurementStatusItem {
-	proposalId: number;
-	proposalStatus: string;
-	revisionCount: number;
-	submittedAt: string | null;
-	reviewedAt: string | null;
-	amount: number;
-	tenderId: number;
-	tenderStatus: string;
-	tenderDeadlineAt: string | null;
-	projectId: number;
-	projectTitle: string;
-	companyName: string;
-	latestNote: string | null;
-}
-
-export interface ProposalDraftBody {
-	tenderId: number;
-	amount: number;
-	technicalSpec?: string;
-	operationalCost?: number;
-	projectedRoi?: number;
-	warrantyPeriod?: number;
-}
-
-export interface ProposalUpdateBody {
-	amount?: number;
-	technicalSpec?: string;
-	operationalCost?: number;
-	projectedRoi?: number;
-	warrantyPeriod?: number;
-	note?: string;
+	myProposalId: number | null;
 }
 
 export interface ProposalSummary {
 	id: number;
-	tenderId: number;
-	projectId: number;
-	projectTitle: string;
+	tenderId?: number;
+	projectId?: number;
+	projectTitle?: string;
+	vendorCompanyName?: string;
+	tenderStatus?: string | null;
+	tenderDeadlineAt?: string | null;
 	amount: number;
 	status: string;
 	revisionCount: number;
 	submittedAt: string | null;
-	tenderStatus: string;
-	tenderDeadlineAt: string | null;
 }
 
 export interface ProposalRevisionEntry {
@@ -480,27 +400,95 @@ export interface ProposalRevisionEntry {
 	createdAt: string | null;
 }
 
-export interface ProposalDetail {
-	id: number;
-	amount: number;
+export interface ProposalDetail extends ProposalSummary {
 	technicalSpec: string | null;
 	operationalCost: number | null;
 	projectedRoi: number | null;
 	warrantyPeriod: number | null;
-	status: string;
-	revisionCount: number;
-	submittedAt: string | null;
 	reviewedAt: string | null;
-	tender: VendorTenderSummary;
+	revisions?: ProposalRevisionEntry[];
+	tender?: VendorTenderSummary | null;
+	project?: {
+		id: number;
+		title: string;
+		description?: string | null;
+		status?: string;
+		location?: string | null;
+		industrySector?: string | null;
+		budget?: number | null;
+		companyName?: string | null;
+	} | null;
+}
+
+export interface ProposalDraftBody {
+	tenderId: number;
+	amount: number;
+	technicalSpec: string;
+	operationalCost: number;
+	projectedRoi: number;
+	warrantyPeriod: number;
+}
+
+export interface ProposalUpdateBody {
+	amount?: number;
+	technicalSpec?: string;
+	operationalCost?: number;
+	projectedRoi?: number;
+	warrantyPeriod?: number;
+	note?: string;
+}
+
+export interface VendorProjectDetail {
+	id: number;
+	title: string;
+	companyName?: string | null;
+	description: string | null;
+	status: string;
+	budget: number | null;
+	location: string | null;
+	industrySector: string | null;
+	targetEmissionReduction?: number | null;
+	estimatedEnergySaving?: number | null;
+	riskScore?: number | null;
+	tender: VendorTenderSummary | null;
+	blueprint?: BlueprintSummary;
+	canSubmit?: boolean;
+}
+
+export interface VendorMyProject {
+	proposal: ProposalSummary;
 	project: {
 		id: number;
 		title: string;
-		description: string | null;
 		status: string;
-		companyName: string;
-		location: string | null;
-		industrySector: string | null;
-		budget: number | null;
+		companyName?: string | null;
+		location?: string | null;
+		industrySector?: string | null;
+		budget?: number | null;
 	};
-	revisions: ProposalRevisionEntry[];
+	tender: VendorTenderSummary | null;
+}
+
+export interface VendorMyProjectDetail extends VendorProjectDetail {
+	proposal: ProposalDetail;
+	revisions?: ProposalRevisionEntry[];
+}
+
+export interface VendorProcurementStatusItem {
+	id?: number;
+	proposalId?: number;
+	projectId: number;
+	projectTitle: string;
+	status?: string;
+	proposalStatus?: string;
+	revisionCount: number;
+	latestNote: string | null;
+	deadlineAt?: string | null;
+	tenderDeadlineAt?: string | null;
+	tenderId?: number;
+	tenderStatus?: string;
+	submittedAt?: string | null;
+	reviewedAt?: string | null;
+	amount?: number;
+	companyName?: string;
 }

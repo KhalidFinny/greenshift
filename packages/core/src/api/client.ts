@@ -9,11 +9,16 @@ import {
 	type AdminVendor,
 	type AuditLogEntry,
 	type AuthResponse,
+	type BondSummary,
+	type BuyBondBody,
 	type CsrfResponse,
 	apiRoutes,
 	type BlueprintUpdateBody,
 	type LoginBody,
+	type MarketProject,
 	type OkResponse,
+	type PortfolioDetail,
+	type PortfolioItem,
 	type ProposalDetail,
 	type ProposalDraftBody,
 	type ProposalSummary,
@@ -79,10 +84,26 @@ export const api = {
 				method: apiRoutes.stepUp.method,
 				body: JSON.stringify({ password } satisfies StepUpBody),
 			}),
-		logout: () =>
+		logout: (silent = false) =>
 			request<OkResponse>(apiRoutes.logout.path, {
 				method: apiRoutes.logout.method,
+				silent,
 			}),
+	},
+	investor: {
+		market: () =>
+			request<{ projects: MarketProject[] }>(apiRoutes.investorMarket.path),
+		buyBond: (body: BuyBondBody) =>
+			request<{ investment: BondSummary }>(apiRoutes.investorBuyBond.path, {
+				method: apiRoutes.investorBuyBond.method,
+				body: JSON.stringify(body satisfies BuyBondBody),
+			}),
+		portfolio: () =>
+			request<{ items: PortfolioItem[] }>(apiRoutes.investorPortfolio.path),
+		portfolioDetail: (id: number) =>
+			request<PortfolioDetail>(
+				apiRoutes.investorPortfolioDetail.path.replace(":id", String(id)),
+			),
 	},
 	admin: {
 		users: (params?: { role?: string; limit?: number }) =>

@@ -58,8 +58,10 @@ function LoginPage() {
 				setError(`Akun ${user.role} tidak tersedia pada server dev:${devRole}`);
 				return;
 			}
-			// Full page load so the dashboard boots fresh (and shows the splash).
-			window.location.assign(roleHome[user.role]);
+			// No full page load: useAuth.login() invalidates the router, the
+			// login route's beforeLoad re-runs with the fresh session and
+			// redirects to the role home — so toasts (and UI state) survive
+			// the transition uninterrupted.
 		} catch (err) {
 			setError(
 				err instanceof ApiError ? err.message : "Terjadi kesalahan, coba lagi",

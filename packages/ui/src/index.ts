@@ -27,6 +27,7 @@ export * from "./components/ui/separator";
 export * from "./components/ui/sheet";
 export * from "./components/ui/table";
 export * from "./components/ui/tabs";
+export * from "./components/ui/toast";
 export * from "./components/ui/tooltip";
 export * from "./hooks/useIsHome";
 export * from "./layouts/role-shell";

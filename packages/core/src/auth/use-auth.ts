@@ -29,8 +29,8 @@ export function useAuth() {
 		return registered;
 	}
 
-	async function logout(): Promise<void> {
-		await api.auth.logout();
+	async function logout(silent = false): Promise<void> {
+		await api.auth.logout(silent);
 		await router.invalidate();
 	}
 
