@@ -7,9 +7,9 @@ import type {
 } from "../../contracts";
 import type { GreenShiftDb } from "../../db";
 import {
+	projects,
 	proposalRevisions,
 	proposals,
-	projects,
 	tenders,
 	users,
 } from "../../db/schema";

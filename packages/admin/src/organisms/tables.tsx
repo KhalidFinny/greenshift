@@ -81,14 +81,14 @@ export function AccountsTable({ users, limit = 5 }: AccountsTableProps) {
 											{user.companyName ? (
 												<span className="font-medium text-primary">✓</span>
 											) : (
-												<span className="text-muted-foreground">—</span>
+												<span className="text-muted-foreground">-</span>
 											)}
 										</TableCell>
 										<TableCell className="text-center">
 											{user.vendorProfile ? (
 												<span className="font-medium text-primary">✓</span>
 											) : (
-												<span className="text-muted-foreground">—</span>
+												<span className="text-muted-foreground">-</span>
 											)}
 										</TableCell>
 										<TableCell>
@@ -173,7 +173,7 @@ export function BlueprintsTable({
 										</TableCell>
 										<TableCell>{formatDateTime(bp.validatedAt)}</TableCell>
 										<TableCell className="max-w-40 truncate">
-											{bp.auditNote ?? "—"}
+											{bp.auditNote ?? "-"}
 										</TableCell>
 									</TableRow>
 								);

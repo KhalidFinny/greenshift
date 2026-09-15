@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import type { AdminVendor } from "@greenshift/api/contracts";
 import {
 	Badge,
@@ -16,6 +15,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@greenshift/ui";
+import { useEffect, useState } from "react";
 import { RatingBar } from "./rating-bar";
 
 const PAGE_SIZE = 8;
@@ -51,7 +51,7 @@ export function VendorPerformanceDialog({
 						Vendor Performance
 					</DialogTitle>
 					<DialogDescription className="text-base">
-						Peringkat {sorted.length} vendor — rating pada skala 0–5.
+						Peringkat {sorted.length} vendor, rating pada skala 0–5.
 					</DialogDescription>
 				</DialogHeader>
 

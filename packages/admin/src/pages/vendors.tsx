@@ -145,14 +145,14 @@ function VendorRow({
 						))}
 					</div>
 				) : (
-					<span className="text-muted-foreground">—</span>
+					<span className="text-muted-foreground">-</span>
 				)}
 			</TableCell>
 			<TableCell>
 				{vendor.portfolio.length > 0 ? (
 					<span>{vendor.portfolio.length} proyek</span>
 				) : (
-					<span className="text-muted-foreground">—</span>
+					<span className="text-muted-foreground">-</span>
 				)}
 			</TableCell>
 			<TableCell>
@@ -259,8 +259,8 @@ export function AdminVendors() {
 			rows: vendors.map((vendor) => [
 				vendor.companyName,
 				vendor.email,
-				vendor.certifications.join(", ") || "—",
-				vendor.portfolio.length > 0 ? `${vendor.portfolio.length} proyek` : "—",
+				vendor.certifications.join(", ") || "-",
+				vendor.portfolio.length > 0 ? `${vendor.portfolio.length} proyek` : "-",
 				vendor.rating.toFixed(1),
 				vendor.verifiedAt !== null ? "Terverifikasi" : "Belum",
 			]),

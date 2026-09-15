@@ -1,7 +1,7 @@
 /**
  * Broker platform registry for the "beli obligasi" hand-off.
  *
- * GreenShift never settles a bond trade itself — bonds are bought through a
+ * GreenShift never settles a bond trade itself: bonds are bought through a
  * licensed broker app. Trima+ (Trimegah Sekuritas) is the primary target: it is
  * the only platform here that explicitly sells corporate bonds (including IPO)
  * on mobile, which matches the project-bond issuance scenario. IPOT is kept as
@@ -16,7 +16,7 @@ export interface BrokerPlatform {
 	/** Stable key, used in deep links and copy payloads. */
 	key: string;
 	name: string;
-	/** Company operating the app — shown as trust context. */
+	/** Company operating the app: shown as trust context. */
 	publisher: string;
 	/** Why an investor would pick this platform over the other. */
 	note: string;
@@ -27,12 +27,12 @@ export interface BrokerPlatform {
 	 *
 	 * VERIFY BEFORE DEMO: neither the Play listing nor Trimegah's product page
 	 * documents a public scheme, so this is a placeholder derived from the app
-	 * id. Launching fails safe — if the scheme is wrong or the app is not
+	 * id. Launching fails safe: if the scheme is wrong or the app is not
 	 * installed, the Android intent resolves nothing and we fall back to the
 	 * Play listing. To confirm, open this URL on a device with Trima+
 	 * installed and check the app opens instead of Play.
 	 *
-	 * `null` means "no known scheme" — the UI then skips the launch attempt and
+	 * `null` means "no known scheme": the UI then skips the launch attempt and
 	 * goes straight to Play, so we never fire a dead intent.
 	 */
 	deepLinkScheme: string | null;
@@ -58,7 +58,7 @@ export const IPOT: BrokerPlatform = {
 	deepLinkScheme: null,
 };
 
-/** Ordered by preference — Trima+ first, it is the only bond-capable target. */
+/** Ordered by preference: Trima+ first, it is the only bond-capable target. */
 export const BROKER_PLATFORMS: BrokerPlatform[] = [TRIMA_PLUS, IPOT];
 
 export const PRIMARY_BROKER = TRIMA_PLUS;

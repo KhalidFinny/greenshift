@@ -17,7 +17,7 @@ const MAX_PROFILE_DESCRIPTION = 2000;
 const MAX_LIST_ITEMS = 50;
 // Worst-case ASCII payload (50×100×2 arrays + description ≈ 12.6KB) stays
 // under the 16KB body cap. Multibyte- or escape-heavy maximal input can still
-// exceed it (char vs byte units) — same pre-existing class as PATCH proposals.
+// exceed it (char vs byte units): same pre-existing class as PATCH proposals.
 const MAX_ITEM_LENGTH = 100;
 
 function toVendorProfile(
@@ -146,7 +146,7 @@ profileRoutes.put(
 				| undefined;
 			const createdId = Number(firstRow?.id);
 			if (!Number.isInteger(createdId) || createdId <= 0) {
-				// Lost the race: another request created it — update instead.
+				// Lost the race: another request created it: update instead.
 				const [other] = await db
 					.select({ id: vendors.id })
 					.from(vendors)

@@ -10,7 +10,7 @@ interface DemoObligasi
  *
  * Mirrors the shape returned by `GET /api/investor/market` so the dashboard is
  * presentable when the local D1 has not been seeded yet. Bond codes are
- * placeholders — the real ones are issued by the broker/KSEI.
+ * placeholders: the real ones are issued by the broker/KSEI.
  */
 const LISTINGS: DemoObligasi[] = [
 	{

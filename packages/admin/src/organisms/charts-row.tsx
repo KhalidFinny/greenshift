@@ -69,9 +69,7 @@ export function ChartsRow({ activityData, carbonReduction }: ChartsRowProps) {
 							<p className="text-4xl font-semibold leading-none tabular-nums text-primary">
 								{carbonReduction}
 							</p>
-							<p className="mt-2 text-base text-muted-foreground">
-								ton CO₂e
-							</p>
+							<p className="mt-2 text-base text-muted-foreground">ton CO₂e</p>
 						</div>
 					</div>
 

@@ -38,7 +38,7 @@ async function copyText(value: string): Promise<boolean> {
 			return true;
 		}
 	} catch {
-		// Permission denied or insecure context — fall through to execCommand.
+		// Permission denied or insecure context: fall through to execCommand.
 	}
 
 	try {
@@ -224,7 +224,7 @@ export function BondPurchaseActions({ project }: BondPurchaseActionsProps) {
 
 			{launch === "launched" && (
 				<p className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm leading-relaxed text-muted-foreground">
-					{platform.name} dibuka — cari kode{" "}
+					{platform.name} dibuka. Cari kode{" "}
 					<span className="font-mono font-semibold">{code}</span> di kolom
 					pencarian.
 				</p>

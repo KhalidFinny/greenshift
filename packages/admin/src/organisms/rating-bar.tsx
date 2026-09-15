@@ -10,12 +10,19 @@ export function RatingBar({
 	className?: string;
 }) {
 	const barClass =
-		rating >= 4.5 ? "bg-primary" : rating >= 4 ? "bg-primary/60" : "bg-destructive";
+		rating >= 4.5
+			? "bg-primary"
+			: rating >= 4
+				? "bg-primary/60"
+				: "bg-destructive";
 	return (
 		<div
 			role="img"
 			aria-label={`Rating ${rating.toFixed(1)} dari 5`}
-			className={cn("h-2 w-full overflow-hidden rounded-full bg-muted", className)}
+			className={cn(
+				"h-2 w-full overflow-hidden rounded-full bg-muted",
+				className,
+			)}
 		>
 			<div
 				className={cn("h-full rounded-full", barClass)}

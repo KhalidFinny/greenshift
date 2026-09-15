@@ -22,7 +22,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 		meta: [
 			{ charSet: "utf-8" },
 			{ name: "viewport", content: "width=device-width, initial-scale=1" },
-			{ title: "GreenShift — Platform MRV untuk Pembiayaan Hijau" },
+			{ title: "GreenShift: Platform MRV untuk Pembiayaan Hijau" },
 		],
 		links: [
 			{ rel: "stylesheet", href: appCss },
@@ -37,7 +37,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 	const isHome = useIsHome();
 	// Decide public chrome from the committed route tree, not from pathname +
 	// auth context: during a transition out of an authed page the session is
-	// already cleared while the route is still the old one — a pathname/user
+	// already cleared while the route is still the old one: a pathname/user
 	// mix would flash the public header for a frame.
 	const activeRouteId = useRouterState({
 		select: (state) => state.matches[state.matches.length - 1]?.routeId,

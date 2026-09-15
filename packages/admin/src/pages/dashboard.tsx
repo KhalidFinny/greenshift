@@ -103,25 +103,29 @@ export function AdminDashboard() {
 				"Verifikasi",
 				"Terdaftar",
 			],
-			rows: users.slice(0, 5).map((user) => [
-				user.name,
-				user.email,
-				user.role,
-				user.companyName ?? "—",
-				user.vendorProfile ? "✓" : "—",
-				user.verifiedAt !== null ? "Terverifikasi" : "Belum",
-				formatDateTime(user.createdAt),
-			]),
+			rows: users
+				.slice(0, 5)
+				.map((user) => [
+					user.name,
+					user.email,
+					user.role,
+					user.companyName ?? "-",
+					user.vendorProfile ? "✓" : "-",
+					user.verifiedAt !== null ? "Terverifikasi" : "Belum",
+					formatDateTime(user.createdAt),
+				]),
 		},
 		{
 			title: "Blueprint Terbaru",
 			headers: ["Proyek", "Status", "Validasi", "Catatan"],
-			rows: blueprints.slice(0, 5).map((bp) => [
-				bp.projectTitle,
-				BLUEPRINT_META[bp.status]?.label ?? bp.status,
-				formatDateTime(bp.validatedAt),
-				bp.auditNote ?? "—",
-			]),
+			rows: blueprints
+				.slice(0, 5)
+				.map((bp) => [
+					bp.projectTitle,
+					BLUEPRINT_META[bp.status]?.label ?? bp.status,
+					formatDateTime(bp.validatedAt),
+					bp.auditNote ?? "-",
+				]),
 		},
 	];
 

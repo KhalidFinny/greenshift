@@ -49,7 +49,7 @@ function query(params?: Record<string, string | number | undefined>) {
 /**
  * Typed client for the single GreenShift API.
  * Paths, methods, and body shapes come from the shared contract in
- * @greenshift/api — nothing API-related is hardcoded here.
+ * @greenshift/api: nothing API-related is hardcoded here.
  */
 export const api = {
 	auth: {

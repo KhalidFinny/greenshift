@@ -54,7 +54,7 @@ function RegisterPage() {
 			await register(name, email, password, companyName);
 			// SPA transition: register() invalidates the router and the
 			// register route's beforeLoad redirects to the role home with the
-			// fresh session — no full page load, so toasts stay visible.
+			// fresh session: no full page load, so toasts stay visible.
 		} catch (err) {
 			setError(
 				err instanceof ApiError ? err.message : "Terjadi kesalahan, coba lagi",
@@ -74,8 +74,8 @@ function RegisterPage() {
 						Platform MRV untuk Pembiayaan Hijau
 					</h2>
 					<p className="mt-4 text-base leading-relaxed text-white/70">
-						Kelola proyek, tender, dan laporan MRV dalam satu platform —
-						transparan untuk bisnis, vendor, dan pengawas.
+						Kelola proyek, tender, dan laporan MRV dalam satu platform.
+						Transparan untuk bisnis, vendor, dan pengawas.
 					</p>
 				</div>
 				<p className="text-sm text-white/50">© 2026 GreenShift</p>

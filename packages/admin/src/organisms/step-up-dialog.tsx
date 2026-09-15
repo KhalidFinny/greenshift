@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { faLock } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { api } from "@greenshift/core";
 import {
 	Button,
@@ -11,8 +12,7 @@ import {
 	Input,
 	Label,
 } from "@greenshift/ui";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faLock } from "@fortawesome/free-solid-svg-icons";
+import { useState } from "react";
 
 interface StepUpDialogProps {
 	isOpen: boolean;
@@ -20,7 +20,11 @@ interface StepUpDialogProps {
 	onSuccess: () => void;
 }
 
-export function StepUpDialog({ isOpen, onClose, onSuccess }: StepUpDialogProps) {
+export function StepUpDialog({
+	isOpen,
+	onClose,
+	onSuccess,
+}: StepUpDialogProps) {
 	const [password, setPassword] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);

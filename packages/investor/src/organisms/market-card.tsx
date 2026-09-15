@@ -148,13 +148,13 @@ export function ObligasiCard({ listing }: ObligasiCardProps) {
 							value={
 								typeof irr === "number"
 									? `${irr.toLocaleString("id-ID", { maximumFractionDigits: 1 })}%`
-									: "—"
+									: "-"
 							}
 							tone="text-primary"
 						/>
 						<Metric
 							label="Tenor"
-							value={typeof payback === "number" ? `${payback} thn` : "—"}
+							value={typeof payback === "number" ? `${payback} thn` : "-"}
 						/>
 						<Metric label="Risiko" value={risk.label} />
 					</div>
@@ -188,7 +188,7 @@ export function ObligasiCard({ listing }: ObligasiCardProps) {
 				{verified ? (
 					<>
 						<p className="text-sm text-muted-foreground">
-							Listing aktif — beli melalui broker:
+							Listing aktif. Beli melalui broker:
 						</p>
 						<BondPurchaseActions project={listing} />
 					</>

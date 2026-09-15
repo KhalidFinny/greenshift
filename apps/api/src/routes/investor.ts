@@ -18,7 +18,7 @@ export const investorRoutes = new Hono<ApiEnv>();
  * Public obligasi catalog: every project that is at least in assessment,
  * grouped by whether its blueprint has been published (verified) or is still
  * being processed. Funding totals come from active investments only. No
- * authentication required — this is the landing-adjacent public surface.
+ * authentication required: this is the landing-adjacent public surface.
  */
 investorRoutes.get(
 	"/market",

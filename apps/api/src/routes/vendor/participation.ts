@@ -8,9 +8,9 @@ import type {
 } from "../../contracts";
 import { createDb } from "../../db";
 import {
+	projects,
 	proposalRevisions,
 	proposals,
-	projects,
 	tenders,
 	users,
 	vendors,
@@ -180,7 +180,9 @@ participationRoutes.get(
 				tender: tenders,
 				project: projects,
 				companyName: users.name,
-				latestNote: sql<string | null>`(select note from proposal_revisions pr where pr.proposal_id = proposals.id order by pr.id desc limit 1)`,
+				latestNote: sql<
+					string | null
+				>`(select note from proposal_revisions pr where pr.proposal_id = proposals.id order by pr.id desc limit 1)`,
 			})
 			.from(proposals)
 			.innerJoin(tenders, eq(proposals.tenderId, tenders.id))

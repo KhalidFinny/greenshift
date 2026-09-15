@@ -105,7 +105,7 @@ const verifiedBy = "(SELECT id FROM users WHERE email = 'admin@greenshift.dev')"
 
 // Public obligasi dashboard fixtures so the dashboard is exercisable without
 // an account: two projects already past procurement (funding + published
-// blueprint) plus MRV emission reports — one anomaly-flagged to demo the
+// blueprint) plus MRV emission reports: one anomaly-flagged to demo the
 // anomaly badge.
 lines.push(
 	// funded projects (published blueprint + funding status)
@@ -120,7 +120,7 @@ VALUES (${projectId("Retrofit Chiller Pabrik")}, 'published', '{"financialProjec
 	`INSERT INTO blueprints (project_id, status, document, validated_at, published_at, created_at, updated_at)
 VALUES (${projectId("Efisiensi Motor Listrik")}, 'published', '{"financialProjections":{"npv":61000000,"irr":16,"paybackPeriod":3}}', ${nowTs(-85)}, ${nowTs(-82)}, ${nowTs(-90)}, ${nowTs(-82)});`,
 
-	// MRV emission reports — Chiller project ends with an anomaly flag
+	// MRV emission reports: Chiller project ends with an anomaly flag
 	`INSERT INTO emission_reports (project_id, period_start, period_end, actual_consumption, baseline_consumption, emission_reduction, anomaly_flagged, report_data, verified_by, verified_at, created_at)
 VALUES (${projectId("Retrofit Chiller Pabrik")}, ${nowTs(-125)}, ${nowTs(-95)}, 108000, 120000, 9.48, 0, '{}', ${verifiedBy}, ${nowTs(-92)}, ${nowTs(-95)});`,
 	`INSERT INTO emission_reports (project_id, period_start, period_end, actual_consumption, baseline_consumption, emission_reduction, anomaly_flagged, report_data, verified_by, verified_at, created_at)

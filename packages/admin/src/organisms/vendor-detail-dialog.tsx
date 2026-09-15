@@ -98,7 +98,7 @@ export function VendorDetailDialog({
 								))}
 							</div>
 						) : (
-							<p className="text-base text-muted-foreground">—</p>
+							<p className="text-base text-muted-foreground">-</p>
 						)}
 					</section>
 
@@ -113,7 +113,7 @@ export function VendorDetailDialog({
 								))}
 							</ul>
 						) : (
-							<p className="text-base text-muted-foreground">—</p>
+							<p className="text-base text-muted-foreground">-</p>
 						)}
 					</section>
 				</div>

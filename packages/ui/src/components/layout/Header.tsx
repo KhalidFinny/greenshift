@@ -64,7 +64,7 @@ function LandingHeader() {
 			</header>
 
 			{/* Compact floating header: brand green so the white logo works on
-				both landing headers (hero + compact) — no logo swap needed. */}
+				both landing headers (hero + compact), no logo swap needed. */}
 			<header
 				aria-hidden={!scrolled}
 				style={{

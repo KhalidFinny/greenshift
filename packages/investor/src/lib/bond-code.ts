@@ -6,7 +6,7 @@ import { formatIdr } from "./format";
  * The real code is issued by the broker/KSEI, so once the API exposes
  * `bondCode` we use it verbatim. Until then we derive a deterministic
  * placeholder from the project so the demo has something stable to copy and
- * search — never random, or the investor could not find the same bond twice.
+ * search: never random, or the investor could not find the same bond twice.
  */
 export function bondCodeFor(project: {
 	id: number;
@@ -20,7 +20,7 @@ export function bondCodeFor(project: {
  * Plain-text payload for the "Salin Kode" button.
  *
  * Investors paste this into the broker app's search field, so it carries the
- * code plus just enough context (name, issuer, coupon) to disambiguate —
+ * code plus just enough context (name, issuer, coupon) to disambiguate:
  * without turning the clipboard into a data dump.
  */
 export function bondSearchPayload(project: {

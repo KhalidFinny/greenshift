@@ -56,7 +56,10 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 						</Link>
 					</div>
 
-					<nav className="flex-1 space-y-4 px-3 pb-3 pt-8" aria-label="Menu sidebar">
+					<nav
+						className="flex-1 space-y-4 px-3 pb-3 pt-8"
+						aria-label="Menu sidebar"
+					>
 						{navItems.map((item) => {
 							const isActive = activePath === item.to;
 							const icon =
@@ -158,7 +161,10 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 										onClick={openProfile}
 										className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
 									>
-										<FontAwesomeIcon icon={faCircleUser} className="size-4 shrink-0" />
+										<FontAwesomeIcon
+											icon={faCircleUser}
+											className="size-4 shrink-0"
+										/>
 										Profile
 									</button>
 									<button
@@ -167,7 +173,10 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 										onClick={handleLogout}
 										className="flex w-full items-center gap-3 border-t border-border px-4 py-2.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/5"
 									>
-										<FontAwesomeIcon icon={faRightFromBracket} className="size-4 shrink-0" />
+										<FontAwesomeIcon
+											icon={faRightFromBracket}
+											className="size-4 shrink-0"
+										/>
 										Logout
 									</button>
 								</div>

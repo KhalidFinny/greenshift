@@ -1,3 +1,9 @@
+import {
+	faArrowTrendUp,
+	faBuilding,
+	faClipboardCheck,
+	faGaugeHigh,
+} from "@fortawesome/free-solid-svg-icons";
 import type { AdminProject } from "@greenshift/api/contracts";
 import { api } from "@greenshift/core";
 import {
@@ -21,14 +27,9 @@ import {
 	TableHeader,
 	TableRow,
 } from "@greenshift/ui";
-import {
-	faArrowTrendUp,
-	faBuilding,
-	faClipboardCheck,
-	faGaugeHigh,
-} from "@fortawesome/free-solid-svg-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import type { ExportSection } from "../lib/export";
 import {
 	BLUEPRINT_STATUS_BADGE,
 	BLUEPRINT_STATUS_LABELS,
@@ -36,20 +37,91 @@ import {
 	PROJECT_STATUS_LABELS,
 	PROJECT_STATUS_OPTIONS,
 } from "../lib/project-status";
-import type { ExportSection } from "../lib/export";
 import { ExportMenu } from "../organisms/export-menu";
 import { MetricCard } from "../organisms/metric-card";
 import { ProjectDetailDialog } from "../organisms/project-detail-dialog";
 
 const DEMO_PROJECTS: AdminProject[] = [
-	{ id: 1, title: "Retrofit Chiller Pabrik Tekstil", status: "funding", companyName: "PT Hijau Nusantara", industrySector: "Manufaktur", budget: 500_000_000, riskScore: 72, blueprintStatus: "published" },
-	{ id: 2, title: "Motor Efisiensi Tinggi", status: "funding", companyName: "PT Karbon Bersih", industrySector: "Industri Berat", budget: 350_000_000, riskScore: 68, blueprintStatus: "validated" },
-	{ id: 3, title: "Sistem Pencahayaan LED", status: "monitoring", companyName: "PT Hijau Nusantara", industrySector: "Gedung", budget: 150_000_000, riskScore: 85, blueprintStatus: "published" },
-	{ id: 4, title: "Panel Surya Atap Gudang", status: "draft", companyName: "PT Karbon Bersih", industrySector: "Logistik", budget: 800_000_000, riskScore: 55, blueprintStatus: null },
-	{ id: 5, title: "Kompresor VFD", status: "assessment", companyName: "PT Hijau Nusantara", industrySector: "Manufaktur", budget: 200_000_000, riskScore: 62, blueprintStatus: null },
-	{ id: 6, title: "Heat Recovery System", status: "completed", companyName: "PT Karbon Bersih", industrySector: "Industri Berat", budget: 450_000_000, riskScore: 78, blueprintStatus: "published" },
-	{ id: 7, title: "Variable Speed Drive", status: "completed", companyName: "PT Hijau Nusantara", industrySector: "Manufaktur", budget: 280_000_000, riskScore: 71, blueprintStatus: "published" },
-	{ id: 8, title: "Insulasi Pipa Industri", status: "completed", companyName: "PT Karbon Bersih", industrySector: "Industri Berat", budget: 120_000_000, riskScore: 88, blueprintStatus: "published" },
+	{
+		id: 1,
+		title: "Retrofit Chiller Pabrik Tekstil",
+		status: "funding",
+		companyName: "PT Hijau Nusantara",
+		industrySector: "Manufaktur",
+		budget: 500_000_000,
+		riskScore: 72,
+		blueprintStatus: "published",
+	},
+	{
+		id: 2,
+		title: "Motor Efisiensi Tinggi",
+		status: "funding",
+		companyName: "PT Karbon Bersih",
+		industrySector: "Industri Berat",
+		budget: 350_000_000,
+		riskScore: 68,
+		blueprintStatus: "validated",
+	},
+	{
+		id: 3,
+		title: "Sistem Pencahayaan LED",
+		status: "monitoring",
+		companyName: "PT Hijau Nusantara",
+		industrySector: "Gedung",
+		budget: 150_000_000,
+		riskScore: 85,
+		blueprintStatus: "published",
+	},
+	{
+		id: 4,
+		title: "Panel Surya Atap Gudang",
+		status: "draft",
+		companyName: "PT Karbon Bersih",
+		industrySector: "Logistik",
+		budget: 800_000_000,
+		riskScore: 55,
+		blueprintStatus: null,
+	},
+	{
+		id: 5,
+		title: "Kompresor VFD",
+		status: "assessment",
+		companyName: "PT Hijau Nusantara",
+		industrySector: "Manufaktur",
+		budget: 200_000_000,
+		riskScore: 62,
+		blueprintStatus: null,
+	},
+	{
+		id: 6,
+		title: "Heat Recovery System",
+		status: "completed",
+		companyName: "PT Karbon Bersih",
+		industrySector: "Industri Berat",
+		budget: 450_000_000,
+		riskScore: 78,
+		blueprintStatus: "published",
+	},
+	{
+		id: 7,
+		title: "Variable Speed Drive",
+		status: "completed",
+		companyName: "PT Hijau Nusantara",
+		industrySector: "Manufaktur",
+		budget: 280_000_000,
+		riskScore: 71,
+		blueprintStatus: "published",
+	},
+	{
+		id: 8,
+		title: "Insulasi Pipa Industri",
+		status: "completed",
+		companyName: "PT Karbon Bersih",
+		industrySector: "Industri Berat",
+		budget: 120_000_000,
+		riskScore: 88,
+		blueprintStatus: "published",
+	},
 ];
 
 const idr = new Intl.NumberFormat("id-ID", {
@@ -65,7 +137,10 @@ export function AdminProjects() {
 
 	const projectsQuery = useQuery({
 		queryKey: ["admin", "projects", status],
-		queryFn: () => api.admin.projects(status === "all" ? { limit: 200 } : { status, limit: 200 }),
+		queryFn: () =>
+			api.admin.projects(
+				status === "all" ? { limit: 200 } : { status, limit: 200 },
+			),
 	});
 	const statsQuery = useQuery({
 		queryKey: ["admin", "stats"],
@@ -105,13 +180,24 @@ export function AdminProjects() {
 	}
 
 	const stats = statsQuery.data;
-	const projects = projectsQuery.data.projects.length > 0 ? projectsQuery.data.projects : DEMO_PROJECTS;
-	const activeProjects = (stats.projects.funding ?? 0) + (stats.projects.monitoring ?? 0);
-	const totalProjects = Object.values(stats.projects).reduce((a, b) => a + b, 0);
+	const projects =
+		projectsQuery.data.projects.length > 0
+			? projectsQuery.data.projects
+			: DEMO_PROJECTS;
+	const activeProjects =
+		(stats.projects.funding ?? 0) + (stats.projects.monitoring ?? 0);
+	const totalProjects = Object.values(stats.projects).reduce(
+		(a, b) => a + b,
+		0,
+	);
 	const completedProjects = stats.projects.completed ?? 0;
-	const avgRisk = projects.length > 0
-		? Math.round(projects.reduce((sum, p) => sum + (p.riskScore ?? 0), 0) / projects.length)
-		: 0;
+	const avgRisk =
+		projects.length > 0
+			? Math.round(
+					projects.reduce((sum, p) => sum + (p.riskScore ?? 0), 0) /
+						projects.length,
+				)
+			: 0;
 
 	const projectExportSections: ExportSection[] = [
 		{
@@ -128,14 +214,14 @@ export function AdminProjects() {
 			rows: projects.map((project) => [
 				project.title,
 				project.companyName,
-				project.industrySector ?? "—",
+				project.industrySector ?? "-",
 				PROJECT_STATUS_LABELS[project.status] ?? project.status,
-				project.budget ? idr.format(project.budget) : "—",
-				String(project.riskScore ?? "—"),
+				project.budget ? idr.format(project.budget) : "-",
+				String(project.riskScore ?? "-"),
 				project.blueprintStatus
 					? (BLUEPRINT_STATUS_LABELS[project.blueprintStatus] ??
 						project.blueprintStatus)
-					: "—",
+					: "-",
 			]),
 		},
 	];
@@ -158,10 +244,30 @@ export function AdminProjects() {
 
 			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 				{[
-					{ label: "Total Proyek", value: String(totalProjects), icon: faBuilding, sub: "seluruh pipeline" },
-					{ label: "Proyek Aktif", value: String(activeProjects), icon: faArrowTrendUp, sub: "funding + monitoring" },
-					{ label: "Selesai", value: String(completedProjects), icon: faClipboardCheck, sub: "proyek closed-loop" },
-					{ label: "Avg Risk", value: String(avgRisk), icon: faGaugeHigh, sub: "rata-rata risk score" },
+					{
+						label: "Total Proyek",
+						value: String(totalProjects),
+						icon: faBuilding,
+						sub: "seluruh pipeline",
+					},
+					{
+						label: "Proyek Aktif",
+						value: String(activeProjects),
+						icon: faArrowTrendUp,
+						sub: "funding + monitoring",
+					},
+					{
+						label: "Selesai",
+						value: String(completedProjects),
+						icon: faClipboardCheck,
+						sub: "proyek closed-loop",
+					},
+					{
+						label: "Avg Risk",
+						value: String(avgRisk),
+						icon: faGaugeHigh,
+						sub: "rata-rata risk score",
+					},
 				].map((card) => (
 					<MetricCard
 						key={card.label}
@@ -194,7 +300,9 @@ export function AdminProjects() {
 				</CardHeader>
 				<CardContent>
 					{projects.length === 0 ? (
-						<p className="text-base text-muted-foreground">Tidak ada proyek pada filter ini.</p>
+						<p className="text-base text-muted-foreground">
+							Tidak ada proyek pada filter ini.
+						</p>
 					) : (
 						<Table className="text-base">
 							<TableHeader>
@@ -220,28 +328,42 @@ export function AdminProjects() {
 										<TableRow key={project.id}>
 											<TableCell>
 												<p className="font-medium">{project.title}</p>
-												<p className="text-muted-foreground">{project.companyName}</p>
+												<p className="text-muted-foreground">
+													{project.companyName}
+												</p>
 											</TableCell>
-											<TableCell>{project.industrySector ?? "—"}</TableCell>
+											<TableCell>{project.industrySector ?? "-"}</TableCell>
 											<TableCell>
-												<Badge variant={PROJECT_STATUS_BADGE[project.status] ?? "outline"} className="text-base px-3 !h-8 rounded-md">
-													{PROJECT_STATUS_LABELS[project.status] ?? project.status}
+												<Badge
+													variant={
+														PROJECT_STATUS_BADGE[project.status] ?? "outline"
+													}
+													className="text-base px-3 !h-8 rounded-md"
+												>
+													{PROJECT_STATUS_LABELS[project.status] ??
+														project.status}
 												</Badge>
 											</TableCell>
 											<TableCell className="tabular-nums">
-												{project.budget ? idr.format(project.budget) : "—"}
+												{project.budget ? idr.format(project.budget) : "-"}
 											</TableCell>
-											<TableCell className={`tabular-nums ${riskColor}`}>{project.riskScore ?? "—"}</TableCell>
+											<TableCell className={`tabular-nums ${riskColor}`}>
+												{project.riskScore ?? "-"}
+											</TableCell>
 											<TableCell>
 												{project.blueprintStatus ? (
 													<Badge
-														variant={BLUEPRINT_STATUS_BADGE[project.blueprintStatus] ?? "outline"}
+														variant={
+															BLUEPRINT_STATUS_BADGE[project.blueprintStatus] ??
+															"outline"
+														}
 														className="text-base px-3 !h-8 rounded-md"
 													>
-														{BLUEPRINT_STATUS_LABELS[project.blueprintStatus] ?? project.blueprintStatus}
+														{BLUEPRINT_STATUS_LABELS[project.blueprintStatus] ??
+															project.blueprintStatus}
 													</Badge>
 												) : (
-													"—"
+													"-"
 												)}
 											</TableCell>
 											<TableCell>

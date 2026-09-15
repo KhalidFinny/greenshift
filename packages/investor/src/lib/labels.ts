@@ -2,7 +2,7 @@
 export type StatusTone = "default" | "secondary" | "destructive" | "outline";
 
 /**
- * Table/status badge sizing used across admin — enlarged from the DS default
+ * Table/status badge sizing used across admin: enlarged from the DS default
  * so status chips read at the same size as table text.
  */
 export const STATUS_BADGE_CLASS = "!h-8 rounded-md px-3 text-base";
@@ -37,7 +37,7 @@ export function riskMeta(score: number | null | undefined): {
 	tone: StatusTone;
 } {
 	if (typeof score !== "number" || !Number.isFinite(score)) {
-		return { label: "—", tone: "outline" };
+		return { label: "-", tone: "outline" };
 	}
 	if (score < 40) return { label: "Rendah", tone: "outline" };
 	if (score < 70) return { label: "Sedang", tone: "secondary" };

@@ -3,7 +3,13 @@ import {
 	faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button, Card, CardContent, CardHeader, CardTitle } from "@greenshift/ui";
+import {
+	Button,
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
 
 interface PendingAction {

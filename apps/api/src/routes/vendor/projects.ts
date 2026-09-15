@@ -8,8 +8,8 @@ import type {
 import { createDb } from "../../db";
 import {
 	blueprints,
-	proposals,
 	projects,
+	proposals,
 	tenders,
 	users,
 	vendors,

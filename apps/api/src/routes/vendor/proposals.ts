@@ -5,8 +5,8 @@ import type { ProposalDraftBody, ProposalSummary } from "../../contracts";
 import { createDb } from "../../db";
 import {
 	auditLogs,
-	proposals,
 	projects,
+	proposals,
 	tenders,
 	vendors,
 } from "../../db/schema";
@@ -152,7 +152,9 @@ proposalsRoutes.post(
 			})
 		) {
 			return c.json(
-				{ error: { code: "VALIDATION", message: "Input penawaran tidak valid" } },
+				{
+					error: { code: "VALIDATION", message: "Input penawaran tidak valid" },
+				},
 				400,
 			);
 		}
@@ -266,7 +268,8 @@ proposalsRoutes.post(
 				{
 					error: {
 						code: "PROPOSAL_CONFLICT",
-						message: "Penawaran gagal dikirim: tender ditutup atau penawaran sudah ada",
+						message:
+							"Penawaran gagal dikirim: tender ditutup atau penawaran sudah ada",
 					},
 				},
 				409,

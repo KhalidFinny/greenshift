@@ -10,7 +10,10 @@ interface MetricCardProps {
 	subTone?: "muted" | "positive" | "destructive";
 }
 
-const SUB_TONE_CLASS: Record<NonNullable<MetricCardProps["subTone"]>, string> = {
+const SUB_TONE_CLASS: Record<
+	NonNullable<MetricCardProps["subTone"]>,
+	string
+> = {
 	muted: "text-muted-foreground",
 	positive: "text-primary",
 	destructive: "text-destructive",

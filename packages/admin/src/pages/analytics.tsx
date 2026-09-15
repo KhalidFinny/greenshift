@@ -100,7 +100,7 @@ export function AdminAnalytics() {
 	const totalUsers = Object.values(stats.users).reduce((a, b) => a + b, 0);
 	const activeProjects =
 		(stats.projects.funding ?? 0) + (stats.projects.monitoring ?? 0);
-	// Obligasi funding status — the same public obligasi data surfaced on the
+	// Obligasi funding status: the same public obligasi data surfaced on the
 	// public dashboard, aggregated here for admin without any per-investor rows.
 	const topObligasi =
 		stats.funding && stats.funding.length > 0
@@ -156,7 +156,7 @@ export function AdminAnalytics() {
 			headers: ["Obligasi", "Anggaran", "Terkumpul", "Progres"],
 			rows: topObligasi.map((row) => [
 				row.title,
-				row.budget ? idr.format(row.budget) : "—",
+				row.budget ? idr.format(row.budget) : "-",
 				idr.format(row.funded ?? 0),
 				`${Math.round((row.progress ?? (row.budget ? (row.funded ?? 0) / row.budget : 0)) * 100)}%`,
 			]),
@@ -178,11 +178,11 @@ export function AdminAnalytics() {
 			rows: topProjects.map((row) => [
 				row.title,
 				row.companyName,
-				row.industrySector ?? "—",
+				row.industrySector ?? "-",
 				row.status,
-				row.budget ? idr.format(row.budget) : "—",
-				String(row.riskScore ?? "—"),
-				row.blueprintStatus ?? "—",
+				row.budget ? idr.format(row.budget) : "-",
+				String(row.riskScore ?? "-"),
+				row.blueprintStatus ?? "-",
 			]),
 		},
 	];
@@ -328,7 +328,7 @@ export function AdminAnalytics() {
 										<TableRow key={row.id}>
 											<TableCell className="font-medium">{row.title}</TableCell>
 											<TableCell className="tabular-nums">
-												{row.budget ? idr.format(row.budget) : "—"}
+												{row.budget ? idr.format(row.budget) : "-"}
 											</TableCell>
 											<TableCell className="tabular-nums">
 												{idr.format(row.funded ?? 0)}
@@ -377,7 +377,7 @@ export function AdminAnalytics() {
 											<p className="font-medium">{row.title}</p>
 											<p className="text-muted-foreground">{row.companyName}</p>
 										</TableCell>
-										<TableCell>{row.industrySector ?? "—"}</TableCell>
+										<TableCell>{row.industrySector ?? "-"}</TableCell>
 										<TableCell>
 											<Badge
 												variant="secondary"
@@ -387,10 +387,10 @@ export function AdminAnalytics() {
 											</Badge>
 										</TableCell>
 										<TableCell className="tabular-nums">
-											{row.budget ? idr.format(row.budget) : "—"}
+											{row.budget ? idr.format(row.budget) : "-"}
 										</TableCell>
 										<TableCell className="tabular-nums">
-											{row.riskScore ?? "—"}
+											{row.riskScore ?? "-"}
 										</TableCell>
 										<TableCell>
 											{row.blueprintStatus ? (
@@ -401,7 +401,7 @@ export function AdminAnalytics() {
 													{row.blueprintStatus}
 												</Badge>
 											) : (
-												"—"
+												"-"
 											)}
 										</TableCell>
 									</TableRow>

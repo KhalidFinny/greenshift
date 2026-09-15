@@ -17,7 +17,7 @@ function ShimmerBlock({ className }: { className?: string }) {
 }
 
 /**
- * Content-area skeleton shown while a route loads —
+ * Content-area skeleton shown while a route loads:
  * the app shell (sidebar + header) stays rendered, only the content shimmers.
  */
 export function ContentSkeleton() {

@@ -45,7 +45,7 @@ function UserRow({ user }: { user: AdminUser }) {
 				</Badge>
 			</TableCell>
 			<TableCell className="max-w-56 truncate">
-				{user.companyName ?? "—"}
+				{user.companyName ?? "-"}
 			</TableCell>
 			<TableCell>
 				<Badge
@@ -132,7 +132,7 @@ export function AdminUsers() {
 									user.name,
 									user.email,
 									ROLE_LABELS[user.role] ?? user.role,
-									user.companyName ?? "—",
+									user.companyName ?? "-",
 									user.verifiedAt !== null
 										? "Terverifikasi"
 										: "Belum diverifikasi",

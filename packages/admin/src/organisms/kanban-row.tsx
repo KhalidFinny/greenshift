@@ -78,7 +78,7 @@ export function KanbanRow({ projects }: KanbanRowProps) {
 											</p>
 											<div className="mt-2 flex items-center justify-between text-base">
 												<span className="text-muted-foreground">
-													{project.riskScore ?? "—"}
+													{project.riskScore ?? "-"}
 												</span>
 												{project.blueprintStatus ? (
 													<span

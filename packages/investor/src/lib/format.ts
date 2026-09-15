@@ -17,27 +17,27 @@ const date = new Intl.DateTimeFormat("id-ID", {
 const month = new Intl.DateTimeFormat("id-ID", { month: "short" });
 
 export function formatIdr(value: number | null | undefined): string {
-	if (typeof value !== "number" || !Number.isFinite(value)) return "—";
+	if (typeof value !== "number" || !Number.isFinite(value)) return "-";
 	return idr.format(value);
 }
 
 export function formatNumber(value: number | null | undefined): string {
-	if (typeof value !== "number" || !Number.isFinite(value)) return "—";
+	if (typeof value !== "number" || !Number.isFinite(value)) return "-";
 	return number.format(value);
 }
 
 /** Emission values in tonnes of CO₂e, e.g. "49,8 tCO₂e". */
 export function formatTonnes(value: number | null | undefined): string {
-	if (typeof value !== "number" || !Number.isFinite(value)) return "—";
+	if (typeof value !== "number" || !Number.isFinite(value)) return "-";
 	return `${new Intl.NumberFormat("id-ID", {
 		maximumFractionDigits: 1,
 	}).format(value)} tCO₂e`;
 }
 
 export function formatDate(iso: string | null | undefined): string {
-	if (!iso) return "—";
+	if (!iso) return "-";
 	const parsed = new Date(iso);
-	if (Number.isNaN(parsed.getTime())) return "—";
+	if (Number.isNaN(parsed.getTime())) return "-";
 	return date.format(parsed);
 }
 
@@ -59,11 +59,11 @@ export function quarterKey(date: Date): string {
 /** Short label from a "YYYY-Qn" key, e.g. "Q3 26". */
 export function quarterLabel(key: string | null | undefined): string {
 	const match = /^(\d{4})-Q([1-4])$/.exec(key ?? "");
-	if (!match) return key ?? "—";
+	if (!match) return key ?? "-";
 	return `Q${match[2]} ${match[1].slice(2)}`;
 }
 
-/** First letter uppercased — seeds store sectors lowercase ("tekstil"). */
+/** First letter uppercased: seeds store sectors lowercase ("tekstil"). */
 export function titleCase(value: string): string {
 	return value.charAt(0).toUpperCase() + value.slice(1);
 }

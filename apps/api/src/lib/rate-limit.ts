@@ -9,7 +9,7 @@ export interface RateLimitResult {
 
 // Fixed-window counter in KV. KV is eventually consistent, so this is a
 // coarse throttle that slows brute force and registration abuse, not a hard
-// security boundary — appropriate for auth endpoints.
+// security boundary: appropriate for auth endpoints.
 export async function checkRateLimit(
 	env: Env,
 	key: string,

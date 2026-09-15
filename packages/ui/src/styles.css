@@ -142,7 +142,7 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* No global scroll-behavior:smooth — it turns the router's per-navigation
+/* No global scroll-behavior:smooth: it turns the router's per-navigation
    scroll reset into a glide that makes the header and page "race" during
    page transitions. Section scrolling is smoothed explicitly in JS. */
 [id] {
@@ -195,8 +195,8 @@ body {
 
 /* ── Route view-transition variants ─────────────────────────────────
    Default (no data-vt) is a STAGGERED fade: the old page fully fades
-   out before the new one fades in, so the two pages never overlap —
-   the image-heavy hero (home) can't "race" against the white obligasi
+   out before the new one fades in, so the two pages never overlap.
+   The image-heavy hero (home) can't "race" against the white obligasi
    page, even without relying on attribute-selector support.
    Override with ?vt=slide-fade|zoom-fade (set on <html> in __root).   */
 
@@ -230,7 +230,7 @@ body {
   animation: vt-fade-in 220ms ease-out 140ms backwards;
 }
 
-/* slide-fade — old exits left, new enters from the right */
+/* slide-fade: old exits left, new enters from the right */
 :root[data-vt="slide-fade"]::view-transition-old(root) {
   animation: vt-slide-out 160ms ease-in forwards;
 }
@@ -238,7 +238,7 @@ body {
   animation: vt-slide-in 240ms cubic-bezier(0.22, 1, 0.36, 1) 160ms backwards;
 }
 
-/* zoom-fade — old shrinks away, new breathes in larger */
+/* zoom-fade: old shrinks away, new breathes in larger */
 :root[data-vt="zoom-fade"]::view-transition-old(root) {
   animation: vt-zoom-out 150ms ease-in forwards;
 }

@@ -19,7 +19,7 @@ import { ExportMenu } from "../organisms/export-menu";
 
 function MetadataCell({ log }: { log: AuditLogEntry }) {
 	if (log.metadata === null || log.metadata === undefined) {
-		return <TableCell>—</TableCell>;
+		return <TableCell>-</TableCell>;
 	}
 	const json = JSON.stringify(log.metadata, null, 2);
 	return (
@@ -45,7 +45,7 @@ function LogRow({ log }: { log: AuditLogEntry }) {
 					{log.action}
 				</span>
 			</TableCell>
-			<TableCell>{log.userEmail ?? "—"}</TableCell>
+			<TableCell>{log.userEmail ?? "-"}</TableCell>
 			<TableCell>
 				{log.entityType ? (
 					<span className="text-muted-foreground">
@@ -53,7 +53,7 @@ function LogRow({ log }: { log: AuditLogEntry }) {
 						{log.entityId !== null ? ` #${log.entityId}` : ""}
 					</span>
 				) : (
-					"—"
+					"-"
 				)}
 			</TableCell>
 			<MetadataCell log={log} />
@@ -129,9 +129,9 @@ export function AdminAuditLogs() {
 								rows: logs.map((log) => [
 									formatDateTime(log.createdAt),
 									log.action,
-									log.userEmail ?? "—",
-									log.entityType ? `${log.entityType} #${log.entityId}` : "—",
-									log.metadata == null ? "—" : JSON.stringify(log.metadata),
+									log.userEmail ?? "-",
+									log.entityType ? `${log.entityType} #${log.entityId}` : "-",
+									log.metadata == null ? "-" : JSON.stringify(log.metadata),
 								]),
 							},
 						]}

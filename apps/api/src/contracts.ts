@@ -114,7 +114,7 @@ export interface BlueprintSummary {
  *
  * `verified` mirrors an OJK-cleared bond that brokers can list; `on_progress`
  * is everything still working through assessment/audit. GreenShift never
- * settles a trade — verified listings hand off to a broker app via Trima+.
+ * settles a trade: verified listings hand off to a broker app via Trima+.
  */
 export const obligasiStatuses = ["verified", "on_progress"] as const;
 export type ObligasiStatus = (typeof obligasiStatuses)[number];

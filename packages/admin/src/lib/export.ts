@@ -25,10 +25,7 @@ function csvCell(value: string): string {
 	return value;
 }
 
-export function downloadCsv(
-	filename: string,
-	sections: ExportSection[],
-): void {
+export function downloadCsv(filename: string, sections: ExportSection[]): void {
 	const lines: string[] = [];
 	for (const section of sections) {
 		if (lines.length > 0) lines.push("");
@@ -38,10 +35,13 @@ export function downloadCsv(
 			lines.push(row.map(csvCell).join(","));
 		}
 	}
-	const blob = new Blob(["\uFEFF" + lines.join("\r\n")], {
+	const blob = new Blob([`\uFEFF${lines.join("\r\n")}`], {
 		type: "text/csv;charset=utf-8",
 	});
-	triggerDownload(filename.endsWith(".csv") ? filename : `${filename}.csv`, blob);
+	triggerDownload(
+		filename.endsWith(".csv") ? filename : `${filename}.csv`,
+		blob,
+	);
 }
 
 // ── Minimal PDF (A4, Helvetica, no dependencies) ───────────
@@ -148,7 +148,10 @@ export function downloadPdf(
 	pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`;
 
 	const blob = new Blob([pdf], { type: "application/pdf" });
-	triggerDownload(filename.endsWith(".pdf") ? filename : `${filename}.pdf`, blob);
+	triggerDownload(
+		filename.endsWith(".pdf") ? filename : `${filename}.pdf`,
+		blob,
+	);
 }
 
 export function downloadExport(

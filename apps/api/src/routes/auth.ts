@@ -27,8 +27,8 @@ import {
 	elevateSession,
 	readCookie,
 	SESSION_COOKIE,
-	sessionCookie,
 	STEP_UP_TTL_MS,
+	sessionCookie,
 } from "../lib/session";
 
 const factory = createFactory<ApiEnv>();
@@ -42,8 +42,6 @@ const MAX_COMPANY = 200;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 let dummyHashPromise: Promise<string> | null = null;
-
-
 
 authRoutes.post(
 	"/login",
@@ -348,7 +346,10 @@ authRoutes.post(
 	requireSession,
 	requireCsrf,
 	...factory.createHandlers(async (c) => {
-		await destroySession(c.env, readCookie(c.req.header("cookie"), SESSION_COOKIE));
+		await destroySession(
+			c.env,
+			readCookie(c.req.header("cookie"), SESSION_COOKIE),
+		);
 		c.header("Set-Cookie", clearSessionCookie());
 		return c.json({ ok: true });
 	}),

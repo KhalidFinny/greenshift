@@ -168,14 +168,14 @@ export function ProjectDetailDialog({
 
 	const blueprintActions = BLUEPRINT_ACTIONS[bp?.status ?? ""] ?? [];
 	const infoItems = [
-		{ label: "Sektor", value: project.industrySector ?? "—" },
+		{ label: "Sektor", value: project.industrySector ?? "-" },
 		{
 			label: "Anggaran",
-			value: project.budget ? idr.format(project.budget) : "—",
+			value: project.budget ? idr.format(project.budget) : "-",
 		},
 		{
 			label: "Risk Score",
-			value: project.riskScore != null ? String(project.riskScore) : "—",
+			value: project.riskScore != null ? String(project.riskScore) : "-",
 		},
 	];
 
@@ -334,7 +334,7 @@ export function ProjectDetailDialog({
 															{log.action}
 														</span>
 													</TableCell>
-													<TableCell>{log.userEmail ?? "—"}</TableCell>
+													<TableCell>{log.userEmail ?? "-"}</TableCell>
 												</TableRow>
 											))}
 										</TableBody>

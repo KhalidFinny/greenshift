@@ -15,7 +15,7 @@ const SAFE_METHODS: Record<string, true> = {
 };
 
 /**
- * Success message per mutation route. Reads stay silent — their loading and
+ * Success message per mutation route. Reads stay silent: their loading and
  * error states live in the page (skeletons / empty states).
  */
 function successMessageFor(path: string, method: string): string | null {

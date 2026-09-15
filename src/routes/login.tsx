@@ -60,7 +60,7 @@ function LoginPage() {
 			}
 			// No full page load: useAuth.login() invalidates the router, the
 			// login route's beforeLoad re-runs with the fresh session and
-			// redirects to the role home — so toasts (and UI state) survive
+			// redirects to the role home: so toasts (and UI state) survive
 			// the transition uninterrupted.
 		} catch (err) {
 			setError(
@@ -94,8 +94,8 @@ function LoginPage() {
 						Platform MRV untuk Pembiayaan Hijau
 					</h2>
 					<p className="mt-4 text-base leading-relaxed text-white/70">
-						Kelola proyek, tender, dan laporan MRV dalam satu platform —
-						transparan untuk bisnis, vendor, dan pengawas.
+						Kelola proyek, tender, dan laporan MRV dalam satu platform.
+						Transparan untuk bisnis, vendor, dan pengawas.
 					</p>
 				</div>
 				<p className="text-sm text-white/50">© 2026 GreenShift</p>
@@ -162,7 +162,7 @@ function LoginPage() {
 					</form>
 					{import.meta.env.DEV && devRole && devUsername && (
 						<div className="mt-6 rounded-lg border border-dashed border-border p-4">
-							<p className="text-sm font-medium">Dev mode — {devRole}</p>
+							<p className="text-sm font-medium">Dev mode: {devRole}</p>
 							<p className="mt-1 text-sm text-muted-foreground">
 								Login otomatis dengan akun dev role ini.
 							</p>
