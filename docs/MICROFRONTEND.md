@@ -12,7 +12,7 @@ packages/
   core/           FE shared contract — useAuth, guards, roleNav/roleHome, typed API client + request, query, types
   landing/        Public landing page (components + hooks)
   business/       Role package — business dashboard
-  investor/       Role package — investor dashboard
+  investor/       Public obligasi dashboard (market + detail)
   vendor/         Role package — vendor dashboard
   admin/          Role package — admin dashboard
 src/              The web app — TanStack Start routes, router, worker entry (server.ts), session fn, styles
@@ -45,7 +45,7 @@ Why not Module Federation? Federation splits builds and loads remote entries at 
 
 ## Roles & auth
 
-4 roles: `business`, `investor`, `vendor`, `admin` (D1 enum + `UserRole`).
+3 login roles: `business`, `vendor`, `admin` (D1 enum + `UserRole`). The obligasi dashboard (`/obligasi`) is public and needs no account.
 
 Flow: login (`POST /api/auth/login`) → PBKDF2 verify → KV session → httpOnly cookie → root `beforeLoad` hydrates `context.user` via `getSessionFn` (server fn). Guards (`requireRole`) redirect unauthenticated users to `/login` and wrong-role users to their role home.
 

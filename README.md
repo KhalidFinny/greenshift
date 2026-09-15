@@ -1,6 +1,6 @@
 # GreenShift
 
-Platform MRV untuk Pembiayaan Hijau — role-based dashboards for **business**, **investor**, **vendor**, and **admin**, served from one Cloudflare Worker.
+Platform MRV untuk Pembiayaan Hijau — role-based dashboards for **business**, **vendor**, and **admin**, plus a public **Obligasi** dashboard, served from one Cloudflare Worker.
 
 ## Stack
 
@@ -18,7 +18,7 @@ bun run dev          # full app at localhost:3000
 bun run dev:business # role-scoped dev server (business only, port 3001)
 ```
 
-Login with `business1` / `investor1` / `vendor1` / `admin` (password `12345678`).
+Login with `business1` / `vendor1` / `admin` (password `12345678`).
 
 ## Structure
 
@@ -27,7 +27,8 @@ apps/api/        BE — Hono API, D1 schema, sessions
 packages/ui/     design system (shadcn, RoleShell, Header/Footer)
 packages/core/   FE shared contract (auth, guards, typed API client)
 packages/landing/  landing page
-packages/{business,investor,vendor,admin}/  role packages
+packages/{business,vendor,admin}/  role packages
+packages/investor/  public obligasi dashboard (market + detail)
 src/             web app (routes, router, worker entry)
 ```
 

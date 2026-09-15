@@ -2,6 +2,7 @@ import type { AuditLogEntry } from "@greenshift/api/contracts";
 import { api } from "@greenshift/core";
 import {
 	Button,
+	Card,
 	ContentSkeleton,
 	EmptyState,
 	Table,
@@ -129,12 +130,8 @@ export function AdminAuditLogs() {
 									formatDateTime(log.createdAt),
 									log.action,
 									log.userEmail ?? "—",
-									log.entityType
-										? `${log.entityType} #${log.entityId}`
-										: "—",
-									log.metadata == null
-										? "—"
-										: JSON.stringify(log.metadata),
+									log.entityType ? `${log.entityType} #${log.entityId}` : "—",
+									log.metadata == null ? "—" : JSON.stringify(log.metadata),
 								]),
 							},
 						]}

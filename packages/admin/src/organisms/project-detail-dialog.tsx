@@ -1,4 +1,10 @@
-import { useEffect, useState, type ReactNode } from "react";
+import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
+import {
+	faArrowsRotate,
+	faFileLines,
+	faHistory,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import type { AdminProject } from "@greenshift/api/contracts";
 import { api } from "@greenshift/core";
 import {
@@ -24,13 +30,8 @@ import {
 	TableHeader,
 	TableRow,
 } from "@greenshift/ui";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-	faArrowsRotate,
-	faFileLines,
-	faHistory,
-} from "@fortawesome/free-solid-svg-icons";
 import { useQuery } from "@tanstack/react-query";
+import { type ReactNode, useEffect, useState } from "react";
 import { formatDateTime } from "../lib/format";
 import {
 	BLUEPRINT_STATUS_BADGE,
@@ -62,7 +63,9 @@ const BLUEPRINT_ACTIONS: Record<
 		{ label: "Tolak", next: "rejected", variant: "destructive" },
 	],
 	validated: [{ label: "Publikasikan", next: "published", variant: "default" }],
-	rejected: [{ label: "Kirim Ulang ke Audit", next: "audit", variant: "outline" }],
+	rejected: [
+		{ label: "Kirim Ulang ke Audit", next: "audit", variant: "outline" },
+	],
 	published: [],
 };
 
@@ -76,7 +79,7 @@ function SectionHeading({
 	icon,
 	children,
 }: {
-	icon: ReactNode;
+	icon: IconDefinition;
 	children: ReactNode;
 }) {
 	return (
@@ -93,7 +96,9 @@ export function ProjectDetailDialog({
 	onMutated,
 }: ProjectDetailDialogProps) {
 	const open = project !== null;
-	const [nextStatus, setNextStatus] = useState<string>(project?.status ?? "draft");
+	const [nextStatus, setNextStatus] = useState<string>(
+		project?.status ?? "draft",
+	);
 	const [auditNote, setAuditNote] = useState("");
 	const [actionError, setActionError] = useState<string | null>(null);
 
@@ -112,8 +117,8 @@ export function ProjectDetailDialog({
 		enabled: open,
 	});
 
-	const projectStatus = useStepUpAction(
-		(id: number, status: string) => api.admin.projectStatus(id, status),
+	const projectStatus = useStepUpAction((id: number, status: string) =>
+		api.admin.projectStatus(id, status),
 	);
 	const blueprintStatus = useStepUpAction(
 		(id: number, status: string, note?: string) =>
@@ -242,7 +247,9 @@ export function ProjectDetailDialog({
 									</Select>
 									<Button
 										onClick={() => runStatusAction(nextStatus)}
-										disabled={projectStatus.isPending || nextStatus === project.status}
+										disabled={
+											projectStatus.isPending || nextStatus === project.status
+										}
 									>
 										Terapkan Status
 									</Button>
@@ -321,9 +328,7 @@ export function ProjectDetailDialog({
 										<TableBody>
 											{projectLogs.map((log) => (
 												<TableRow key={log.id}>
-													<TableCell>
-														{formatDateTime(log.createdAt)}
-													</TableCell>
+													<TableCell>{formatDateTime(log.createdAt)}</TableCell>
 													<TableCell>
 														<span className="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-xs font-medium">
 															{log.action}

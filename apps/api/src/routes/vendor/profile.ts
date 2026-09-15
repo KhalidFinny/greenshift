@@ -34,6 +34,7 @@ function toVendorProfile(
 		rating: vendor.rating ?? 0,
 		totalProjects: vendor.totalProjects ?? 0,
 		verified: vendor.verifiedAt !== null,
+		verifiedAt: iso(vendor.verifiedAt),
 		userEmail: user.email,
 		userName: user.name,
 		createdAt: iso(vendor.createdAt),
@@ -159,10 +160,7 @@ profileRoutes.put(
 				}
 				created = false;
 				vendorId = other.id;
-				await db
-					.update(vendors)
-					.set(values)
-					.where(eq(vendors.id, other.id));
+				await db.update(vendors).set(values).where(eq(vendors.id, other.id));
 			} else {
 				vendorId = createdId;
 			}
@@ -175,9 +173,7 @@ profileRoutes.put(
 				.where(eq(users.id, userId)),
 			db.insert(auditLogs).values({
 				userId,
-				action: created
-					? "vendor.profile_created"
-					: "vendor.profile_updated",
+				action: created ? "vendor.profile_created" : "vendor.profile_updated",
 				entityType: "vendor_profile",
 				entityId: vendorId,
 				metadata: { companyName: values.companyName },

@@ -95,7 +95,7 @@ function LoginPage() {
 					</h2>
 					<p className="mt-4 text-base leading-relaxed text-white/70">
 						Kelola proyek, tender, dan laporan MRV dalam satu platform —
-						transparan untuk bisnis, vendor, investor, dan pengawas.
+						transparan untuk bisnis, vendor, dan pengawas.
 					</p>
 				</div>
 				<p className="text-sm text-white/50">© 2026 GreenShift</p>

@@ -22,9 +22,8 @@ Role-scoped dev servers (login restricted to that role, one-click dev login on t
 
 ```bash
 bun run dev:business   # business role only — port 3001
-bun run dev:investor   # investor role only — port 3002
-bun run dev:vendor     # vendor role only — port 3003
-bun run dev:admin      # admin role only — port 3004
+bun run dev:vendor     # vendor role only — port 3002
+bun run dev:admin      # admin role only — port 3006
 bun run dev:landing    # landing page only — port 3007
 ```
 
@@ -35,7 +34,6 @@ All passwords are `12345678`. Type the username or `username@greenshift.dev`:
 | Username | Role |
 |---|---|
 | `business1` | company |
-| `investor1` | investor |
 | `vendor1` | vendor |
 | `admin` | admin |
 
@@ -47,7 +45,8 @@ All passwords are `12345678`. Type the username or `username@greenshift.dev`:
 | `packages/ui` (`@greenshift/ui`) | Design system — shadcn components, RoleShell, Header/Footer, loaders, EmptyState, `cn` |
 | `packages/core` (`@greenshift/core`) | Shared FE contract — `useAuth`, guards, `roleNav`/`roleHome`, typed API client + `request`, query |
 | `packages/landing` (`@greenshift/landing`) | Landing page components + hooks |
-| `packages/business` \| `investor` \| `vendor` \| `admin` | Role dashboards |
+| `packages/business` \| `vendor` \| `admin` | Role dashboards |
+| `packages/investor` | Public obligasi dashboard (market + detail) |
 
 ## Rules (must)
 

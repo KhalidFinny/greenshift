@@ -1,5 +1,5 @@
-import { ApiError } from "./errors";
 import { publishToast } from "../toast-bus";
+import { ApiError } from "./errors";
 
 type ErrorBody = { error?: { code?: string; message?: string } } | null;
 type CsrfBody = { csrfToken?: string } | null;
@@ -23,7 +23,6 @@ function successMessageFor(path: string, method: string): string | null {
 	if (path.endsWith("/api/auth/login")) return "Berhasil masuk";
 	if (path.endsWith("/api/auth/register")) return "Akun berhasil dibuat";
 	if (path.endsWith("/api/auth/logout")) return "Berhasil keluar";
-	if (/\/api\/investor\/bonds$/.test(path)) return "Obligasi hijau berhasil dibeli";
 	if (/\/api\/admin\/users\/\d+\/verify$/.test(path))
 		return "Verifikasi pengguna diperbarui";
 	if (/\/api\/admin\/vendors\/\d+\/verify$/.test(path))
@@ -81,7 +80,7 @@ async function fetchCsrfToken(signal?: AbortSignal): Promise<string | null> {
 		}
 		const body = (await res.json().catch(() => null)) as CsrfBody;
 		return typeof body?.csrfToken === "string" ? body.csrfToken : null;
-		} finally {
+	} finally {
 		clearTimeout(timeout);
 	}
 }

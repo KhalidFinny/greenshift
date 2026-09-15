@@ -89,7 +89,7 @@ proposalUpdateRoutes.patch(
 		const userId = c.get("user").id;
 
 		const [profile] = await db
-			.select({ id: vendors.id })
+			.select({ id: vendors.id, verifiedAt: vendors.verifiedAt })
 			.from(vendors)
 			.where(eq(vendors.userId, userId))
 			.limit(1);
@@ -195,7 +195,7 @@ proposalUpdateRoutes.patch(
 			}
 			await db.insert(proposalRevisions).values({
 				proposalId: current.id,
-				revisionNumber: claimed.revisionCount,
+				revisionNumber: claimed.revisionCount ?? 0,
 				note: note ?? null,
 				amount: amount ?? current.amount,
 				previousAmount: current.amount,
@@ -210,7 +210,9 @@ proposalUpdateRoutes.patch(
 				.returning();
 			if (!row) {
 				return c.json(
-					{ error: { code: "NOT_FOUND", message: "Penawaran tidak ditemukan" } },
+					{
+						error: { code: "NOT_FOUND", message: "Penawaran tidak ditemukan" },
+					},
 					404,
 				);
 			}

@@ -35,7 +35,7 @@ function warmSsrOnBoot(): Plugin {
 }
 
 const config = defineConfig({
-	resolve: { tsconfigPaths: true },
+	resolve: { tsconfigPaths: true, dedupe: ["lucide-react"] },
 	server: {
 		// Pre-transform the app graph at boot so the first page load doesn't
 		// pay the on-demand compile waterfall (~6s on cold start). The SSR

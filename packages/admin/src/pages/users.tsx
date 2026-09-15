@@ -25,12 +25,11 @@ import { ExportMenu } from "../organisms/export-menu";
 
 const ROLE_LABELS: Record<string, string> = {
 	business: "Bisnis",
-	investor: "Investor",
 	vendor: "Vendor",
 	admin: "Admin",
 };
 
-const ROLE_OPTIONS = ["business", "investor", "vendor", "admin"] as const;
+const ROLE_OPTIONS = ["business", "vendor", "admin"] as const;
 
 function UserRow({ user }: { user: AdminUser }) {
 	const verified = user.verifiedAt !== null;

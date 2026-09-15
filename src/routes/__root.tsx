@@ -9,6 +9,7 @@ import {
 	useRouterState,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { useEffect } from "react";
 import { NotFoundComponent } from "../components/not-found";
 import { getSessionFn } from "../lib/session";
 import type { RouterContext } from "../router";
@@ -46,6 +47,15 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			activeRouteId !== "/login" &&
 			activeRouteId !== "/register"
 		: true;
+	// The obligasi dashboard is a self-contained public surface: no site footer.
+	const isObligasiPage = activeRouteId?.startsWith("/obligasi") ?? false;
+
+	// Pick the view-transition variant. Defaults to "fade-through" (no asset
+	// overlap); override live with ?vt=slide-fade|zoom-fade to A/B.
+	useEffect(() => {
+		const variant = new URLSearchParams(window.location.search).get("vt");
+		document.documentElement.dataset.vt = variant ?? "fade-through";
+	}, []);
 
 	return (
 		<html lang="id" suppressHydrationWarning>
@@ -53,11 +63,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<HeadContent />
 			</head>
 			<body className="bg-background font-sans text-foreground antialiased [overflow-wrap:anywhere] selection:bg-secondary selection:text-foreground">
-				{isPublicPage ? (
-					<Header variant={isHome ? "transparent" : "default"} />
-				) : null}
+				{isHome ? <Header /> : null}
 				<ToastProvider>{children}</ToastProvider>
-				{isPublicPage ? <Footer /> : null}
+				{isPublicPage && !isObligasiPage ? <Footer /> : null}
 				{import.meta.env.DEV && (
 					<TanStackDevtools
 						config={{ position: "bottom-right" }}

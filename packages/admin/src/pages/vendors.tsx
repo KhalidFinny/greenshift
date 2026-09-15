@@ -1,3 +1,9 @@
+import {
+	faCheckCircle,
+	faHandshake,
+	faStar,
+	faWarehouse,
+} from "@fortawesome/free-solid-svg-icons";
 import type { AdminVendor } from "@greenshift/api/contracts";
 import { api } from "@greenshift/core";
 import {
@@ -23,16 +29,10 @@ import {
 	TableHeader,
 	TableRow,
 } from "@greenshift/ui";
-import {
-	faCheckCircle,
-	faHandshake,
-	faStar,
-	faWarehouse,
-} from "@fortawesome/free-solid-svg-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { useStepUpAction } from "../lib/use-step-up-action";
 import type { ExportSection } from "../lib/export";
+import { useStepUpAction } from "../lib/use-step-up-action";
 import { ExportMenu } from "../organisms/export-menu";
 import { MetricCard } from "../organisms/metric-card";
 import { StepUpDialog } from "../organisms/step-up-dialog";
@@ -42,7 +42,7 @@ import { VendorPerformanceDialog } from "../organisms/vendor-performance-dialog"
 const MATCH_RATE = [
 	{ label: "Sukses", value: 68, maxValue: 100, color: "var(--chart-1)" },
 	{ label: "Belum match", value: 32, maxValue: 100, color: "var(--chart-5)" },
-] as const;
+];
 
 const MATCHES_OVER_TIME = [
 	{ label: "Jan", value: 4 },
@@ -53,7 +53,7 @@ const MATCHES_OVER_TIME = [
 	{ label: "Jun", value: 12 },
 	{ label: "Jul", value: 14 },
 	{ label: "Agu", value: 18 },
-] as const;
+];
 
 const DEMO_PERFORMANCE_VENDORS: AdminVendor[] = [
 	{
@@ -64,10 +64,7 @@ const DEMO_PERFORMANCE_VENDORS: AdminVendor[] = [
 		companyName: "EcoTech",
 		description: "Spesialis retrofit HVAC dan optimasi utilitas pabrik.",
 		certifications: ["ISO 50001", "K3 Umum"],
-		portfolio: [
-			"Retrofit chiller 600 TR",
-			"Optimasi kompresor pabrik tekstil",
-		],
+		portfolio: ["Retrofit chiller 600 TR", "Optimasi kompresor pabrik tekstil"],
 		rating: 4.6,
 		totalProjects: 7,
 		verifiedAt: "2026-07-14T09:00:00.000Z",
@@ -79,8 +76,7 @@ const DEMO_PERFORMANCE_VENDORS: AdminVendor[] = [
 		email: "growth@greenworks.id",
 		userName: "GreenWorks Team",
 		companyName: "GreenWorks",
-		description:
-			"Vendor efisiensi energi dengan fokus audit dan LED retrofit.",
+		description: "Vendor efisiensi energi dengan fokus audit dan LED retrofit.",
 		certifications: ["ISO 9001", "Auditor Energi"],
 		portfolio: ["LED relamping gudang", "Audit energi pabrik FMCG"],
 		rating: 4.4,
@@ -94,8 +90,7 @@ const DEMO_PERFORMANCE_VENDORS: AdminVendor[] = [
 		email: "project@solarx.id",
 		userName: "SolarX Team",
 		companyName: "SolarX",
-		description:
-			"Implementasi PLTS atap dan monitoring performa energi.",
+		description: "Implementasi PLTS atap dan monitoring performa energi.",
 		certifications: ["IEC Solar Installer"],
 		portfolio: ["PLTS atap 500 kWp", "Monitoring energi multi-site"],
 		rating: 4.2,
@@ -210,9 +205,7 @@ export function AdminVendors() {
 		void verify
 			.run({ id: vendor.id, verified })
 			.catch((err: unknown) =>
-				setVerifyError(
-					err instanceof Error ? err.message : "Verifikasi gagal",
-				),
+				setVerifyError(err instanceof Error ? err.message : "Verifikasi gagal"),
 			);
 	};
 
@@ -267,9 +260,7 @@ export function AdminVendors() {
 				vendor.companyName,
 				vendor.email,
 				vendor.certifications.join(", ") || "—",
-				vendor.portfolio.length > 0
-					? `${vendor.portfolio.length} proyek`
-					: "—",
+				vendor.portfolio.length > 0 ? `${vendor.portfolio.length} proyek` : "—",
 				vendor.rating.toFixed(1),
 				vendor.verifiedAt !== null ? "Terverifikasi" : "Belum",
 			]),
@@ -354,10 +345,7 @@ export function AdminVendors() {
 								Target benchmark: 4.5 / 5
 							</p>
 							{performanceSource.length > 5 ? (
-								<Button
-									variant="outline"
-									onClick={() => setPerfOpen(true)}
-								>
+								<Button variant="outline" onClick={() => setPerfOpen(true)}>
 									Lihat Semua ({performanceSource.length})
 								</Button>
 							) : null}
@@ -430,9 +418,7 @@ export function AdminVendors() {
 									style={{ backgroundColor: item.color }}
 									aria-hidden="true"
 								/>
-								<p className="text-base text-muted-foreground">
-									{item.label}
-								</p>
+								<p className="text-base text-muted-foreground">{item.label}</p>
 								<p className="text-base font-semibold tabular-nums">
 									{item.value}%
 								</p>

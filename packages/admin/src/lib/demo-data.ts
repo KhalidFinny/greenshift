@@ -7,7 +7,6 @@ import type {
 
 export const ROLE_LABELS: Record<string, string> = {
 	business: "Bisnis",
-	investor: "Investor",
 	vendor: "Vendor",
 	admin: "Admin",
 };
@@ -27,7 +26,7 @@ export const BLUEPRINT_META: Record<
 };
 
 export const DEMO_STATS: AdminStats = {
-	users: { business: 12, investor: 8, vendor: 5, admin: 2 },
+	users: { business: 12, vendor: 5, admin: 2 },
 	projects: {
 		draft: 3,
 		assessment: 2,
@@ -39,7 +38,7 @@ export const DEMO_STATS: AdminStats = {
 	payments: { paid: 18, scheduled: 4, failed: 2 },
 	usersVerified: { verified: 21, unverified: 6 },
 	companies: 14,
-	investorsActive: 8,
+	investorsActive: 0,
 	blueprints: {
 		draft: 2,
 		audit: 1,
@@ -98,16 +97,6 @@ export const DEMO_USERS: AdminUser[] = [
 		createdAt: "2026-06-15T09:00:00Z",
 	},
 	{
-		id: 2,
-		email: "invest@greencapital.id",
-		name: "Green Capital Fund",
-		role: "investor",
-		companyName: "Green Capital",
-		verifiedAt: "2026-07-12T10:00:00Z",
-		vendorProfile: false,
-		createdAt: "2026-06-20T11:00:00Z",
-	},
-	{
 		id: 3,
 		email: "vendor@ecotech.io",
 		name: "EcoTech Solutions",
@@ -136,16 +125,6 @@ export const DEMO_USERS: AdminUser[] = [
 		verifiedAt: null,
 		vendorProfile: false,
 		createdAt: "2026-08-01T07:00:00Z",
-	},
-	{
-		id: 6,
-		email: "fund@carbonvest.id",
-		name: "CarbonVest Capital",
-		role: "investor",
-		companyName: "CarbonVest",
-		verifiedAt: "2026-08-05T09:00:00Z",
-		vendorProfile: false,
-		createdAt: "2026-07-28T10:00:00Z",
 	},
 ];
 

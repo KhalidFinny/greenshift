@@ -1,111 +1,136 @@
-import type { MarketProject } from "@greenshift/api/contracts";
+import { faArrowLeft, faCircleInfo } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import type { ObligasiListing } from "@greenshift/api/contracts";
 import { api } from "@greenshift/core";
+import { Button, ContentSkeleton, cn, EmptyState } from "@greenshift/ui";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import {
-	ContentSkeleton,
-	EmptyState,
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@greenshift/ui";
-import { DEMO_MARKET } from "../lib/demo-data";
-import { titleCase } from "../lib/format";
-import { BondBuyDialog } from "../organisms/bond-buy-dialog";
-import { MarketCard } from "../organisms/market-card";
+import { PRIMARY_BROKER } from "../lib/broker-platforms";
+import { DEMO_OBLIGASI } from "../lib/demo-data";
+import { ObligasiCard } from "../organisms/market-card";
 
-export function GreenMarket() {
+type ObligasiTab = "verified" | "on_progress";
+
+function ListingGrid({ listings }: { listings: ObligasiListing[] }) {
+	if (listings.length === 0) {
+		return (
+			<EmptyState
+				title="Belum ada obligasi"
+				description="Belum ada obligasi pada kategori ini saat ini."
+			/>
+		);
+	}
+	return (
+		<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+			{listings.map((listing) => (
+				<ObligasiCard key={listing.id} listing={listing} />
+			))}
+		</div>
+	);
+}
+
+export function ObligasiPage() {
 	const query = useQuery({
 		queryKey: ["investor", "market"],
 		queryFn: () => api.investor.market(),
 	});
-	const [sector, setSector] = useState("all");
-	const [sort, setSort] = useState("return");
-	const [selected, setSelected] = useState<MarketProject | null>(null);
+	const [tab, setTab] = useState<ObligasiTab>("verified");
 
-	if (query.isPending) return <ContentSkeleton />;
-	if (query.isError) {
-		return (
-			<EmptyState
-				title="Gagal memuat Green Market"
-				description="Tidak dapat mengambil daftar proyek pendanaan saat ini."
-			/>
-		);
-	}
+	const live = query.data?.obligasi ?? [];
+	const source = query.isSuccess
+		? live.length > 0
+			? live
+			: DEMO_OBLIGASI
+		: [];
 
-	const liveProjects = query.data.projects;
-	const isDemo = liveProjects.length === 0;
-	const source: MarketProject[] = isDemo ? DEMO_MARKET : liveProjects;
-	const sectors = [...new Set(source.map((project) => titleCase(project.industrySector ?? "Umum")))].sort();
-
-	const projects = [...source]
-		.filter((project) =>
-			sector === "all"
-				? true
-				: titleCase(project.industrySector ?? "Umum") === sector,
-		)
-		.sort((a, b) => {
-			if (sort === "risk") return (a.riskScore ?? 999) - (b.riskScore ?? 999);
-			if (sort === "funding") return b.fundingProgress - a.fundingProgress;
-			return (b.blueprint.irr ?? 0) - (a.blueprint.irr ?? 0);
-		});
+	const verified = source.filter((listing) => listing.status === "verified");
+	const onProgress = source.filter(
+		(listing) => listing.status === "on_progress",
+	);
+	const tabs: Array<{ value: ObligasiTab; label: string; count: number }> = [
+		{ value: "verified", label: "Terverifikasi", count: verified.length },
+		{ value: "on_progress", label: "Dalam Proses", count: onProgress.length },
+	];
 
 	return (
-		<div className="space-y-6">
-			<div className="flex flex-wrap items-center justify-end gap-3">
-				<Select value={sector} onValueChange={setSector}>
-					<SelectTrigger>
-						<SelectValue placeholder="Semua sektor" />
-					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value="all">Semua Sektor</SelectItem>
-						{sectors.map((item) => (
-							<SelectItem key={item} value={item}>
-								{item}
-							</SelectItem>
-						))}
-					</SelectContent>
-				</Select>
-
-				<Select value={sort} onValueChange={setSort}>
-					<SelectTrigger>
-						<SelectValue placeholder="Urutkan" />
-					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value="return">Return &gt; 10%</SelectItem>
-						<SelectItem value="risk">Risiko terendah</SelectItem>
-						<SelectItem value="funding">Pendanaan tertinggi</SelectItem>
-					</SelectContent>
-				</Select>
+		<main className="pb-20">
+			{/* Sticky command bar: back button stays reachable while the list scrolls. */}
+			<div className="sticky top-0 z-30 border-b border-border/70 bg-background/85 backdrop-blur">
+				<div className="page-wrap mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+					<Link to="/">
+						<Button variant="outline" size="lg">
+							<FontAwesomeIcon icon={faArrowLeft} />
+							Kembali ke Beranda
+						</Button>
+					</Link>
+					<span className="hidden text-sm text-muted-foreground sm:block">
+						{source.length} obligasi terdaftar
+					</span>
+				</div>
 			</div>
 
-			{projects.length === 0 ? (
-				<EmptyState
-					title="Tidak ada hasil"
-					description="Belum ada proyek untuk filter yang dipilih."
-				/>
-			) : (
-				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
-					{projects.map((project) => (
-						<MarketCard
-							key={project.id}
-							project={project}
-							disabled={isDemo}
-							onBuy={() => setSelected(project)}
-						/>
-					))}
-				</div>
-			)}
+			<div className="page-wrap mx-auto max-w-7xl px-4 py-8 sm:px-6">
+				<header className="max-w-3xl">
+					<h1 className="text-3xl font-semibold leading-tight sm:text-4xl">
+						Obligasi Hijau
+					</h1>
+				</header>
 
-			<BondBuyDialog
-				project={selected}
-				open={selected !== null && !isDemo}
-				onOpenChange={(open) => {
-					if (!open) setSelected(null);
-				}}
-			/>
-		</div>
+				<div className="mt-6 flex max-w-3xl items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4">
+					<FontAwesomeIcon
+						icon={faCircleInfo}
+						className="mt-0.5 size-5 shrink-0 text-primary"
+					/>
+					<p className="text-sm leading-relaxed text-muted-foreground">
+						<span className="font-medium text-foreground">
+							{PRIMARY_BROKER.name}
+						</span>{" "}
+						{PRIMARY_BROKER.note} Tombol beli akan membuka aplikasi broker; bila
+						belum terpasang kami arahkan ke Google Play, dan Anda selalu bisa
+						menyalin kode obligasi untuk dicari manual.
+					</p>
+				</div>
+
+				{query.isPending ? (
+					<div className="mt-8">
+						<ContentSkeleton />
+					</div>
+				) : query.isError ? (
+					<div className="mt-8">
+						<EmptyState
+							title="Gagal memuat obligasi"
+							description="Tidak dapat mengambil daftar obligasi saat ini."
+						/>
+					</div>
+				) : (
+					<>
+						<div className="mt-8 inline-flex flex-wrap gap-1 rounded-lg border border-border/70 bg-muted/40 p-1">
+							{tabs.map((item) => (
+								<button
+									key={item.value}
+									type="button"
+									onClick={() => setTab(item.value)}
+									className={cn(
+										"rounded-md px-4 py-2 text-base font-medium transition-colors",
+										tab === item.value
+											? "bg-background text-foreground shadow-sm"
+											: "text-muted-foreground hover:text-foreground",
+									)}
+								>
+									{item.label} ({item.count})
+								</button>
+							))}
+						</div>
+
+						<div className="mt-6">
+							<ListingGrid
+								listings={tab === "verified" ? verified : onProgress}
+							/>
+						</div>
+					</>
+				)}
+			</div>
+		</main>
 	);
 }

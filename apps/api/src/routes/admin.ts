@@ -897,10 +897,13 @@ adminRoutes.get(
 		) => {
 			flags.push({
 				id: `${category}.${kind}-${entityId ?? flags.length}`,
+				code: kind,
 				category,
 				severity,
 				title,
+				description: detail,
 				detail,
+				projectId: null,
 				entityType,
 				entityId,
 				entityLabel,
