@@ -1,13 +1,13 @@
 export type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
 
 export const PROJECT_STATUS_LABELS: Record<string, string> = {
-	draft: "Draf",
-	assessment: "Penilaian",
+	draft: "Draft",
+	assessment: "Assessment",
 	tendering: "Tender",
 	blueprint: "Blueprint",
-	funding: "Pendanaan",
+	funding: "Funding",
 	monitoring: "Monitoring",
-	completed: "Selesai",
+	completed: "Completed",
 };
 
 export const PROJECT_STATUS_OPTIONS = [
@@ -31,11 +31,11 @@ export const PROJECT_STATUS_BADGE: Record<string, BadgeVariant> = {
 };
 
 export const BLUEPRINT_STATUS_LABELS: Record<string, string> = {
-	draft: "Draf",
+	draft: "Draft",
 	audit: "Audit",
-	validated: "Tervalidasi",
-	rejected: "Ditolak",
-	published: "Terpublikasi",
+	validated: "Validated",
+	rejected: "Rejected",
+	published: "Published",
 };
 
 export const BLUEPRINT_STATUS_BADGE: Record<string, BadgeVariant> = {

@@ -18,7 +18,7 @@ export function RatingBar({
 	return (
 		<div
 			role="img"
-			aria-label={`Rating ${rating.toFixed(1)} dari 5`}
+			aria-label={`Rating ${rating.toFixed(1)} out of 5`}
 			className={cn(
 				"h-2 w-full overflow-hidden rounded-full bg-muted",
 				className,

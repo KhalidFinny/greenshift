@@ -11,14 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/_auth'
+import { Route as BondsRouteImport } from './routes/bonds'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as ObligasiRouteImport } from './routes/obligasi'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as AuthAdminRouteImport } from './routes/_auth.admin'
 import { Route as AuthBusinessRouteImport } from './routes/_auth.business'
 import { Route as AuthProfileRouteImport } from './routes/_auth.profile'
 import { Route as AuthVendorRouteImport } from './routes/_auth.vendor'
-import { Route as ObligasiIndexRouteImport } from './routes/obligasi.index'
+import { Route as BondsIndexRouteImport } from './routes/bonds.index'
 import { Route as AuthAdminIndexRouteImport } from './routes/_auth.admin.index'
 import { Route as AuthAdminAnalyticsRouteImport } from './routes/_auth.admin.analytics'
 import { Route as AuthAdminAuditLogsRouteImport } from './routes/_auth.admin.audit-logs'
@@ -38,14 +38,14 @@ const AuthRoute = AuthRouteImport.update({
   id: '/_auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BondsRoute = BondsRouteImport.update({
+  id: '/bonds',
+  path: '/bonds',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ObligasiRoute = ObligasiRouteImport.update({
-  id: '/obligasi',
-  path: '/obligasi',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterRoute = RegisterRouteImport.update({
@@ -73,10 +73,10 @@ const AuthVendorRoute = AuthVendorRouteImport.update({
   path: '/vendor',
   getParentRoute: () => AuthRoute,
 } as any)
-const ObligasiIndexRoute = ObligasiIndexRouteImport.update({
+const BondsIndexRoute = BondsIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => ObligasiRoute,
+  getParentRoute: () => BondsRoute,
 } as any)
 const AuthAdminIndexRoute = AuthAdminIndexRouteImport.update({
   id: '/',
@@ -126,14 +126,14 @@ const AuthVendorIndexRoute = AuthVendorIndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/bonds': typeof BondsRouteWithChildren
   '/login': typeof LoginRoute
-  '/obligasi': typeof ObligasiRouteWithChildren
   '/register': typeof RegisterRoute
   '/admin': typeof AuthAdminRouteWithChildren
   '/business': typeof AuthBusinessRouteWithChildren
   '/profile': typeof AuthProfileRoute
   '/vendor': typeof AuthVendorRouteWithChildren
-  '/obligasi/': typeof ObligasiIndexRoute
+  '/bonds/': typeof BondsIndexRoute
   '/admin/analytics': typeof AuthAdminAnalyticsRoute
   '/admin/audit-logs': typeof AuthAdminAuditLogsRoute
   '/admin/projects': typeof AuthAdminProjectsRoute
@@ -149,7 +149,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/profile': typeof AuthProfileRoute
-  '/obligasi': typeof ObligasiIndexRoute
+  '/bonds': typeof BondsIndexRoute
   '/admin/analytics': typeof AuthAdminAnalyticsRoute
   '/admin/audit-logs': typeof AuthAdminAuditLogsRoute
   '/admin/projects': typeof AuthAdminProjectsRoute
@@ -164,14 +164,14 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteWithChildren
+  '/bonds': typeof BondsRouteWithChildren
   '/login': typeof LoginRoute
-  '/obligasi': typeof ObligasiRouteWithChildren
   '/register': typeof RegisterRoute
   '/_auth/admin': typeof AuthAdminRouteWithChildren
   '/_auth/business': typeof AuthBusinessRouteWithChildren
   '/_auth/profile': typeof AuthProfileRoute
   '/_auth/vendor': typeof AuthVendorRouteWithChildren
-  '/obligasi/': typeof ObligasiIndexRoute
+  '/bonds/': typeof BondsIndexRoute
   '/_auth/admin/analytics': typeof AuthAdminAnalyticsRoute
   '/_auth/admin/audit-logs': typeof AuthAdminAuditLogsRoute
   '/_auth/admin/projects': typeof AuthAdminProjectsRoute
@@ -186,14 +186,14 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/bonds'
     | '/login'
-    | '/obligasi'
     | '/register'
     | '/admin'
     | '/business'
     | '/profile'
     | '/vendor'
-    | '/obligasi/'
+    | '/bonds/'
     | '/admin/analytics'
     | '/admin/audit-logs'
     | '/admin/projects'
@@ -209,7 +209,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/profile'
-    | '/obligasi'
+    | '/bonds'
     | '/admin/analytics'
     | '/admin/audit-logs'
     | '/admin/projects'
@@ -223,14 +223,14 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_auth'
+    | '/bonds'
     | '/login'
-    | '/obligasi'
     | '/register'
     | '/_auth/admin'
     | '/_auth/business'
     | '/_auth/profile'
     | '/_auth/vendor'
-    | '/obligasi/'
+    | '/bonds/'
     | '/_auth/admin/analytics'
     | '/_auth/admin/audit-logs'
     | '/_auth/admin/projects'
@@ -245,8 +245,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRouteWithChildren
+  BondsRoute: typeof BondsRouteWithChildren
   LoginRoute: typeof LoginRoute
-  ObligasiRoute: typeof ObligasiRouteWithChildren
   RegisterRoute: typeof RegisterRoute
 }
 
@@ -266,18 +266,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bonds': {
+      id: '/bonds'
+      path: '/bonds'
+      fullPath: '/bonds'
+      preLoaderRoute: typeof BondsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/obligasi': {
-      id: '/obligasi'
-      path: '/obligasi'
-      fullPath: '/obligasi'
-      preLoaderRoute: typeof ObligasiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/register': {
@@ -315,12 +315,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthVendorRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/obligasi/': {
-      id: '/obligasi/'
+    '/bonds/': {
+      id: '/bonds/'
       path: '/'
-      fullPath: '/obligasi/'
-      preLoaderRoute: typeof ObligasiIndexRouteImport
-      parentRoute: typeof ObligasiRoute
+      fullPath: '/bonds/'
+      preLoaderRoute: typeof BondsIndexRouteImport
+      parentRoute: typeof BondsRoute
     }
     '/_auth/admin/': {
       id: '/_auth/admin/'
@@ -452,23 +452,21 @@ const AuthRouteChildren: AuthRouteChildren = {
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
-interface ObligasiRouteChildren {
-  ObligasiIndexRoute: typeof ObligasiIndexRoute
+interface BondsRouteChildren {
+  BondsIndexRoute: typeof BondsIndexRoute
 }
 
-const ObligasiRouteChildren: ObligasiRouteChildren = {
-  ObligasiIndexRoute: ObligasiIndexRoute,
+const BondsRouteChildren: BondsRouteChildren = {
+  BondsIndexRoute: BondsIndexRoute,
 }
 
-const ObligasiRouteWithChildren = ObligasiRoute._addFileChildren(
-  ObligasiRouteChildren,
-)
+const BondsRouteWithChildren = BondsRoute._addFileChildren(BondsRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRouteWithChildren,
+  BondsRoute: BondsRouteWithChildren,
   LoginRoute: LoginRoute,
-  ObligasiRoute: ObligasiRouteWithChildren,
   RegisterRoute: RegisterRoute,
 }
 export const routeTree = rootRouteImport

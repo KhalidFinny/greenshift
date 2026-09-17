@@ -1,6 +1,6 @@
 import { faArrowLeft, faCircleInfo } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import type { ObligasiListing } from "@greenshift/api/contracts";
+import type { BondListing } from "@greenshift/api/contracts";
 import { api } from "@greenshift/core";
 import { Button, ContentSkeleton, cn, EmptyState } from "@greenshift/ui";
 import { useQuery } from "@tanstack/react-query";
@@ -8,36 +8,36 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { PRIMARY_BROKER } from "../lib/broker-platforms";
 import { DEMO_OBLIGASI } from "../lib/demo-data";
-import { ObligasiCard } from "../organisms/market-card";
+import { BondCard } from "../organisms/market-card";
 
-type ObligasiTab = "verified" | "on_progress";
+type BondTab = "verified" | "on_progress";
 
-function ListingGrid({ listings }: { listings: ObligasiListing[] }) {
+function ListingGrid({ listings }: { listings: BondListing[] }) {
 	if (listings.length === 0) {
 		return (
 			<EmptyState
-				title="Belum ada obligasi"
-				description="Belum ada obligasi pada kategori ini saat ini."
+				title="No bonds yet"
+				description="There are no bonds in this category yet."
 			/>
 		);
 	}
 	return (
 		<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 			{listings.map((listing) => (
-				<ObligasiCard key={listing.id} listing={listing} />
+				<BondCard key={listing.id} listing={listing} />
 			))}
 		</div>
 	);
 }
 
-export function ObligasiPage() {
+export function BondsPage() {
 	const query = useQuery({
 		queryKey: ["investor", "market"],
 		queryFn: () => api.investor.market(),
 	});
-	const [tab, setTab] = useState<ObligasiTab>("verified");
+	const [tab, setTab] = useState<BondTab>("verified");
 
-	const live = query.data?.obligasi ?? [];
+	const live = query.data?.bonds ?? [];
 	const source = query.isSuccess
 		? live.length > 0
 			? live
@@ -48,9 +48,9 @@ export function ObligasiPage() {
 	const onProgress = source.filter(
 		(listing) => listing.status === "on_progress",
 	);
-	const tabs: Array<{ value: ObligasiTab; label: string; count: number }> = [
-		{ value: "verified", label: "Terverifikasi", count: verified.length },
-		{ value: "on_progress", label: "Dalam Proses", count: onProgress.length },
+	const tabs: Array<{ value: BondTab; label: string; count: number }> = [
+		{ value: "verified", label: "Verified", count: verified.length },
+		{ value: "on_progress", label: "In Progress", count: onProgress.length },
 	];
 
 	return (
@@ -61,11 +61,11 @@ export function ObligasiPage() {
 					<Link to="/">
 						<Button variant="outline" size="lg">
 							<FontAwesomeIcon icon={faArrowLeft} />
-							Kembali ke Beranda
+							Back to Home
 						</Button>
 					</Link>
 					<span className="hidden text-sm text-muted-foreground sm:block">
-						{source.length} obligasi terdaftar
+						{source.length} bonds listed
 					</span>
 				</div>
 			</div>
@@ -73,7 +73,7 @@ export function ObligasiPage() {
 			<div className="page-wrap mx-auto max-w-7xl px-4 py-8 sm:px-6">
 				<header className="max-w-3xl">
 					<h1 className="text-3xl font-semibold leading-tight sm:text-4xl">
-						Obligasi Hijau
+						Green Bonds
 					</h1>
 				</header>
 
@@ -86,9 +86,9 @@ export function ObligasiPage() {
 						<span className="font-medium text-foreground">
 							{PRIMARY_BROKER.name}
 						</span>{" "}
-						{PRIMARY_BROKER.note} Tombol beli akan membuka aplikasi broker; bila
-						belum terpasang kami arahkan ke Google Play, dan Anda selalu bisa
-						menyalin kode obligasi untuk dicari manual.
+						{PRIMARY_BROKER.note} The buy button opens the broker app; if it is
+						not installed we redirect you to Google Play, and you can always
+						copy the bond code to search manually.
 					</p>
 				</div>
 
@@ -99,8 +99,8 @@ export function ObligasiPage() {
 				) : query.isError ? (
 					<div className="mt-8">
 						<EmptyState
-							title="Gagal memuat obligasi"
-							description="Tidak dapat mengambil daftar obligasi saat ini."
+							title="Failed to load bonds"
+							description="Unable to fetch the bond list right now."
 						/>
 					</div>
 				) : (

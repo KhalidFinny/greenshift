@@ -20,13 +20,13 @@ const STATUS_ORDER = [
 ];
 
 const STATUS_LABELS: Record<string, string> = {
-	draft: "Draf",
-	assessment: "Penilaian",
+	draft: "Draft",
+	assessment: "Assessment",
 	tendering: "Tender",
 	blueprint: "Blueprint",
-	funding: "Pendanaan",
+	funding: "Funding",
 	monitoring: "Monitoring",
-	completed: "Selesai",
+	completed: "Completed",
 };
 
 interface KanbanRowProps {
@@ -44,9 +44,9 @@ export function KanbanRow({ projects }: KanbanRowProps) {
 		<Card>
 			<CardHeader>
 				<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-					<CardTitle className="text-xl">Pipeline Proyek</CardTitle>
+					<CardTitle className="text-xl">Project Pipeline</CardTitle>
 					<Button asChild variant="outline" className="!h-9 px-4 text-base">
-						<Link to="/admin/projects">Lihat selengkapnya</Link>
+						<Link to="/admin/projects">View more</Link>
 					</Button>
 				</div>
 			</CardHeader>
@@ -91,7 +91,7 @@ export function KanbanRow({ projects }: KanbanRowProps) {
 									))}
 									{col.projects.length > 2 ? (
 										<p className="text-base text-muted-foreground">
-											+{col.projects.length - 2} lagi
+											+{col.projects.length - 2} more
 										</p>
 									) : null}
 								</div>

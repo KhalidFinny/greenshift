@@ -22,7 +22,7 @@ export const requireSession = createMiddleware<ApiEnv>(
 		const session = await getSessionUser(c.env, token);
 		if (!session || !token) {
 			return c.json(
-				{ error: { code: "UNAUTHORIZED", message: "Sesi tidak valid" } },
+				{ error: { code: "UNAUTHORIZED", message: "Invalid session" } },
 				401,
 			);
 		}
@@ -35,7 +35,7 @@ export const requireSession = createMiddleware<ApiEnv>(
 			.limit(1);
 		if (!user) {
 			return c.json(
-				{ error: { code: "UNAUTHORIZED", message: "Sesi tidak valid" } },
+				{ error: { code: "UNAUTHORIZED", message: "Invalid session" } },
 				401,
 			);
 		}
@@ -55,7 +55,7 @@ export function requireRole(...roles: AuthUser["role"][]) {
 				{
 					error: {
 						code: "FORBIDDEN",
-						message: "Anda tidak memiliki akses ke sumber daya ini",
+						message: "You do not have access to this resource",
 					},
 				},
 				403,
@@ -73,7 +73,8 @@ export const requireRecentStepUp = createMiddleware<ApiEnv>(
 				{
 					error: {
 						code: "STEP_UP_REQUIRED",
-						message: "Konfirmasi kata sandi diperlukan untuk aksi sensitif ini",
+						message:
+							"Password confirmation is required for this sensitive action",
 					},
 				},
 				428,

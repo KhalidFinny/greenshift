@@ -1,5 +1,7 @@
+import { sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { createFactory } from "hono/factory";
+import { createDb } from "../db";
 import type { Env } from "../env";
 
 const factory = createFactory<{ Bindings: Env }>();
@@ -15,7 +17,7 @@ healthRoutes.get(
 		const checks: Record<string, { status: "ok" | "error" }> = {};
 
 		try {
-			await env.DB.prepare("SELECT 1").first();
+			await createDb(env.DB).run(sql`select 1`);
 			checks.d1 = { status: "ok" };
 		} catch (err) {
 			console.error("[health] d1", err);

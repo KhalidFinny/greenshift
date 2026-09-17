@@ -6,10 +6,10 @@ import { buttonVariants } from "../ui/button";
 
 const navLinks = [
 	{ href: "#hero", label: "home" },
-	{ href: "#cara-kerja", label: "cara kerja" },
-	{ href: "#ekosistem", label: "ekosistem" },
+	{ href: "#how-it-works", label: "how it works" },
+	{ href: "#ecosystem", label: "ecosystem" },
 	{ href: "#faq", label: "faq" },
-	{ href: "#hubungi-kami", label: "kontak" },
+	{ href: "#contact", label: "contact" },
 ] as const;
 
 // Compact brand-green bar that fades in once the hero has been scrolled past.
@@ -90,7 +90,7 @@ function HeaderNav({ onDark }: { onDark: boolean }) {
 	return (
 		<nav
 			className="page-wrap flex items-center justify-between py-4"
-			aria-label="Navigasi utama"
+			aria-label="Main navigation"
 		>
 			<Link to="/" className="no-underline">
 				<img
@@ -156,7 +156,7 @@ function HeaderNav({ onDark }: { onDark: boolean }) {
 				})}
 				<li>
 					<Link
-						to="/obligasi"
+						to="/bonds"
 						className={cn(
 							"relative py-1 text-base font-medium no-underline transition-colors duration-200",
 							onDark
@@ -164,7 +164,7 @@ function HeaderNav({ onDark }: { onDark: boolean }) {
 								: "text-muted-foreground hover:text-foreground",
 						)}
 					>
-						Obligasi
+						Bonds
 					</Link>
 				</li>
 			</ul>

@@ -11,42 +11,42 @@ import { useInView } from "../../hooks/useInView";
 const actors = [
 	{
 		icon: Building2,
-		label: "Perusahaan",
-		tagline: "Mengajukan proyek dan kebutuhan energi",
+		label: "Company",
+		tagline: "Submits projects and energy needs",
 		detail:
-			"Perusahaan industri mengajukan proyek efisiensi energi ke GreenShift beserta dokumen pendukung seperti tagihan listrik, audit energi, dan data operasional. Tim kami memvalidasi setiap pengajuan agar proyek siap untuk tahap selanjutnya.",
+			"Industrial companies submit energy efficiency projects to GreenShift along with supporting documents such as electricity bills, energy audits, and operational data. Our team validates every submission so the project is ready for the next stage.",
 		angle: -90,
 	},
 	{
 		icon: Truck,
 		label: "Vendor",
-		tagline: "Menyediakan solusi dan menjalankan proyek",
+		tagline: "Provides solutions and executes projects",
 		detail:
-			"Vendor energi terdaftar menyediakan solusi teknis, melakukan assessment lapangan, dan menjalankan proyek efisiensi energi. Setiap vendor telah melalui proses verifikasi untuk memastikan kualitas dan keandalan.",
+			"Registered energy vendors provide technical solutions, conduct on-site assessments, and execute energy efficiency projects. Every vendor has gone through a verification process to ensure quality and reliability.",
 		angle: -90 + 72,
 	},
 	{
 		icon: ShieldCheck,
-		label: "Validator Independen",
-		tagline: "Memvalidasi data dan dampak secara objektif",
+		label: "Independent Validator",
+		tagline: "Validates data and impact objectively",
 		detail:
-			"Validator independen melakukan verifikasi data energi, menghitung dampak pengurangan emisi karbon, dan menyusun laporan audit yang transparan. Memastikan setiap klaim berbasis data faktual dan dapat diverifikasi.",
+			"Independent validators verify energy data, calculate carbon emission reduction impact, and prepare transparent audit reports. Ensuring every claim is based on factual, verifiable data.",
 		angle: -90 + 72 * 2,
 	},
 	{
 		icon: Landmark,
-		label: "Mitra SCF Berizin OJK",
-		tagline: "Menyediakan akses pendanaan publik",
+		label: "OJK-Licensed SCF Partners",
+		tagline: "Provides access to public funding",
 		detail:
-			"Mitra supply chain financing berizin OJK menyediakan instrumen pendanaan hijau seperti green bonds dan sukuk. Menghubungkan proyek terverifikasi dengan sumber pendanaan publik yang terpercaya.",
+			"OJK-licensed supply chain financing partners provide green funding instruments such as green bonds and sukuk. Connecting verified projects with trusted public funding sources.",
 		angle: -90 + 72 * 3,
 	},
 	{
 		icon: TrendingUp,
 		label: "Investor",
-		tagline: "Mendanai proyek dan menerima imbal hasil",
+		tagline: "Funds projects and receives returns",
 		detail:
-			"Investor individu maupun institusi mendanai proyek efisiensi energi melalui platform GreenShift. Setiap investasi terhubung dengan proyek nyata yang menghasilkan ROI dan dampak pengurangan emisi yang terukur.",
+			"Individual and institutional investors fund energy efficiency projects through the GreenShift platform. Every investment is linked to a real project that generates ROI and measurable emission reduction impact.",
 		angle: -90 + 72 * 4,
 	},
 ];
@@ -81,7 +81,7 @@ function detectCrossing(
 	return current;
 }
 
-export default function EkosistemSection() {
+export default function EcosystemSection() {
 	const [active, setActive] = useState(0);
 	const [ballAngle, setBallAngle] = useState(actors[0].angle);
 	const pausedRef = useRef(false);
@@ -155,17 +155,17 @@ export default function EkosistemSection() {
 
 	return (
 		<section
-			id="ekosistem"
+			id="ecosystem"
 			ref={ref}
 			className="relative overflow-hidden bg-white"
 		>
 			<div className="page-wrap relative z-10 py-24">
 				<header className="mb-16 max-w-2xl">
 					<p className="text-sm font-bold uppercase tracking-[0.2em] text-[#03442C]">
-						Ekosistem
+						Ecosystem
 					</p>
 					<h2 className="mt-4 text-[36px] font-bold leading-tight text-[#1C1C1C]">
-						Kolaborasi untuk transisi energi industri
+						Collaboration for the industrial energy transition
 					</h2>
 				</header>
 

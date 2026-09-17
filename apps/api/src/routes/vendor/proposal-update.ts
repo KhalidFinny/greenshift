@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, lt, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { createFactory } from "hono/factory";
 import type { ProposalUpdateBody } from "../../contracts";
@@ -41,7 +41,7 @@ proposalUpdateRoutes.patch(
 		const id = Number(c.req.param("id"));
 		if (!Number.isInteger(id) || id <= 0) {
 			return c.json(
-				{ error: { code: "VALIDATION", message: "ID tidak valid" } },
+				{ error: { code: "VALIDATION", message: "Invalid ID" } },
 				400,
 			);
 		}
@@ -80,7 +80,7 @@ proposalUpdateRoutes.patch(
 				(typeof note !== "string" || note.length > MAX_NOTE_LENGTH))
 		) {
 			return c.json(
-				{ error: { code: "VALIDATION", message: "Input tidak valid" } },
+				{ error: { code: "VALIDATION", message: "Invalid input" } },
 				400,
 			);
 		}
@@ -95,7 +95,7 @@ proposalUpdateRoutes.patch(
 			.limit(1);
 		if (!profile) {
 			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Penawaran tidak ditemukan" } },
+				{ error: { code: "NOT_FOUND", message: "Proposal not found" } },
 				404,
 			);
 		}
@@ -104,7 +104,7 @@ proposalUpdateRoutes.patch(
 				{
 					error: {
 						code: "FORBIDDEN",
-						message: "Profil vendor belum diverifikasi oleh admin",
+						message: "Vendor profile has not been verified by an admin",
 					},
 				},
 				403,
@@ -119,7 +119,7 @@ proposalUpdateRoutes.patch(
 			.limit(1);
 		if (!currentRow) {
 			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Penawaran tidak ditemukan" } },
+				{ error: { code: "NOT_FOUND", message: "Proposal not found" } },
 				404,
 			);
 		}
@@ -134,7 +134,7 @@ proposalUpdateRoutes.patch(
 				{
 					error: {
 						code: "PROPOSAL_LOCKED",
-						message: "Penawaran sudah diproses dan tidak dapat diubah",
+						message: "Proposal has already been processed and cannot be edited",
 					},
 				},
 				409,
@@ -157,7 +157,7 @@ proposalUpdateRoutes.patch(
 					{
 						error: {
 							code: "REVISION_LIMIT",
-							message: `Batas revisi (${MAX_REVISIONS}) sudah tercapai`,
+							message: `Revision limit (${MAX_REVISIONS}) has been reached`,
 						},
 					},
 					409,
@@ -178,7 +178,7 @@ proposalUpdateRoutes.patch(
 					and(
 						eq(proposals.id, current.id),
 						eq(proposals.status, "revision"),
-						sql`${proposals.revisionCount} < ${MAX_REVISIONS}`,
+						lt(proposals.revisionCount, MAX_REVISIONS),
 					),
 				)
 				.returning();
@@ -187,7 +187,7 @@ proposalUpdateRoutes.patch(
 					{
 						error: {
 							code: "REVISION_LIMIT",
-							message: `Batas revisi (${MAX_REVISIONS}) tercapai atau penawaran sudah direspons`,
+							message: `Revision limit (${MAX_REVISIONS}) reached or the proposal has already been responded to`,
 						},
 					},
 					409,
@@ -211,7 +211,7 @@ proposalUpdateRoutes.patch(
 			if (!row) {
 				return c.json(
 					{
-						error: { code: "NOT_FOUND", message: "Penawaran tidak ditemukan" },
+						error: { code: "NOT_FOUND", message: "Proposal not found" },
 					},
 					404,
 				);

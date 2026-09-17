@@ -10,9 +10,9 @@ import type {
 	AuditLogEntry,
 	AuthResponse,
 	BlueprintUpdateBody,
+	BondMarketResponse,
 	CsrfResponse,
 	LoginBody,
-	ObligasiMarketResponse,
 	OkResponse,
 	ProposalDetail,
 	ProposalDraftBody,
@@ -87,8 +87,7 @@ export const api = {
 			}),
 	},
 	investor: {
-		market: () =>
-			request<ObligasiMarketResponse>(apiRoutes.investorMarket.path),
+		market: () => request<BondMarketResponse>(apiRoutes.investorMarket.path),
 	},
 	admin: {
 		users: (params?: { role?: string; limit?: number }) =>

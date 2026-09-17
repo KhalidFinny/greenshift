@@ -52,12 +52,12 @@ const TONE_META: Record<ToastTone, ToastToneMeta> = {
 	success: {
 		icon: faCircleCheck,
 		iconClass: "text-primary",
-		label: "Berhasil",
+		label: "Success",
 	},
 	error: {
 		icon: faCircleExclamation,
 		iconClass: "text-destructive",
-		label: "Gagal",
+		label: "Failed",
 	},
 	info: {
 		icon: faCircleInfo,
@@ -146,7 +146,7 @@ function ToastCard({
 				size="icon"
 				className="-mr-1.5 -mt-1.5 shrink-0"
 				onClick={onClose}
-				aria-label="Tutup notifikasi"
+				aria-label="Dismiss notification"
 			>
 				<FontAwesomeIcon icon={faXmark} />
 			</Button>

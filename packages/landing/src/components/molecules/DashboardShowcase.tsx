@@ -7,14 +7,15 @@ export default function DashboardShowcase() {
 				<div className="relative">
 					<img
 						src="/dashboard.webp"
-						alt="Tampilan dasbor GreenShift menampilkan metrik proyek energi"
+						alt="GreenShift dashboard view showing energy project metrics"
 						decoding="async"
 						className="w-full"
 					/>
 				</div>
 			</GlassCard>
 			<figcaption className="sr-only">
-				Dashboard monitoring proyek GreenShift dengan visualisasi data real-time
+				GreenShift project monitoring dashboard with real-time data
+				visualization
 			</figcaption>
 		</figure>
 	);

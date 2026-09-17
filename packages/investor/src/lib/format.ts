@@ -1,20 +1,20 @@
-const idr = new Intl.NumberFormat("id-ID", {
+const idr = new Intl.NumberFormat("en-US", {
 	style: "currency",
 	currency: "IDR",
 	maximumFractionDigits: 0,
 });
 
-const number = new Intl.NumberFormat("id-ID", {
+const number = new Intl.NumberFormat("en-US", {
 	maximumFractionDigits: 0,
 });
 
-const date = new Intl.DateTimeFormat("id-ID", {
+const date = new Intl.DateTimeFormat("en-US", {
 	day: "2-digit",
 	month: "short",
 	year: "numeric",
 });
 
-const month = new Intl.DateTimeFormat("id-ID", { month: "short" });
+const month = new Intl.DateTimeFormat("en-US", { month: "short" });
 
 export function formatIdr(value: number | null | undefined): string {
 	if (typeof value !== "number" || !Number.isFinite(value)) return "-";
@@ -29,7 +29,7 @@ export function formatNumber(value: number | null | undefined): string {
 /** Emission values in tonnes of CO₂e, e.g. "49,8 tCO₂e". */
 export function formatTonnes(value: number | null | undefined): string {
 	if (typeof value !== "number" || !Number.isFinite(value)) return "-";
-	return `${new Intl.NumberFormat("id-ID", {
+	return `${new Intl.NumberFormat("en-US", {
 		maximumFractionDigits: 1,
 	}).format(value)} tCO₂e`;
 }
@@ -41,7 +41,7 @@ export function formatDate(iso: string | null | undefined): string {
 	return date.format(parsed);
 }
 
-/** Short month label from a YYYY-MM key, e.g. "Mei 26". */
+/** Short month label from a YYYY-MM key, e.g. "May 26". */
 export function monthLabel(key: string): string {
 	const [year, monthIndex] = key.split("-").map(Number);
 	if (!year || monthIndex === undefined || monthIndex < 1 || monthIndex > 12) {
@@ -63,7 +63,7 @@ export function quarterLabel(key: string | null | undefined): string {
 	return `Q${match[2]} ${match[1].slice(2)}`;
 }
 
-/** First letter uppercased: seeds store sectors lowercase ("tekstil"). */
+/** First letter uppercased: seeds store sectors lowercase ("textile"). */
 export function titleCase(value: string): string {
 	return value.charAt(0).toUpperCase() + value.slice(1);
 }

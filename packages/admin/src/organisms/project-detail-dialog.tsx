@@ -5,12 +5,13 @@ import {
 	faHistory,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import type { AdminProject } from "@greenshift/api/contracts";
+import type { AdminProject, AuditLogEntry } from "@greenshift/api/contracts";
 import { api } from "@greenshift/core";
 import {
 	Badge,
 	Button,
 	ContentSkeleton,
+	DataTable,
 	Dialog,
 	DialogClose,
 	DialogContent,
@@ -23,14 +24,9 @@ import {
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
 } from "@greenshift/ui";
 import { useQuery } from "@tanstack/react-query";
+import type { ColumnDef } from "@tanstack/react-table";
 import { type ReactNode, useEffect, useState } from "react";
 import { formatDateTime } from "../lib/format";
 import {
@@ -43,7 +39,7 @@ import {
 import { useStepUpAction } from "../lib/use-step-up-action";
 import { StepUpDialog } from "./step-up-dialog";
 
-const idr = new Intl.NumberFormat("id-ID", {
+const idr = new Intl.NumberFormat("en-US", {
 	style: "currency",
 	currency: "IDR",
 	maximumFractionDigits: 0,
@@ -57,17 +53,42 @@ const BLUEPRINT_ACTIONS: Record<
 		variant: "default" | "outline" | "destructive";
 	}>
 > = {
-	draft: [{ label: "Kirim ke Audit", next: "audit", variant: "default" }],
+	draft: [{ label: "Submit for Audit", next: "audit", variant: "default" }],
 	audit: [
-		{ label: "Validasi", next: "validated", variant: "default" },
-		{ label: "Tolak", next: "rejected", variant: "destructive" },
+		{ label: "Validate", next: "validated", variant: "default" },
+		{ label: "Reject", next: "rejected", variant: "destructive" },
 	],
-	validated: [{ label: "Publikasikan", next: "published", variant: "default" }],
+	validated: [{ label: "Publish", next: "published", variant: "default" }],
 	rejected: [
-		{ label: "Kirim Ulang ke Audit", next: "audit", variant: "outline" },
+		{ label: "Resubmit for Audit", next: "audit", variant: "outline" },
 	],
 	published: [],
 };
+
+const auditLogColumns: ColumnDef<AuditLogEntry>[] = [
+	{
+		id: "time",
+		accessorFn: (log) => log.createdAt ?? "",
+		header: "Time",
+		cell: ({ row }) => formatDateTime(row.original.createdAt),
+	},
+	{
+		id: "action",
+		accessorFn: (log) => log.action,
+		header: "Action",
+		cell: ({ row }) => (
+			<span className="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-xs font-medium">
+				{row.original.action}
+			</span>
+		),
+	},
+	{
+		id: "user",
+		accessorFn: (log) => log.userEmail ?? "",
+		header: "User",
+		cell: ({ row }) => row.original.userEmail ?? "-",
+	},
+];
 
 interface ProjectDetailDialogProps {
 	project: AdminProject | null;
@@ -148,7 +169,7 @@ export function ProjectDetailDialog({
 			.run(project.id, status)
 			.then(() => onMutated({ status }))
 			.catch((err: unknown) =>
-				setActionError(err instanceof Error ? err.message : "Aksi gagal"),
+				setActionError(err instanceof Error ? err.message : "Action failed"),
 			);
 	};
 
@@ -162,15 +183,15 @@ export function ProjectDetailDialog({
 				onMutated({ blueprintStatus: next });
 			})
 			.catch((err: unknown) =>
-				setActionError(err instanceof Error ? err.message : "Aksi gagal"),
+				setActionError(err instanceof Error ? err.message : "Action failed"),
 			);
 	};
 
 	const blueprintActions = BLUEPRINT_ACTIONS[bp?.status ?? ""] ?? [];
 	const infoItems = [
-		{ label: "Sektor", value: project.industrySector ?? "-" },
+		{ label: "Sector", value: project.industrySector ?? "-" },
 		{
-			label: "Anggaran",
+			label: "Budget",
 			value: project.budget ? idr.format(project.budget) : "-",
 		},
 		{
@@ -227,7 +248,7 @@ export function ProjectDetailDialog({
 
 							<section className="space-y-3 py-5">
 								<SectionHeading icon={faArrowsRotate}>
-									Lifecycle Proyek
+									Project Lifecycle
 								</SectionHeading>
 								<div className="flex flex-wrap items-center gap-3">
 									<Select
@@ -251,7 +272,7 @@ export function ProjectDetailDialog({
 											projectStatus.isPending || nextStatus === project.status
 										}
 									>
-										Terapkan Status
+										Apply Status
 									</Button>
 								</div>
 							</section>
@@ -272,13 +293,13 @@ export function ProjectDetailDialog({
 								</div>
 								{!bp ? (
 									<p className="text-base text-muted-foreground">
-										Belum ada blueprint untuk proyek ini.
+										No blueprint for this project yet.
 									</p>
 								) : (
 									<div className="space-y-3">
 										{bp.auditNote ? (
 											<p className="text-base">
-												<span className="font-medium">Catatan audit:</span>{" "}
+												<span className="font-medium">Audit note:</span>{" "}
 												{bp.auditNote}
 											</p>
 										) : null}
@@ -288,7 +309,7 @@ export function ProjectDetailDialog({
 													<textarea
 														value={auditNote}
 														onChange={(e) => setAuditNote(e.target.value)}
-														placeholder="Catatan audit (opsional)"
+														placeholder="Audit note (optional)"
 														className="min-h-24 w-full rounded-sm border border-border bg-background p-3 text-base focus-visible:outline-2 focus-visible:outline-primary"
 													/>
 												) : null}
@@ -311,34 +332,18 @@ export function ProjectDetailDialog({
 							</section>
 
 							<section className="space-y-3 py-5">
-								<SectionHeading icon={faHistory}>Jejak Audit</SectionHeading>
+								<SectionHeading icon={faHistory}>Audit Trail</SectionHeading>
 								{projectLogs.length === 0 ? (
 									<p className="text-base text-muted-foreground">
-										Belum ada aktivitas tercatat.
+										No recorded activity yet.
 									</p>
 								) : (
-									<Table className="text-base">
-										<TableHeader>
-											<TableRow>
-												<TableHead>Waktu</TableHead>
-												<TableHead>Aksi</TableHead>
-												<TableHead>Pengguna</TableHead>
-											</TableRow>
-										</TableHeader>
-										<TableBody>
-											{projectLogs.map((log) => (
-												<TableRow key={log.id}>
-													<TableCell>{formatDateTime(log.createdAt)}</TableCell>
-													<TableCell>
-														<span className="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-xs font-medium">
-															{log.action}
-														</span>
-													</TableCell>
-													<TableCell>{log.userEmail ?? "-"}</TableCell>
-												</TableRow>
-											))}
-										</TableBody>
-									</Table>
+									<DataTable
+										columns={auditLogColumns}
+										data={projectLogs}
+										getRowId={(log) => String(log.id)}
+										ariaLabel="Audit trail"
+									/>
 								)}
 							</section>
 						</>
@@ -347,7 +352,7 @@ export function ProjectDetailDialog({
 
 				<DialogFooter className="shrink-0 border-t border-border px-6 py-4">
 					<DialogClose asChild>
-						<Button variant="outline">Tutup</Button>
+						<Button variant="outline">Close</Button>
 					</DialogClose>
 				</DialogFooter>
 			</DialogContent>

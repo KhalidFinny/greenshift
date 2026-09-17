@@ -116,12 +116,12 @@ function openPlay(platform: BrokerPlatform) {
 }
 
 /**
- * The "beli obligasi" hand-off on each verified card.
+ * The "buy bond" hand-off on each verified card.
  *
  * Priority order:
  *   1. Open the broker app via Android deep link (Trima+ first).
  *   2. Deep link failed / unsupported -> Google Play listing.
- *   3. Always: "Salin Kode" so the code can be searched manually in any broker.
+ *   3. Always: "Copy Code" so the code can be searched manually in any broker.
  */
 export function BondPurchaseActions({ project }: BondPurchaseActionsProps) {
 	const code = bondCodeFor(project);
@@ -164,16 +164,16 @@ export function BondPurchaseActions({ project }: BondPurchaseActionsProps) {
 		if (!ok) {
 			publishToast({
 				tone: "error",
-				title: "Gagal menyalin",
-				message: `Salin manual: ${code}`,
+				title: "Copy failed",
+				message: `Copy manually: ${code}`,
 			});
 			return;
 		}
 		setCopied(true);
 		publishToast({
 			tone: "success",
-			title: "Kode disalin",
-			message: `${code} siap ditempel di ${platform.name}.`,
+			title: "Code copied",
+			message: `${code} is ready to paste into ${platform.name}.`,
 		});
 		if (copiedTimer.current !== null) window.clearTimeout(copiedTimer.current);
 		copiedTimer.current = window.setTimeout(() => setCopied(false), 2000);
@@ -186,7 +186,7 @@ export function BondPurchaseActions({ project }: BondPurchaseActionsProps) {
 	return (
 		<div className="space-y-3">
 			<p className="text-sm text-muted-foreground">
-				Kode obligasi{" "}
+				Bond code{" "}
 				<span className="font-mono font-medium text-foreground">{code}</span>
 			</p>
 
@@ -198,17 +198,19 @@ export function BondPurchaseActions({ project }: BondPurchaseActionsProps) {
 			>
 				<FontAwesomeIcon icon={faArrowUpRightFromSquare} />
 				{launch === "opening"
-					? `Membuka ${PRIMARY_BROKER.name}...`
-					: `Beli di ${PRIMARY_BROKER.name}`}
+					? `Opening ${PRIMARY_BROKER.name}...`
+					: `Buy on ${PRIMARY_BROKER.name}`}
 			</Button>
 
 			{/* Deep link failed or the platform has no scheme: Play is the exit. */}
 			{launch === "fallback" && (
 				<div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3">
-					<p className="text-sm font-medium">{platform.name} belum terpasang</p>
+					<p className="text-sm font-medium">
+						{platform.name} is not installed
+					</p>
 					<p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-						Kami arahkan ke Google Play. Setelah terpasang, cari kode{" "}
-						<span className="font-mono">{code}</span>.
+						We are redirecting you to Google Play. Once installed, search for
+						code <span className="font-mono">{code}</span>.
 					</p>
 					<Button
 						variant="outline"
@@ -217,16 +219,16 @@ export function BondPurchaseActions({ project }: BondPurchaseActionsProps) {
 						onClick={() => openPlay(platform)}
 					>
 						<FontAwesomeIcon icon={faArrowUpRightFromSquare} />
-						Buka Google Play
+						Open Google Play
 					</Button>
 				</div>
 			)}
 
 			{launch === "launched" && (
 				<p className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm leading-relaxed text-muted-foreground">
-					{platform.name} dibuka. Cari kode{" "}
-					<span className="font-mono font-semibold">{code}</span> di kolom
-					pencarian.
+					{platform.name} is open. Search for code{" "}
+					<span className="font-mono font-semibold">{code}</span> in the search
+					field.
 				</p>
 			)}
 
@@ -238,7 +240,7 @@ export function BondPurchaseActions({ project }: BondPurchaseActionsProps) {
 					onClick={() => void handleCopy()}
 				>
 					<FontAwesomeIcon icon={copied ? faCheck : faCopy} />
-					{copied ? "Tersalin" : "Salin Kode"}
+					{copied ? "Copied" : "Copy Code"}
 				</Button>
 				{secondary && (
 					<Button
@@ -248,7 +250,7 @@ export function BondPurchaseActions({ project }: BondPurchaseActionsProps) {
 						onClick={() => void openPlatform(secondary)}
 					>
 						<FontAwesomeIcon icon={faMagnifyingGlass} />
-						Cari di {secondary.name}
+						Search on {secondary.name}
 					</Button>
 				)}
 			</div>

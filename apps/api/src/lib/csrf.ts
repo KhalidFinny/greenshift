@@ -41,7 +41,7 @@ export const requireCsrf = createMiddleware<ApiEnv>(
 				{
 					error: {
 						code: "FORBIDDEN",
-						message: "Permintaan lintas-origin ditolak",
+						message: "Cross-origin request rejected",
 					},
 				},
 				403,
@@ -53,7 +53,7 @@ export const requireCsrf = createMiddleware<ApiEnv>(
 				{
 					error: {
 						code: "FORBIDDEN",
-						message: "Origin tidak valid",
+						message: "Invalid origin",
 					},
 				},
 				403,
@@ -67,7 +67,7 @@ export const requireCsrf = createMiddleware<ApiEnv>(
 				{
 					error: {
 						code: "FORBIDDEN",
-						message: "CSRF token tidak valid",
+						message: "Invalid CSRF token",
 					},
 				},
 				403,

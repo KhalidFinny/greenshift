@@ -54,7 +54,7 @@ Strict rules for all UI work in this project. Read on every session startup.
 - Do NOT use `text-xs` or `text-sm` for visible content.
 - Do NOT mix fonts (DM Sans only).
 - Do NOT use hugeicons; use Font Awesome.
-- Do NOT add "Muat ulang" / refresh buttons to dashboards.
+- Do NOT add "Refresh" / refresh buttons to dashboards.
 - Do NOT use bare `<a>` for actions; use `<Button>`.
 - Do NOT chart operational status (payment completion, user verification progress) as pie/ring charts; put that data in tables.
 - Do NOT add arbitrary border-radius; use the system (rounded-none for buttons, Card component for cards).

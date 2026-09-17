@@ -196,7 +196,7 @@ body {
 /* ── Route view-transition variants ─────────────────────────────────
    Default (no data-vt) is a STAGGERED fade: the old page fully fades
    out before the new one fades in, so the two pages never overlap.
-   The image-heavy hero (home) can't "race" against the white obligasi
+   The image-heavy hero (home) can't "race" against the white bond
    page, even without relying on attribute-selector support.
    Override with ?vt=slide-fade|zoom-fade (set on <html> in __root).   */
 

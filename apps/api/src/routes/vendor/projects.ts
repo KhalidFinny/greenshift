@@ -33,7 +33,7 @@ projectsRoutes.get(
 			!["open", "evaluation", "closed", "awarded"].includes(tenderStatus)
 		) {
 			return c.json(
-				{ error: { code: "VALIDATION", message: "Status tender tidak valid" } },
+				{ error: { code: "VALIDATION", message: "Invalid tender status" } },
 				400,
 			);
 		}
@@ -98,7 +98,7 @@ projectsRoutes.get(
 		const id = Number(c.req.param("id"));
 		if (!Number.isInteger(id) || id <= 0) {
 			return c.json(
-				{ error: { code: "VALIDATION", message: "ID tidak valid" } },
+				{ error: { code: "VALIDATION", message: "Invalid ID" } },
 				400,
 			);
 		}
@@ -121,7 +121,7 @@ projectsRoutes.get(
 
 		if (!row) {
 			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Proyek tidak ditemukan" } },
+				{ error: { code: "NOT_FOUND", message: "Project not found" } },
 				404,
 			);
 		}

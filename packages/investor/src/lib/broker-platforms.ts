@@ -1,5 +1,5 @@
 /**
- * Broker platform registry for the "beli obligasi" hand-off.
+ * Broker platform registry for the "buy bond" hand-off.
  *
  * GreenShift never settles a bond trade itself: bonds are bought through a
  * licensed broker app. Trima+ (Trimegah Sekuritas) is the primary target: it is
@@ -42,7 +42,7 @@ export const TRIMA_PLUS: BrokerPlatform = {
 	key: "trima-plus",
 	name: "Trima+",
 	publisher: "PT Trimegah Sekuritas Indonesia Tbk",
-	note: "Bisa beli obligasi korporasi langsung dari aplikasi, termasuk masa penawaran IPO.",
+	note: "Buy corporate bonds directly from the app, including during the IPO offering period.",
 	playUrl:
 		"https://play.google.com/store/apps/details?id=id.trimegah.tplus.android&hl=id",
 	deepLinkScheme: "trimaplus://",
@@ -52,7 +52,7 @@ export const IPOT: BrokerPlatform = {
 	key: "ipot",
 	name: "IPOT",
 	publisher: "PT Indopremier Sekuritas",
-	note: "Alternatif bila Anda sudah punya akun efek di IPOT.",
+	note: "An alternative if you already have a securities account at IPOT.",
 	playUrl:
 		"https://play.google.com/store/apps/details?id=com.indopremier.ipot&hl=id",
 	deepLinkScheme: null,

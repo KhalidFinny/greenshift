@@ -8,7 +8,7 @@ export type ToastTone = "success" | "error" | "info";
 
 export interface ToastMessage {
 	tone?: ToastTone;
-	/** Optional heading; falls back to the tone label ("Berhasil"/"Gagal"). */
+	/** Optional heading; falls back to the tone label ("Success"/"Failed"). */
 	title?: string;
 	message: string;
 }

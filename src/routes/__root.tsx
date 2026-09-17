@@ -22,7 +22,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 		meta: [
 			{ charSet: "utf-8" },
 			{ name: "viewport", content: "width=device-width, initial-scale=1" },
-			{ title: "GreenShift: Platform MRV untuk Pembiayaan Hijau" },
+			{ title: "GreenShift: MRV Platform for Green Financing" },
 		],
 		links: [
 			{ rel: "stylesheet", href: appCss },
@@ -47,8 +47,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			activeRouteId !== "/login" &&
 			activeRouteId !== "/register"
 		: true;
-	// The obligasi dashboard is a self-contained public surface: no site footer.
-	const isObligasiPage = activeRouteId?.startsWith("/obligasi") ?? false;
+	// The bonds dashboard is a self-contained public surface: no site footer.
+	const isBondsPage = activeRouteId?.startsWith("/bonds") ?? false;
 
 	// Pick the view-transition variant. Defaults to "fade-through" (no asset
 	// overlap); override live with ?vt=slide-fade|zoom-fade to A/B.
@@ -58,14 +58,14 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 	}, []);
 
 	return (
-		<html lang="id" suppressHydrationWarning>
+		<html lang="en" suppressHydrationWarning>
 			<head>
 				<HeadContent />
 			</head>
 			<body className="bg-background font-sans text-foreground antialiased [overflow-wrap:anywhere] selection:bg-secondary selection:text-foreground">
 				{isHome ? <Header /> : null}
 				<ToastProvider>{children}</ToastProvider>
-				{isPublicPage && !isObligasiPage ? <Footer /> : null}
+				{isPublicPage && !isBondsPage ? <Footer /> : null}
 				{import.meta.env.DEV && (
 					<TanStackDevtools
 						config={{ position: "bottom-right" }}

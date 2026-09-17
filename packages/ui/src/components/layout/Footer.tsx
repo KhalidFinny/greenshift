@@ -21,22 +21,26 @@ export default function Footer() {
 						className="h-12 w-auto"
 					/>
 					<p className="mt-4 max-w-xs text-base leading-relaxed text-white/80">
-						Platform MRV untuk pembiayaan hijau: memvalidasi proyek efisiensi
-						energi, menyusun blueprint, dan memantau ROI dalam satu ekosistem.
+						An MRV platform for green financing: validating energy-efficiency
+						projects, drafting blueprints, and monitoring ROI in a single
+						ecosystem.
 					</p>
 				</div>
 
-				<nav aria-label="Navigasi produk">
-					<h3 className="text-base font-semibold text-white">Produk</h3>
+				<nav aria-label="Product navigation">
+					<h3 className="text-base font-semibold text-white">Product</h3>
 					<ul className="mt-4 flex flex-col gap-3">
 						<li>
-							<a href="#cara-kerja" className="text-white/80 hover:text-white">
-								Cara Kerja
+							<a
+								href="#how-it-works"
+								className="text-white/80 hover:text-white"
+							>
+								How It Works
 							</a>
 						</li>
 						<li>
-							<a href="#ekosistem" className="text-white/80 hover:text-white">
-								Ekosistem
+							<a href="#ecosystem" className="text-white/80 hover:text-white">
+								Ecosystem
 							</a>
 						</li>
 						<li>
@@ -47,12 +51,12 @@ export default function Footer() {
 					</ul>
 				</nav>
 
-				<nav aria-label="Navigasi akun">
-					<h3 className="text-base font-semibold text-white">Akun</h3>
+				<nav aria-label="Account navigation">
+					<h3 className="text-base font-semibold text-white">Account</h3>
 					<ul className="mt-4 flex flex-col gap-3">
 						<li>
 							<Link to="/register" className="text-white/80 hover:text-white">
-								Mulai Gratis
+								Start for Free
 							</Link>
 						</li>
 						<li>
@@ -64,7 +68,7 @@ export default function Footer() {
 				</nav>
 
 				<div>
-					<h3 className="text-base font-semibold text-white">Kontak</h3>
+					<h3 className="text-base font-semibold text-white">Contact</h3>
 					<ul className="mt-4 flex flex-col gap-3">
 						<li>
 							<a
@@ -74,7 +78,9 @@ export default function Footer() {
 								contact@greenshift.com
 							</a>
 						</li>
-						<li className="text-white/80">Diskusi proyek & investasi</li>
+						<li className="text-white/80">
+							Project &amp; investment discussion
+						</li>
 					</ul>
 				</div>
 			</div>
@@ -82,7 +88,7 @@ export default function Footer() {
 			<div className="border-t border-white/15">
 				<div className="page-wrap flex flex-col items-center justify-between gap-2 py-6 text-base text-white/80 sm:flex-row">
 					<small>&copy; {year} GreenShift. All rights reserved.</small>
-					<span>Platform MRV untuk Pembiayaan Hijau</span>
+					<span>An MRV Platform for Green Financing</span>
 				</div>
 			</div>
 		</footer>

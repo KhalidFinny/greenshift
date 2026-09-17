@@ -1,24 +1,24 @@
-import type { ObligasiListing } from "@greenshift/api/contracts";
+import type { BondListing } from "@greenshift/api/contracts";
 
-interface DemoObligasi
-	extends Omit<ObligasiListing, "funded" | "fundingProgress" | "verifiedAt"> {
+interface DemoBonds
+	extends Omit<BondListing, "funded" | "fundingProgress" | "verifiedAt"> {
 	verifiedAt?: string;
 }
 
 /**
- * Demo fallback for the public obligasi catalog.
+ * Demo fallback for the public bond catalog.
  *
  * Mirrors the shape returned by `GET /api/investor/market` so the dashboard is
  * presentable when the local D1 has not been seeded yet. Bond codes are
  * placeholders: the real ones are issued by the broker/KSEI.
  */
-const LISTINGS: DemoObligasi[] = [
+const LISTINGS: DemoBonds[] = [
 	{
 		id: 901,
-		title: "Retrofit Chiller Pabrik",
+		title: "Factory Chiller Retrofit",
 		bondCode: "GSCHLR01",
 		companyName: "PT Tekstil Nusantara Tbk",
-		industrySector: "logam dasar",
+		industrySector: "base metals",
 		location: "Sidoarjo",
 		budget: 500_000_000,
 		riskScore: 24,
@@ -30,10 +30,10 @@ const LISTINGS: DemoObligasi[] = [
 	},
 	{
 		id: 902,
-		title: "Efisiensi Motor Listrik",
+		title: "Electric Motor Efficiency",
 		bondCode: "GSMOTR01",
 		companyName: "PT Logam Presisi Timur",
-		industrySector: "manufaktur",
+		industrySector: "manufacturing",
 		location: "Gresik",
 		budget: 300_000_000,
 		riskScore: 18,
@@ -45,10 +45,10 @@ const LISTINGS: DemoObligasi[] = [
 	},
 	{
 		id: 903,
-		title: "Optimasi Compressed Air",
+		title: "Compressed Air Optimization",
 		bondCode: "GSAIRC01",
 		companyName: "PT Sinar Pangan Abadi",
-		industrySector: "makanan & minuman",
+		industrySector: "food & beverage",
 		location: "Pasuruan",
 		budget: 200_000_000,
 		riskScore: 31,
@@ -63,7 +63,7 @@ const LISTINGS: DemoObligasi[] = [
 		title: "Solar Rooftop 500 kWp",
 		bondCode: null,
 		companyName: "PT Green Nusantara",
-		industrySector: "manufaktur",
+		industrySector: "manufacturing",
 		location: "Surabaya",
 		budget: 1_000_000_000,
 		riskScore: 35,
@@ -74,10 +74,10 @@ const LISTINGS: DemoObligasi[] = [
 	},
 	{
 		id: 905,
-		title: "Boiler Biomassa",
+		title: "Biomass Boiler",
 		bondCode: null,
 		companyName: "PT Nusantara Kertas",
-		industrySector: "kertas",
+		industrySector: "paper",
 		location: "Pasuruan",
 		budget: 2_500_000_000,
 		riskScore: 41,
@@ -96,7 +96,7 @@ const FUNDED: Record<number, number> = {
 	905: 500_000_000,
 };
 
-export const DEMO_OBLIGASI: ObligasiListing[] = LISTINGS.map((listing) => {
+export const DEMO_OBLIGASI: BondListing[] = LISTINGS.map((listing) => {
 	const funded = FUNDED[listing.id] ?? 0;
 	return {
 		...listing,

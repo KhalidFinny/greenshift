@@ -6,57 +6,57 @@ const steps = [
 	{
 		id: "01",
 		stepLabel: "Validate",
-		title: "Mulai Dengan Mudah",
+		title: "Start with Ease",
 		description:
-			"Cukup isi profil perusahaan Anda dan unggah dokumen pendukung seperti tagihan listrik, audit energi, serta data operasional lainnya. Sistem kami akan memvalidasi setiap informasi secara otomatis agar prosesnya cepat, transparan, dan tanpa ribet.",
+			"Simply fill in your company profile and upload supporting documents such as electricity bills, energy audits, and other operational data. Our system validates every piece of information automatically so the process stays fast, transparent, and hassle-free.",
 	},
 	{
 		id: "02",
 		stepLabel: "Prepare",
-		title: "Siapkan Strategi Terbaik",
+		title: "Prepare the Best Strategy",
 		description:
-			"Tim GreenShift akan menyusun technical blueprint dan financial model yang disesuaikan dengan kebutuhan proyek Anda. Dari analisis kelayakan hingga perencanaan implementasi, semuanya dirancang untuk memastikan proyek berjalan efisien dan menghasilkan dampak nyata.",
+			"The GreenShift team builds a technical blueprint and financial model tailored to your project's needs. From feasibility analysis to implementation planning, everything is designed to keep the project efficient and deliver real impact.",
 	},
 	{
 		id: "03",
 		stepLabel: "Fund",
-		title: "Dapatkan Pendanaan",
+		title: "Secure Funding",
 		description:
-			"Proyek yang telah divalidasi dan terstruktur dengan baik siap menarik minat mitra investasi kami. Kami menjembatani kebutuhan pembiayaan Anda dengan jaringan investor yang berkomitmen pada transisi energi berkelanjutan.",
+			"Projects that have been validated and well structured are ready to attract our investment partners. We bridge your financing needs with a network of investors committed to a sustainable energy transition.",
 	},
 	{
 		id: "04",
 		stepLabel: "Monitor",
-		title: "Pantau Dengan Percaya Diri",
+		title: "Monitor with Confidence",
 		description:
-			"Akses dashboard real-time untuk melacak performa proyek, pengembalian investasi, dan dampak pengurangan emisi karbon. Semua data tersedia dalam satu tempat sehingga Anda bisa mengambil keputusan yang tepat kapan saja.",
+			"Access a real-time dashboard to track project performance, investment returns, and carbon emission reduction impact. All data is available in one place so you can make the right decisions at any time.",
 	},
 ];
 
-export default function CaraKerjaSection() {
+export default function HowItWorksSection() {
 	const { activeStep, setActiveStep } = useStepper(steps.length);
 	const imageRef = useMouseParallax<HTMLDivElement>({ intensity: 0.025 });
 	const { ref, isVisible } = useInView<HTMLElement>({ threshold: 0.1 });
 
 	return (
 		<section
-			id="cara-kerja"
+			id="how-it-works"
 			ref={ref}
 			className="relative overflow-hidden bg-white"
 		>
 			<div className="page-wrap relative z-10 py-24">
 				<header className="mb-12 max-w-2xl">
 					<p className="text-sm font-bold uppercase tracking-[0.2em] text-[#03442C]">
-						Cara Kerja
+						How It Works
 					</p>
 					<h2 className="mt-4 text-[36px] font-bold leading-tight text-[#1C1C1C]">
-						Langkah Menuju Transisi Energi
+						Steps Toward the Energy Transition
 					</h2>
 				</header>
 
 				<nav
 					className="mb-20 flex flex-wrap items-start"
-					aria-label="Langkah proses"
+					aria-label="Process steps"
 				>
 					{steps.map((step, index) => (
 						<div key={step.id} className="flex items-start">
@@ -117,14 +117,14 @@ export default function CaraKerjaSection() {
 						>
 							<img
 								src="/dashboard.webp"
-								alt="Dasbor GreenShift menampilkan visualisasi data proyek efisiensi energi"
+								alt="GreenShift dashboard showing energy efficiency project data visualization"
 								loading="lazy"
 								decoding="async"
 								className="w-full rounded-[12px]"
 							/>
 						</div>
 						<figcaption className="sr-only">
-							Preview dashboard monitoring proyek GreenShift
+							Preview of the GreenShift project monitoring dashboard
 						</figcaption>
 					</figure>
 				</div>

@@ -8,7 +8,7 @@ import {
 	faUtensils,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import type { ObligasiListing } from "@greenshift/api/contracts";
+import type { BondListing } from "@greenshift/api/contracts";
 import {
 	Badge,
 	Card,
@@ -22,54 +22,55 @@ import { formatIdr, formatTonnes, titleCase } from "../lib/format";
 import { riskMeta } from "../lib/labels";
 import { BondPurchaseActions } from "./bond-purchase-actions";
 
-interface ObligasiCardProps {
-	listing: ObligasiListing;
+interface BondCardProps {
+	listing: BondListing;
 }
 
 const STATUS_META: Record<
-	ObligasiListing["status"],
+	BondListing["status"],
 	{ label: string; className: string }
 > = {
 	verified: {
-		label: "Terverifikasi",
+		label: "Verified",
 		className: "border-transparent bg-primary/10 text-primary",
 	},
 	on_progress: {
-		label: "Dalam Proses",
+		label: "In Progress",
 		className: "border-transparent bg-amber-500/15 text-amber-700",
 	},
 };
 
-function categoryIconFor(listing: ObligasiListing): IconDefinition {
+function categoryIconFor(listing: BondListing): IconDefinition {
 	const scope =
 		`${listing.title} ${listing.industrySector ?? ""}`.toLowerCase();
 	if (
 		scope.includes("solar") ||
 		scope.includes("plts") ||
 		scope.includes("panel") ||
-		scope.includes("energi") ||
-		scope.includes("listrik")
+		scope.includes("energy") ||
+		scope.includes("electric") ||
+		scope.includes("power")
 	) {
 		return faBolt;
 	}
-	if (scope.includes("logistik") || scope.includes("pergudangan")) {
+	if (scope.includes("logistics") || scope.includes("warehouse")) {
 		return faTruck;
 	}
 	if (
-		scope.includes("makanan") ||
-		scope.includes("minuman") ||
-		scope.includes("f&b") ||
 		scope.includes("food") ||
+		scope.includes("beverage") ||
+		scope.includes("f&b") ||
 		scope.includes("boiler") ||
-		scope.includes("biomassa")
+		scope.includes("biomass")
 	) {
 		return faUtensils;
 	}
 	if (
-		scope.includes("manufaktur") ||
-		scope.includes("logam") ||
-		scope.includes("tekstil") ||
-		scope.includes("kimia")
+		scope.includes("manufacturing") ||
+		scope.includes("metal") ||
+		scope.includes("textile") ||
+		scope.includes("chemical") ||
+		scope.includes("paper")
 	) {
 		return faIndustry;
 	}
@@ -100,7 +101,7 @@ function Metric({
 	);
 }
 
-export function ObligasiCard({ listing }: ObligasiCardProps) {
+export function BondCard({ listing }: BondCardProps) {
 	const status = STATUS_META[listing.status];
 	const categoryIcon = categoryIconFor(listing);
 	const risk = riskMeta(listing.riskScore);
@@ -122,7 +123,7 @@ export function ObligasiCard({ listing }: ObligasiCardProps) {
 						</Badge>
 					</div>
 					<Badge variant="outline">
-						{titleCase(listing.industrySector ?? "Umum")}
+						{titleCase(listing.industrySector ?? "General")}
 					</Badge>
 				</div>
 
@@ -134,7 +135,7 @@ export function ObligasiCard({ listing }: ObligasiCardProps) {
 						{listing.companyName ? <span>{listing.companyName}</span> : null}
 						<span className="flex items-center gap-2">
 							<FontAwesomeIcon icon={faLocationDot} className="size-4" />
-							{listing.location ?? "Lokasi belum ditentukan"}
+							{listing.location ?? "Location not specified"}
 						</span>
 					</div>
 				</div>
@@ -144,10 +145,10 @@ export function ObligasiCard({ listing }: ObligasiCardProps) {
 				<div className="overflow-hidden rounded-lg border border-border/70">
 					<div className="grid grid-cols-3 divide-x divide-border/70">
 						<Metric
-							label="Kupon"
+							label="Coupon"
 							value={
 								typeof irr === "number"
-									? `${irr.toLocaleString("id-ID", { maximumFractionDigits: 1 })}%`
+									? `${irr.toLocaleString("en-US", { maximumFractionDigits: 1 })}%`
 									: "-"
 							}
 							tone="text-primary"
@@ -156,10 +157,10 @@ export function ObligasiCard({ listing }: ObligasiCardProps) {
 							label="Tenor"
 							value={typeof payback === "number" ? `${payback} thn` : "-"}
 						/>
-						<Metric label="Risiko" value={risk.label} />
+						<Metric label="Risk" value={risk.label} />
 					</div>
 					<div className="flex items-center justify-between gap-4 border-t border-border/70 p-3">
-						<p className="text-sm text-muted-foreground">Nominal penerbitan</p>
+						<p className="text-sm text-muted-foreground">Issuance amount</p>
 						<p className="text-lg font-semibold tabular-nums">
 							{formatIdr(listing.budget)}
 						</p>
@@ -168,7 +169,7 @@ export function ObligasiCard({ listing }: ObligasiCardProps) {
 
 				<div>
 					<div className="flex items-center justify-between gap-4">
-						<p className="text-sm text-muted-foreground">Progres pendanaan</p>
+						<p className="text-sm text-muted-foreground">Funding progress</p>
 						<p className="text-sm font-semibold tabular-nums">{progress}%</p>
 					</div>
 					<div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
@@ -178,8 +179,8 @@ export function ObligasiCard({ listing }: ObligasiCardProps) {
 						/>
 					</div>
 					<p className="mt-2 text-sm tabular-nums text-muted-foreground">
-						{formatIdr(listing.funded)} terkumpul ·{" "}
-						{formatTonnes(listing.targetEmissionReduction)} reduksi emisi
+						{formatIdr(listing.funded)} raised ·{" "}
+						{formatTonnes(listing.targetEmissionReduction)} emission reduction
 					</p>
 				</div>
 			</CardContent>
@@ -188,16 +189,16 @@ export function ObligasiCard({ listing }: ObligasiCardProps) {
 				{verified ? (
 					<>
 						<p className="text-sm text-muted-foreground">
-							Listing aktif. Beli melalui broker:
+							Active listing. Buy through a broker:
 						</p>
 						<BondPurchaseActions project={listing} />
 					</>
 				) : (
 					<div className="rounded-lg border border-dashed border-border/70 bg-muted/40 p-3">
-						<p className="text-sm font-medium">Belum diperdagangkan</p>
+						<p className="text-sm font-medium">Not yet trading</p>
 						<p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-							Obligasi masih dalam proses verifikasi dan penempatan broker.
-							Hubungi kami untuk informasi masa penawaran.
+							The bond is still undergoing verification and broker placement.
+							Contact us for information on the offering period.
 						</p>
 					</div>
 				)}

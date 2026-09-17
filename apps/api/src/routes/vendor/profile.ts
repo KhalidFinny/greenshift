@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { createFactory } from "hono/factory";
 import type { VendorProfile, VendorProfileBody } from "../../contracts";
@@ -58,7 +58,7 @@ profileRoutes.get(
 				{
 					error: {
 						code: "NOT_FOUND",
-						message: "Profil vendor belum dibuat",
+						message: "Vendor profile has not been created",
 					},
 				},
 				404,
@@ -105,7 +105,7 @@ profileRoutes.put(
 			(portfolio !== undefined && !isStringArray(portfolio))
 		) {
 			return c.json(
-				{ error: { code: "VALIDATION", message: "Input tidak valid" } },
+				{ error: { code: "VALIDATION", message: "Invalid input" } },
 				400,
 			);
 		}
@@ -125,46 +125,36 @@ profileRoutes.put(
 			.where(eq(vendors.userId, userId))
 			.limit(1);
 
-		let vendorId: number;
-		let created = false;
-		if (existing) {
-			vendorId = existing.id;
-			await db.update(vendors).set(values).where(eq(vendors.id, existing.id));
-		} else {
-			created = true;
-			// Atomic create: the NOT EXISTS gate prevents duplicate profiles
-			// when two first-time saves race (no unique index on user_id).
-			const now = Date.now();
-			const runResult = await db.run(sql`
-				INSERT INTO vendor_profiles (user_id, company_name, description, certifications, portfolio, created_at)
-				SELECT ${userId}, ${values.companyName}, ${values.description}, ${JSON.stringify(values.certifications)}, ${JSON.stringify(values.portfolio)}, ${now}
-				WHERE NOT EXISTS (SELECT 1 FROM vendor_profiles vp WHERE vp.user_id = ${userId})
-				RETURNING id
-			`);
-			const firstRow = runResult.results?.[0] as
-				| Record<string, unknown>
-				| undefined;
-			const createdId = Number(firstRow?.id);
-			if (!Number.isInteger(createdId) || createdId <= 0) {
-				// Lost the race: another request created it: update instead.
-				const [other] = await db
-					.select({ id: vendors.id })
-					.from(vendors)
-					.where(eq(vendors.userId, userId))
-					.limit(1);
-				if (!other) {
-					return c.json(
-						{ error: { code: "INTERNAL", message: "Gagal menyimpan profil" } },
-						500,
-					);
-				}
-				created = false;
-				vendorId = other.id;
-				await db.update(vendors).set(values).where(eq(vendors.id, other.id));
-			} else {
-				vendorId = createdId;
-			}
+		// Atomic upsert: conflicts on the unique user_id index, so two first-time
+		// saves racing cannot create duplicate profiles (single statement).
+		const [saved] = await db
+			.insert(vendors)
+			.values({
+				userId,
+				companyName: values.companyName,
+				description: values.description,
+				certifications: values.certifications,
+				portfolio: values.portfolio,
+			})
+			.onConflictDoUpdate({
+				target: vendors.userId,
+				set: {
+					companyName: values.companyName,
+					description: values.description,
+					certifications: values.certifications,
+					portfolio: values.portfolio,
+				},
+			})
+			.returning({ id: vendors.id });
+
+		if (!saved) {
+			return c.json(
+				{ error: { code: "INTERNAL", message: "Failed to save profile" } },
+				500,
+			);
 		}
+		const created = !existing;
+		const vendorId = saved.id;
 
 		await db.batch([
 			db
@@ -188,7 +178,7 @@ profileRoutes.put(
 			.limit(1);
 		if (!row) {
 			return c.json(
-				{ error: { code: "INTERNAL", message: "Gagal memuat profil" } },
+				{ error: { code: "INTERNAL", message: "Failed to load profile" } },
 				500,
 			);
 		}
