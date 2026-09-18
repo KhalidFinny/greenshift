@@ -18,8 +18,8 @@ import {
 	Label,
 } from "@greenshift/ui";
 import { useState } from "react";
-import type { CompanyVerificationDetails } from "../lib/types";
 import { formatDate } from "../lib/format";
+import type { CompanyVerificationDetails } from "../lib/types";
 
 interface VerificationStatusCardProps {
 	verification: CompanyVerificationDetails;
@@ -51,7 +51,10 @@ export function VerificationStatusCard({
 				<CardHeader>
 					<CardTitle className="flex items-center justify-between text-lg">
 						<span className="flex items-center gap-2">
-							<FontAwesomeIcon icon={faShieldAlt} className="text-emerald-600" />
+							<FontAwesomeIcon
+								icon={faShieldAlt}
+								className="text-emerald-600"
+							/>
 							Status Verifikasi Dokumen Otomatis
 						</span>
 						{verification.status === "VERIFIED" && (
@@ -87,7 +90,10 @@ export function VerificationStatusCard({
 					{verification.status === "VERIFIED" && (
 						<div className="space-y-2 rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200">
 							<div className="flex items-center gap-2 text-sm font-bold">
-								<FontAwesomeIcon icon={faUserCheck} className="text-emerald-600" />
+								<FontAwesomeIcon
+									icon={faUserCheck}
+									className="text-emerald-600"
+								/>
 								Perusahaan Anda Telah Terverifikasi Penuh
 							</div>
 							<p>

@@ -1,6 +1,13 @@
 import { faFilter, faSearch } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button, Input, Tabs, TabsContent, TabsList, TabsTrigger } from "@greenshift/ui";
+import {
+	Button,
+	Input,
+	Tabs,
+	TabsContent,
+	TabsList,
+	TabsTrigger,
+} from "@greenshift/ui";
 import { useState } from "react";
 import { useVendorData } from "../lib/use-vendor-data";
 import { VendorProjectCard } from "../organisms/vendor-project-card";

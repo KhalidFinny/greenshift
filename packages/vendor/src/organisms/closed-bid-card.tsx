@@ -1,6 +1,12 @@
 import { faCheckCircle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Badge, Card, CardContent, CardHeader, CardTitle } from "@greenshift/ui";
+import {
+	Badge,
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from "@greenshift/ui";
 import { formatRupiah } from "../lib/format";
 
 interface ClosedBidCardProps {
@@ -34,9 +40,7 @@ export function ClosedBidCard({
 			</CardHeader>
 			<CardContent className="space-y-3 text-xs">
 				<div className="space-y-1 rounded-lg bg-muted p-3">
-					<p className="text-muted-foreground">
-						Your Sealed Bid (Submitted):
-					</p>
+					<p className="text-muted-foreground">Your Sealed Bid (Submitted):</p>
 					<p className="text-base font-bold text-foreground">
 						{formatRupiah(submittedPrice)}
 					</p>
@@ -45,7 +49,8 @@ export function ClosedBidCard({
 					</p>
 				</div>
 				<p className="text-muted-foreground">
-					Closed bidding does not disclose competitor bids and offers can only be submitted once.
+					Closed bidding does not disclose competitor bids and offers can only
+					be submitted once.
 				</p>
 			</CardContent>
 		</Card>

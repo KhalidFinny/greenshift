@@ -1,7 +1,14 @@
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@greenshift/ui";
+import {
+	Badge,
+	Button,
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
-import type { VendorProjectCardData } from "../lib/types";
 import { formatRupiah } from "../lib/format";
+import type { VendorProjectCardData } from "../lib/types";
 
 interface RecommendedProjectsPreviewProps {
 	projects: VendorProjectCardData[];

@@ -72,9 +72,10 @@ export const VERIFICATION_STATUS_LABEL: Record<VerificationStatus, string> = {
 	REJECTED: "Rejected",
 };
 
-export const VERIFICATION_STATUS_TONE: Record<VerificationStatus, StatusTone> = {
-	NOT_VERIFIED: "outline",
-	VERIFYING: "secondary",
-	VERIFIED: "default",
-	REJECTED: "destructive",
-};
+export const VERIFICATION_STATUS_TONE: Record<VerificationStatus, StatusTone> =
+	{
+		NOT_VERIFIED: "outline",
+		VERIFYING: "secondary",
+		VERIFIED: "default",
+		REJECTED: "destructive",
+	};

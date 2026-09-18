@@ -26,7 +26,10 @@ export type BrokerProjectWorkflowStatus =
 	| "MONITORING"
 	| "COMPLETED";
 
-export type ExternalBondIssuanceStatus = "NOT_STARTED" | "IN_PROGRESS" | "ISSUED";
+export type ExternalBondIssuanceStatus =
+	| "NOT_STARTED"
+	| "IN_PROGRESS"
+	| "ISSUED";
 
 export interface ExternalBondInfo {
 	status: ExternalBondIssuanceStatus;
@@ -73,7 +76,10 @@ export interface BrokerDocumentRequest {
 	reviewedAt?: string;
 }
 
-export type MonthlyReportOverallStatus = "ON_TRACK" | "ATTENTION_REQUIRED" | "AT_RISK";
+export type MonthlyReportOverallStatus =
+	| "ON_TRACK"
+	| "ATTENTION_REQUIRED"
+	| "AT_RISK";
 
 export interface MonthlyProjectReport {
 	id: string;

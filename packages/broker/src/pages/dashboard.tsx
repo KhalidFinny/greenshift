@@ -26,13 +26,8 @@ function formatRupiah(amount: number) {
 }
 
 export function BrokerDashboard() {
-	const {
-		verification,
-		projects,
-		documentRequests,
-		metrics,
-		approveDocument,
-	} = useBrokerData();
+	const { verification, projects, documentRequests, metrics, approveDocument } =
+		useBrokerData();
 
 	const isVerified = verification.status === "VERIFIED";
 	const pendingDocs = documentRequests.filter(
@@ -50,16 +45,19 @@ export function BrokerDashboard() {
 							className="mt-0.5 text-xl text-amber-600 dark:text-amber-400"
 						/>
 						<div>
-							<h3 className="font-semibold">
-								Broker Verification Required
-							</h3>
+							<h3 className="font-semibold">Broker Verification Required</h3>
 							<p className="mt-1 text-sm">
-								Your Broker account is not fully verified. You cannot process project bond underwriting assignments or approve company documents yet.
+								Your Broker account is not fully verified. You cannot process
+								project bond underwriting assignments or approve company
+								documents yet.
 							</p>
 						</div>
 					</div>
 					<Link to="/broker/settings">
-						<Button size="sm" className="bg-amber-600 text-white hover:bg-amber-700">
+						<Button
+							size="sm"
+							className="bg-amber-600 text-white hover:bg-amber-700"
+						>
 							Complete Verification
 						</Button>
 					</Link>
@@ -134,7 +132,9 @@ export function BrokerDashboard() {
 				{/* Left 2 Cols: Assigned Projects Workload */}
 				<Card className="lg:col-span-2">
 					<CardHeader className="flex flex-row items-center justify-between">
-						<CardTitle className="text-lg">Verified Assigned Projects</CardTitle>
+						<CardTitle className="text-lg">
+							Verified Assigned Projects
+						</CardTitle>
 						<Link
 							to="/broker/projects"
 							className="text-sm text-emerald-600 hover:underline dark:text-emerald-400"
@@ -153,7 +153,10 @@ export function BrokerDashboard() {
 										<Badge className="bg-[#03442C] text-white font-semibold">
 											{proj.workflowStatus.replace(/_/g, " ")}
 										</Badge>
-										<Badge variant="outline" className="border-emerald-500 text-emerald-700 dark:text-emerald-300">
+										<Badge
+											variant="outline"
+											className="border-emerald-500 text-emerald-700 dark:text-emerald-300"
+										>
 											GHG LVV Verified
 										</Badge>
 									</div>
@@ -186,7 +189,10 @@ export function BrokerDashboard() {
 
 								<div className="flex justify-end gap-2 pt-2 border-t border-border">
 									<Link to="/broker/projects/$id" params={{ id: proj.id }}>
-										<Button size="sm" className="bg-[#03442C] text-white hover:bg-[#03442C]/90">
+										<Button
+											size="sm"
+											className="bg-[#03442C] text-white hover:bg-[#03442C]/90"
+										>
 											Open Project Financial Details
 										</Button>
 									</Link>

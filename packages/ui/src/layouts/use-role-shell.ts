@@ -49,16 +49,10 @@ export function useRoleShell(): RoleShellData {
 
 		function onPointerDown(event: PointerEvent) {
 			const target = event.target as Node;
-			if (
-				accountRef.current &&
-				!accountRef.current.contains(target)
-			) {
+			if (accountRef.current && !accountRef.current.contains(target)) {
 				setAccountMenuOpen(false);
 			}
-			if (
-				notifRef.current &&
-				!notifRef.current.contains(target)
-			) {
+			if (notifRef.current && !notifRef.current.contains(target)) {
 				setNotifMenuOpen(false);
 			}
 		}

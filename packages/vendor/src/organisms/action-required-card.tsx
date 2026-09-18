@@ -1,9 +1,16 @@
 import { faClock } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@greenshift/ui";
+import {
+	Badge,
+	Button,
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
-import type { NegotiationRequest, VendorProjectCardData } from "../lib/types";
 import { formatRupiah } from "../lib/format";
+import type { NegotiationRequest, VendorProjectCardData } from "../lib/types";
 
 interface ActionRequiredCardProps {
 	negotiations: NegotiationRequest[];
@@ -52,7 +59,10 @@ export function ActionRequiredCard({
 								</p>
 							</div>
 							<Link to="/vendor/deals">
-								<Button size="sm" className="bg-blue-600 text-white hover:bg-blue-700">
+								<Button
+									size="sm"
+									className="bg-blue-600 text-white hover:bg-blue-700"
+								>
 									Respond to Negotiation
 								</Button>
 							</Link>
@@ -75,13 +85,14 @@ export function ActionRequiredCard({
 									<span className="flex items-center gap-1 text-xs text-muted-foreground">
 										<FontAwesomeIcon icon={faClock} />
 										Ends{" "}
-										{new Date(firstOpenBidProject.tenderDeadlineAt).toLocaleDateString(
-											"en-US",
-											{ dateStyle: "medium" },
-										)}
+										{new Date(
+											firstOpenBidProject.tenderDeadlineAt,
+										).toLocaleDateString("en-US", { dateStyle: "medium" })}
 									</span>
 								</div>
-								<h4 className="mt-2 font-semibold">{firstOpenBidProject.title}</h4>
+								<h4 className="mt-2 font-semibold">
+									{firstOpenBidProject.title}
+								</h4>
 								<p className="mt-1 text-sm text-muted-foreground">
 									Budget:{" "}
 									<span className="font-semibold text-foreground">
@@ -89,7 +100,8 @@ export function ActionRequiredCard({
 									</span>
 									{currentVendorRank && (
 										<>
-											{" "}• Your Standing:{" "}
+											{" "}
+											• Your Standing:{" "}
 											<span className="font-semibold text-foreground">
 												Rank {currentVendorRank} of {leaderboard.length} Vendors
 											</span>

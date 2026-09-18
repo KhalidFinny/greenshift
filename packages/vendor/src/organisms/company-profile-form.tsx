@@ -1,4 +1,12 @@
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from "@greenshift/ui";
+import {
+	Button,
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+	Input,
+	Label,
+} from "@greenshift/ui";
 import { useState } from "react";
 
 interface CompanyProfileFormProps {
@@ -12,7 +20,9 @@ interface CompanyProfileFormProps {
 }
 
 export function CompanyProfileForm({ onSave }: CompanyProfileFormProps) {
-	const [companyName, setCompanyName] = useState("PT Nusantara Energy Solution");
+	const [companyName, setCompanyName] = useState(
+		"PT Nusantara Energy Solution",
+	);
 	const [description, setDescription] = useState(
 		"Perusahaan EPC & ESCO spesialis pengadaan sistem Solar PV industri, Retrofit HVAC sentral, dan manajemen efisiensi energi gedung terverifikasi ISO 50001.",
 	);

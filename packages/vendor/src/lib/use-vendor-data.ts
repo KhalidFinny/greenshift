@@ -1,31 +1,27 @@
-import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { api } from "@greenshift/core";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import {
-	mapVerificationStatus,
+	derivePerformanceMetrics,
 	mapProjectToCardData,
 	mapToActiveProject,
 	mapToPortfolioItem,
 	mapToStructuredProposal,
-	derivePerformanceMetrics,
+	mapVerificationStatus,
 } from "./api-mappers";
+// ── Fallback demo data (used when API fails) ─────────────
+import { sampleNotifications, sampleOpenBidLeaderboard } from "./demo-data";
 import type {
-	VendorProjectCardData,
 	ActiveVendorProject,
-	VendorPortfolioItem,
-	VendorPerformanceMetrics,
-	StructuredProposal,
-	OpenBidLeaderboardEntry,
-	VendorNotification,
 	EvidenceFile,
 	NegotiationRequest,
+	OpenBidLeaderboardEntry,
+	StructuredProposal,
+	VendorNotification,
+	VendorPerformanceMetrics,
+	VendorPortfolioItem,
+	VendorProjectCardData,
 } from "./types";
-
-// ── Fallback demo data (used when API fails) ─────────────
-import {
-	sampleOpenBidLeaderboard,
-	sampleNotifications,
-} from "./demo-data";
 
 export function useVendorData() {
 	// ── Local state (before derived data that depends on them) ─────
@@ -37,23 +33,29 @@ export function useVendorData() {
 		return new Set();
 	});
 
-	const [userPortfolio, setUserPortfolio] = useState<VendorPortfolioItem[]>(() => {
-		if (typeof window !== "undefined") {
-			const saved = localStorage.getItem("vendor_portfolio");
-			return saved ? JSON.parse(saved) : [];
-		}
-		return [];
-	});
+	const [userPortfolio, setUserPortfolio] = useState<VendorPortfolioItem[]>(
+		() => {
+			if (typeof window !== "undefined") {
+				const saved = localStorage.getItem("vendor_portfolio");
+				return saved ? JSON.parse(saved) : [];
+			}
+			return [];
+		},
+	);
 
-	const [leaderboard, setLeaderboard] = useState<OpenBidLeaderboardEntry[]>(sampleOpenBidLeaderboard);
+	const [leaderboard, setLeaderboard] = useState<OpenBidLeaderboardEntry[]>(
+		sampleOpenBidLeaderboard,
+	);
 
-	const [readNotifications, setReadNotifications] = useState<Set<string>>(() => {
-		if (typeof window !== "undefined") {
-			const saved = localStorage.getItem("vendor_read_notifications");
-			return saved ? new Set(JSON.parse(saved)) : new Set();
-		}
-		return new Set();
-	});
+	const [readNotifications, setReadNotifications] = useState<Set<string>>(
+		() => {
+			if (typeof window !== "undefined") {
+				const saved = localStorage.getItem("vendor_read_notifications");
+				return saved ? new Set(JSON.parse(saved)) : new Set();
+			}
+			return new Set();
+		},
+	);
 
 	// ── Fetch data from API ─────────────────────────────────
 	const { data: profileData, isLoading: profileLoading } = useQuery({
@@ -168,7 +170,10 @@ export function useVendorData() {
 				next.add(projectId);
 			}
 			if (typeof window !== "undefined") {
-				localStorage.setItem("vendor_saved_projects", JSON.stringify([...next]));
+				localStorage.setItem(
+					"vendor_saved_projects",
+					JSON.stringify([...next]),
+				);
 			}
 			return next;
 		});
@@ -178,7 +183,11 @@ export function useVendorData() {
 		setLeaderboard((prev) => {
 			const updated = prev.map((item) =>
 				item.isCurrentVendor
-					? { ...item, currentPrice: newPrice, updatedAt: new Date().toISOString() }
+					? {
+							...item,
+							currentPrice: newPrice,
+							updatedAt: new Date().toISOString(),
+						}
 					: item,
 			);
 			return updated
@@ -244,7 +253,10 @@ export function useVendorData() {
 			const next = new Set(prev);
 			next.add(notifId);
 			if (typeof window !== "undefined") {
-				localStorage.setItem("vendor_read_notifications", JSON.stringify([...next]));
+				localStorage.setItem(
+					"vendor_read_notifications",
+					JSON.stringify([...next]),
+				);
 			}
 			return next;
 		});

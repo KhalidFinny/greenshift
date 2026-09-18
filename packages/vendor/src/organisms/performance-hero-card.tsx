@@ -35,25 +35,33 @@ export function PerformanceHeroCard({
 					{/* Metrics Grid */}
 					<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 						<div className="rounded-lg bg-muted/50 p-3">
-							<p className="text-xs font-medium text-muted-foreground">Completion</p>
+							<p className="text-xs font-medium text-muted-foreground">
+								Completion
+							</p>
 							<p className="mt-1 text-xl font-bold text-foreground">
 								{performanceMetrics.completionRatePercent}%
 							</p>
 						</div>
 						<div className="rounded-lg bg-muted/50 p-3">
-							<p className="text-xs font-medium text-muted-foreground">On-Time</p>
+							<p className="text-xs font-medium text-muted-foreground">
+								On-Time
+							</p>
 							<p className="mt-1 text-xl font-bold text-foreground">
 								{performanceMetrics.onTimeCompletionPercent}%
 							</p>
 						</div>
 						<div className="rounded-lg bg-muted/50 p-3">
-							<p className="text-xs font-medium text-muted-foreground">Energy Savings</p>
+							<p className="text-xs font-medium text-muted-foreground">
+								Energy Savings
+							</p>
 							<p className="mt-1 text-xl font-bold text-emerald-600 dark:text-emerald-400">
 								{performanceMetrics.energySavingAchievementPercent}%
 							</p>
 						</div>
 						<div className="rounded-lg bg-muted/50 p-3">
-							<p className="text-xs font-medium text-muted-foreground">Satisfaction</p>
+							<p className="text-xs font-medium text-muted-foreground">
+								Satisfaction
+							</p>
 							<p className="mt-1 text-xl font-bold text-foreground">
 								{performanceMetrics.clientApprovalRatePercent}%
 							</p>

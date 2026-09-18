@@ -1,5 +1,6 @@
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useAuth } from "@greenshift/core";
 import {
 	Button,
 	Card,
@@ -10,19 +11,23 @@ import {
 	TabsList,
 	TabsTrigger,
 } from "@greenshift/ui";
-import { useAuth } from "@greenshift/core";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useVendorData } from "../lib/use-vendor-data";
 import { VendorProjectCard } from "../organisms/vendor-project-card";
 
-type ProcurementFilter = "ALL" | "OPEN_BIDDING" | "CLOSED_BIDDING" | "DIRECT_SELECTION";
+type ProcurementFilter =
+	| "ALL"
+	| "OPEN_BIDDING"
+	| "CLOSED_BIDDING"
+	| "DIRECT_SELECTION";
 
 export function VendorOpportunitiesPage() {
 	const { user } = useAuth();
 	const { projects, toggleSaveProject, proposals } = useVendorData();
 	const [searchQuery, setSearchQuery] = useState("");
-	const [selectedMethod, setSelectedMethod] = useState<ProcurementFilter>("ALL");
+	const [selectedMethod, setSelectedMethod] =
+		useState<ProcurementFilter>("ALL");
 
 	// Project IDs the vendor has already applied to
 	const appliedProjectIds = new Set(proposals.map((p) => p.projectId));
@@ -121,7 +126,8 @@ export function VendorOpportunitiesPage() {
 
 				{selectedMethod === "DIRECT_SELECTION" && (
 					<p className="text-xs text-purple-600 dark:text-purple-400">
-						ℹ️ Direct Selection projects are private invitations — only visible if you've been invited by the company.
+						ℹ️ Direct Selection projects are private invitations — only visible
+						if you've been invited by the company.
 					</p>
 				)}
 			</div>
@@ -140,7 +146,10 @@ export function VendorOpportunitiesPage() {
 				{/* 1. Available Tenders Tab */}
 				<TabsContent value="available" className="mt-6 space-y-4">
 					<div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 px-4 py-2.5 text-xs text-muted-foreground">
-						<span>Showing unapplied tender opportunities. Already submitted a proposal?</span>
+						<span>
+							Showing unapplied tender opportunities. Already submitted a
+							proposal?
+						</span>
 						<Link
 							to="/vendor/deals"
 							className="font-semibold text-emerald-700 hover:underline dark:text-emerald-400"
@@ -173,7 +182,8 @@ export function VendorOpportunitiesPage() {
 					{recommended.length === 0 ? (
 						<Card>
 							<CardContent className="p-8 text-center text-xs text-muted-foreground">
-								No recommended tenders match your current criteria. Try adjusting your search query or filters.
+								No recommended tenders match your current criteria. Try
+								adjusting your search query or filters.
 							</CardContent>
 						</Card>
 					) : (
@@ -195,7 +205,8 @@ export function VendorOpportunitiesPage() {
 					{saved.length === 0 ? (
 						<Card>
 							<CardContent className="p-8 text-center text-xs text-muted-foreground">
-								No saved projects yet. Bookmark projects using the bookmark icon on any project card to review them here.
+								No saved projects yet. Bookmark projects using the bookmark icon
+								on any project card to review them here.
 							</CardContent>
 						</Card>
 					) : (

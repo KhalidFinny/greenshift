@@ -1,8 +1,4 @@
-import {
-	faFileAlt,
-	faLeaf,
-	faTrash,
-} from "@fortawesome/free-solid-svg-icons";
+import { faFileAlt, faLeaf, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
 	Badge,
@@ -12,8 +8,8 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@greenshift/ui";
-import type { VendorPortfolioItem } from "../lib/types";
 import { formatRupiah } from "../lib/format";
+import type { VendorPortfolioItem } from "../lib/types";
 
 interface PortfolioItemCardProps {
 	item: VendorPortfolioItem;

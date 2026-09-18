@@ -1,6 +1,12 @@
 import { faShieldAlt } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Badge, Card, CardContent, CardHeader, CardTitle } from "@greenshift/ui";
+import {
+	Badge,
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from "@greenshift/ui";
 
 export function ProjectRiskCard() {
 	return (
@@ -20,7 +26,8 @@ export function ProjectRiskCard() {
 			<CardContent className="space-y-4 text-xs">
 				<p className="text-muted-foreground">
 					This risk assessment is automatically computed from engineering models
-					and blueprint financial metrics. Vendors cannot alter baseline risk parameters.
+					and blueprint financial metrics. Vendors cannot alter baseline risk
+					parameters.
 				</p>
 
 				<div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

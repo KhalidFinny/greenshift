@@ -1,17 +1,17 @@
 import type {
-	VendorProfile,
-	VendorMyProject,
-	VendorProjectListItem,
 	ProposalSummary,
+	VendorMyProject,
+	VendorProfile,
+	VendorProjectListItem,
 } from "@greenshift/api/contracts";
 import type {
-	CompanyVerificationDetails,
-	VendorProjectCardData,
 	ActiveVendorProject,
-	VendorPortfolioItem,
-	VendorPerformanceMetrics,
-	StructuredProposal,
+	CompanyVerificationDetails,
 	ProcurementMethod,
+	StructuredProposal,
+	VendorPerformanceMetrics,
+	VendorPortfolioItem,
+	VendorProjectCardData,
 } from "./types";
 
 // ── Verification Status ──────────────────────────────────
@@ -196,7 +196,7 @@ export function derivePerformanceMetrics(
 	// Calculate average project value
 	const avgValue =
 		agreedProjects.reduce((sum, p) => sum + (p.proposal.amount ?? 0), 0) /
-			Math.max(completedCount, 1);
+		Math.max(completedCount, 1);
 
 	// Derive rating-based metrics
 	const ratingScore = profile.rating ?? 4.5;
@@ -231,14 +231,13 @@ export function derivePerformanceMetrics(
 			{ period: "26Q1", score: 96 },
 		],
 		bastRating: ratingScore,
-		retentionRate: ratingScore >= 4.5 ? "High" : ratingScore >= 3.5 ? "Medium" : "Low",
+		retentionRate:
+			ratingScore >= 4.5 ? "High" : ratingScore >= 3.5 ? "Medium" : "Low",
 	};
 }
 
 // ── Helpers ──────────────────────────────────────────────
-function mapProcurementMethod(
-	method?: string | null,
-): ProcurementMethod {
+function mapProcurementMethod(method?: string | null): ProcurementMethod {
 	switch (method?.toUpperCase()) {
 		case "OPEN_BIDDING":
 			return "OPEN_BIDDING";

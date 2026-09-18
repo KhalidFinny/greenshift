@@ -18,8 +18,8 @@ import {
 	Label,
 } from "@greenshift/ui";
 import { useState } from "react";
-import type { EvidenceFile, ProjectMilestone } from "../lib/types";
 import { MILESTONE_STATUS_LABEL } from "../lib/labels";
+import type { EvidenceFile, ProjectMilestone } from "../lib/types";
 
 interface MilestoneTrackerCardProps {
 	projectId: string;
@@ -123,7 +123,9 @@ function SubmitMilestoneEvidenceDialog({
 						>
 							<option value="photo">Field Photo (Photo)</option>
 							<option value="video">Video Documentation</option>
-							<option value="document">Document / BAST (Handover Certificate)</option>
+							<option value="document">
+								Document / BAST (Handover Certificate)
+							</option>
 							<option value="inspection">Inspection / Testing Report</option>
 							<option value="energy_data">Energy Log / Smart Meter Data</option>
 						</select>
@@ -144,8 +146,8 @@ function SubmitMilestoneEvidenceDialog({
 					</div>
 
 					<p className="text-[11px] italic text-muted-foreground">
-						* After uploading evidence, the milestone status advances to
-						"Under Review" for client inspection and sign-off.
+						* After uploading evidence, the milestone status advances to "Under
+						Review" for client inspection and sign-off.
 					</p>
 
 					<div className="flex justify-end gap-2 border-t border-border pt-2">
@@ -179,14 +181,14 @@ export function MilestoneTrackerCard({
 			<div className="flex items-center justify-between">
 				<h3 className="text-lg font-bold">Agreed Milestones Tracker</h3>
 				<span className="text-xs text-muted-foreground">
-					* Milestones are jointly scheduled with the Client upon contract execution.
+					* Milestones are jointly scheduled with the Client upon contract
+					execution.
 				</span>
 			</div>
 
 			<div className="space-y-4">
 				{milestones.map((ms) => {
-					const isDone =
-						ms.status === "COMPLETED" || ms.status === "APPROVED";
+					const isDone = ms.status === "COMPLETED" || ms.status === "APPROVED";
 					return (
 						<Card
 							key={ms.id}
@@ -204,8 +206,8 @@ export function MilestoneTrackerCard({
 													isDone
 														? "bg-emerald-600 text-white"
 														: ms.status === "SUBMITTED_FOR_REVIEW"
-														? "bg-blue-600 text-white"
-														: "bg-muted text-muted-foreground"
+															? "bg-blue-600 text-white"
+															: "bg-muted text-muted-foreground"
 												}
 											>
 												{MILESTONE_STATUS_LABEL[ms.status]}

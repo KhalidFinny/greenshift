@@ -29,7 +29,9 @@ export function AddPortfolioDialog({ onAdd }: AddPortfolioDialogProps) {
 	const [energySavingPercent, setEnergySavingPercent] = useState("20");
 	const [carbonReductionTons, setCarbonReductionTons] = useState("500");
 	const [completionYear, setCompletionYear] = useState("2025");
-	const [documents, setDocuments] = useState<{ name: string; type: string }[]>([]);
+	const [documents, setDocuments] = useState<{ name: string; type: string }[]>(
+		[],
+	);
 
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const files = e.target.files;
@@ -207,9 +209,12 @@ export function AddPortfolioDialog({ onAdd }: AddPortfolioDialogProps) {
 
 					{/* Document Upload Section */}
 					<div className="space-y-2">
-						<Label className="text-xs font-semibold">Supporting Documents</Label>
+						<Label className="text-xs font-semibold">
+							Supporting Documents
+						</Label>
 						<p className="text-[10px] text-muted-foreground">
-							Upload BAST certificates, photos, inspection reports, or other verification documents.
+							Upload BAST certificates, photos, inspection reports, or other
+							verification documents.
 						</p>
 						<div className="rounded-lg border-2 border-dashed border-border p-6 text-center transition-colors hover:border-emerald-500/50 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20">
 							<input
@@ -220,10 +225,7 @@ export function AddPortfolioDialog({ onAdd }: AddPortfolioDialogProps) {
 								className="hidden"
 								onChange={handleFileChange}
 							/>
-							<label
-								htmlFor="p-docs"
-								className="cursor-pointer"
-							>
+							<label htmlFor="p-docs" className="cursor-pointer">
 								<FontAwesomeIcon
 									icon={faFileUpload}
 									className="mb-2 text-3xl text-muted-foreground"
@@ -249,8 +251,13 @@ export function AddPortfolioDialog({ onAdd }: AddPortfolioDialogProps) {
 										className="flex items-center justify-between rounded-md bg-muted px-3 py-2"
 									>
 										<div className="flex items-center gap-2">
-											<FontAwesomeIcon icon={faFileUpload} className="text-xs text-emerald-600" />
-											<span className="text-xs text-foreground truncate max-w-[250px]">{doc.name}</span>
+											<FontAwesomeIcon
+												icon={faFileUpload}
+												className="text-xs text-emerald-600"
+											/>
+											<span className="text-xs text-foreground truncate max-w-[250px]">
+												{doc.name}
+											</span>
 										</div>
 										<Button
 											type="button"

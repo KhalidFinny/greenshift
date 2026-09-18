@@ -24,7 +24,8 @@ export function VendorDashboard() {
 	const kpiItems = [
 		{
 			label: "Active Tenders",
-			value: projects.filter((p) => p.procurementMethod === "OPEN_BIDDING").length,
+			value: projects.filter((p) => p.procurementMethod === "OPEN_BIDDING")
+				.length,
 			sub: "Open for participation",
 			icon: faHandshake,
 			iconBg: "bg-emerald-100 dark:bg-emerald-950/60",

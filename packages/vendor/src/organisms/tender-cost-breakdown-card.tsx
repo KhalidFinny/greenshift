@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@greenshift/ui";
-import type { CostBreakdown } from "../lib/types";
 import { formatRupiah } from "../lib/format";
+import type { CostBreakdown } from "../lib/types";
 
 interface TenderCostBreakdownCardProps {
 	costBreakdown: CostBreakdown;

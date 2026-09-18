@@ -1,13 +1,21 @@
 import { faLeaf } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Badge, Card, CardContent, CardHeader, CardTitle } from "@greenshift/ui";
+import {
+	Badge,
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from "@greenshift/ui";
 import type { MonthlyEnergyReport } from "../lib/types";
 
 interface MonthlyEnergyReportCardProps {
 	reports: MonthlyEnergyReport[];
 }
 
-export function MonthlyEnergyReportCard({ reports }: MonthlyEnergyReportCardProps) {
+export function MonthlyEnergyReportCard({
+	reports,
+}: MonthlyEnergyReportCardProps) {
 	return (
 		<Card>
 			<CardHeader>

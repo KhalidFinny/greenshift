@@ -1,8 +1,8 @@
 import { faBuilding } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Badge, Card, CardContent } from "@greenshift/ui";
-import type { NegotiationRequest, StructuredProposal } from "../lib/types";
 import { formatRupiah } from "../lib/format";
+import type { NegotiationRequest, StructuredProposal } from "../lib/types";
 
 interface TenderDetailHeroProps {
 	proposal: StructuredProposal;

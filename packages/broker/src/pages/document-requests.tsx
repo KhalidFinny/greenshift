@@ -25,11 +25,12 @@ import {
 	TabsTrigger,
 } from "@greenshift/ui";
 import { useState } from "react";
-
-import { useBrokerData } from "../lib/use-broker-data";
 import type { BrokerDocumentRequest, DocumentCategory } from "../lib/types";
+import { useBrokerData } from "../lib/use-broker-data";
 
-{/* Modal Reject Document with mandatory reason */}
+{
+	/* Modal Reject Document with mandatory reason */
+}
 function RejectDocumentModal({
 	request,
 	onReject,
@@ -50,7 +51,11 @@ function RejectDocumentModal({
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
-				<Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 text-xs">
+				<Button
+					size="sm"
+					variant="outline"
+					className="text-red-600 border-red-200 hover:bg-red-50 text-xs"
+				>
 					Reject & Request Revision
 				</Button>
 			</DialogTrigger>
@@ -64,8 +69,12 @@ function RejectDocumentModal({
 
 				<form onSubmit={handleSubmit} className="space-y-4 pt-2 text-xs">
 					<div className="rounded-lg bg-muted p-3">
-						<p className="font-semibold text-foreground">{request.documentTypeName}</p>
-						<p className="text-muted-foreground mt-0.5">Client: {request.companyName}</p>
+						<p className="font-semibold text-foreground">
+							{request.documentTypeName}
+						</p>
+						<p className="text-muted-foreground mt-0.5">
+							Client: {request.companyName}
+						</p>
 					</div>
 
 					<div className="space-y-1.5">
@@ -84,7 +93,11 @@ function RejectDocumentModal({
 					</div>
 
 					<div className="flex justify-end gap-2 pt-2 border-t border-border">
-						<Button type="button" variant="outline" onClick={() => setOpen(false)}>
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => setOpen(false)}
+						>
 							Cancel
 						</Button>
 						<Button type="submit" variant="destructive">
@@ -97,7 +110,9 @@ function RejectDocumentModal({
 	);
 }
 
-{/* Modal Create Document Request */}
+{
+	/* Modal Create Document Request */
+}
 function GlobalCreateDocumentRequestModal({
 	projects,
 	onCreateRequest,
@@ -114,7 +129,9 @@ function GlobalCreateDocumentRequestModal({
 	) => void;
 }) {
 	const [open, setOpen] = useState(false);
-	const [selectedProjectId, setSelectedProjectId] = useState(projects[0]?.id ?? "");
+	const [selectedProjectId, setSelectedProjectId] = useState(
+		projects[0]?.id ?? "",
+	);
 	const [category, setCategory] = useState<DocumentCategory>("Financial");
 	const [typeName, setTypeName] = useState("");
 	const [period, setPeriod] = useState("");
@@ -184,7 +201,9 @@ function GlobalCreateDocumentRequestModal({
 								id="g-cat"
 								className="w-full rounded-md border border-input bg-background p-2 text-xs"
 								value={category}
-								onChange={(e) => setCategory(e.target.value as DocumentCategory)}
+								onChange={(e) =>
+									setCategory(e.target.value as DocumentCategory)
+								}
 							>
 								<option value="Financial">Financial</option>
 								<option value="Legal">Legal</option>
@@ -249,10 +268,17 @@ function GlobalCreateDocumentRequestModal({
 					</div>
 
 					<div className="flex justify-end gap-2 pt-2 border-t border-border">
-						<Button type="button" variant="outline" onClick={() => setOpen(false)}>
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => setOpen(false)}
+						>
 							Cancel
 						</Button>
-						<Button type="submit" className="bg-[#03442C] text-white hover:bg-[#03442C]/90">
+						<Button
+							type="submit"
+							className="bg-[#03442C] text-white hover:bg-[#03442C]/90"
+						>
 							Send Document Request
 						</Button>
 					</div>
@@ -286,7 +312,8 @@ export function BrokerDocumentRequestsPage() {
 				<div>
 					<h1 className="text-2xl font-bold">Document Requests Center</h1>
 					<p className="mt-1 text-sm text-muted-foreground">
-						Request legal, financial, and technical documents from Client Companies for bond underwriting requirements.
+						Request legal, financial, and technical documents from Client
+						Companies for bond underwriting requirements.
 					</p>
 				</div>
 				<GlobalCreateDocumentRequestModal
@@ -319,13 +346,21 @@ export function BrokerDocumentRequestsPage() {
 				<TabsList className="grid w-full grid-cols-4">
 					<TabsTrigger value="all">All ({filteredRequests.length})</TabsTrigger>
 					<TabsTrigger value="pending">
-						Awaiting Review ({filteredRequests.filter((d) => d.status === "SUBMITTED" || d.status === "UNDER_REVIEW").length})
+						Awaiting Review (
+						{
+							filteredRequests.filter(
+								(d) => d.status === "SUBMITTED" || d.status === "UNDER_REVIEW",
+							).length
+						}
+						)
 					</TabsTrigger>
 					<TabsTrigger value="approved">
-						Approved ({filteredRequests.filter((d) => d.status === "APPROVED").length})
+						Approved (
+						{filteredRequests.filter((d) => d.status === "APPROVED").length})
 					</TabsTrigger>
 					<TabsTrigger value="requested">
-						Awaiting Client ({filteredRequests.filter((d) => d.status === "REQUESTED").length})
+						Awaiting Client (
+						{filteredRequests.filter((d) => d.status === "REQUESTED").length})
 					</TabsTrigger>
 				</TabsList>
 
@@ -343,10 +378,10 @@ export function BrokerDocumentRequestsPage() {
 												doc.status === "APPROVED"
 													? "bg-emerald-600 text-white"
 													: doc.status === "REJECTED"
-													? "bg-red-600 text-white"
-													: doc.status === "SUBMITTED"
-													? "bg-amber-600 text-white"
-													: "bg-muted text-muted-foreground"
+														? "bg-red-600 text-white"
+														: doc.status === "SUBMITTED"
+															? "bg-amber-600 text-white"
+															: "bg-muted text-muted-foreground"
 											}
 										>
 											Status: {doc.status}
@@ -373,7 +408,10 @@ export function BrokerDocumentRequestsPage() {
 								{doc.submittedFileName && (
 									<div className="rounded-lg bg-emerald-50 p-3 dark:bg-emerald-950/40 flex flex-wrap items-center justify-between gap-3 border border-emerald-200 dark:border-emerald-800">
 										<span className="flex items-center gap-2 font-semibold text-emerald-950 dark:text-emerald-200">
-											<FontAwesomeIcon icon={faFileAlt} className="text-emerald-600 text-sm" />
+											<FontAwesomeIcon
+												icon={faFileAlt}
+												className="text-emerald-600 text-sm"
+											/>
 											File Uploaded: {doc.submittedFileName} ({doc.submittedAt})
 										</span>
 
@@ -409,7 +447,9 @@ export function BrokerDocumentRequestsPage() {
 
 				<TabsContent value="pending" className="mt-6 space-y-4">
 					{filteredRequests
-						.filter((d) => d.status === "SUBMITTED" || d.status === "UNDER_REVIEW")
+						.filter(
+							(d) => d.status === "SUBMITTED" || d.status === "UNDER_REVIEW",
+						)
 						.map((doc) => (
 							<Card key={doc.id}>
 								<CardContent className="p-5 space-y-3 text-xs">
@@ -437,9 +477,13 @@ export function BrokerDocumentRequestsPage() {
 						.map((doc) => (
 							<Card key={doc.id}>
 								<CardContent className="p-5 text-xs space-y-1">
-									<Badge className="bg-emerald-600 text-white mb-1">Approved</Badge>
+									<Badge className="bg-emerald-600 text-white mb-1">
+										Approved
+									</Badge>
 									<h4 className="font-bold text-sm">{doc.documentTypeName}</h4>
-									<p className="text-muted-foreground">{doc.submittedFileName}</p>
+									<p className="text-muted-foreground">
+										{doc.submittedFileName}
+									</p>
 								</CardContent>
 							</Card>
 						))}
@@ -453,7 +497,9 @@ export function BrokerDocumentRequestsPage() {
 								<CardContent className="p-5 text-xs space-y-1">
 									<Badge variant="outline">Awaiting Client</Badge>
 									<h4 className="font-bold text-sm">{doc.documentTypeName}</h4>
-									<p className="text-muted-foreground">Deadline: {doc.deadlineDate}</p>
+									<p className="text-muted-foreground">
+										Deadline: {doc.deadlineDate}
+									</p>
 								</CardContent>
 							</Card>
 						))}

@@ -1,6 +1,6 @@
 import { Badge, Card, CardContent } from "@greenshift/ui";
-import type { ActiveVendorProject } from "../lib/types";
 import { formatRupiah } from "../lib/format";
+import type { ActiveVendorProject } from "../lib/types";
 
 interface ActiveProjectHeroProps {
 	project: ActiveVendorProject;

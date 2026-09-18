@@ -1,9 +1,9 @@
 import { faBuilding, faMapMarkerAlt } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Badge, Card, CardContent } from "@greenshift/ui";
-import type { VendorProjectCardData } from "../lib/types";
 import { formatRupiah } from "../lib/format";
 import { PROCUREMENT_METHOD_LABEL } from "../lib/labels";
+import type { VendorProjectCardData } from "../lib/types";
 
 interface ProjectDetailHeroProps {
 	project: VendorProjectCardData;

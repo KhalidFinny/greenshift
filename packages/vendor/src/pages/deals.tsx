@@ -1,6 +1,19 @@
-import { faArrowLeft, faCheckCircle, faGavel } from "@fortawesome/free-solid-svg-icons";
+import {
+	faArrowLeft,
+	faCheckCircle,
+	faGavel,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Badge, Button, Card, CardContent, Tabs, TabsContent, TabsList, TabsTrigger } from "@greenshift/ui";
+import {
+	Badge,
+	Button,
+	Card,
+	CardContent,
+	Tabs,
+	TabsContent,
+	TabsList,
+	TabsTrigger,
+} from "@greenshift/ui";
 import { useState } from "react";
 import { useVendorData } from "../lib/use-vendor-data";
 import { ActiveProjectCard } from "../organisms/active-project-card";
@@ -22,13 +35,18 @@ export function VendorDealsPage() {
 		submitNegotiationResponse,
 	} = useVendorData();
 
-	const [selectedActiveProjectId, setSelectedActiveProjectId] = useState<string | null>(null);
+	const [selectedActiveProjectId, setSelectedActiveProjectId] = useState<
+		string | null
+	>(null);
 
-	const selectedProject = activeProjects.find((p) => p.id === selectedActiveProjectId);
+	const selectedProject = activeProjects.find(
+		(p) => p.id === selectedActiveProjectId,
+	);
 
 	// Find open bidding proposals (live auctions)
 	const openBiddingProposals = proposals.filter(
-		(p) => p.procurementMethod === "OPEN_BIDDING" && p.status === "UNDER_EVALUATION",
+		(p) =>
+			p.procurementMethod === "OPEN_BIDDING" && p.status === "UNDER_EVALUATION",
 	);
 
 	return (
@@ -60,13 +78,18 @@ export function VendorDealsPage() {
 						<Card>
 							<CardContent className="p-8 text-center text-xs text-muted-foreground space-y-3">
 								<div className="mx-auto flex size-12 items-center justify-center rounded-full bg-muted">
-									<FontAwesomeIcon icon={faGavel} className="text-xl text-muted-foreground" />
+									<FontAwesomeIcon
+										icon={faGavel}
+										className="text-xl text-muted-foreground"
+									/>
 								</div>
 								<h4 className="font-semibold text-sm text-foreground">
 									No Live Bidding in Progress
 								</h4>
 								<p className="max-w-md mx-auto">
-									When you submit a proposal for an Open Bidding tender, you can track your ranking and revise your bid price in real-time here.
+									When you submit a proposal for an Open Bidding tender, you can
+									track your ranking and revise your bid price in real-time
+									here.
 								</p>
 							</CardContent>
 						</Card>
@@ -110,7 +133,8 @@ export function VendorDealsPage() {
 					{proposals.length === 0 ? (
 						<Card>
 							<CardContent className="p-8 text-center text-xs text-muted-foreground">
-								No proposals currently submitted. Browse Opportunities to submit bids.
+								No proposals currently submitted. Browse Opportunities to submit
+								bids.
 							</CardContent>
 						</Card>
 					) : (
@@ -166,7 +190,9 @@ export function VendorDealsPage() {
 								onSubmitEvidence={submitMilestoneEvidence}
 							/>
 
-							<MonthlyEnergyReportCard reports={selectedProject.monthlyReports} />
+							<MonthlyEnergyReportCard
+								reports={selectedProject.monthlyReports}
+							/>
 						</div>
 					) : (
 						<div className="space-y-6">
@@ -176,7 +202,8 @@ export function VendorDealsPage() {
 										Concurrent Active Projects ({activeProjects.length})
 									</h3>
 									<p className="text-xs text-muted-foreground">
-										Select any project to drill down into milestone tracking, upload execution evidence, and view energy reports.
+										Select any project to drill down into milestone tracking,
+										upload execution evidence, and view energy reports.
 									</p>
 								</div>
 							</div>
@@ -205,7 +232,9 @@ export function VendorDealsPage() {
 								All Closed & Completed Deals
 							</h4>
 							<p className="max-w-md mx-auto">
-								Completed contracts with finalized BAST (Handover Certificate) verification automatically archive into your verified Track Record under Portfolio & Performance.
+								Completed contracts with finalized BAST (Handover Certificate)
+								verification automatically archive into your verified Track
+								Record under Portfolio & Performance.
 							</p>
 						</CardContent>
 					</Card>

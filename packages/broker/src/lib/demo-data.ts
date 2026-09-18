@@ -44,7 +44,8 @@ export const sampleAssignedProjects: BrokerAssignedProject[] = [
 			technicalRisk: "Medium",
 			implementationRisk: "Medium",
 			environmentalRisk: "Low",
-			notes: "Operational and environmental risks are very low. GHG LVV has verified the emission baseline calculation methodology.",
+			notes:
+				"Operational and environmental risks are very low. GHG LVV has verified the emission baseline calculation methodology.",
 		},
 		bondInfo: {
 			status: "IN_PROGRESS",
@@ -85,7 +86,8 @@ export const sampleAssignedProjects: BrokerAssignedProject[] = [
 			technicalRisk: "Low",
 			implementationRisk: "Medium",
 			environmentalRisk: "Low",
-			notes: "Hospital cash flow predictability is exceptionally stable. Credit risk is classified as very low.",
+			notes:
+				"Hospital cash flow predictability is exceptionally stable. Credit risk is classified as very low.",
 		},
 		bondInfo: {
 			status: "IN_PROGRESS",
@@ -125,7 +127,8 @@ export const sampleAssignedProjects: BrokerAssignedProject[] = [
 			technicalRisk: "Low",
 			implementationRisk: "Medium",
 			environmentalRisk: "Low",
-			notes: "Local palm kernel shell feedstock supply requires long-term contract certainty review.",
+			notes:
+				"Local palm kernel shell feedstock supply requires long-term contract certainty review.",
 		},
 		bondInfo: {
 			status: "NOT_STARTED",
@@ -151,9 +154,11 @@ export const sampleDocumentRequests: BrokerDocumentRequest[] = [
 		category: "Financial",
 		documentTypeName: "Audited Financial Statements",
 		requiredPeriod: "2025 (Full Year)",
-		reason: "Required for solvency ratio analysis and green bond underwriting preparation.",
+		reason:
+			"Required for solvency ratio analysis and green bond underwriting preparation.",
 		deadlineDate: "2026-09-15",
-		additionalNotes: "Please include an independent certified public accountant (CPA) opinion.",
+		additionalNotes:
+			"Please include an independent certified public accountant (CPA) opinion.",
 		status: "SUBMITTED",
 		submittedFileName: "Audited_Financial_Statements_SinarTekstil_2025.pdf",
 		submittedFileUrl: "#",
@@ -167,7 +172,8 @@ export const sampleDocumentRequests: BrokerDocumentRequest[] = [
 		category: "Legal",
 		documentTypeName: "Roof & Factory Structure Building Permit",
 		requiredPeriod: "2026-2051",
-		reason: "Verification of factory building rights and roof structural load capacity for solar module installation.",
+		reason:
+			"Verification of factory building rights and roof structural load capacity for solar module installation.",
 		deadlineDate: "2026-09-18",
 		status: "REQUESTED",
 	},
@@ -179,7 +185,8 @@ export const sampleDocumentRequests: BrokerDocumentRequest[] = [
 		category: "Technical",
 		documentTypeName: "Daikin Magnetic Bearing Compressor Certification",
 		requiredPeriod: "5-Year Warranty",
-		reason: "Verification of primary equipment manufacturer warranty supporting operational cash flows.",
+		reason:
+			"Verification of primary equipment manufacturer warranty supporting operational cash flows.",
 		deadlineDate: "2026-08-30",
 		status: "APPROVED",
 		submittedFileName: "Daikin_HVAC_Warranty_Certificate.pdf",

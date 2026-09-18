@@ -16,8 +16,8 @@ import {
 	Label,
 } from "@greenshift/ui";
 import { useState } from "react";
-import type { OpenBidLeaderboardEntry } from "../lib/types";
 import { formatRupiah } from "../lib/format";
+import type { OpenBidLeaderboardEntry } from "../lib/types";
 
 interface OpenBidLeaderboardProps {
 	leaderboard: OpenBidLeaderboardEntry[];
@@ -49,7 +49,10 @@ function ReviseOpenBidDialog({
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
-				<Button size="sm" className="bg-[#03442C] text-white hover:bg-[#03442C]/90">
+				<Button
+					size="sm"
+					className="bg-[#03442C] text-white hover:bg-[#03442C]/90"
+				>
 					Revise Bid Price
 				</Button>
 			</DialogTrigger>
@@ -87,7 +90,11 @@ function ReviseOpenBidDialog({
 					</div>
 
 					<div className="flex justify-end gap-2 pt-2">
-						<Button type="button" variant="outline" onClick={() => setOpen(false)}>
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => setOpen(false)}
+						>
 							Cancel
 						</Button>
 						<Button
@@ -133,9 +140,7 @@ export function OpenBidLeaderboard({
 			<CardHeader className="flex flex-row items-center justify-between">
 				<div>
 					<div className="flex items-center gap-2">
-						<Badge className="bg-emerald-600 text-white">
-							Open Bidding
-						</Badge>
+						<Badge className="bg-emerald-600 text-white">Open Bidding</Badge>
 						<span className="text-xs text-muted-foreground">
 							Ends {deadline}
 						</span>
@@ -205,7 +210,9 @@ export function OpenBidLeaderboard({
 					</div>
 				</div>
 				<p className="text-[11px] italic text-muted-foreground">
-					* Note: Open bidding displays real-time ranking only. Competitor identities are anonymized and previous revision histories are not shown.
+					* Note: Open bidding displays real-time ranking only. Competitor
+					identities are anonymized and previous revision histories are not
+					shown.
 				</p>
 			</CardContent>
 		</Card>

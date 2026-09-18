@@ -1,5 +1,6 @@
 import {
 	faBookmark,
+	faHandshake,
 	faInfoCircle,
 	faLeaf,
 	faMapMarkerAlt,
@@ -19,9 +20,8 @@ import {
 	DialogTrigger,
 } from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
-import type { VendorProjectCardData } from "../lib/types";
 import { formatRupiah } from "../lib/format";
-import { faHandshake } from "@fortawesome/free-solid-svg-icons";
+import type { VendorProjectCardData } from "../lib/types";
 
 interface VendorProjectCardProps {
 	project: VendorProjectCardData;
@@ -60,7 +60,10 @@ function MatchmakingDialog({ project }: { project: VendorProjectCardData }) {
 					variant="outline"
 					className="h-8 gap-1.5 rounded-lg border-emerald-200 bg-emerald-50/70 px-2.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 hover:text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/60"
 				>
-					<FontAwesomeIcon icon={faInfoCircle} className="text-emerald-600 dark:text-emerald-400" />
+					<FontAwesomeIcon
+						icon={faInfoCircle}
+						className="text-emerald-600 dark:text-emerald-400"
+					/>
 					{mm.overallMatch}% Match
 				</Button>
 			</DialogTrigger>
@@ -167,7 +170,9 @@ export function VendorProjectCard({
 						/>
 					</Button>
 				</div>
-				<CardTitle className="line-clamp-2 text-base">{project.title}</CardTitle>
+				<CardTitle className="line-clamp-2 text-base">
+					{project.title}
+				</CardTitle>
 				<p className="text-xs font-medium text-muted-foreground">
 					{project.companyName} • {project.industrySector}
 				</p>
@@ -211,7 +216,10 @@ export function VendorProjectCard({
 				<div className="flex items-center justify-between gap-2 border-t border-border pt-2">
 					<MatchmakingDialog project={project} />
 					<Link to="/vendor/projects/$id" params={{ id: project.id }}>
-						<Button size="sm" className="bg-[#03442C] text-white hover:bg-[#03442C]/90">
+						<Button
+							size="sm"
+							className="bg-[#03442C] text-white hover:bg-[#03442C]/90"
+						>
 							View Project
 						</Button>
 					</Link>

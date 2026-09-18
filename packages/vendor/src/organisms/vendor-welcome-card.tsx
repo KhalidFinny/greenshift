@@ -1,7 +1,14 @@
-import { faCheckCircle, faInfoCircle, faShieldHalved } from "@fortawesome/free-solid-svg-icons";
+import {
+	faCheckCircle,
+	faInfoCircle,
+	faShieldHalved,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Card, CardContent, CardHeader, CardTitle } from "@greenshift/ui";
-import type { VerificationStatus, VendorPerformanceMetrics } from "../lib/types";
+import type {
+	VendorPerformanceMetrics,
+	VerificationStatus,
+} from "../lib/types";
 
 interface VendorWelcomeCardProps {
 	userName: string;
@@ -35,7 +42,9 @@ export function VendorWelcomeCard({
 			</CardHeader>
 			<CardContent className="flex flex-1 flex-col justify-between space-y-4 pt-2">
 				<p className="text-sm text-emerald-100/90">
-					Manage competitive open biddings, commercial proposal submissions, structured contract negotiations, and project milestone execution from a unified dashboard.
+					Manage competitive open biddings, commercial proposal submissions,
+					structured contract negotiations, and project milestone execution from
+					a unified dashboard.
 				</p>
 
 				<div className="grid grid-cols-2 gap-4 rounded-lg bg-white/10 p-4 sm:grid-cols-4">

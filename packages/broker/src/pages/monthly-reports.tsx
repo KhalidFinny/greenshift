@@ -15,8 +15,8 @@ import {
 	CardTitle,
 	Input,
 } from "@greenshift/ui";
-import { useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { useState } from "react";
 
 import { useBrokerData } from "../lib/use-broker-data";
 
@@ -44,7 +44,8 @@ export function BrokerMonthlyReportsPage() {
 			<div>
 				<h1 className="text-2xl font-bold">Monthly Monitoring Reports</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
-					Verified project performance reports to support investment reporting to external green bond investors. (Read-Only)
+					Verified project performance reports to support investment reporting
+					to external green bond investors. (Read-Only)
 				</p>
 			</div>
 
@@ -82,27 +83,40 @@ export function BrokerMonthlyReportsPage() {
 											report.overallStatus === "ON_TRACK"
 												? "bg-emerald-600 text-white font-bold"
 												: report.overallStatus === "ATTENTION_REQUIRED"
-												? "bg-amber-600 text-white font-bold"
-												: "bg-red-600 text-white font-bold"
+													? "bg-amber-600 text-white font-bold"
+													: "bg-red-600 text-white font-bold"
 										}
 									>
 										Project Status: {report.overallStatus.replace(/_/g, " ")}
 									</Badge>
 								</div>
-								<CardTitle className="mt-2 text-lg">{report.projectTitle}</CardTitle>
+								<CardTitle className="mt-2 text-lg">
+									{report.projectTitle}
+								</CardTitle>
 								<p className="text-xs text-muted-foreground mt-0.5">
-									Client: {report.companyName} • Contractor / Vendor: {report.vendorName}
+									Client: {report.companyName} • Contractor / Vendor:{" "}
+									{report.vendorName}
 								</p>
 							</div>
 
 							<div className="flex items-center gap-2">
-								<Link to="/broker/monthly-reports/$id" params={{ id: report.id }}>
-									<Button variant="outline" size="sm" className="gap-1.5 text-xs">
+								<Link
+									to="/broker/monthly-reports/$id"
+									params={{ id: report.id }}
+								>
+									<Button
+										variant="outline"
+										size="sm"
+										className="gap-1.5 text-xs"
+									>
 										<FontAwesomeIcon icon={faFileAlt} />
 										View Full Report
 									</Button>
 								</Link>
-								<Button size="sm" className="bg-[#03442C] text-white hover:bg-[#03442C]/90 gap-1.5 text-xs">
+								<Button
+									size="sm"
+									className="bg-[#03442C] text-white hover:bg-[#03442C]/90 gap-1.5 text-xs"
+								>
 									<FontAwesomeIcon icon={faDownload} />
 									Download Report PDF
 								</Button>
@@ -115,7 +129,8 @@ export function BrokerMonthlyReportsPage() {
 								<div>
 									<p className="text-muted-foreground">Physical Progress</p>
 									<p className="font-bold text-foreground text-sm mt-0.5">
-										{report.actualProgressPercent}% (Target: {report.plannedProgressPercent}%)
+										{report.actualProgressPercent}% (Target:{" "}
+										{report.plannedProgressPercent}%)
 									</p>
 								</div>
 								<div>
@@ -131,7 +146,9 @@ export function BrokerMonthlyReportsPage() {
 									</p>
 								</div>
 								<div>
-									<p className="text-muted-foreground">Carbon Emission Reduction</p>
+									<p className="text-muted-foreground">
+										Carbon Emission Reduction
+									</p>
 									<p className="font-bold text-emerald-600 dark:text-emerald-400 text-sm mt-0.5">
 										{report.actualCarbonReductionTons} tCO₂e
 									</p>
@@ -141,7 +158,9 @@ export function BrokerMonthlyReportsPage() {
 							{/* Overall Conclusion & Anomaly alerts */}
 							<div className="space-y-3">
 								<div className="rounded-lg border border-border p-3 space-y-1">
-									<p className="font-semibold text-foreground">Official Monitoring Verdict:</p>
+									<p className="font-semibold text-foreground">
+										Official Monitoring Verdict:
+									</p>
 									<p className="text-muted-foreground leading-relaxed">
 										{report.overallConclusion}
 									</p>
@@ -150,7 +169,10 @@ export function BrokerMonthlyReportsPage() {
 								{report.detectedRisksOrAnomalies.length > 0 && (
 									<div className="rounded-lg bg-emerald-50 p-3 text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-200 border border-emerald-200">
 										<p className="font-semibold flex items-center gap-1.5">
-											<FontAwesomeIcon icon={faCheckCircle} className="text-emerald-600" />
+											<FontAwesomeIcon
+												icon={faCheckCircle}
+												className="text-emerald-600"
+											/>
 											Additional Monitoring Notes:
 										</p>
 										<ul className="list-disc pl-5 mt-1 space-y-0.5">

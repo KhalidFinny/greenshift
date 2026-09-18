@@ -1,4 +1,8 @@
-import { faCheckCircle, faClock, faTasks } from "@fortawesome/free-solid-svg-icons";
+import {
+	faCheckCircle,
+	faClock,
+	faTasks,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
 	Badge,
@@ -9,16 +13,19 @@ import {
 	CardTitle,
 } from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
-import type { ActiveVendorProject } from "../lib/types";
 import { formatRupiah } from "../lib/format";
 import { MILESTONE_STATUS_LABEL } from "../lib/labels";
+import type { ActiveVendorProject } from "../lib/types";
 
 interface ActiveProjectCardProps {
 	project: ActiveVendorProject;
 	onSelect?: () => void;
 }
 
-export function ActiveProjectCard({ project, onSelect }: ActiveProjectCardProps) {
+export function ActiveProjectCard({
+	project,
+	onSelect,
+}: ActiveProjectCardProps) {
 	return (
 		<Card className="overflow-hidden">
 			<CardHeader className="flex flex-row items-center justify-between border-b border-border bg-muted/30 pb-4">
@@ -84,8 +91,8 @@ export function ActiveProjectCard({ project, onSelect }: ActiveProjectCardProps)
 									isDone
 										? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30"
 										: isInProg
-										? "border-blue-500 bg-blue-50/50 font-medium dark:bg-blue-950/30"
-										: "border-border bg-card"
+											? "border-blue-500 bg-blue-50/50 font-medium dark:bg-blue-950/30"
+											: "border-border bg-card"
 								}`}
 							>
 								<div className="flex items-center justify-between text-[11px]">
@@ -96,10 +103,7 @@ export function ActiveProjectCard({ project, onSelect }: ActiveProjectCardProps)
 											className="text-emerald-600"
 										/>
 									) : isInProg ? (
-										<FontAwesomeIcon
-											icon={faClock}
-											className="text-blue-600"
-										/>
+										<FontAwesomeIcon icon={faClock} className="text-blue-600" />
 									) : null}
 								</div>
 								<p className="line-clamp-1 font-semibold text-foreground">

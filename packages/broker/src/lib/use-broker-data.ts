@@ -21,8 +21,9 @@ export function useBrokerData() {
 	const [verification, setVerification] = useState<BrokerVerificationDetails>(
 		initialBrokerVerification,
 	);
-	const [projects, setProjects] =
-		useState<BrokerAssignedProject[]>(sampleAssignedProjects);
+	const [projects, setProjects] = useState<BrokerAssignedProject[]>(
+		sampleAssignedProjects,
+	);
 	const [documentRequests, setDocumentRequests] = useState<
 		BrokerDocumentRequest[]
 	>(sampleDocumentRequests);

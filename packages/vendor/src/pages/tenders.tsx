@@ -1,4 +1,11 @@
-import { Card, CardContent, Tabs, TabsContent, TabsList, TabsTrigger } from "@greenshift/ui";
+import {
+	Card,
+	CardContent,
+	Tabs,
+	TabsContent,
+	TabsList,
+	TabsTrigger,
+} from "@greenshift/ui";
 import { useVendorData } from "../lib/use-vendor-data";
 import { ClosedBidCard } from "../organisms/closed-bid-card";
 import { NegotiationCard } from "../organisms/negotiation-card";
@@ -18,12 +25,18 @@ export function VendorTendersPage() {
 		<div className="space-y-6">
 			<Tabs defaultValue="active">
 				<TabsList className="flex w-full flex-wrap gap-1 md:grid md:grid-cols-4 md:gap-0">
-					<TabsTrigger value="active" className="flex-1 md:flex-none">Lelang Aktif</TabsTrigger>
-					<TabsTrigger value="proposals" className="flex-1 md:flex-none">Proposal Saya ({proposals.length})</TabsTrigger>
+					<TabsTrigger value="active" className="flex-1 md:flex-none">
+						Lelang Aktif
+					</TabsTrigger>
+					<TabsTrigger value="proposals" className="flex-1 md:flex-none">
+						Proposal Saya ({proposals.length})
+					</TabsTrigger>
 					<TabsTrigger value="negotiations" className="flex-1 md:flex-none">
 						Negosiasi ({negotiations.length})
 					</TabsTrigger>
-					<TabsTrigger value="completed" className="flex-1 md:flex-none">Selesai</TabsTrigger>
+					<TabsTrigger value="completed" className="flex-1 md:flex-none">
+						Selesai
+					</TabsTrigger>
 				</TabsList>
 
 				{/* Active Tenders Tab */}

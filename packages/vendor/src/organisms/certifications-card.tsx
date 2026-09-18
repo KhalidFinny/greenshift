@@ -1,4 +1,10 @@
-import { Badge, Card, CardContent, CardHeader, CardTitle } from "@greenshift/ui";
+import {
+	Badge,
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from "@greenshift/ui";
 
 interface CertificationItem {
 	name: string;
@@ -27,7 +33,9 @@ export function CertificationsCard({
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle className="text-lg">Sertifikasi Industri (ESCO & ISO)</CardTitle>
+				<CardTitle className="text-lg">
+					Sertifikasi Industri (ESCO & ISO)
+				</CardTitle>
 			</CardHeader>
 			<CardContent className="space-y-3 text-xs">
 				{certifications.map((cert) => (

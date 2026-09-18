@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@greenshift/ui";
-import type { VendorPerformanceMetrics } from "../lib/types";
 import { formatCompactRupiah } from "../lib/format";
+import type { VendorPerformanceMetrics } from "../lib/types";
 
 interface PerformanceMetricsGridProps {
 	metrics: VendorPerformanceMetrics;

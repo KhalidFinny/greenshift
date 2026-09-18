@@ -10,7 +10,8 @@ export function VendorNotificationsPage() {
 			<div>
 				<h1 className="text-2xl font-bold">Vendor Notification Center</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
-					Real-time updates regarding tender standings, price ranking revisions, structured negotiations, and corporate verification.
+					Real-time updates regarding tender standings, price ranking revisions,
+					structured negotiations, and corporate verification.
 				</p>
 			</div>
 

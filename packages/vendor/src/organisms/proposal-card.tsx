@@ -1,7 +1,13 @@
-import { Badge, Card, CardContent, CardHeader, CardTitle } from "@greenshift/ui";
-import type { StructuredProposal } from "../lib/types";
+import {
+	Badge,
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from "@greenshift/ui";
 import { formatRupiah } from "../lib/format";
 import { PROPOSAL_STATUS_LABEL, PROPOSAL_STATUS_TONE } from "../lib/labels";
+import type { StructuredProposal } from "../lib/types";
 
 interface ProposalCardProps {
 	proposal: StructuredProposal;
@@ -23,7 +29,9 @@ export function ProposalCard({ proposal }: ProposalCardProps) {
 			<CardHeader className="flex flex-row items-center justify-between pb-2">
 				<div>
 					<Badge className={TONE_CLASS[tone]}>{label}</Badge>
-					<CardTitle className="mt-2 text-lg">{proposal.projectTitle}</CardTitle>
+					<CardTitle className="mt-2 text-lg">
+						{proposal.projectTitle}
+					</CardTitle>
 					<p className="mt-0.5 text-xs text-muted-foreground">
 						Client: {proposal.companyName}
 					</p>

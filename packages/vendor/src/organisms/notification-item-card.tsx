@@ -22,11 +22,18 @@ function getNotificationIcon(category: VendorNotification["category"]) {
 		case "Tenders":
 			return <FontAwesomeIcon icon={faGavel} className="text-emerald-600" />;
 		case "Projects":
-			return <FontAwesomeIcon icon={faFileSignature} className="text-purple-600" />;
+			return (
+				<FontAwesomeIcon icon={faFileSignature} className="text-purple-600" />
+			);
 		case "Verification":
 			return <FontAwesomeIcon icon={faShieldAlt} className="text-amber-600" />;
 		default:
-			return <FontAwesomeIcon icon={faInfoCircle} className="text-muted-foreground" />;
+			return (
+				<FontAwesomeIcon
+					icon={faInfoCircle}
+					className="text-muted-foreground"
+				/>
+			);
 	}
 }
 

@@ -6,7 +6,13 @@ import {
 	faHandshake,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button, Card, CardContent, CardHeader, CardTitle } from "@greenshift/ui";
+import {
+	Button,
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
 import type { ProcurementMethod } from "../lib/types";
 
@@ -36,7 +42,8 @@ export function ProjectProcurementActionCard({
 						</div>
 						<p>
 							Your vendor profile has not completed automated verification. To
-							submit competitive bids or technical proposals, please upload your corporate credentials first.
+							submit competitive bids or technical proposals, please upload your
+							corporate credentials first.
 						</p>
 						<Link to="/vendor/settings" className="block">
 							<Button
@@ -60,8 +67,9 @@ export function ProjectProcurementActionCard({
 						{procurementMethod === "OPEN_BIDDING" && (
 							<div className="space-y-3">
 								<p className="text-xs text-muted-foreground">
-									This opportunity uses <strong>Open Bidding</strong>. You can view
-									real-time anonymized rank standings and revise your bid pricing before the tender closes.
+									This opportunity uses <strong>Open Bidding</strong>. You can
+									view real-time anonymized rank standings and revise your bid
+									pricing before the tender closes.
 								</p>
 								<Link to="/vendor/opportunities">
 									<Button className="w-full gap-2 bg-[#03442C] text-white hover:bg-[#03442C]/90">
@@ -75,8 +83,9 @@ export function ProjectProcurementActionCard({
 						{procurementMethod === "CLOSED_BIDDING" && (
 							<div className="space-y-3">
 								<p className="text-xs text-muted-foreground">
-									This project uses <strong>Closed Bidding</strong>. Sealed proposals are
-									submitted once without disclosing competitor pricing.
+									This project uses <strong>Closed Bidding</strong>. Sealed
+									proposals are submitted once without disclosing competitor
+									pricing.
 								</p>
 								<Link to="/vendor/deals">
 									<Button className="w-full gap-2 bg-[#03442C] text-white hover:bg-[#03442C]/90">

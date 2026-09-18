@@ -1,6 +1,17 @@
-import { faArrowRight, faFileSignature, faLeaf, faTasks } from "@fortawesome/free-solid-svg-icons";
+import {
+	faArrowRight,
+	faFileSignature,
+	faLeaf,
+	faTasks,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button, Card, CardContent, CardHeader, CardTitle } from "@greenshift/ui";
+import {
+	Button,
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
 
 export function QuickActionsCard() {
@@ -23,7 +34,10 @@ export function QuickActionsCard() {
 				<Link to="/vendor/deals" className="block">
 					<Button variant="outline" className="w-full justify-between">
 						<span className="flex items-center gap-2">
-							<FontAwesomeIcon icon={faFileSignature} className="text-blue-600" />
+							<FontAwesomeIcon
+								icon={faFileSignature}
+								className="text-blue-600"
+							/>
 							Review Proposals & Deals
 						</span>
 						<FontAwesomeIcon icon={faArrowRight} className="text-xs" />

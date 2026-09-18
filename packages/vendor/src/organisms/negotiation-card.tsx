@@ -1,4 +1,8 @@
-import { faCheckCircle, faHandshake, faLock } from "@fortawesome/free-solid-svg-icons";
+import {
+	faCheckCircle,
+	faHandshake,
+	faLock,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
 	Badge,
@@ -16,8 +20,8 @@ import {
 	Label,
 } from "@greenshift/ui";
 import { useState } from "react";
-import type { NegotiationRequest } from "../lib/types";
 import { formatRupiah } from "../lib/format";
+import type { NegotiationRequest } from "../lib/types";
 
 interface NegotiationCardProps {
 	negotiation: NegotiationRequest;
@@ -78,15 +82,16 @@ function RespondNegotiationDialog({
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2">
 						<FontAwesomeIcon icon={faHandshake} className="text-blue-600" />
-						Structured Negotiation Response (Revision {negotiation.iterationNumber}{" "}
-						of {negotiation.maxIterations})
+						Structured Negotiation Response (Revision{" "}
+						{negotiation.iterationNumber} of {negotiation.maxIterations})
 					</DialogTitle>
 				</DialogHeader>
 
 				{isLocked ? (
 					<div className="flex items-center gap-2 rounded-lg bg-amber-50 p-4 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
 						<FontAwesomeIcon icon={faLock} />
-						The negotiation process has reached the maximum limit of 3 revisions and is currently locked.
+						The negotiation process has reached the maximum limit of 3 revisions
+						and is currently locked.
 					</div>
 				) : (
 					<form onSubmit={handleSubmit} className="space-y-4 pt-2 text-xs">
@@ -176,7 +181,10 @@ function RespondNegotiationDialog({
 	);
 }
 
-export function NegotiationCard({ negotiation, onSubmitResponse }: NegotiationCardProps) {
+export function NegotiationCard({
+	negotiation,
+	onSubmitResponse,
+}: NegotiationCardProps) {
 	return (
 		<Card className="border-blue-200 dark:border-blue-800">
 			<CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -190,7 +198,9 @@ export function NegotiationCard({ negotiation, onSubmitResponse }: NegotiationCa
 							{negotiation.status.replace(/_/g, " ")}
 						</Badge>
 					</div>
-					<CardTitle className="mt-2 text-lg">{negotiation.projectTitle}</CardTitle>
+					<CardTitle className="mt-2 text-lg">
+						{negotiation.projectTitle}
+					</CardTitle>
 					<p className="text-xs text-muted-foreground">
 						Client: {negotiation.companyName}
 					</p>
@@ -222,11 +232,13 @@ export function NegotiationCard({ negotiation, onSubmitResponse }: NegotiationCa
 						<p className="font-semibold text-foreground">
 							Latest Vendor Response:
 						</p>
-						<p className="text-muted-foreground">{negotiation.vendorResponseNote}</p>
+						<p className="text-muted-foreground">
+							{negotiation.vendorResponseNote}
+						</p>
 						{negotiation.vendorRevisedPrice && (
 							<p className="pt-1 font-semibold text-emerald-600 dark:text-emerald-400">
-								Revised Price: {formatRupiah(negotiation.vendorRevisedPrice)}{" "}
-								({negotiation.vendorRevisedWarrantyYears}-year warranty)
+								Revised Price: {formatRupiah(negotiation.vendorRevisedPrice)} (
+								{negotiation.vendorRevisedWarrantyYears}-year warranty)
 							</p>
 						)}
 					</div>

@@ -8,8 +8,8 @@ import {
 	faCircleUser,
 	faClipboardList,
 	faFileLines,
-	faGavel,
 	faGauge,
+	faGavel,
 	faGear,
 	faHandshake,
 	faLayerGroup,
@@ -46,19 +46,17 @@ function getSidebarIcon(item: { to: string; label: string }) {
 	) {
 		return faGauge;
 	}
-	if (
-		to.includes("deals") ||
-		label.includes("deal")
-	) {
+	if (to.includes("deals") || label.includes("deal")) {
 		return faHandshake;
 	}
-	if (
-		to.includes("opportunities") ||
-		label.includes("opportunit")
-	) {
+	if (to.includes("opportunities") || label.includes("opportunit")) {
 		return faLeaf;
 	}
-	if (to.includes("tenders") || label.includes("tender") || label.includes("lelang")) {
+	if (
+		to.includes("tenders") ||
+		label.includes("tender") ||
+		label.includes("lelang")
+	) {
 		return faGavel;
 	}
 	if (to.includes("active-projects") || label.includes("active")) {
@@ -80,7 +78,11 @@ function getSidebarIcon(item: { to: string; label: string }) {
 	) {
 		return faGear;
 	}
-	if (to.includes("projects") || label.includes("projects") || label.includes("proyek")) {
+	if (
+		to.includes("projects") ||
+		label.includes("projects") ||
+		label.includes("proyek")
+	) {
 		return faLeaf;
 	}
 	if (to.includes("analytics") || label.includes("analytics")) {
@@ -199,7 +201,10 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 								>
 									<div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-3">
 										<div className="flex items-center gap-2">
-											<FontAwesomeIcon icon={faBell} className="size-4 text-emerald-600" />
+											<FontAwesomeIcon
+												icon={faBell}
+												className="size-4 text-emerald-600"
+											/>
 											<span className="text-sm font-semibold text-foreground">
 												Pusat Notifikasi
 											</span>
@@ -211,7 +216,11 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 
 									<div className="max-h-72 overflow-y-auto divide-y divide-border text-xs">
 										<Link
-											to={user ? (`/${user.role}/notifications` as any) : "/vendor/notifications"}
+											to={
+												user
+													? (`/${user.role}/notifications` as any)
+													: "/vendor/notifications"
+											}
 											onClick={closeNotifMenu}
 											className="block p-3 transition-colors hover:bg-muted/50 no-underline"
 										>
@@ -222,7 +231,8 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 														Permintaan Negosiasi Baru
 													</p>
 													<p className="mt-0.5 text-muted-foreground line-clamp-2">
-														PT Sentra Graha Medika mengajukan revisi harga & garansi.
+														PT Sentra Graha Medika mengajukan revisi harga &
+														garansi.
 													</p>
 													<span className="mt-1 block text-[10px] text-muted-foreground">
 														10 menit yang lalu
@@ -232,7 +242,11 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 										</Link>
 
 										<Link
-											to={user ? (`/${user.role}/notifications` as any) : "/vendor/notifications"}
+											to={
+												user
+													? (`/${user.role}/notifications` as any)
+													: "/vendor/notifications"
+											}
 											onClick={closeNotifMenu}
 											className="block p-3 transition-colors hover:bg-muted/50 no-underline"
 										>
@@ -243,7 +257,8 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 														Perubahan Peringkat Lelang
 													</p>
 													<p className="mt-0.5 text-muted-foreground line-clamp-2">
-														Tawaran Anda pada Solar PV Pabrik Tekstil berada di posisi 2.
+														Tawaran Anda pada Solar PV Pabrik Tekstil berada di
+														posisi 2.
 													</p>
 													<span className="mt-1 block text-[10px] text-muted-foreground">
 														2 jam yang lalu
@@ -255,7 +270,11 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 
 									<div className="border-t border-border bg-muted/20 p-2.5 text-center">
 										<Link
-											to={user ? (`/${user.role}/notifications` as any) : "/vendor/notifications"}
+											to={
+												user
+													? (`/${user.role}/notifications` as any)
+													: "/vendor/notifications"
+											}
 											onClick={closeNotifMenu}
 											className="block rounded-lg py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 transition-colors no-underline"
 										>

@@ -9,7 +9,9 @@ export function ProjectScopeCard({ project }: ProjectScopeCardProps) {
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle className="text-lg">Project Description & Scope of Work</CardTitle>
+				<CardTitle className="text-lg">
+					Project Description & Scope of Work
+				</CardTitle>
 			</CardHeader>
 			<CardContent className="space-y-4 text-sm">
 				<p className="leading-relaxed text-muted-foreground">

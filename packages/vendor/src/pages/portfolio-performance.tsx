@@ -1,7 +1,7 @@
-import { useState } from "react";
 import { faPencil, faX } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "@greenshift/ui";
+import { useState } from "react";
 import { useVendorData } from "../lib/use-vendor-data";
 import { AddPortfolioDialog } from "../organisms/add-portfolio-dialog";
 import { PerformanceHeroCard } from "../organisms/performance-hero-card";
@@ -10,7 +10,12 @@ import { PerformanceTrendCard } from "../organisms/performance-trend-card";
 import { PortfolioItemCard } from "../organisms/portfolio-item-card";
 
 export function VendorPortfolioPerformancePage() {
-	const { portfolio, addPortfolioItem, deletePortfolioItem, performanceMetrics } = useVendorData();
+	const {
+		portfolio,
+		addPortfolioItem,
+		deletePortfolioItem,
+		performanceMetrics,
+	} = useVendorData();
 	const [isEditMode, setIsEditMode] = useState(false);
 
 	return (
@@ -49,10 +54,10 @@ export function VendorPortfolioPerformancePage() {
 				<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
 					{portfolio.map((item) => (
 						<PortfolioItemCard
-						key={item.id}
-						item={item}
-						onDelete={isEditMode ? deletePortfolioItem : undefined}
-					/>
+							key={item.id}
+							item={item}
+							onDelete={isEditMode ? deletePortfolioItem : undefined}
+						/>
 					))}
 				</div>
 			</section>

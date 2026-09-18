@@ -22,12 +22,16 @@ export function VerificationBanner({ status }: VerificationBannerProps) {
 					<h3 className="font-semibold">Company Verification Required</h3>
 					<p className="mt-1 text-sm">
 						Your vendor account is not yet fully verified. You can browse green
-						opportunities and matchmaking scores, but cannot submit bids or proposals until verified.
+						opportunities and matchmaking scores, but cannot submit bids or
+						proposals until verified.
 					</p>
 				</div>
 			</div>
 			<Link to="/vendor/settings">
-				<Button size="sm" className="bg-amber-600 text-white hover:bg-amber-700">
+				<Button
+					size="sm"
+					className="bg-amber-600 text-white hover:bg-amber-700"
+				>
 					Complete Verification
 				</Button>
 			</Link>

@@ -24,11 +24,10 @@ import {
 	TabsList,
 	TabsTrigger,
 } from "@greenshift/ui";
-import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-
-import { useBrokerData } from "../lib/use-broker-data";
+import { useState } from "react";
 import type { BrokerAssignedProject } from "../lib/types";
+import { useBrokerData } from "../lib/use-broker-data";
 
 function formatRupiah(amount: number) {
 	return new Intl.NumberFormat("en-US", {
@@ -38,7 +37,9 @@ function formatRupiah(amount: number) {
 	}).format(amount);
 }
 
-{/* Modal Decline Assignment (Mandatory Reason per spec) */}
+{
+	/* Modal Decline Assignment (Mandatory Reason per spec) */
+}
 function DeclineAssignmentModal({
 	project,
 	onDecline,
@@ -59,7 +60,11 @@ function DeclineAssignmentModal({
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
-				<Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 text-xs">
+				<Button
+					size="sm"
+					variant="outline"
+					className="text-red-600 border-red-200 hover:bg-red-50 text-xs"
+				>
 					Decline Assignment
 				</Button>
 			</DialogTrigger>
@@ -74,7 +79,9 @@ function DeclineAssignmentModal({
 				<form onSubmit={handleSubmit} className="space-y-4 pt-2 text-xs">
 					<div className="rounded-lg bg-muted p-3">
 						<p className="font-semibold text-foreground">{project.title}</p>
-						<p className="text-muted-foreground mt-0.5">Client: {project.companyName}</p>
+						<p className="text-muted-foreground mt-0.5">
+							Client: {project.companyName}
+						</p>
 					</div>
 
 					<div className="space-y-1.5">
@@ -93,11 +100,16 @@ function DeclineAssignmentModal({
 					</div>
 
 					<p className="text-[11px] text-muted-foreground italic">
-						* Declining an assignment does not cancel the project. The client company will be notified to select another underwriting broker.
+						* Declining an assignment does not cancel the project. The client
+						company will be notified to select another underwriting broker.
 					</p>
 
 					<div className="flex justify-end gap-2 pt-2 border-t border-border">
-						<Button type="button" variant="outline" onClick={() => setOpen(false)}>
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => setOpen(false)}
+						>
 							Cancel
 						</Button>
 						<Button type="submit" variant="destructive">
@@ -126,7 +138,8 @@ export function BrokerAssignedProjectsPage() {
 			<div>
 				<h1 className="text-2xl font-bold">Assigned Verified Projects</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
-					GHG LVV verified green projects allocated by client companies for external green bond underwriting and preparation.
+					GHG LVV verified green projects allocated by client companies for
+					external green bond underwriting and preparation.
 				</p>
 			</div>
 
@@ -154,13 +167,34 @@ export function BrokerAssignedProjectsPage() {
 				<TabsList className="grid w-full grid-cols-4">
 					<TabsTrigger value="all">All ({filteredProjects.length})</TabsTrigger>
 					<TabsTrigger value="under_review">
-						Under Review ({filteredProjects.filter((p) => p.workflowStatus === "UNDER_REVIEW" || p.workflowStatus === "DOCUMENT_COLLECTION").length})
+						Under Review (
+						{
+							filteredProjects.filter(
+								(p) =>
+									p.workflowStatus === "UNDER_REVIEW" ||
+									p.workflowStatus === "DOCUMENT_COLLECTION",
+							).length
+						}
+						)
 					</TabsTrigger>
 					<TabsTrigger value="bond_issuance">
-						Bond Issuance ({filteredProjects.filter((p) => p.workflowStatus === "READY_FOR_BOND_ISSUANCE" || p.workflowStatus === "BOND_ISSUANCE").length})
+						Bond Issuance (
+						{
+							filteredProjects.filter(
+								(p) =>
+									p.workflowStatus === "READY_FOR_BOND_ISSUANCE" ||
+									p.workflowStatus === "BOND_ISSUANCE",
+							).length
+						}
+						)
 					</TabsTrigger>
 					<TabsTrigger value="monitoring">
-						Monitoring ({filteredProjects.filter((p) => p.workflowStatus === "MONITORING").length})
+						Monitoring (
+						{
+							filteredProjects.filter((p) => p.workflowStatus === "MONITORING")
+								.length
+						}
+						)
 					</TabsTrigger>
 				</TabsList>
 
@@ -201,10 +235,18 @@ export function BrokerAssignedProjectsPage() {
 
 									<div className="flex items-center justify-between text-muted-foreground">
 										<span className="flex items-center gap-1">
-											<FontAwesomeIcon icon={faMapMarkerAlt} className="text-red-500" />
+											<FontAwesomeIcon
+												icon={faMapMarkerAlt}
+												className="text-red-500"
+											/>
 											{proj.location}
 										</span>
-										<span>Risk: <strong className="text-foreground">{proj.riskAssessment.overallRiskLevel}</strong></span>
+										<span>
+											Risk:{" "}
+											<strong className="text-foreground">
+												{proj.riskAssessment.overallRiskLevel}
+											</strong>
+										</span>
 									</div>
 
 									{/* Accept / Decline actions for newly assigned projects */}
@@ -229,13 +271,18 @@ export function BrokerAssignedProjectsPage() {
 										</div>
 									) : proj.declineReason ? (
 										<div className="rounded-lg bg-red-50 p-2.5 text-[11px] text-red-900 dark:bg-red-950/40 dark:text-red-200 space-y-1 pt-2 border-t border-border">
-											<p className="font-bold">Assignment Declined by Broker:</p>
+											<p className="font-bold">
+												Assignment Declined by Broker:
+											</p>
 											<p className="italic">"{proj.declineReason}"</p>
 										</div>
 									) : (
 										<div className="flex items-center justify-between gap-2 pt-2 border-t border-border">
 											<Link to="/broker/projects/$id" params={{ id: proj.id }}>
-												<Button size="sm" className="w-full bg-[#03442C] text-white hover:bg-[#03442C]/90">
+												<Button
+													size="sm"
+													className="w-full bg-[#03442C] text-white hover:bg-[#03442C]/90"
+												>
 													Project Detail
 												</Button>
 											</Link>
@@ -250,15 +297,24 @@ export function BrokerAssignedProjectsPage() {
 				<TabsContent value="under_review" className="mt-6">
 					<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
 						{filteredProjects
-							.filter((p) => p.workflowStatus === "UNDER_REVIEW" || p.workflowStatus === "DOCUMENT_COLLECTION")
+							.filter(
+								(p) =>
+									p.workflowStatus === "UNDER_REVIEW" ||
+									p.workflowStatus === "DOCUMENT_COLLECTION",
+							)
 							.map((proj) => (
 								<Card key={proj.id} className="flex flex-col justify-between">
 									<CardHeader className="space-y-3 pb-3">
-										<CardTitle className="text-base line-clamp-2">{proj.title}</CardTitle>
+										<CardTitle className="text-base line-clamp-2">
+											{proj.title}
+										</CardTitle>
 									</CardHeader>
 									<CardContent className="space-y-4 text-xs">
 										<Link to="/broker/projects/$id" params={{ id: proj.id }}>
-											<Button size="sm" className="w-full bg-[#03442C] text-white hover:bg-[#03442C]/90">
+											<Button
+												size="sm"
+												className="w-full bg-[#03442C] text-white hover:bg-[#03442C]/90"
+											>
 												Open Project →
 											</Button>
 										</Link>
@@ -271,15 +327,24 @@ export function BrokerAssignedProjectsPage() {
 				<TabsContent value="bond_issuance" className="mt-6">
 					<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
 						{filteredProjects
-							.filter((p) => p.workflowStatus === "READY_FOR_BOND_ISSUANCE" || p.workflowStatus === "BOND_ISSUANCE")
+							.filter(
+								(p) =>
+									p.workflowStatus === "READY_FOR_BOND_ISSUANCE" ||
+									p.workflowStatus === "BOND_ISSUANCE",
+							)
 							.map((proj) => (
 								<Card key={proj.id} className="flex flex-col justify-between">
 									<CardHeader className="space-y-3 pb-3">
-										<CardTitle className="text-base line-clamp-2">{proj.title}</CardTitle>
+										<CardTitle className="text-base line-clamp-2">
+											{proj.title}
+										</CardTitle>
 									</CardHeader>
 									<CardContent className="space-y-4 text-xs">
 										<Link to="/broker/projects/$id" params={{ id: proj.id }}>
-											<Button size="sm" className="w-full bg-[#03442C] text-white hover:bg-[#03442C]/90">
+											<Button
+												size="sm"
+												className="w-full bg-[#03442C] text-white hover:bg-[#03442C]/90"
+											>
 												Open Project →
 											</Button>
 										</Link>

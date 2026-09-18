@@ -9,11 +9,7 @@ import { ProjectProcurementActionCard } from "../organisms/project-procurement-a
 import { ProjectRiskCard } from "../organisms/project-risk-card";
 import { ProjectScopeCard } from "../organisms/project-scope-card";
 
-export function VendorProjectDetailPage({
-	projectId,
-}: {
-	projectId?: string;
-}) {
+export function VendorProjectDetailPage({ projectId }: { projectId?: string }) {
 	const { projects, verification } = useVendorData();
 	const isVerified = verification.status === "VERIFIED";
 

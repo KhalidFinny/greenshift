@@ -1,6 +1,12 @@
 import { faFilePdf } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button, Card, CardContent, CardHeader, CardTitle } from "@greenshift/ui";
+import {
+	Button,
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from "@greenshift/ui";
 
 const DEFAULT_DOCS = [
 	"Akta_Pendirian_PT_Nusantara_Energy.pdf",
@@ -15,7 +21,9 @@ export function DocumentsVaultCard({
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle className="text-lg">Penyimpanan Dokumen Perusahaan</CardTitle>
+				<CardTitle className="text-lg">
+					Penyimpanan Dokumen Perusahaan
+				</CardTitle>
 			</CardHeader>
 			<CardContent className="space-y-3 text-xs">
 				{documents.map((doc) => (
@@ -24,7 +32,10 @@ export function DocumentsVaultCard({
 						className="flex items-center justify-between rounded-lg border border-border p-3"
 					>
 						<span className="flex items-center gap-2 font-semibold">
-							<FontAwesomeIcon icon={faFilePdf} className="text-base text-red-500" />
+							<FontAwesomeIcon
+								icon={faFilePdf}
+								className="text-base text-red-500"
+							/>
 							{doc}
 						</span>
 						<Button size="sm" variant="outline">
