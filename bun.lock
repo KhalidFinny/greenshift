@@ -43,6 +43,7 @@
         "@cloudflare/workers-types": "^5.20260823.1",
         "@greenshift/admin": "workspace:*",
         "@greenshift/api": "workspace:*",
+        "@greenshift/broker": "workspace:*",
         "@greenshift/business": "workspace:*",
         "@greenshift/core": "workspace:*",
         "@greenshift/investor": "workspace:*",
@@ -69,6 +70,9 @@
     },
     "packages/admin": {
       "name": "@greenshift/admin",
+    },
+    "packages/broker": {
+      "name": "@greenshift/broker",
     },
     "packages/business": {
       "name": "@greenshift/business",
@@ -291,6 +295,8 @@
     "@greenshift/admin": ["@greenshift/admin@workspace:packages/admin"],
 
     "@greenshift/api": ["@greenshift/api@workspace:apps/api"],
+
+    "@greenshift/broker": ["@greenshift/broker@workspace:packages/broker"],
 
     "@greenshift/business": ["@greenshift/business@workspace:packages/business"],
 

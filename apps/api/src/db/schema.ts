@@ -9,7 +9,13 @@ import {
 } from "drizzle-orm/sqlite-core";
 
 // ── Type helpers ────────────────────────────────────────────
-export const userRoles = ["business", "vendor", "admin"] as const;
+export const userRoles = [
+	"business",
+	"investor",
+	"vendor",
+	"admin",
+	"broker",
+] as const;
 export type UserRole = (typeof userRoles)[number];
 
 export const projectStatuses = [

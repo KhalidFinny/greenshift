@@ -15,6 +15,7 @@ import { Route as BondsRouteImport } from './routes/bonds'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as AuthAdminRouteImport } from './routes/_auth.admin'
+import { Route as AuthBrokerRouteImport } from './routes/_auth.broker'
 import { Route as AuthBusinessRouteImport } from './routes/_auth.business'
 import { Route as AuthProfileRouteImport } from './routes/_auth.profile'
 import { Route as AuthVendorRouteImport } from './routes/_auth.vendor'
@@ -26,8 +27,29 @@ import { Route as AuthAdminProjectsRouteImport } from './routes/_auth.admin.proj
 import { Route as AuthAdminSystemRouteImport } from './routes/_auth.admin.system'
 import { Route as AuthAdminUsersRouteImport } from './routes/_auth.admin.users'
 import { Route as AuthAdminVendorsRouteImport } from './routes/_auth.admin.vendors'
+import { Route as AuthBrokerIndexRouteImport } from './routes/_auth.broker.index'
+import { Route as AuthBrokerDocumentRequestsRouteImport } from './routes/_auth.broker.document-requests'
+import { Route as AuthBrokerSettingsRouteImport } from './routes/_auth.broker.settings'
 import { Route as AuthBusinessIndexRouteImport } from './routes/_auth.business.index'
 import { Route as AuthVendorIndexRouteImport } from './routes/_auth.vendor.index'
+import { Route as AuthVendorDealsRouteImport } from './routes/_auth.vendor.deals'
+import { Route as AuthVendorNotificationsRouteImport } from './routes/_auth.vendor.notifications'
+import { Route as AuthVendorOpportunitiesRouteImport } from './routes/_auth.vendor.opportunities'
+import { Route as AuthVendorPerformanceRouteImport } from './routes/_auth.vendor.performance'
+import { Route as AuthVendorPortfolioRouteImport } from './routes/_auth.vendor.portfolio'
+import { Route as AuthVendorPortfolioPerformanceRouteImport } from './routes/_auth.vendor.portfolio-performance'
+import { Route as AuthVendorSettingsRouteImport } from './routes/_auth.vendor.settings'
+import { Route as AuthBrokerMonthlyReportsIndexRouteImport } from './routes/_auth.broker.monthly-reports.index'
+import { Route as AuthBrokerMonthlyReportsIdRouteImport } from './routes/_auth.broker.monthly-reports.$id'
+import { Route as AuthBrokerProjectsIndexRouteImport } from './routes/_auth.broker.projects.index'
+import { Route as AuthBrokerProjectsIdRouteImport } from './routes/_auth.broker.projects.$id'
+import { Route as AuthInvestorPortfolioIdRouteImport } from './routes/_auth.investor.portfolio.$id'
+import { Route as AuthVendorActiveProjectsIndexRouteImport } from './routes/_auth.vendor.active-projects.index'
+import { Route as AuthVendorActiveProjectsIdRouteImport } from './routes/_auth.vendor.active-projects.$id'
+import { Route as AuthVendorProjectsIndexRouteImport } from './routes/_auth.vendor.projects.index'
+import { Route as AuthVendorProjectsIdRouteImport } from './routes/_auth.vendor.projects.$id'
+import { Route as AuthVendorTendersIndexRouteImport } from './routes/_auth.vendor.tenders.index'
+import { Route as AuthVendorTendersIdRouteImport } from './routes/_auth.vendor.tenders.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -56,6 +78,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const AuthAdminRoute = AuthAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthBrokerRoute = AuthBrokerRouteImport.update({
+  id: '/broker',
+  path: '/broker',
   getParentRoute: () => AuthRoute,
 } as any)
 const AuthBusinessRoute = AuthBusinessRouteImport.update({
@@ -113,6 +140,22 @@ const AuthAdminVendorsRoute = AuthAdminVendorsRouteImport.update({
   path: '/vendors',
   getParentRoute: () => AuthAdminRoute,
 } as any)
+const AuthBrokerIndexRoute = AuthBrokerIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthBrokerRoute,
+} as any)
+const AuthBrokerDocumentRequestsRoute =
+  AuthBrokerDocumentRequestsRouteImport.update({
+    id: '/document-requests',
+    path: '/document-requests',
+    getParentRoute: () => AuthBrokerRoute,
+  } as any)
+const AuthBrokerSettingsRoute = AuthBrokerSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthBrokerRoute,
+} as any)
 const AuthBusinessIndexRoute = AuthBusinessIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -123,6 +166,101 @@ const AuthVendorIndexRoute = AuthVendorIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthVendorRoute,
 } as any)
+const AuthVendorDealsRoute = AuthVendorDealsRouteImport.update({
+  id: '/deals',
+  path: '/deals',
+  getParentRoute: () => AuthVendorRoute,
+} as any)
+const AuthVendorNotificationsRoute = AuthVendorNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AuthVendorRoute,
+} as any)
+const AuthVendorOpportunitiesRoute = AuthVendorOpportunitiesRouteImport.update({
+  id: '/opportunities',
+  path: '/opportunities',
+  getParentRoute: () => AuthVendorRoute,
+} as any)
+const AuthVendorPerformanceRoute = AuthVendorPerformanceRouteImport.update({
+  id: '/performance',
+  path: '/performance',
+  getParentRoute: () => AuthVendorRoute,
+} as any)
+const AuthVendorPortfolioRoute = AuthVendorPortfolioRouteImport.update({
+  id: '/portfolio',
+  path: '/portfolio',
+  getParentRoute: () => AuthVendorRoute,
+} as any)
+const AuthVendorPortfolioPerformanceRoute =
+  AuthVendorPortfolioPerformanceRouteImport.update({
+    id: '/portfolio-performance',
+    path: '/portfolio-performance',
+    getParentRoute: () => AuthVendorRoute,
+  } as any)
+const AuthVendorSettingsRoute = AuthVendorSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthVendorRoute,
+} as any)
+const AuthBrokerMonthlyReportsIndexRoute =
+  AuthBrokerMonthlyReportsIndexRouteImport.update({
+    id: '/monthly-reports/',
+    path: '/monthly-reports/',
+    getParentRoute: () => AuthBrokerRoute,
+  } as any)
+const AuthBrokerMonthlyReportsIdRoute =
+  AuthBrokerMonthlyReportsIdRouteImport.update({
+    id: '/monthly-reports/$id',
+    path: '/monthly-reports/$id',
+    getParentRoute: () => AuthBrokerRoute,
+  } as any)
+const AuthBrokerProjectsIndexRoute = AuthBrokerProjectsIndexRouteImport.update({
+  id: '/projects/',
+  path: '/projects/',
+  getParentRoute: () => AuthBrokerRoute,
+} as any)
+const AuthBrokerProjectsIdRoute = AuthBrokerProjectsIdRouteImport.update({
+  id: '/projects/$id',
+  path: '/projects/$id',
+  getParentRoute: () => AuthBrokerRoute,
+} as any)
+const AuthInvestorPortfolioIdRoute = AuthInvestorPortfolioIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthInvestorPortfolioRoute,
+} as any)
+const AuthVendorActiveProjectsIndexRoute =
+  AuthVendorActiveProjectsIndexRouteImport.update({
+    id: '/active-projects/',
+    path: '/active-projects/',
+    getParentRoute: () => AuthVendorRoute,
+  } as any)
+const AuthVendorActiveProjectsIdRoute =
+  AuthVendorActiveProjectsIdRouteImport.update({
+    id: '/active-projects/$id',
+    path: '/active-projects/$id',
+    getParentRoute: () => AuthVendorRoute,
+  } as any)
+const AuthVendorProjectsIndexRoute = AuthVendorProjectsIndexRouteImport.update({
+  id: '/projects/',
+  path: '/projects/',
+  getParentRoute: () => AuthVendorRoute,
+} as any)
+const AuthVendorProjectsIdRoute = AuthVendorProjectsIdRouteImport.update({
+  id: '/projects/$id',
+  path: '/projects/$id',
+  getParentRoute: () => AuthVendorRoute,
+} as any)
+const AuthVendorTendersIndexRoute = AuthVendorTendersIndexRouteImport.update({
+  id: '/tenders/',
+  path: '/tenders/',
+  getParentRoute: () => AuthVendorRoute,
+} as any)
+const AuthVendorTendersIdRoute = AuthVendorTendersIdRouteImport.update({
+  id: '/tenders/$id',
+  path: '/tenders/$id',
+  getParentRoute: () => AuthVendorRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -130,6 +268,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/admin': typeof AuthAdminRouteWithChildren
+  '/broker': typeof AuthBrokerRouteWithChildren
   '/business': typeof AuthBusinessRouteWithChildren
   '/profile': typeof AuthProfileRoute
   '/vendor': typeof AuthVendorRouteWithChildren
@@ -140,9 +279,32 @@ export interface FileRoutesByFullPath {
   '/admin/system': typeof AuthAdminSystemRoute
   '/admin/users': typeof AuthAdminUsersRoute
   '/admin/vendors': typeof AuthAdminVendorsRoute
+  '/broker/document-requests': typeof AuthBrokerDocumentRequestsRoute
+  '/broker/settings': typeof AuthBrokerSettingsRoute
+  '/investor/market': typeof AuthInvestorMarketRoute
+  '/investor/portfolio': typeof AuthInvestorPortfolioRouteWithChildren
+  '/vendor/deals': typeof AuthVendorDealsRoute
+  '/vendor/notifications': typeof AuthVendorNotificationsRoute
+  '/vendor/opportunities': typeof AuthVendorOpportunitiesRoute
+  '/vendor/performance': typeof AuthVendorPerformanceRoute
+  '/vendor/portfolio': typeof AuthVendorPortfolioRoute
+  '/vendor/portfolio-performance': typeof AuthVendorPortfolioPerformanceRoute
+  '/vendor/settings': typeof AuthVendorSettingsRoute
   '/admin/': typeof AuthAdminIndexRoute
+  '/broker/': typeof AuthBrokerIndexRoute
   '/business/': typeof AuthBusinessIndexRoute
   '/vendor/': typeof AuthVendorIndexRoute
+  '/broker/monthly-reports/$id': typeof AuthBrokerMonthlyReportsIdRoute
+  '/broker/projects/$id': typeof AuthBrokerProjectsIdRoute
+  '/investor/portfolio/$id': typeof AuthInvestorPortfolioIdRoute
+  '/vendor/active-projects/$id': typeof AuthVendorActiveProjectsIdRoute
+  '/vendor/projects/$id': typeof AuthVendorProjectsIdRoute
+  '/vendor/tenders/$id': typeof AuthVendorTendersIdRoute
+  '/broker/monthly-reports/': typeof AuthBrokerMonthlyReportsIndexRoute
+  '/broker/projects/': typeof AuthBrokerProjectsIndexRoute
+  '/vendor/active-projects/': typeof AuthVendorActiveProjectsIndexRoute
+  '/vendor/projects/': typeof AuthVendorProjectsIndexRoute
+  '/vendor/tenders/': typeof AuthVendorTendersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -156,9 +318,32 @@ export interface FileRoutesByTo {
   '/admin/system': typeof AuthAdminSystemRoute
   '/admin/users': typeof AuthAdminUsersRoute
   '/admin/vendors': typeof AuthAdminVendorsRoute
+  '/broker/document-requests': typeof AuthBrokerDocumentRequestsRoute
+  '/broker/settings': typeof AuthBrokerSettingsRoute
+  '/investor/market': typeof AuthInvestorMarketRoute
+  '/investor/portfolio': typeof AuthInvestorPortfolioRouteWithChildren
+  '/vendor/deals': typeof AuthVendorDealsRoute
+  '/vendor/notifications': typeof AuthVendorNotificationsRoute
+  '/vendor/opportunities': typeof AuthVendorOpportunitiesRoute
+  '/vendor/performance': typeof AuthVendorPerformanceRoute
+  '/vendor/portfolio': typeof AuthVendorPortfolioRoute
+  '/vendor/portfolio-performance': typeof AuthVendorPortfolioPerformanceRoute
+  '/vendor/settings': typeof AuthVendorSettingsRoute
   '/admin': typeof AuthAdminIndexRoute
+  '/broker': typeof AuthBrokerIndexRoute
   '/business': typeof AuthBusinessIndexRoute
   '/vendor': typeof AuthVendorIndexRoute
+  '/broker/monthly-reports/$id': typeof AuthBrokerMonthlyReportsIdRoute
+  '/broker/projects/$id': typeof AuthBrokerProjectsIdRoute
+  '/investor/portfolio/$id': typeof AuthInvestorPortfolioIdRoute
+  '/vendor/active-projects/$id': typeof AuthVendorActiveProjectsIdRoute
+  '/vendor/projects/$id': typeof AuthVendorProjectsIdRoute
+  '/vendor/tenders/$id': typeof AuthVendorTendersIdRoute
+  '/broker/monthly-reports': typeof AuthBrokerMonthlyReportsIndexRoute
+  '/broker/projects': typeof AuthBrokerProjectsIndexRoute
+  '/vendor/active-projects': typeof AuthVendorActiveProjectsIndexRoute
+  '/vendor/projects': typeof AuthVendorProjectsIndexRoute
+  '/vendor/tenders': typeof AuthVendorTendersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -168,6 +353,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/_auth/admin': typeof AuthAdminRouteWithChildren
+  '/_auth/broker': typeof AuthBrokerRouteWithChildren
   '/_auth/business': typeof AuthBusinessRouteWithChildren
   '/_auth/profile': typeof AuthProfileRoute
   '/_auth/vendor': typeof AuthVendorRouteWithChildren
@@ -178,9 +364,32 @@ export interface FileRoutesById {
   '/_auth/admin/system': typeof AuthAdminSystemRoute
   '/_auth/admin/users': typeof AuthAdminUsersRoute
   '/_auth/admin/vendors': typeof AuthAdminVendorsRoute
+  '/_auth/broker/document-requests': typeof AuthBrokerDocumentRequestsRoute
+  '/_auth/broker/settings': typeof AuthBrokerSettingsRoute
+  '/_auth/investor/market': typeof AuthInvestorMarketRoute
+  '/_auth/investor/portfolio': typeof AuthInvestorPortfolioRouteWithChildren
+  '/_auth/vendor/deals': typeof AuthVendorDealsRoute
+  '/_auth/vendor/notifications': typeof AuthVendorNotificationsRoute
+  '/_auth/vendor/opportunities': typeof AuthVendorOpportunitiesRoute
+  '/_auth/vendor/performance': typeof AuthVendorPerformanceRoute
+  '/_auth/vendor/portfolio': typeof AuthVendorPortfolioRoute
+  '/_auth/vendor/portfolio-performance': typeof AuthVendorPortfolioPerformanceRoute
+  '/_auth/vendor/settings': typeof AuthVendorSettingsRoute
   '/_auth/admin/': typeof AuthAdminIndexRoute
+  '/_auth/broker/': typeof AuthBrokerIndexRoute
   '/_auth/business/': typeof AuthBusinessIndexRoute
   '/_auth/vendor/': typeof AuthVendorIndexRoute
+  '/_auth/broker/monthly-reports/$id': typeof AuthBrokerMonthlyReportsIdRoute
+  '/_auth/broker/projects/$id': typeof AuthBrokerProjectsIdRoute
+  '/_auth/investor/portfolio/$id': typeof AuthInvestorPortfolioIdRoute
+  '/_auth/vendor/active-projects/$id': typeof AuthVendorActiveProjectsIdRoute
+  '/_auth/vendor/projects/$id': typeof AuthVendorProjectsIdRoute
+  '/_auth/vendor/tenders/$id': typeof AuthVendorTendersIdRoute
+  '/_auth/broker/monthly-reports/': typeof AuthBrokerMonthlyReportsIndexRoute
+  '/_auth/broker/projects/': typeof AuthBrokerProjectsIndexRoute
+  '/_auth/vendor/active-projects/': typeof AuthVendorActiveProjectsIndexRoute
+  '/_auth/vendor/projects/': typeof AuthVendorProjectsIndexRoute
+  '/_auth/vendor/tenders/': typeof AuthVendorTendersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -190,6 +399,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/admin'
+    | '/broker'
     | '/business'
     | '/profile'
     | '/vendor'
@@ -200,9 +410,32 @@ export interface FileRouteTypes {
     | '/admin/system'
     | '/admin/users'
     | '/admin/vendors'
+    | '/broker/document-requests'
+    | '/broker/settings'
+    | '/investor/market'
+    | '/investor/portfolio'
+    | '/vendor/deals'
+    | '/vendor/notifications'
+    | '/vendor/opportunities'
+    | '/vendor/performance'
+    | '/vendor/portfolio'
+    | '/vendor/portfolio-performance'
+    | '/vendor/settings'
     | '/admin/'
+    | '/broker/'
     | '/business/'
     | '/vendor/'
+    | '/broker/monthly-reports/$id'
+    | '/broker/projects/$id'
+    | '/investor/portfolio/$id'
+    | '/vendor/active-projects/$id'
+    | '/vendor/projects/$id'
+    | '/vendor/tenders/$id'
+    | '/broker/monthly-reports/'
+    | '/broker/projects/'
+    | '/vendor/active-projects/'
+    | '/vendor/projects/'
+    | '/vendor/tenders/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -216,9 +449,32 @@ export interface FileRouteTypes {
     | '/admin/system'
     | '/admin/users'
     | '/admin/vendors'
+    | '/broker/document-requests'
+    | '/broker/settings'
+    | '/investor/market'
+    | '/investor/portfolio'
+    | '/vendor/deals'
+    | '/vendor/notifications'
+    | '/vendor/opportunities'
+    | '/vendor/performance'
+    | '/vendor/portfolio'
+    | '/vendor/portfolio-performance'
+    | '/vendor/settings'
     | '/admin'
+    | '/broker'
     | '/business'
     | '/vendor'
+    | '/broker/monthly-reports/$id'
+    | '/broker/projects/$id'
+    | '/investor/portfolio/$id'
+    | '/vendor/active-projects/$id'
+    | '/vendor/projects/$id'
+    | '/vendor/tenders/$id'
+    | '/broker/monthly-reports'
+    | '/broker/projects'
+    | '/vendor/active-projects'
+    | '/vendor/projects'
+    | '/vendor/tenders'
   id:
     | '__root__'
     | '/'
@@ -227,6 +483,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/_auth/admin'
+    | '/_auth/broker'
     | '/_auth/business'
     | '/_auth/profile'
     | '/_auth/vendor'
@@ -237,9 +494,32 @@ export interface FileRouteTypes {
     | '/_auth/admin/system'
     | '/_auth/admin/users'
     | '/_auth/admin/vendors'
+    | '/_auth/broker/document-requests'
+    | '/_auth/broker/settings'
+    | '/_auth/investor/market'
+    | '/_auth/investor/portfolio'
+    | '/_auth/vendor/deals'
+    | '/_auth/vendor/notifications'
+    | '/_auth/vendor/opportunities'
+    | '/_auth/vendor/performance'
+    | '/_auth/vendor/portfolio'
+    | '/_auth/vendor/portfolio-performance'
+    | '/_auth/vendor/settings'
     | '/_auth/admin/'
+    | '/_auth/broker/'
     | '/_auth/business/'
     | '/_auth/vendor/'
+    | '/_auth/broker/monthly-reports/$id'
+    | '/_auth/broker/projects/$id'
+    | '/_auth/investor/portfolio/$id'
+    | '/_auth/vendor/active-projects/$id'
+    | '/_auth/vendor/projects/$id'
+    | '/_auth/vendor/tenders/$id'
+    | '/_auth/broker/monthly-reports/'
+    | '/_auth/broker/projects/'
+    | '/_auth/vendor/active-projects/'
+    | '/_auth/vendor/projects/'
+    | '/_auth/vendor/tenders/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -292,6 +572,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthAdminRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/broker': {
+      id: '/_auth/broker'
+      path: '/broker'
+      fullPath: '/broker'
+      preLoaderRoute: typeof AuthBrokerRouteImport
       parentRoute: typeof AuthRoute
     }
     '/_auth/business': {
@@ -371,6 +658,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthAdminVendorsRouteImport
       parentRoute: typeof AuthAdminRoute
     }
+    '/_auth/broker/': {
+      id: '/_auth/broker/'
+      path: '/'
+      fullPath: '/broker/'
+      preLoaderRoute: typeof AuthBrokerIndexRouteImport
+      parentRoute: typeof AuthBrokerRoute
+    }
+    '/_auth/broker/document-requests': {
+      id: '/_auth/broker/document-requests'
+      path: '/document-requests'
+      fullPath: '/broker/document-requests'
+      preLoaderRoute: typeof AuthBrokerDocumentRequestsRouteImport
+      parentRoute: typeof AuthBrokerRoute
+    }
+    '/_auth/broker/settings': {
+      id: '/_auth/broker/settings'
+      path: '/settings'
+      fullPath: '/broker/settings'
+      preLoaderRoute: typeof AuthBrokerSettingsRouteImport
+      parentRoute: typeof AuthBrokerRoute
+    }
     '/_auth/business/': {
       id: '/_auth/business/'
       path: '/'
@@ -383,6 +691,132 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/vendor/'
       preLoaderRoute: typeof AuthVendorIndexRouteImport
+      parentRoute: typeof AuthVendorRoute
+    }
+    '/_auth/vendor/deals': {
+      id: '/_auth/vendor/deals'
+      path: '/deals'
+      fullPath: '/vendor/deals'
+      preLoaderRoute: typeof AuthVendorDealsRouteImport
+      parentRoute: typeof AuthVendorRoute
+    }
+    '/_auth/vendor/notifications': {
+      id: '/_auth/vendor/notifications'
+      path: '/notifications'
+      fullPath: '/vendor/notifications'
+      preLoaderRoute: typeof AuthVendorNotificationsRouteImport
+      parentRoute: typeof AuthVendorRoute
+    }
+    '/_auth/vendor/opportunities': {
+      id: '/_auth/vendor/opportunities'
+      path: '/opportunities'
+      fullPath: '/vendor/opportunities'
+      preLoaderRoute: typeof AuthVendorOpportunitiesRouteImport
+      parentRoute: typeof AuthVendorRoute
+    }
+    '/_auth/vendor/performance': {
+      id: '/_auth/vendor/performance'
+      path: '/performance'
+      fullPath: '/vendor/performance'
+      preLoaderRoute: typeof AuthVendorPerformanceRouteImport
+      parentRoute: typeof AuthVendorRoute
+    }
+    '/_auth/vendor/portfolio': {
+      id: '/_auth/vendor/portfolio'
+      path: '/portfolio'
+      fullPath: '/vendor/portfolio'
+      preLoaderRoute: typeof AuthVendorPortfolioRouteImport
+      parentRoute: typeof AuthVendorRoute
+    }
+    '/_auth/vendor/portfolio-performance': {
+      id: '/_auth/vendor/portfolio-performance'
+      path: '/portfolio-performance'
+      fullPath: '/vendor/portfolio-performance'
+      preLoaderRoute: typeof AuthVendorPortfolioPerformanceRouteImport
+      parentRoute: typeof AuthVendorRoute
+    }
+    '/_auth/vendor/settings': {
+      id: '/_auth/vendor/settings'
+      path: '/settings'
+      fullPath: '/vendor/settings'
+      preLoaderRoute: typeof AuthVendorSettingsRouteImport
+      parentRoute: typeof AuthVendorRoute
+    }
+    '/_auth/broker/monthly-reports/': {
+      id: '/_auth/broker/monthly-reports/'
+      path: '/monthly-reports'
+      fullPath: '/broker/monthly-reports/'
+      preLoaderRoute: typeof AuthBrokerMonthlyReportsIndexRouteImport
+      parentRoute: typeof AuthBrokerRoute
+    }
+    '/_auth/broker/monthly-reports/$id': {
+      id: '/_auth/broker/monthly-reports/$id'
+      path: '/monthly-reports/$id'
+      fullPath: '/broker/monthly-reports/$id'
+      preLoaderRoute: typeof AuthBrokerMonthlyReportsIdRouteImport
+      parentRoute: typeof AuthBrokerRoute
+    }
+    '/_auth/broker/projects/': {
+      id: '/_auth/broker/projects/'
+      path: '/projects'
+      fullPath: '/broker/projects/'
+      preLoaderRoute: typeof AuthBrokerProjectsIndexRouteImport
+      parentRoute: typeof AuthBrokerRoute
+    }
+    '/_auth/broker/projects/$id': {
+      id: '/_auth/broker/projects/$id'
+      path: '/projects/$id'
+      fullPath: '/broker/projects/$id'
+      preLoaderRoute: typeof AuthBrokerProjectsIdRouteImport
+      parentRoute: typeof AuthBrokerRoute
+    }
+    '/_auth/investor/portfolio/$id': {
+      id: '/_auth/investor/portfolio/$id'
+      path: '/$id'
+      fullPath: '/investor/portfolio/$id'
+      preLoaderRoute: typeof AuthInvestorPortfolioIdRouteImport
+      parentRoute: typeof AuthInvestorPortfolioRoute
+    }
+    '/_auth/vendor/active-projects/': {
+      id: '/_auth/vendor/active-projects/'
+      path: '/active-projects'
+      fullPath: '/vendor/active-projects/'
+      preLoaderRoute: typeof AuthVendorActiveProjectsIndexRouteImport
+      parentRoute: typeof AuthVendorRoute
+    }
+    '/_auth/vendor/active-projects/$id': {
+      id: '/_auth/vendor/active-projects/$id'
+      path: '/active-projects/$id'
+      fullPath: '/vendor/active-projects/$id'
+      preLoaderRoute: typeof AuthVendorActiveProjectsIdRouteImport
+      parentRoute: typeof AuthVendorRoute
+    }
+    '/_auth/vendor/projects/': {
+      id: '/_auth/vendor/projects/'
+      path: '/projects'
+      fullPath: '/vendor/projects/'
+      preLoaderRoute: typeof AuthVendorProjectsIndexRouteImport
+      parentRoute: typeof AuthVendorRoute
+    }
+    '/_auth/vendor/projects/$id': {
+      id: '/_auth/vendor/projects/$id'
+      path: '/projects/$id'
+      fullPath: '/vendor/projects/$id'
+      preLoaderRoute: typeof AuthVendorProjectsIdRouteImport
+      parentRoute: typeof AuthVendorRoute
+    }
+    '/_auth/vendor/tenders/': {
+      id: '/_auth/vendor/tenders/'
+      path: '/tenders'
+      fullPath: '/vendor/tenders/'
+      preLoaderRoute: typeof AuthVendorTendersIndexRouteImport
+      parentRoute: typeof AuthVendorRoute
+    }
+    '/_auth/vendor/tenders/$id': {
+      id: '/_auth/vendor/tenders/$id'
+      path: '/tenders/$id'
+      fullPath: '/vendor/tenders/$id'
+      preLoaderRoute: typeof AuthVendorTendersIdRouteImport
       parentRoute: typeof AuthVendorRoute
     }
   }
@@ -412,6 +846,30 @@ const AuthAdminRouteWithChildren = AuthAdminRoute._addFileChildren(
   AuthAdminRouteChildren,
 )
 
+interface AuthBrokerRouteChildren {
+  AuthBrokerDocumentRequestsRoute: typeof AuthBrokerDocumentRequestsRoute
+  AuthBrokerSettingsRoute: typeof AuthBrokerSettingsRoute
+  AuthBrokerIndexRoute: typeof AuthBrokerIndexRoute
+  AuthBrokerMonthlyReportsIdRoute: typeof AuthBrokerMonthlyReportsIdRoute
+  AuthBrokerProjectsIdRoute: typeof AuthBrokerProjectsIdRoute
+  AuthBrokerMonthlyReportsIndexRoute: typeof AuthBrokerMonthlyReportsIndexRoute
+  AuthBrokerProjectsIndexRoute: typeof AuthBrokerProjectsIndexRoute
+}
+
+const AuthBrokerRouteChildren: AuthBrokerRouteChildren = {
+  AuthBrokerDocumentRequestsRoute: AuthBrokerDocumentRequestsRoute,
+  AuthBrokerSettingsRoute: AuthBrokerSettingsRoute,
+  AuthBrokerIndexRoute: AuthBrokerIndexRoute,
+  AuthBrokerMonthlyReportsIdRoute: AuthBrokerMonthlyReportsIdRoute,
+  AuthBrokerProjectsIdRoute: AuthBrokerProjectsIdRoute,
+  AuthBrokerMonthlyReportsIndexRoute: AuthBrokerMonthlyReportsIndexRoute,
+  AuthBrokerProjectsIndexRoute: AuthBrokerProjectsIndexRoute,
+}
+
+const AuthBrokerRouteWithChildren = AuthBrokerRoute._addFileChildren(
+  AuthBrokerRouteChildren,
+)
+
 interface AuthBusinessRouteChildren {
   AuthBusinessIndexRoute: typeof AuthBusinessIndexRoute
 }
@@ -425,11 +883,37 @@ const AuthBusinessRouteWithChildren = AuthBusinessRoute._addFileChildren(
 )
 
 interface AuthVendorRouteChildren {
+  AuthVendorDealsRoute: typeof AuthVendorDealsRoute
+  AuthVendorNotificationsRoute: typeof AuthVendorNotificationsRoute
+  AuthVendorOpportunitiesRoute: typeof AuthVendorOpportunitiesRoute
+  AuthVendorPerformanceRoute: typeof AuthVendorPerformanceRoute
+  AuthVendorPortfolioRoute: typeof AuthVendorPortfolioRoute
+  AuthVendorPortfolioPerformanceRoute: typeof AuthVendorPortfolioPerformanceRoute
+  AuthVendorSettingsRoute: typeof AuthVendorSettingsRoute
   AuthVendorIndexRoute: typeof AuthVendorIndexRoute
+  AuthVendorActiveProjectsIdRoute: typeof AuthVendorActiveProjectsIdRoute
+  AuthVendorProjectsIdRoute: typeof AuthVendorProjectsIdRoute
+  AuthVendorTendersIdRoute: typeof AuthVendorTendersIdRoute
+  AuthVendorActiveProjectsIndexRoute: typeof AuthVendorActiveProjectsIndexRoute
+  AuthVendorProjectsIndexRoute: typeof AuthVendorProjectsIndexRoute
+  AuthVendorTendersIndexRoute: typeof AuthVendorTendersIndexRoute
 }
 
 const AuthVendorRouteChildren: AuthVendorRouteChildren = {
+  AuthVendorDealsRoute: AuthVendorDealsRoute,
+  AuthVendorNotificationsRoute: AuthVendorNotificationsRoute,
+  AuthVendorOpportunitiesRoute: AuthVendorOpportunitiesRoute,
+  AuthVendorPerformanceRoute: AuthVendorPerformanceRoute,
+  AuthVendorPortfolioRoute: AuthVendorPortfolioRoute,
+  AuthVendorPortfolioPerformanceRoute: AuthVendorPortfolioPerformanceRoute,
+  AuthVendorSettingsRoute: AuthVendorSettingsRoute,
   AuthVendorIndexRoute: AuthVendorIndexRoute,
+  AuthVendorActiveProjectsIdRoute: AuthVendorActiveProjectsIdRoute,
+  AuthVendorProjectsIdRoute: AuthVendorProjectsIdRoute,
+  AuthVendorTendersIdRoute: AuthVendorTendersIdRoute,
+  AuthVendorActiveProjectsIndexRoute: AuthVendorActiveProjectsIndexRoute,
+  AuthVendorProjectsIndexRoute: AuthVendorProjectsIndexRoute,
+  AuthVendorTendersIndexRoute: AuthVendorTendersIndexRoute,
 }
 
 const AuthVendorRouteWithChildren = AuthVendorRoute._addFileChildren(
@@ -438,6 +922,7 @@ const AuthVendorRouteWithChildren = AuthVendorRoute._addFileChildren(
 
 interface AuthRouteChildren {
   AuthAdminRoute: typeof AuthAdminRouteWithChildren
+  AuthBrokerRoute: typeof AuthBrokerRouteWithChildren
   AuthBusinessRoute: typeof AuthBusinessRouteWithChildren
   AuthProfileRoute: typeof AuthProfileRoute
   AuthVendorRoute: typeof AuthVendorRouteWithChildren
@@ -445,6 +930,7 @@ interface AuthRouteChildren {
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthAdminRoute: AuthAdminRouteWithChildren,
+  AuthBrokerRoute: AuthBrokerRouteWithChildren,
   AuthBusinessRoute: AuthBusinessRouteWithChildren,
   AuthProfileRoute: AuthProfileRoute,
   AuthVendorRoute: AuthVendorRouteWithChildren,

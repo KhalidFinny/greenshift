@@ -14,6 +14,10 @@ export interface RoleShellData {
 	accountMenuOpen: boolean;
 	toggleAccountMenu: () => void;
 	closeAccountMenu: () => void;
+	notifRef: RefObject<HTMLDivElement | null>;
+	notifMenuOpen: boolean;
+	toggleNotifMenu: () => void;
+	closeNotifMenu: () => void;
 	openProfile: () => void;
 	handleLogout: () => Promise<void>;
 }
@@ -35,22 +39,35 @@ export function useRoleShell(): RoleShellData {
 	});
 	const name = user?.name ?? "";
 	const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+	const [notifMenuOpen, setNotifMenuOpen] = useState(false);
+
 	const accountRef = useRef<HTMLDivElement | null>(null);
+	const notifRef = useRef<HTMLDivElement | null>(null);
 
 	useEffect(() => {
-		if (!accountMenuOpen) return;
+		if (!accountMenuOpen && !notifMenuOpen) return;
 
 		function onPointerDown(event: PointerEvent) {
+			const target = event.target as Node;
 			if (
 				accountRef.current &&
-				!accountRef.current.contains(event.target as Node)
+				!accountRef.current.contains(target)
 			) {
 				setAccountMenuOpen(false);
+			}
+			if (
+				notifRef.current &&
+				!notifRef.current.contains(target)
+			) {
+				setNotifMenuOpen(false);
 			}
 		}
 
 		function onKeyDown(event: KeyboardEvent) {
-			if (event.key === "Escape") setAccountMenuOpen(false);
+			if (event.key === "Escape") {
+				setAccountMenuOpen(false);
+				setNotifMenuOpen(false);
+			}
 		}
 
 		document.addEventListener("pointerdown", onPointerDown);
@@ -59,9 +76,10 @@ export function useRoleShell(): RoleShellData {
 			document.removeEventListener("pointerdown", onPointerDown);
 			document.removeEventListener("keydown", onKeyDown);
 		};
-	}, [accountMenuOpen]);
+	}, [accountMenuOpen, notifMenuOpen]);
 
 	const closeAccountMenu = () => setAccountMenuOpen(false);
+	const closeNotifMenu = () => setNotifMenuOpen(false);
 
 	return {
 		user,
@@ -71,8 +89,18 @@ export function useRoleShell(): RoleShellData {
 		activePath,
 		accountRef,
 		accountMenuOpen,
-		toggleAccountMenu: () => setAccountMenuOpen((open) => !open),
+		toggleAccountMenu: () => {
+			setAccountMenuOpen((open) => !open);
+			setNotifMenuOpen(false);
+		},
 		closeAccountMenu,
+		notifRef,
+		notifMenuOpen,
+		toggleNotifMenu: () => {
+			setNotifMenuOpen((open) => !open);
+			setAccountMenuOpen(false);
+		},
+		closeNotifMenu,
 		openProfile: () => {
 			closeAccountMenu();
 			navigate({ to: "/profile" });
