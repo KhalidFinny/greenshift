@@ -7,7 +7,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { PRIMARY_BROKER } from "../lib/broker-platforms";
-import { DEMO_OBLIGASI } from "../lib/demo-data";
 import { BondCard } from "../organisms/market-card";
 
 type BondTab = "verified" | "on_progress";
@@ -37,12 +36,7 @@ export function BondsPage() {
 	});
 	const [tab, setTab] = useState<BondTab>("verified");
 
-	const live = query.data?.bonds ?? [];
-	const source = query.isSuccess
-		? live.length > 0
-			? live
-			: DEMO_OBLIGASI
-		: [];
+	const source = query.data?.bonds ?? [];
 
 	const verified = source.filter((listing) => listing.status === "verified");
 	const onProgress = source.filter(
