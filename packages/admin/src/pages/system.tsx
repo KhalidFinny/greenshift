@@ -10,36 +10,32 @@ import {
 	CardContent,
 	CardHeader,
 	CardTitle,
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
+	DataTable,
 } from "@greenshift/ui";
+import type { ColumnDef } from "@tanstack/react-table";
 import type { ExportSection } from "../lib/export";
 import { ExportMenu } from "../organisms/export-menu";
 import { MetricCard } from "../organisms/metric-card";
 
 const KPI = [
-	{ label: "Uptime", value: "99.9%", icon: faServer, sub: "24 jam terakhir" },
+	{ label: "Uptime", value: "99.9%", icon: faServer, sub: "last 24 hours" },
 	{
 		label: "API Response",
 		value: "142ms",
 		icon: faGaugeHigh,
-		sub: "rata-rata",
+		sub: "average",
 	},
 	{
 		label: "Error Rate",
 		value: "0.3%",
 		icon: faBug,
-		sub: "dari seluruh request",
+		sub: "of all requests",
 	},
 	{
 		label: "Request Volume",
 		value: "48.2k",
 		icon: faArrowTrendUp,
-		sub: "per hari",
+		sub: "per day",
 	},
 ];
 
@@ -82,6 +78,43 @@ const FAILED_JOBS = [
 		system: "Notification Service",
 		time: "2026-08-27 08:10",
 		status: "retrying",
+	},
+];
+
+type FailedJob = (typeof FAILED_JOBS)[number];
+
+const failedJobColumns: ColumnDef<FailedJob>[] = [
+	{
+		id: "job",
+		accessorFn: (job) => job.name,
+		header: "Job",
+		meta: { className: "font-medium" },
+		cell: ({ row }) => row.original.name,
+	},
+	{
+		id: "system",
+		accessorFn: (job) => job.system,
+		header: "System",
+		cell: ({ row }) => row.original.system,
+	},
+	{
+		id: "time",
+		accessorFn: (job) => job.time,
+		header: "Time",
+		cell: ({ row }) => row.original.time,
+	},
+	{
+		id: "status",
+		accessorFn: (job) => job.status,
+		header: "Status",
+		cell: ({ row }) => (
+			<Badge
+				variant={row.original.status === "failed" ? "destructive" : "secondary"}
+				className="text-base px-3 !h-8 rounded-md"
+			>
+				{row.original.status}
+			</Badge>
+		),
 	},
 ];
 
@@ -170,7 +203,7 @@ export function AdminSystem() {
 	const failedJobsSections: ExportSection[] = [
 		{
 			title: "Failed Jobs",
-			headers: ["Job", "System", "Waktu", "Status"],
+			headers: ["Job", "System", "Time", "Status"],
 			rows: FAILED_JOBS.map((job) => [
 				job.name,
 				job.system,
@@ -183,7 +216,7 @@ export function AdminSystem() {
 	const systemEventsSections: ExportSection[] = [
 		{
 			title: "System Events",
-			headers: ["Waktu", "Peristiwa", "Status"],
+			headers: ["Time", "Event", "Status"],
 			rows: SYSTEM_EVENTS.map((event) => [
 				event.time,
 				event.event,
@@ -198,7 +231,7 @@ export function AdminSystem() {
 				<div>
 					<h1 className="text-2xl font-semibold">System</h1>
 					<p className="mt-1 text-base text-muted-foreground">
-						Kesehatan infrastruktur dan operasional.
+						Infrastructure and operational health.
 					</p>
 				</div>
 				<ExportMenu
@@ -264,7 +297,7 @@ export function AdminSystem() {
 
 				<Card>
 					<CardHeader>
-						<CardTitle className="text-xl">Kesehatan Sistem</CardTitle>
+						<CardTitle className="text-xl">System Health</CardTitle>
 					</CardHeader>
 					<CardContent>
 						<ul className="space-y-2.5">
@@ -300,35 +333,12 @@ export function AdminSystem() {
 						<CardTitle className="text-xl">Failed Jobs</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<Table className="text-base">
-							<TableHeader>
-								<TableRow>
-									<TableHead>Job</TableHead>
-									<TableHead>System</TableHead>
-									<TableHead>Waktu</TableHead>
-									<TableHead>Status</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{FAILED_JOBS.map((job) => (
-									<TableRow key={job.id}>
-										<TableCell className="font-medium">{job.name}</TableCell>
-										<TableCell>{job.system}</TableCell>
-										<TableCell>{job.time}</TableCell>
-										<TableCell>
-											<Badge
-												variant={
-													job.status === "failed" ? "destructive" : "secondary"
-												}
-												className="text-base px-3 !h-8 rounded-md"
-											>
-												{job.status}
-											</Badge>
-										</TableCell>
-									</TableRow>
-								))}
-							</TableBody>
-						</Table>
+						<DataTable
+							columns={failedJobColumns}
+							data={FAILED_JOBS}
+							getRowId={(job) => String(job.id)}
+							ariaLabel="Failed jobs"
+						/>
 					</CardContent>
 				</Card>
 

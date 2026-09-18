@@ -6,16 +6,132 @@ import {
 	CardContent,
 	CardHeader,
 	CardTitle,
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
+	DataTable,
 } from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
+import type { ColumnDef } from "@tanstack/react-table";
 import { BLUEPRINT_META } from "../lib/demo-data";
 import { formatDateTime } from "../lib/format";
+
+const accountColumns: ColumnDef<AdminUser>[] = [
+	{
+		id: "user",
+		accessorFn: (user) => user.name,
+		header: "User",
+		cell: ({ row }) => (
+			<>
+				<p className="font-medium">{row.original.name}</p>
+				<p className="text-base text-muted-foreground">{row.original.email}</p>
+			</>
+		),
+	},
+	{
+		id: "role",
+		accessorFn: (user) => user.role,
+		header: "Role",
+		cell: ({ row }) => (
+			<Badge variant="secondary" className="!h-8 rounded-md px-3 text-base">
+				{row.original.role}
+			</Badge>
+		),
+	},
+	{
+		id: "company",
+		accessorFn: (user) => user.companyName !== null,
+		header: "Company",
+		meta: { className: "text-center", headClassName: "text-center" },
+		cell: ({ row }) =>
+			row.original.companyName ? (
+				<span className="font-medium text-primary">✓</span>
+			) : (
+				<span className="text-muted-foreground">-</span>
+			),
+	},
+	{
+		id: "vendorProfile",
+		accessorFn: (user) => user.vendorProfile,
+		header: "Vendor Profile",
+		meta: { className: "text-center", headClassName: "text-center" },
+		cell: ({ row }) =>
+			row.original.vendorProfile ? (
+				<span className="font-medium text-primary">✓</span>
+			) : (
+				<span className="text-muted-foreground">-</span>
+			),
+	},
+	{
+		id: "verification",
+		accessorFn: (user) =>
+			user.verifiedAt !== null ? "Verified" : "Not verified",
+		header: "Verification",
+		cell: ({ row }) => {
+			const verified = row.original.verifiedAt !== null;
+			return (
+				<Badge
+					variant={verified ? "default" : "destructive"}
+					className="!h-8 rounded-md px-3 text-base"
+				>
+					{verified ? "Verified" : "Not verified"}
+				</Badge>
+			);
+		},
+	},
+	{
+		id: "registered",
+		accessorFn: (user) => user.createdAt ?? "",
+		header: "Registered",
+		cell: ({ row }) => formatDateTime(row.original.createdAt),
+	},
+];
+
+const blueprintColumns: ColumnDef<AdminBlueprint>[] = [
+	{
+		id: "project",
+		accessorFn: (bp) => bp.projectTitle,
+		header: "Project",
+		meta: { className: "max-w-64" },
+		cell: ({ row }) => (
+			<>
+				<p className="truncate font-medium">{row.original.projectTitle}</p>
+				<p className="text-base text-muted-foreground">
+					Blueprint #{row.original.id}
+				</p>
+			</>
+		),
+	},
+	{
+		id: "status",
+		accessorFn: (bp) => bp.status,
+		header: "Status",
+		cell: ({ row }) => {
+			const meta = BLUEPRINT_META[row.original.status] ?? {
+				label: row.original.status,
+				variant: "outline" as const,
+			};
+			return (
+				<Badge
+					variant={meta.variant}
+					className="!h-8 rounded-md px-3 text-base"
+				>
+					{meta.label}
+				</Badge>
+			);
+		},
+	},
+	{
+		id: "validation",
+		accessorFn: (bp) => bp.validatedAt ?? "",
+		header: "Validation",
+		cell: ({ row }) => formatDateTime(row.original.validatedAt),
+	},
+	{
+		id: "note",
+		accessorFn: (bp) => bp.auditNote ?? "",
+		header: "Note",
+		meta: { className: "max-w-40 truncate" },
+		cell: ({ row }) => row.original.auditNote ?? "-",
+	},
+];
 
 interface AccountsTableProps {
 	users: AdminUser[];
@@ -27,85 +143,19 @@ export function AccountsTable({ users, limit = 5 }: AccountsTableProps) {
 		<Card>
 			<CardHeader>
 				<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-					<CardTitle className="text-xl">Akun Terbaru</CardTitle>
+					<CardTitle className="text-xl">Latest Accounts</CardTitle>
 					<Button asChild variant="outline" className="!h-9 px-4 text-base">
-						<Link to="/admin/users">Lihat selengkapnya</Link>
+						<Link to="/admin/users">View more</Link>
 					</Button>
 				</div>
 			</CardHeader>
 			<CardContent className="pt-0">
-				<div className="overflow-x-auto">
-					<Table className="text-base">
-						<TableHeader>
-							<TableRow>
-								<TableHead className="text-base text-muted-foreground">
-									Pengguna
-								</TableHead>
-								<TableHead className="text-base text-muted-foreground">
-									Peran
-								</TableHead>
-								<TableHead className="text-center text-base text-muted-foreground">
-									Perusahaan
-								</TableHead>
-								<TableHead className="text-center text-base text-muted-foreground">
-									Profil Vendor
-								</TableHead>
-								<TableHead className="text-base text-muted-foreground">
-									Verifikasi
-								</TableHead>
-								<TableHead className="text-base text-muted-foreground">
-									Terdaftar
-								</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{users.slice(0, limit).map((user) => {
-								const verified = user.verifiedAt !== null;
-								return (
-									<TableRow key={user.id}>
-										<TableCell>
-											<p className="font-medium">{user.name}</p>
-											<p className="text-base text-muted-foreground">
-												{user.email}
-											</p>
-										</TableCell>
-										<TableCell>
-											<Badge
-												variant="secondary"
-												className="!h-8 rounded-md px-3 text-base"
-											>
-												{user.role}
-											</Badge>
-										</TableCell>
-										<TableCell className="text-center">
-											{user.companyName ? (
-												<span className="font-medium text-primary">✓</span>
-											) : (
-												<span className="text-muted-foreground">-</span>
-											)}
-										</TableCell>
-										<TableCell className="text-center">
-											{user.vendorProfile ? (
-												<span className="font-medium text-primary">✓</span>
-											) : (
-												<span className="text-muted-foreground">-</span>
-											)}
-										</TableCell>
-										<TableCell>
-											<Badge
-												variant={verified ? "default" : "destructive"}
-												className="!h-8 rounded-md px-3 text-base"
-											>
-												{verified ? "Terverifikasi" : "Belum"}
-											</Badge>
-										</TableCell>
-										<TableCell>{formatDateTime(user.createdAt)}</TableCell>
-									</TableRow>
-								);
-							})}
-						</TableBody>
-					</Table>
-				</div>
+				<DataTable
+					columns={accountColumns}
+					data={users.slice(0, limit)}
+					getRowId={(user) => String(user.id)}
+					ariaLabel="Latest accounts"
+				/>
 			</CardContent>
 		</Card>
 	);
@@ -124,63 +174,19 @@ export function BlueprintsTable({
 		<Card>
 			<CardHeader>
 				<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-					<CardTitle className="text-xl">Blueprint Terbaru</CardTitle>
+					<CardTitle className="text-xl">Latest Blueprints</CardTitle>
 					<Button asChild variant="outline" className="!h-9 px-4 text-base">
-						<Link to="/admin/projects">Lihat selengkapnya</Link>
+						<Link to="/admin/projects">View more</Link>
 					</Button>
 				</div>
 			</CardHeader>
 			<CardContent className="pt-0">
-				<div className="overflow-x-auto">
-					<Table className="text-base">
-						<TableHeader>
-							<TableRow>
-								<TableHead className="text-base text-muted-foreground">
-									Proyek
-								</TableHead>
-								<TableHead className="text-base text-muted-foreground">
-									Status
-								</TableHead>
-								<TableHead className="text-base text-muted-foreground">
-									Validasi
-								</TableHead>
-								<TableHead className="text-base text-muted-foreground">
-									Catatan
-								</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{blueprints.slice(0, limit).map((bp) => {
-								const meta = BLUEPRINT_META[bp.status] ?? {
-									label: bp.status,
-									variant: "outline" as const,
-								};
-								return (
-									<TableRow key={bp.id}>
-										<TableCell className="max-w-64">
-											<p className="truncate font-medium">{bp.projectTitle}</p>
-											<p className="text-base text-muted-foreground">
-												Blueprint #{bp.id}
-											</p>
-										</TableCell>
-										<TableCell>
-											<Badge
-												variant={meta.variant}
-												className="!h-8 rounded-md px-3 text-base"
-											>
-												{meta.label}
-											</Badge>
-										</TableCell>
-										<TableCell>{formatDateTime(bp.validatedAt)}</TableCell>
-										<TableCell className="max-w-40 truncate">
-											{bp.auditNote ?? "-"}
-										</TableCell>
-									</TableRow>
-								);
-							})}
-						</TableBody>
-					</Table>
-				</div>
+				<DataTable
+					columns={blueprintColumns}
+					data={blueprints.slice(0, limit)}
+					getRowId={(bp) => String(bp.id)}
+					ariaLabel="Latest blueprints"
+				/>
 			</CardContent>
 		</Card>
 	);

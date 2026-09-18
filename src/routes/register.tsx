@@ -5,11 +5,10 @@ import {
 	roleHome,
 	useAuth,
 } from "@greenshift/core";
-import { Button, Input, Label, Spinner } from "@greenshift/ui";
+import { useAppForm } from "@greenshift/ui";
 import { ArrowLeft02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import type { FormEvent } from "react";
 import { useState } from "react";
 import { getSessionFn } from "../lib/session";
 
@@ -25,43 +24,40 @@ export const Route = createFileRoute("/register")({
 	component: RegisterPage,
 });
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function RegisterPage() {
 	const { register } = useAuth();
-	const [name, setName] = useState("");
-	const [email, setEmail] = useState("");
-	const [companyName, setCompanyName] = useState("");
-	const [password, setPassword] = useState("");
 	const [error, setError] = useState<string | null>(null);
-	const [submitting, setSubmitting] = useState(false);
 
-	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-		event.preventDefault();
-		setSubmitting(true);
-		setError(null);
-
-		if (!name || !email || !companyName || !password) {
-			setError("Semua kolom wajib diisi");
-			setSubmitting(false);
-			return;
-		}
-		if (password.length < 8) {
-			setError("Kata sandi minimal 8 karakter");
-			setSubmitting(false);
-			return;
-		}
-
-		try {
-			await register(name, email, password, companyName);
-			// SPA transition: register() invalidates the router and the
-			// register route's beforeLoad redirects to the role home with the
-			// fresh session: no full page load, so toasts stay visible.
-		} catch (err) {
-			setError(
-				err instanceof ApiError ? err.message : "Terjadi kesalahan, coba lagi",
-			);
-			setSubmitting(false);
-		}
-	}
+	const form = useAppForm({
+		defaultValues: {
+			name: "",
+			email: "",
+			companyName: "",
+			password: "",
+		},
+		onSubmit: async ({ value }) => {
+			setError(null);
+			try {
+				await register(
+					value.name,
+					value.email,
+					value.password,
+					value.companyName,
+				);
+				// SPA transition: register() invalidates the router and the
+				// register route's beforeLoad redirects to the role home with the
+				// fresh session: no full page load, so toasts stay visible.
+			} catch (err) {
+				setError(
+					err instanceof ApiError
+						? err.message
+						: "Something went wrong, please try again",
+				);
+			}
+		},
+	});
 
 	return (
 		<div className="grid min-h-screen lg:grid-cols-2">
@@ -71,11 +67,11 @@ function RegisterPage() {
 				</Link>
 				<div className="max-w-md">
 					<h2 className="text-4xl font-semibold leading-tight text-white">
-						Platform MRV untuk Pembiayaan Hijau
+						MRV Platform for Green Financing
 					</h2>
 					<p className="mt-4 text-base leading-relaxed text-white/70">
-						Kelola proyek, tender, dan laporan MRV dalam satu platform.
-						Transparan untuk bisnis, vendor, dan pengawas.
+						Manage projects, tenders, and MRV reports in one platform.
+						Transparent for businesses, vendors, and regulators.
 					</p>
 				</div>
 				<p className="text-sm text-white/50">© 2026 GreenShift</p>
@@ -88,57 +84,80 @@ function RegisterPage() {
 						className="mb-10 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground no-underline transition-colors hover:text-foreground"
 					>
 						<HugeiconsIcon icon={ArrowLeft02Icon} />
-						Kembali
+						Go back
 					</Link>
-					<h1 className="text-3xl font-semibold">Daftar ke GreenShift</h1>
+					<h1 className="text-3xl font-semibold">Register for GreenShift</h1>
 					<p className="mt-2 text-muted-foreground">
-						Buat akun perusahaan untuk memulai proyek efisiensi energi Anda.
+						Create a company account to start your energy efficiency project.
 					</p>
-					<form onSubmit={handleSubmit} className="mt-8 space-y-6" noValidate>
-						<div className="space-y-2">
-							<Label htmlFor="name">Nama</Label>
-							<Input
-								id="name"
-								type="text"
-								required
-								autoComplete="name"
-								value={name}
-								onChange={(event) => setName(event.target.value)}
-							/>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="email">Email</Label>
-							<Input
-								id="email"
-								type="email"
-								required
-								autoComplete="email"
-								value={email}
-								onChange={(event) => setEmail(event.target.value)}
-							/>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="companyName">Nama perusahaan</Label>
-							<Input
-								id="companyName"
-								type="text"
-								required
-								autoComplete="organization"
-								value={companyName}
-								onChange={(event) => setCompanyName(event.target.value)}
-							/>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="password">Kata sandi</Label>
-							<Input
-								id="password"
-								type="password"
-								required
-								autoComplete="new-password"
-								value={password}
-								onChange={(event) => setPassword(event.target.value)}
-							/>
-						</div>
+					<form
+						onSubmit={(event) => {
+							event.preventDefault();
+							void form.handleSubmit();
+						}}
+						className="mt-8 space-y-6"
+						noValidate
+					>
+						<form.AppField
+							name="name"
+							validators={{
+								onChange: ({ value }) =>
+									value ? undefined : "Name is required",
+							}}
+						>
+							{(field) => <field.TextField label="Name" autoComplete="name" />}
+						</form.AppField>
+						<form.AppField
+							name="email"
+							validators={{
+								onChange: ({ value }) => {
+									if (!value) return "Email is required";
+									return EMAIL_RE.test(value)
+										? undefined
+										: "Enter a valid email";
+								},
+							}}
+						>
+							{(field) => (
+								<field.TextField
+									label="Email"
+									type="email"
+									autoComplete="email"
+								/>
+							)}
+						</form.AppField>
+						<form.AppField
+							name="companyName"
+							validators={{
+								onChange: ({ value }) =>
+									value ? undefined : "Company name is required",
+							}}
+						>
+							{(field) => (
+								<field.TextField
+									label="Company name"
+									autoComplete="organization"
+								/>
+							)}
+						</form.AppField>
+						<form.AppField
+							name="password"
+							validators={{
+								onChange: ({ value }) => {
+									if (!value) return "Password is required";
+									return value.length >= 8
+										? undefined
+										: "Password must be at least 8 characters";
+								},
+							}}
+						>
+							{(field) => (
+								<field.PasswordField
+									label="Password"
+									autoComplete="new-password"
+								/>
+							)}
+						</form.AppField>
 						{error && (
 							<p
 								role="alert"
@@ -147,28 +166,19 @@ function RegisterPage() {
 								{error}
 							</p>
 						)}
-						<Button
-							type="submit"
-							disabled={submitting}
-							className="w-full cursor-pointer"
-						>
-							{submitting ? (
-								<span className="inline-flex items-center gap-2">
-									<Spinner className="size-4" />
-									Memproses…
-								</span>
-							) : (
-								"Daftar"
-							)}
-						</Button>
+						<form.AppForm>
+							<form.SubmitButton className="w-full cursor-pointer">
+								Register
+							</form.SubmitButton>
+						</form.AppForm>
 					</form>
 					<p className="mt-6 text-center text-sm text-muted-foreground">
-						Sudah punya akun?{" "}
+						Already have an account?{" "}
 						<Link
 							to="/login"
 							className="font-medium text-primary underline-offset-4 hover:underline"
 						>
-							Masuk
+							Sign in
 						</Link>
 					</p>
 				</div>

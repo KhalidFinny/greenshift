@@ -24,17 +24,17 @@ export function NotFoundComponent() {
 				404
 			</p>
 			<h1 className="mt-6 text-3xl font-bold text-[#1C1C1C] md:text-4xl">
-				Halaman tidak ditemukan
+				Page not found
 			</h1>
 			<p className="mt-4 max-w-md text-lg leading-relaxed text-[#555555]">
-				Halaman yang Anda cari mungkin telah dipindahkan, dihapus, atau tidak
-				pernah ada.
+				The page you are looking for may have been moved, deleted, or never
+				existed.
 			</p>
 			<Button
 				onClick={handleBack}
 				className="mt-10 h-[42px] cursor-pointer rounded-[10px] px-8 text-base normal-case tracking-normal"
 			>
-				Kembali
+				Go back
 			</Button>
 		</div>
 	);

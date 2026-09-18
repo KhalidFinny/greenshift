@@ -14,20 +14,16 @@ import {
 	CardHeader,
 	CardTitle,
 	ContentSkeleton,
+	DataTable,
 	EmptyState,
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
 } from "@greenshift/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { ColumnDef } from "@tanstack/react-table";
 import { useState } from "react";
 import type { ExportSection } from "../lib/export";
 import {
@@ -44,50 +40,50 @@ import { ProjectDetailDialog } from "../organisms/project-detail-dialog";
 const DEMO_PROJECTS: AdminProject[] = [
 	{
 		id: 1,
-		title: "Retrofit Chiller Pabrik Tekstil",
+		title: "Textile Factory Chiller Retrofit",
 		status: "funding",
-		companyName: "PT Hijau Nusantara",
-		industrySector: "Manufaktur",
+		companyName: "PT Green Nusantara",
+		industrySector: "Manufacturing",
 		budget: 500_000_000,
 		riskScore: 72,
 		blueprintStatus: "published",
 	},
 	{
 		id: 2,
-		title: "Motor Efisiensi Tinggi",
+		title: "High-Efficiency Motor",
 		status: "funding",
-		companyName: "PT Karbon Bersih",
-		industrySector: "Industri Berat",
+		companyName: "PT Clean Carbon",
+		industrySector: "Heavy Industry",
 		budget: 350_000_000,
 		riskScore: 68,
 		blueprintStatus: "validated",
 	},
 	{
 		id: 3,
-		title: "Sistem Pencahayaan LED",
+		title: "LED Lighting System",
 		status: "monitoring",
-		companyName: "PT Hijau Nusantara",
-		industrySector: "Gedung",
+		companyName: "PT Green Nusantara",
+		industrySector: "Building",
 		budget: 150_000_000,
 		riskScore: 85,
 		blueprintStatus: "published",
 	},
 	{
 		id: 4,
-		title: "Panel Surya Atap Gudang",
+		title: "Warehouse Rooftop Solar Panels",
 		status: "draft",
-		companyName: "PT Karbon Bersih",
-		industrySector: "Logistik",
+		companyName: "PT Clean Carbon",
+		industrySector: "Logistics",
 		budget: 800_000_000,
 		riskScore: 55,
 		blueprintStatus: null,
 	},
 	{
 		id: 5,
-		title: "Kompresor VFD",
+		title: "VFD Compressor",
 		status: "assessment",
-		companyName: "PT Hijau Nusantara",
-		industrySector: "Manufaktur",
+		companyName: "PT Green Nusantara",
+		industrySector: "Manufacturing",
 		budget: 200_000_000,
 		riskScore: 62,
 		blueprintStatus: null,
@@ -96,8 +92,8 @@ const DEMO_PROJECTS: AdminProject[] = [
 		id: 6,
 		title: "Heat Recovery System",
 		status: "completed",
-		companyName: "PT Karbon Bersih",
-		industrySector: "Industri Berat",
+		companyName: "PT Clean Carbon",
+		industrySector: "Heavy Industry",
 		budget: 450_000_000,
 		riskScore: 78,
 		blueprintStatus: "published",
@@ -106,29 +102,116 @@ const DEMO_PROJECTS: AdminProject[] = [
 		id: 7,
 		title: "Variable Speed Drive",
 		status: "completed",
-		companyName: "PT Hijau Nusantara",
-		industrySector: "Manufaktur",
+		companyName: "PT Green Nusantara",
+		industrySector: "Manufacturing",
 		budget: 280_000_000,
 		riskScore: 71,
 		blueprintStatus: "published",
 	},
 	{
 		id: 8,
-		title: "Insulasi Pipa Industri",
+		title: "Industrial Pipe Insulation",
 		status: "completed",
-		companyName: "PT Karbon Bersih",
-		industrySector: "Industri Berat",
+		companyName: "PT Clean Carbon",
+		industrySector: "Heavy Industry",
 		budget: 120_000_000,
 		riskScore: 88,
 		blueprintStatus: "published",
 	},
 ];
 
-const idr = new Intl.NumberFormat("id-ID", {
+const idr = new Intl.NumberFormat("en-US", {
 	style: "currency",
 	currency: "IDR",
 	maximumFractionDigits: 0,
 });
+
+const projectColumns = (
+	onSelect: (project: AdminProject) => void,
+): ColumnDef<AdminProject>[] => [
+	{
+		id: "project",
+		accessorFn: (project) => project.title,
+		header: "Project",
+		cell: ({ row }) => (
+			<>
+				<p className="font-medium">{row.original.title}</p>
+				<p className="text-muted-foreground">{row.original.companyName}</p>
+			</>
+		),
+	},
+	{
+		id: "sector",
+		accessorFn: (project) => project.industrySector ?? "",
+		header: "Sector",
+		cell: ({ row }) => row.original.industrySector ?? "-",
+	},
+	{
+		id: "status",
+		accessorFn: (project) => project.status,
+		header: "Status",
+		cell: ({ row }) => (
+			<Badge
+				variant={PROJECT_STATUS_BADGE[row.original.status] ?? "outline"}
+				className="text-base px-3 !h-8 rounded-md"
+			>
+				{PROJECT_STATUS_LABELS[row.original.status] ?? row.original.status}
+			</Badge>
+		),
+	},
+	{
+		id: "budget",
+		accessorFn: (project) => project.budget ?? 0,
+		header: "Budget",
+		meta: { className: "tabular-nums" },
+		cell: ({ row }) =>
+			row.original.budget ? idr.format(row.original.budget) : "-",
+	},
+	{
+		id: "risk",
+		accessorFn: (project) => project.riskScore ?? 0,
+		header: "Risk",
+		meta: { className: "tabular-nums" },
+		cell: ({ row }) => {
+			const riskColor =
+				(row.original.riskScore ?? 0) >= 70
+					? "text-primary"
+					: (row.original.riskScore ?? 0) >= 50
+						? "text-muted-foreground"
+						: "text-destructive";
+			return <span className={riskColor}>{row.original.riskScore ?? "-"}</span>;
+		},
+	},
+	{
+		id: "blueprint",
+		accessorFn: (project) => project.blueprintStatus ?? "",
+		header: "Blueprint",
+		cell: ({ row }) =>
+			row.original.blueprintStatus ? (
+				<Badge
+					variant={
+						BLUEPRINT_STATUS_BADGE[row.original.blueprintStatus] ?? "outline"
+					}
+					className="text-base px-3 !h-8 rounded-md"
+				>
+					{BLUEPRINT_STATUS_LABELS[row.original.blueprintStatus] ??
+						row.original.blueprintStatus}
+				</Badge>
+			) : (
+				"-"
+			),
+	},
+	{
+		id: "actions",
+		header: "Actions",
+		enableSorting: false,
+		cell: ({ row }) => (
+			<Button variant="outline" onClick={() => onSelect(row.original)}>
+				Detail
+			</Button>
+		),
+	},
+];
 
 export function AdminProjects() {
 	const [status, setStatus] = useState<string>("all");
@@ -172,8 +255,8 @@ export function AdminProjects() {
 		return (
 			<div className="space-y-4">
 				<EmptyState
-					title="Gagal memuat proyek"
-					description="Tidak dapat mengambil data lifecycle proyek."
+					title="Failed to load projects"
+					description="Unable to retrieve project lifecycle data."
 				/>
 			</div>
 		);
@@ -201,13 +284,13 @@ export function AdminProjects() {
 
 	const projectExportSections: ExportSection[] = [
 		{
-			title: "Daftar Proyek",
+			title: "Project List",
 			headers: [
-				"Proyek",
-				"Perusahaan",
-				"Sektor",
+				"Project",
+				"Company",
+				"Sector",
 				"Status",
-				"Anggaran",
+				"Budget",
 				"Risk",
 				"Blueprint",
 			],
@@ -226,13 +309,15 @@ export function AdminProjects() {
 		},
 	];
 
+	const columns = projectColumns((project) => setSelected(project));
+
 	return (
 		<div className="space-y-6">
 			<div className="flex flex-wrap items-end justify-between gap-4">
 				<div>
 					<h1 className="text-2xl font-semibold">Projects</h1>
 					<p className="mt-1 text-base text-muted-foreground">
-						Manajemen lifecycle proyek.
+						Project lifecycle management.
 					</p>
 				</div>
 				<ExportMenu
@@ -245,28 +330,28 @@ export function AdminProjects() {
 			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 				{[
 					{
-						label: "Total Proyek",
+						label: "Total Projects",
 						value: String(totalProjects),
 						icon: faBuilding,
-						sub: "seluruh pipeline",
+						sub: "entire pipeline",
 					},
 					{
-						label: "Proyek Aktif",
+						label: "Active Projects",
 						value: String(activeProjects),
 						icon: faArrowTrendUp,
 						sub: "funding + monitoring",
 					},
 					{
-						label: "Selesai",
+						label: "Completed",
 						value: String(completedProjects),
 						icon: faClipboardCheck,
-						sub: "proyek closed-loop",
+						sub: "closed-loop projects",
 					},
 					{
 						label: "Avg Risk",
 						value: String(avgRisk),
 						icon: faGaugeHigh,
-						sub: "rata-rata risk score",
+						sub: "average risk score",
 					},
 				].map((card) => (
 					<MetricCard
@@ -282,13 +367,13 @@ export function AdminProjects() {
 			<Card>
 				<CardHeader>
 					<div className="flex items-center justify-between gap-4">
-						<CardTitle className="text-xl">Daftar Proyek</CardTitle>
+						<CardTitle className="text-xl">Project List</CardTitle>
 						<Select value={status} onValueChange={(value) => setStatus(value)}>
 							<SelectTrigger className="w-[220px]">
-								<SelectValue placeholder="Semua status" />
+								<SelectValue placeholder="All statuses" />
 							</SelectTrigger>
 							<SelectContent>
-								<SelectItem value="all">Semua status</SelectItem>
+								<SelectItem value="all">All statuses</SelectItem>
 								{PROJECT_STATUS_OPTIONS.map((option) => (
 									<SelectItem key={option} value={option}>
 										{PROJECT_STATUS_LABELS[option]}
@@ -301,84 +386,17 @@ export function AdminProjects() {
 				<CardContent>
 					{projects.length === 0 ? (
 						<p className="text-base text-muted-foreground">
-							Tidak ada proyek pada filter ini.
+							No projects match this filter.
 						</p>
 					) : (
-						<Table className="text-base">
-							<TableHeader>
-								<TableRow>
-									<TableHead>Proyek</TableHead>
-									<TableHead>Sektor</TableHead>
-									<TableHead>Status</TableHead>
-									<TableHead>Anggaran</TableHead>
-									<TableHead>Risk</TableHead>
-									<TableHead>Blueprint</TableHead>
-									<TableHead>Aksi</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{projects.map((project) => {
-									const riskColor =
-										(project.riskScore ?? 0) >= 70
-											? "text-primary"
-											: (project.riskScore ?? 0) >= 50
-												? "text-muted-foreground"
-												: "text-destructive";
-									return (
-										<TableRow key={project.id}>
-											<TableCell>
-												<p className="font-medium">{project.title}</p>
-												<p className="text-muted-foreground">
-													{project.companyName}
-												</p>
-											</TableCell>
-											<TableCell>{project.industrySector ?? "-"}</TableCell>
-											<TableCell>
-												<Badge
-													variant={
-														PROJECT_STATUS_BADGE[project.status] ?? "outline"
-													}
-													className="text-base px-3 !h-8 rounded-md"
-												>
-													{PROJECT_STATUS_LABELS[project.status] ??
-														project.status}
-												</Badge>
-											</TableCell>
-											<TableCell className="tabular-nums">
-												{project.budget ? idr.format(project.budget) : "-"}
-											</TableCell>
-											<TableCell className={`tabular-nums ${riskColor}`}>
-												{project.riskScore ?? "-"}
-											</TableCell>
-											<TableCell>
-												{project.blueprintStatus ? (
-													<Badge
-														variant={
-															BLUEPRINT_STATUS_BADGE[project.blueprintStatus] ??
-															"outline"
-														}
-														className="text-base px-3 !h-8 rounded-md"
-													>
-														{BLUEPRINT_STATUS_LABELS[project.blueprintStatus] ??
-															project.blueprintStatus}
-													</Badge>
-												) : (
-													"-"
-												)}
-											</TableCell>
-											<TableCell>
-												<Button
-													variant="outline"
-													onClick={() => setSelected(project)}
-												>
-													Detail
-												</Button>
-											</TableCell>
-										</TableRow>
-									);
-								})}
-							</TableBody>
-						</Table>
+						<DataTable
+							columns={columns}
+							data={projects}
+							getRowId={(project) => String(project.id)}
+							ariaLabel="Project list"
+							searchPlaceholder="Search projects"
+							emptyMessage="No projects match your search."
+						/>
 					)}
 				</CardContent>
 			</Card>

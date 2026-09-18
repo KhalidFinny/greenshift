@@ -17,7 +17,7 @@ export function bondCodeFor(project: {
 }
 
 /**
- * Plain-text payload for the "Salin Kode" button.
+ * Plain-text payload for the "Copy Code" button.
  *
  * Investors paste this into the broker app's search field, so it carries the
  * code plus just enough context (name, issuer, coupon) to disambiguate:
@@ -31,14 +31,14 @@ export function bondSearchPayload(project: {
 	blueprint?: { irr?: number };
 }): string {
 	const lines = [
-		`Kode Obligasi: ${bondCodeFor(project)}`,
-		`Nama: ${project.title}`,
+		`Bond Code: ${bondCodeFor(project)}`,
+		`Name: ${project.title}`,
 	];
-	if (project.companyName) lines.push(`Penerbit: ${project.companyName}`);
+	if (project.companyName) lines.push(`Issuer: ${project.companyName}`);
 	const coupon = project.blueprint?.irr;
 	if (typeof coupon === "number") {
 		lines.push(
-			`Kupon: ${coupon.toLocaleString("id-ID", { maximumFractionDigits: 1 })}% p.a.`,
+			`Coupon: ${coupon.toLocaleString("en-US", { maximumFractionDigits: 1 })}% p.a.`,
 		);
 	}
 	return lines.join("\n");

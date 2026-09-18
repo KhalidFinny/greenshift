@@ -110,17 +110,17 @@ export interface BlueprintSummary {
 }
 
 /**
- * Listing lifecycle on the public obligasi dashboard.
+ * Listing lifecycle on the public bond dashboard.
  *
  * `verified` mirrors an OJK-cleared bond that brokers can list; `on_progress`
  * is everything still working through assessment/audit. GreenShift never
  * settles a trade: verified listings hand off to a broker app via Trima+.
  */
-export const obligasiStatuses = ["verified", "on_progress"] as const;
-export type ObligasiStatus = (typeof obligasiStatuses)[number];
+export const bondStatuses = ["verified", "on_progress"] as const;
+export type BondStatus = (typeof bondStatuses)[number];
 
-/** A single bond listing shown on the public obligasi dashboard. */
-export interface ObligasiListing {
+/** A single bond listing shown on the public bond dashboard. */
+export interface BondListing {
 	id: number;
 	title: string;
 	/** Broker-facing code investors search for in Trima+/IPOT. */
@@ -128,21 +128,21 @@ export interface ObligasiListing {
 	companyName: string | null;
 	industrySector: string | null;
 	location: string | null;
-	/** Nominal penerbitan (project budget), in IDR. */
+	/** Issuance amount (project budget), in IDR. */
 	budget: number | null;
 	riskScore: number | null;
 	targetEmissionReduction: number | null;
 	estimatedEnergySaving: number | null;
 	funded: number;
 	fundingProgress: number;
-	status: ObligasiStatus;
+	status: BondStatus;
 	/** When the listing became verified; drives the date shown on the card. */
 	verifiedAt: string | null;
 	blueprint: BlueprintSummary;
 }
 
-export interface ObligasiMarketResponse {
-	obligasi: ObligasiListing[];
+export interface BondMarketResponse {
+	bonds: BondListing[];
 }
 
 export interface VerifyUserBody {

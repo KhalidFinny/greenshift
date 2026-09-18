@@ -20,7 +20,7 @@ interface ChartsRowProps {
 export function ChartsRow({ activityData, carbonReduction }: ChartsRowProps) {
 	const carbonData = [
 		{
-			label: "Tercapai",
+			label: "Achieved",
 			value: carbonReduction,
 			maxValue: 100,
 			color: "var(--chart-1)",
@@ -37,9 +37,9 @@ export function ChartsRow({ activityData, carbonReduction }: ChartsRowProps) {
 		<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 			<Card>
 				<CardHeader className="space-y-2">
-					<CardTitle className="text-xl">Aktivitas Platform</CardTitle>
+					<CardTitle className="text-xl">Platform Activity</CardTitle>
 					<p className="text-base text-muted-foreground">
-						Pengajuan proyek per bulan (2026)
+						Project submissions per month (2026)
 					</p>
 				</CardHeader>
 				<CardContent className="pt-0">
@@ -54,9 +54,9 @@ export function ChartsRow({ activityData, carbonReduction }: ChartsRowProps) {
 
 			<Card>
 				<CardHeader className="space-y-2">
-					<CardTitle className="text-xl">Reduksi Karbon</CardTitle>
+					<CardTitle className="text-xl">Carbon Reduction</CardTitle>
 					<p className="text-base text-muted-foreground">
-						Progres menuju target tahunan
+						Progress toward the annual target
 					</p>
 				</CardHeader>
 				<CardContent className="pt-0">
@@ -76,15 +76,15 @@ export function ChartsRow({ activityData, carbonReduction }: ChartsRowProps) {
 					<div className="mt-6 overflow-hidden rounded-xl border border-border/70">
 						{[
 							{
-								label: "CO₂e tereduksi",
-								value: `${carbonReduction} ton`,
+								label: "CO₂e reduced",
+								value: `${carbonReduction} tons`,
 							},
 							{
-								label: "Kemajuan target",
+								label: "Target progress",
 								value: `${carbonReduction}%`,
 							},
 							{
-								label: "Energi dihemat",
+								label: "Energy saved",
 								value: "63.000 kWh",
 							},
 						].map((stat, index) => (

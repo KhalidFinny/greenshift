@@ -55,7 +55,7 @@ export default {
 			console.error("[worker]", err);
 			const response = new Response(
 				JSON.stringify({
-					error: { code: "INTERNAL", message: "Terjadi kesalahan internal" },
+					error: { code: "INTERNAL", message: "Internal server error" },
 				}),
 				{
 					status: 500,

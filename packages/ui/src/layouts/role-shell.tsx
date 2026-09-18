@@ -58,7 +58,7 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 
 					<nav
 						className="flex-1 space-y-4 px-3 pb-3 pt-8"
-						aria-label="Menu sidebar"
+						aria-label="Sidebar menu"
 					>
 						{navItems.map((item) => {
 							const isActive = activePath === item.to;
@@ -114,7 +114,7 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 					<div className="flex items-center gap-3">
 						<button
 							type="button"
-							aria-label="Notifikasi"
+							aria-label="Notifications"
 							className="flex size-10 items-center justify-center rounded-lg text-sidebar-foreground/70 transition-colors hover:bg-foreground/5 hover:text-foreground"
 						>
 							<FontAwesomeIcon icon={faBell} className="size-5" />
@@ -135,7 +135,7 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 								</Avatar>
 								<span className="hidden min-w-0 md:block">
 									<span className="block truncate text-sm font-semibold text-foreground">
-										{name || "Pengguna"}
+										{name || "User"}
 									</span>
 								</span>
 								<FontAwesomeIcon
@@ -151,7 +151,7 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 								>
 									<div className="border-b border-border px-4 py-3">
 										<p className="truncate text-sm font-semibold text-foreground">
-											{name || "Pengguna"}
+											{name || "User"}
 										</p>
 										<p className="truncate text-sm text-primary">{title}</p>
 									</div>

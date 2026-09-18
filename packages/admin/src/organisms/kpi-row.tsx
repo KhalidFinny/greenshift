@@ -6,7 +6,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { MetricCard } from "./metric-card";
 
-const idr = new Intl.NumberFormat("id-ID", {
+const idr = new Intl.NumberFormat("en-US", {
 	style: "currency",
 	currency: "IDR",
 	maximumFractionDigits: 0,
@@ -31,28 +31,28 @@ export function KpiRow({
 }: KpiRowProps) {
 	const cards = [
 		{
-			label: "Total Organisasi",
+			label: "Total Organizations",
 			value: String(companies),
 			icon: faBuilding,
-			sub: `${companies} perusahaan terdaftar`,
+			sub: `${companies} registered companies`,
 		},
 		{
-			label: "Proyek Aktif",
+			label: "Active Projects",
 			value: String(activeProjects),
 			icon: faIndustry,
 			sub: `${totalProjects} total`,
 		},
 		{
-			label: "Reduksi CO₂",
-			value: `${co2Reduction} ton`,
+			label: "CO₂ Reduction",
+			value: `${co2Reduction} tons`,
 			icon: faSeedling,
-			sub: "target 100 ton/tahun",
+			sub: "target 100 tons/year",
 		},
 		{
-			label: "Nilai Proyek",
+			label: "Project Value",
 			value: idr.format(projectValue),
 			icon: faChartLine,
-			sub: `${totalBonds} obligasi`,
+			sub: `${totalBonds} bonds`,
 		},
 	];
 

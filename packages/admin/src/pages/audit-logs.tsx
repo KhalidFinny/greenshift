@@ -4,62 +4,82 @@ import {
 	Button,
 	Card,
 	ContentSkeleton,
+	DataTable,
 	EmptyState,
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
 } from "@greenshift/ui";
 import { useQuery } from "@tanstack/react-query";
+import type { ColumnDef } from "@tanstack/react-table";
 import { useState } from "react";
 import { formatDateTime } from "../lib/format";
 import { ExportMenu } from "../organisms/export-menu";
 
-function MetadataCell({ log }: { log: AuditLogEntry }) {
-	if (log.metadata === null || log.metadata === undefined) {
-		return <TableCell>-</TableCell>;
-	}
-	const json = JSON.stringify(log.metadata, null, 2);
-	return (
-		<TableCell>
-			<details className="group">
-				<summary className="cursor-pointer font-medium text-primary">
-					Lihat detail
-				</summary>
-				<pre className="mt-2 max-w-md overflow-x-auto rounded-sm bg-muted p-3 text-xs text-muted-foreground">
-					{json}
-				</pre>
-			</details>
-		</TableCell>
-	);
-}
-
-function LogRow({ log }: { log: AuditLogEntry }) {
-	return (
-		<TableRow>
-			<TableCell>{formatDateTime(log.createdAt)}</TableCell>
-			<TableCell>
-				<span className="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-xs font-medium">
-					{log.action}
+const logColumns: ColumnDef<AuditLogEntry>[] = [
+	{
+		id: "time",
+		accessorFn: (log) => log.createdAt ?? "",
+		header: "Time",
+		cell: ({ row }) => formatDateTime(row.original.createdAt),
+	},
+	{
+		id: "action",
+		accessorFn: (log) => log.action,
+		header: "Action",
+		cell: ({ row }) => (
+			<span className="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-xs font-medium">
+				{row.original.action}
+			</span>
+		),
+	},
+	{
+		id: "user",
+		accessorFn: (log) => log.userEmail ?? "",
+		header: "User",
+		cell: ({ row }) => row.original.userEmail ?? "-",
+	},
+	{
+		id: "entity",
+		accessorFn: (log) =>
+			log.entityType
+				? `${log.entityType}${log.entityId !== null ? ` #${log.entityId}` : ""}`
+				: "",
+		header: "Entity",
+		cell: ({ row }) =>
+			row.original.entityType ? (
+				<span className="text-muted-foreground">
+					{row.original.entityType}
+					{row.original.entityId !== null ? ` #${row.original.entityId}` : ""}
 				</span>
-			</TableCell>
-			<TableCell>{log.userEmail ?? "-"}</TableCell>
-			<TableCell>
-				{log.entityType ? (
-					<span className="text-muted-foreground">
-						{log.entityType}
-						{log.entityId !== null ? ` #${log.entityId}` : ""}
-					</span>
-				) : (
-					"-"
-				)}
-			</TableCell>
-			<MetadataCell log={log} />
-		</TableRow>
-	);
-}
+			) : (
+				"-"
+			),
+	},
+	{
+		id: "detail",
+		accessorFn: (log) =>
+			log.metadata === null || log.metadata === undefined
+				? ""
+				: JSON.stringify(log.metadata),
+		header: "Detail",
+		enableSorting: false,
+		cell: ({ row }) => {
+			const { metadata } = row.original;
+			if (metadata === null || metadata === undefined) {
+				return "-";
+			}
+			const json = JSON.stringify(metadata, null, 2);
+			return (
+				<details className="group">
+					<summary className="cursor-pointer font-medium text-primary">
+						View details
+					</summary>
+					<pre className="mt-2 max-w-md overflow-x-auto rounded-sm bg-muted p-3 text-xs text-muted-foreground">
+						{json}
+					</pre>
+				</details>
+			);
+		},
+	},
+];
 
 export function AdminAuditLogs() {
 	const [limit, setLimit] = useState(100);
@@ -77,8 +97,8 @@ export function AdminAuditLogs() {
 		return (
 			<div className="space-y-4">
 				<EmptyState
-					title="Gagal memuat audit log"
-					description="Tidak dapat mengambil jejak aktivitas."
+					title="Failed to load audit log"
+					description="Unable to retrieve the activity trail."
 				/>
 				<div>
 					<Button
@@ -86,7 +106,7 @@ export function AdminAuditLogs() {
 						className="cursor-pointer"
 						onClick={() => logsQuery.refetch()}
 					>
-						Coba lagi
+						Try again
 					</Button>
 				</div>
 			</div>
@@ -101,7 +121,7 @@ export function AdminAuditLogs() {
 				<div>
 					<h1 className="text-2xl font-semibold">Audit Log</h1>
 					<p className="mt-1 text-base text-muted-foreground">
-						Jejak aktivitas seluruh data yang melewati platform.
+						Activity trail of all data passing through the platform.
 					</p>
 				</div>
 				<div className="flex flex-wrap items-center gap-2">
@@ -110,14 +130,14 @@ export function AdminAuditLogs() {
 						className="cursor-pointer"
 						onClick={() => setLimit((current) => current + 100)}
 					>
-						Muat lebih ({logs.length} dimuat)
+						Load more ({logs.length} loaded)
 					</Button>
 					<Button
 						variant="outline"
 						className="cursor-pointer"
 						onClick={() => logsQuery.refetch()}
 					>
-						Muat ulang
+						Refresh
 					</Button>
 					<ExportMenu
 						filename="audit-log"
@@ -125,7 +145,7 @@ export function AdminAuditLogs() {
 						sections={[
 							{
 								title: "Audit Log",
-								headers: ["Waktu", "Aksi", "Pengguna", "Entitas", "Detail"],
+								headers: ["Time", "Action", "User", "Entity", "Detail"],
 								rows: logs.map((log) => [
 									formatDateTime(log.createdAt),
 									log.action,
@@ -141,25 +161,20 @@ export function AdminAuditLogs() {
 
 			{logs.length === 0 ? (
 				<EmptyState
-					title="Belum ada aktivitas"
-					description="Jejak audit kosong sejauh ini."
+					title="No activity yet"
+					description="The audit trail is empty so far."
 				/>
 			) : (
 				<Card className="overflow-hidden">
-					<Table aria-label="Audit log" className="text-base">
-						<TableHeader>
-							<TableHead>Waktu</TableHead>
-							<TableHead>Aksi</TableHead>
-							<TableHead>Pengguna</TableHead>
-							<TableHead>Entitas</TableHead>
-							<TableHead>Detail</TableHead>
-						</TableHeader>
-						<TableBody>
-							{logs.map((log) => (
-								<LogRow key={log.id} log={log} />
-							))}
-						</TableBody>
-					</Table>
+					<DataTable
+						columns={logColumns}
+						data={logs}
+						getRowId={(log) => String(log.id)}
+						ariaLabel="Audit log"
+						searchPlaceholder="Search audit log"
+						pageSize={10}
+						emptyMessage="No audit entries match your search."
+					/>
 				</Card>
 			)}
 		</div>
