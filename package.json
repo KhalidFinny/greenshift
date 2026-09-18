@@ -17,6 +17,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "db:setup": "bun scripts/setup-db.ts",
+    "db:setup:broker": "bun scripts/setup-broker.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",

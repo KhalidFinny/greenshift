@@ -95,16 +95,39 @@ bun run db:setup
 # Regenerate the seed fixtures from scripts/seed.ts
 bun scripts/seed.ts > scripts/seed.sql
 
-# Load the seed data (users, projects, tenders, proposals, blueprints, MRV reports,
-# broker assignments with document requests and monthly reports)
+# Load the seed data into a FRESH database (users, projects, tenders, proposals,
+# blueprints, MRV reports, broker assignments with document requests and reports).
+# This file inserts fixed accounts and is not idempotent: on a database that
+# already has them, use `bun run db:setup` + `bun run db:setup:broker` instead.
 bunx wrangler d1 execute greenshift-db --local --file=scripts/seed.sql
 
 # After a schema change: generate a new migration
 bun run db:generate
 ```
 
-To start from a clean local database, delete the files under
-`.wrangler/state/v3/d1/miniflare-D1DatabaseObject/`, re-apply the migrations, and re-run the seed.
+### Adding the broker fixtures to an existing database
+
+Migration `0003` adds the broker tables and is applied by Wrangler when the dev server starts, so an
+existing database needs no reset. The fixture *rows* are a separate step, because `scripts/seed.sql` inserts
+fixed `@greenshift.dev` accounts and therefore conflicts when it is loaded into a database that already has
+them:
+
+```bash
+bun run db:setup          # create any missing demo accounts (idempotent, skips existing rows)
+bun run db:setup:broker   # apply only the broker fixtures (idempotent, one transaction)
+```
+
+`bun run db:setup:broker` needs migration `0003` applied and the earlier fixture projects present; it reports
+what to do when either is missing, and it never modifies existing rows.
+
+### Starting over
+
+To rebuild the local database from scratch - which is the only way to re-run the full seed file - delete
+`.wrangler/state/v3/d1/miniflare-D1DatabaseObject/`, restart the dev server (Wrangler re-applies the
+migrations), then run `bun run db:setup` and load `scripts/seed.sql`.
+
+**This drops every local row, not just the schema**: accounts, sessions, projects, milestones, MRV reports and
+anything else you created locally. It is a fallback, not the normal path after a schema change.
 
 ## Build and deploy
 

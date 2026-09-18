@@ -85,7 +85,7 @@ function LoginPage() {
 	return (
 		<div className="grid min-h-screen lg:grid-cols-2">
 			{/* ── Visual hero panel ────────────────────────────────── */}
-			<section className="hidden flex-col justify-between overflow-hidden bg-[#014A2F] p-12 lg:flex">
+			<section className="relative hidden flex-col justify-between overflow-hidden bg-[#014A2F] p-12 lg:flex">
 				{/* Background landscape */}
 				<img
 					src="/green-1.webp"

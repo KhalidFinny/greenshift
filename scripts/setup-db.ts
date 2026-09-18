@@ -1,63 +1,69 @@
-import { Database } from "bun:sqlite";
-import { existsSync, readdirSync } from "node:fs";
-import { join } from "node:path";
 import { hashPassword } from "../apps/api/src/lib/password";
+import { DEMO_ACCOUNTS, DEMO_PASSWORD, emailFor } from "./accounts";
+import { openLocalD1, tableExists } from "./local-d1";
 
-// Locates the local D1 SQLite file that the Cloudflare Vite plugin creates
-// under .wrangler/state/v3/d1 and seeds the demo users. Migrations are applied
-// by wrangler (migrations_dir in wrangler.jsonc) when the dev server starts,
-// so this script only adds users. Idempotent: safe to re-run.
-const D1_DIR = ".wrangler/state/v3/d1/miniflare-D1DatabaseObject";
-
-const candidates = existsSync(D1_DIR)
-	? readdirSync(D1_DIR).filter(
-			(file) => file.endsWith(".sqlite") && !file.startsWith("metadata"),
-		)
-	: [];
-
-if (candidates.length === 0) {
-	console.error(
-		"No local D1 database found. Run `bun run dev` once first so the Vite plugin creates it, then re-run `bun run db:setup`.",
+/**
+ * Creates any missing demo accounts in the local D1 database.
+ *
+ * Non-destructive and idempotent: accounts that already exist are skipped, so
+ * re-running never touches existing rows. Sessions, MRV rows and any other local
+ * data stay untouched.
+ */
+export async function seedAccounts(
+	only?: readonly string[],
+): Promise<{ created: string[]; skipped: string[] }> {
+	const db = openLocalD1();
+	const existing = new Set(
+		(db.query("SELECT email FROM users").all() as { email: string }[]).map(
+			(row) => row.email,
+		),
 	);
-	process.exit(1);
+
+	const created: string[] = [];
+	const skipped: string[] = [];
+	for (const account of DEMO_ACCOUNTS) {
+		if (only && !only.includes(account.username)) continue;
+		const email = emailFor(account.username);
+		if (existing.has(email)) {
+			skipped.push(email);
+			continue;
+		}
+		const hash = await hashPassword(DEMO_PASSWORD);
+		const now = Date.now();
+		db.run(
+			"INSERT INTO users (email, role, name, hashed_password, company_name, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+			email,
+			account.role,
+			account.name,
+			hash,
+			account.companyName,
+			now,
+			now,
+		);
+		created.push(email);
+	}
+	db.close();
+	return { created, skipped };
 }
 
-const dbFile = join(D1_DIR, candidates[0]);
-const db = new Database(dbFile);
+if (import.meta.main) {
+	const db = openLocalD1();
+	if (!tableExists(db, "users")) {
+		console.error(
+			"The users table does not exist yet. Run `bun run dev` once so the Vite plugin creates the database and applies the migrations, then re-run `bun run db:setup`.",
+		);
+		process.exit(1);
+	}
+	db.close();
 
-// Seed demo users (idempotent: only inserts users that don't exist yet).
-const seed = [
-	{ username: "business1", name: "PT Green Nusantara", role: "business" },
-	{ username: "investor1", name: "Green Fund Capital", role: "investor" },
-	{ username: "vendor1", name: "EcoTech Solutions", role: "vendor" },
-	{ username: "broker1", name: "PT Capital Hijau Sekuritas", role: "broker" },
-	{ username: "admin", name: "Administrator", role: "admin" },
-] as const;
-
-const PASSWORD = "12345678";
-const existing = new Set(
-	(
-		db
-			.query("SELECT email FROM users")
-			.all() as { email: string }[]
-	).map((row) => row.email),
-);
-
-for (const user of seed) {
-	const email = `${user.username}@greenshift.dev`;
-	if (existing.has(email)) continue;
-	const hash = await hashPassword(PASSWORD);
-	const now = Date.now();
-	db.run(
-		"INSERT INTO users (email, role, name, hashed_password, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-		email,
-		user.role,
-		user.name,
-		hash,
-		now,
-		now,
+	const { created, skipped } = await seedAccounts();
+	for (const email of created) console.log(`Seeded ${email}`);
+	console.log(
+		created.length === 0
+			? `All demo accounts already exist (${skipped.length} checked).`
+			: `Created ${created.length} account(s); ${skipped.length} already existed.`,
 	);
-	console.log(`Seeded ${email} (${user.role})`);
+	console.log(
+		"Database ready. Login with business1 / investor1 / vendor1 / broker1 / admin (password 12345678).",
+	);
 }
-
-console.log("Database ready. Login with business1 / investor1 / vendor1 / broker1 / admin (password 12345678).");
