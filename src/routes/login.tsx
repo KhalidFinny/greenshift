@@ -84,11 +84,39 @@ function LoginPage() {
 
 	return (
 		<div className="grid min-h-screen lg:grid-cols-2">
-			<section className="hidden flex-col justify-between bg-[#03442C] p-12 lg:flex">
-				<Link to="/" className="no-underline">
-					<img src="/logo-white.webp" alt="GreenShift" className="h-12" />
+			{/* ── Visual hero panel ────────────────────────────────── */}
+			<section className="hidden flex-col justify-between overflow-hidden bg-[#014A2F] p-12 lg:flex">
+				{/* Background landscape */}
+				<img
+					src="/green-1.webp"
+					alt=""
+					aria-hidden="true"
+					className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-40"
+				/>
+				{/* Dark-to-green gradient overlay */}
+				<div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#014A2F]/90 via-[#014A2F]/60 to-[#03442C]/40" />
+				{/* Subtle radial glow behind the dashboard */}
+				<div className="pointer-events-none absolute left-1/2 top-[42%] h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/20 blur-[120px]" />
+
+				{/* Dashboard preview — floating behind text */}
+				<div className="pointer-events-none absolute inset-x-0 top-[26%] mx-auto w-[78%] max-w-[560px] rotate-[-2deg] opacity-60 blur-[1px]">
+					<div className="overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
+						<img
+							src="/dashboard.webp"
+							alt=""
+							aria-hidden="true"
+							className="h-auto w-full"
+						/>
+					</div>
+				</div>
+
+				{/* Logo */}
+				<Link to="/" className="relative z-10 no-underline">
+					<img src="/logo-white.webp" alt="GreenShift" className="h-10" />
 				</Link>
-				<div className="max-w-md">
+
+				{/* Text block */}
+				<div className="relative z-10 max-w-md">
 					<h2 className="text-4xl font-semibold leading-tight text-white">
 						MRV Platform for Green Financing
 					</h2>
@@ -97,9 +125,11 @@ function LoginPage() {
 						Transparent for businesses, vendors, and regulators.
 					</p>
 				</div>
-				<p className="text-sm text-white/50">© 2026 GreenShift</p>
+
+				<p className="relative z-10 text-sm text-white/40">© 2026 GreenShift</p>
 			</section>
 
+			{/* ── Form panel ──────────────────────────────────────── */}
 			<section className="flex items-center justify-center px-6 py-12">
 				<div className="w-full max-w-md">
 					<Link
@@ -158,7 +188,7 @@ function LoginPage() {
 							</p>
 						)}
 						<form.AppForm>
-							<form.SubmitButton className="w-full cursor-pointer">
+							<form.SubmitButton className="h-12 w-full cursor-pointer text-base font-semibold">
 								Sign in
 							</form.SubmitButton>
 						</form.AppForm>

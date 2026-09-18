@@ -171,15 +171,25 @@ body {
 
 /* ── Landing hero composition ───────────────────────────────────────
    The hero fills the viewport and stacks absolutely positioned layers, so
-   its content cannot reflow. Instead it is laid out on a fixed 2400x1200
-   design canvas: `--u` is ONE canvas pixel at the current viewport and
-   every content size in the hero is a multiple of it, while positions stay
-   in percentages of the stage. The whole composition therefore scales as a
-   single rigid unit — identical framing at every window size, aspect ratio
-   and browser zoom level, with nothing pushed into anything else.
-   All hero sizes are the 2400x1200 (u = 1) values. */
+   its content cannot reflow. Instead it is laid out on a design canvas of
+   1920 wide — the viewport the hero is authored against, i.e. the size at
+   which `--u` is exactly 1px and every element renders at the pixel values
+   written in the components. `--u` is one canvas pixel at the current
+   viewport, every content size in the hero is a multiple of it and
+   positions stay in percentages of the stage, so the composition scales as
+   one rigid unit: identical framing, identical spacing, at every window
+   size, aspect ratio and browser zoom level, with nothing pushed into
+   anything else. It also makes the hero zoom-invariant, since browser zoom
+   scales the CSS viewport and `--u` with it (80% zoom -> viewport and
+   `--u` x1.25 -> the same hero, drawn 1.25x).
+   The two height terms keep the composition from ever colliding: the title
+   block needs its 96px floor plus 249u of content above the bottom-anchored
+   dashboard, which itself needs 504u, plus ~40u of air. Below u = 1 the
+   title offset is pinned to its 96px floor, so the hero needs at least
+   96px + 800u; at and above u = 1 the offset scales too and the whole stack
+   is 900u. */
 #hero {
-  --u: min(100vw / 2400, 100vh / 1200);
+  --u: min(100vw / 1920, (100vh - 96px) / 800, 100vh / 900);
 }
 
 /* Below the desktop layout the hero keeps its own stacked, responsive

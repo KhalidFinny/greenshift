@@ -25,9 +25,17 @@ import {
 	Input,
 	Label,
 } from "@greenshift/ui";
-import { Link } from "@tanstack/react-router";
+import { Link, useParams } from "@tanstack/react-router";
 import { useState } from "react";
-import type { DocumentCategory } from "../lib/types";
+import {
+	BOND_STATUS_LABELS,
+	nextWorkflowStatuses,
+	workflowLabel,
+} from "../lib/lifecycle";
+import type {
+	BrokerProjectWorkflowStatus,
+	DocumentCategory,
+} from "../lib/types";
 import { useBrokerData } from "../lib/use-broker-data";
 
 function formatRupiah(amount: number) {
@@ -215,17 +223,53 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 	const {
 		projects,
 		documentRequests,
+		monthlyReports,
+		isLoading,
 		createDocumentRequest,
 		approveDocument,
 		rejectDocument,
 		updateBondStatus,
+		updateWorkflowStatus,
 	} = useBrokerData();
 
-	const project = projects.find((p) => p.id === projectId) ?? projects[0];
+	// The route param is the source of truth when the page is mounted as a
+	// route; the prop stays supported for direct embedding.
+	const { id } = useParams({ strict: false }) as { id?: string };
+	const targetId = projectId ?? id;
+	const project = targetId
+		? projects.find((p) => p.id === targetId)
+		: projects[0];
+
+	// The assignment list arrives asynchronously; without a project there is
+	// nothing to render yet (or the id is not assigned to this broker).
+	if (!project) {
+		return (
+			<div className="space-y-4">
+				<Link to="/broker/projects">
+					<Button variant="ghost" size="sm" className="gap-2">
+						<FontAwesomeIcon icon={faArrowLeft} />
+						Back to Assigned Projects
+					</Button>
+				</Link>
+				<Card>
+					<CardContent className="p-8 text-center text-sm text-muted-foreground">
+						{isLoading
+							? "Loading the assigned project..."
+							: "This project is not assigned to you."}
+					</CardContent>
+				</Card>
+			</div>
+		);
+	}
 
 	const projectDocs = documentRequests.filter(
 		(d) => d.projectId === project.id,
 	);
+	const projectReports = monthlyReports.filter(
+		(report) => report.projectId === project.id,
+	);
+	const latestReport = projectReports[0];
+	const nextStatuses = nextWorkflowStatuses(project.workflowStatus);
 
 	return (
 		<div className="space-y-6">
@@ -255,7 +299,7 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 								variant="outline"
 								className="border-white/30 text-white uppercase text-xs"
 							>
-								{project.workflowStatus.replace(/_/g, " ")}
+								{workflowLabel(project.workflowStatus)}
 							</Badge>
 						</div>
 						<span className="text-xs text-emerald-200">
@@ -354,6 +398,83 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 						</CardContent>
 					</Card>
 
+					{/* Latest official monitoring report for this project */}
+					{latestReport && (
+						<Card>
+							<CardHeader className="flex flex-row items-center justify-between">
+								<CardTitle className="text-lg flex items-center gap-2">
+									<FontAwesomeIcon
+										icon={faFileAlt}
+										className="text-purple-600"
+									/>
+									Latest Monitoring Report ({latestReport.period})
+								</CardTitle>
+								<Badge
+									className={
+										latestReport.overallStatus === "ON_TRACK"
+											? "bg-emerald-600 text-white"
+											: latestReport.overallStatus === "ATTENTION_REQUIRED"
+												? "bg-amber-600 text-white"
+												: "bg-red-600 text-white"
+									}
+								>
+									{latestReport.overallStatus.replace(/_/g, " ")}
+								</Badge>
+							</CardHeader>
+							<CardContent className="space-y-3 text-xs">
+								<div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+									<div>
+										<p className="text-muted-foreground">Progress</p>
+										<p className="mt-1 font-bold text-foreground">
+											{latestReport.actualProgressPercent}% (plan{" "}
+											{latestReport.plannedProgressPercent}%)
+										</p>
+									</div>
+									<div>
+										<p className="text-muted-foreground">Energy savings</p>
+										<p className="mt-1 font-bold text-emerald-600">
+											{latestReport.actualEnergySavingsKwh.toLocaleString(
+												"en-US",
+											)}{" "}
+											kWh
+										</p>
+									</div>
+									<div>
+										<p className="text-muted-foreground">Emission reduction</p>
+										<p className="mt-1 font-bold text-emerald-600">
+											{latestReport.actualCarbonReductionTons} tCO2e
+										</p>
+									</div>
+									<div>
+										<p className="text-muted-foreground">Budget variance</p>
+										<p className="mt-1 font-bold text-foreground">
+											{formatRupiah(
+												latestReport.actualSpendingAmount -
+													latestReport.plannedBudgetAmount,
+											)}
+										</p>
+									</div>
+								</div>
+								<p className="text-muted-foreground leading-relaxed">
+									{latestReport.overallConclusion}
+								</p>
+								<Link
+									to="/broker/monthly-reports/$id"
+									params={{ id: latestReport.id }}
+								>
+									<Button
+										size="sm"
+										variant="outline"
+										className="gap-1.5 text-xs"
+									>
+										<FontAwesomeIcon icon={faFileAlt} />
+										Open report
+									</Button>
+								</Link>
+							</CardContent>
+						</Card>
+					)}
+
 					{/* Read-Only Project Risk Assessment */}
 					<Card>
 						<CardHeader className="flex flex-row items-center justify-between">
@@ -409,6 +530,53 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 								💡 <strong>Risk Review Notes:</strong>{" "}
 								{project.riskAssessment.notes}
 							</div>
+						</CardContent>
+					</Card>
+
+					{/* Documents GreenShift already holds for this project */}
+					<Card>
+						<CardHeader>
+							<CardTitle className="text-lg flex items-center gap-2">
+								<FontAwesomeIcon icon={faEye} className="text-emerald-600" />
+								Available Project Documents
+							</CardTitle>
+						</CardHeader>
+						<CardContent className="space-y-2 text-xs">
+							{project.documents.length === 0 ? (
+								<p className="text-muted-foreground">
+									No project documents are held on GreenShift for this project
+									yet.
+								</p>
+							) : (
+								project.documents.map((document) => (
+									<div
+										key={document.id}
+										className="flex items-center justify-between rounded-lg border border-border p-3"
+									>
+										<div>
+											<p className="font-semibold text-foreground">
+												{document.fileName}
+											</p>
+											<p className="text-muted-foreground mt-0.5">
+												{document.type.replace(/_/g, " ")} -{" "}
+												{document.uploadedAt}
+											</p>
+										</div>
+										{document.fileUrl && (
+											<Button
+												size="sm"
+												variant="outline"
+												className="text-xs"
+												onClick={() =>
+													window.open(document.fileUrl ?? "#", "_blank")
+												}
+											>
+												View
+											</Button>
+										)}
+									</div>
+								))
+							)}
 						</CardContent>
 					</Card>
 
@@ -515,8 +683,63 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 					</Card>
 				</div>
 
-				{/* Right 1 Col: Bond Status Tracker */}
+				{/* Right 1 Col: Lifecycle & Bond Tracker */}
 				<div className="space-y-6">
+					<Card>
+						<CardHeader>
+							<CardTitle className="text-lg flex items-center gap-2">
+								<FontAwesomeIcon
+									icon={faFileContract}
+									className="text-emerald-600"
+								/>
+								Bond Preparation Stage
+							</CardTitle>
+						</CardHeader>
+						<CardContent className="space-y-3 text-xs">
+							<p className="text-muted-foreground">
+								The broker lifecycle tracks preparation inside GreenShift. Bond
+								issuance itself happens outside the platform.
+							</p>
+							<div className="rounded-xl bg-muted p-3">
+								<p className="text-muted-foreground">Current stage</p>
+								<p className="mt-1 font-bold text-foreground">
+									{workflowLabel(project.workflowStatus)}
+								</p>
+							</div>
+							{nextStatuses.length === 0 ? (
+								<p className="text-muted-foreground">
+									{project.workflowStatus === "ASSIGNED"
+										? "Accept the assignment to start document collection."
+										: project.workflowStatus === "DECLINED"
+											? "This assignment was declined by the broker."
+											: "This assignment has been completed."}
+								</p>
+							) : (
+								<div className="space-y-2">
+									<p className="font-semibold text-foreground">
+										Move to the next stage:
+									</p>
+									{nextStatuses.map((status) => (
+										<Button
+											key={status}
+											size="sm"
+											variant="outline"
+											className="w-full text-xs"
+											onClick={() =>
+												updateWorkflowStatus(
+													project.id,
+													status as BrokerProjectWorkflowStatus,
+												)
+											}
+										>
+											{workflowLabel(status)}
+										</Button>
+									))}
+								</div>
+							)}
+						</CardContent>
+					</Card>
+
 					<Card className="sticky top-6">
 						<CardHeader>
 							<CardTitle className="text-lg flex items-center gap-2">
@@ -540,7 +763,8 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 										Issuance Status:
 									</span>
 									<Badge className="bg-[#03442C] text-white uppercase">
-										{project.bondInfo.status}
+										{BOND_STATUS_LABELS[project.bondInfo.status] ??
+											project.bondInfo.status}
 									</Badge>
 								</div>
 								<div className="flex justify-between">

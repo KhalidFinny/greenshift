@@ -6,11 +6,11 @@ import FloatingPill from "../atoms/FloatingPill";
 import DashboardShowcase from "../molecules/DashboardShowcase";
 
 // The hero is a viewport-filling stage whose layers are absolutely
-// positioned, so it cannot reflow: it is laid out on a fixed 2400x1200
-// design canvas (see `--u` in styles.css) and every content size below is a
-// multiple of that canvas pixel from `lg` up, while positions stay in
-// percentages. Sizes are the u = 1 values; the small-screen layout keeps
-// the original responsive classes.
+// positioned, so it cannot reflow: it is laid out on a 1920x950 design
+// canvas (see `--u` in styles.css), the viewport its sizes are authored
+// against, and every content size below is a multiple of that canvas pixel
+// from `lg` up while positions stay in percentages. Sizes are the u = 1
+// values; the small-screen layout keeps the original responsive classes.
 // Background images render immediately on load; only the title (first) and
 // the floating pills + dashboard (after) animate in.
 export default function HeroSection() {

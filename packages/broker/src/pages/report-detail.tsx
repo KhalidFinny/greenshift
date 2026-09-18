@@ -32,9 +32,30 @@ function formatRupiah(amount: number) {
 
 export function BrokerReportDetailPage() {
 	const { id } = useParams({ strict: false }) as { id?: string };
-	const { monthlyReports } = useBrokerData();
+	const { monthlyReports, isLoading } = useBrokerData();
 
-	const report = monthlyReports.find((r) => r.id === id) || monthlyReports[0];
+	const report = monthlyReports.find((r) => r.id === id) ?? monthlyReports[0];
+
+	// Reports load asynchronously; render a placeholder until one is available.
+	if (!report) {
+		return (
+			<div className="space-y-4">
+				<Link to="/broker/monthly-reports">
+					<Button variant="ghost" size="sm" className="gap-2">
+						<FontAwesomeIcon icon={faArrowLeft} />
+						Back to Monthly Reports
+					</Button>
+				</Link>
+				<Card>
+					<CardContent className="p-8 text-center text-sm text-muted-foreground">
+						{isLoading
+							? "Loading the monitoring report..."
+							: "This report is not available for an assigned project."}
+					</CardContent>
+				</Card>
+			</div>
+		);
+	}
 
 	if (!report) {
 		return (
@@ -70,7 +91,12 @@ export function BrokerReportDetailPage() {
 					</p>
 				</div>
 				<div className="flex items-center gap-2">
-					<Button className="bg-[#03442C] text-white hover:bg-[#03442C]/90 gap-1.5 text-xs">
+					<Button
+						className="bg-[#03442C] text-white hover:bg-[#03442C]/90 gap-1.5 text-xs"
+						onClick={() =>
+							report.pdfExportUrl && window.location.assign(report.pdfExportUrl)
+						}
+					>
 						<FontAwesomeIcon icon={faDownload} />
 						Download Official PDF Report
 					</Button>

@@ -3,7 +3,6 @@ import {
 	faCheckCircle,
 	faClock,
 	faFileContract,
-	faFileUpload,
 	faInfoCircle,
 	faSave,
 	faShieldAlt,
@@ -26,56 +25,64 @@ import {
 	TabsList,
 	TabsTrigger,
 } from "@greenshift/ui";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useBrokerData } from "../lib/use-broker-data";
 
 export function BrokerSettingsPage() {
 	const {
 		verification: verificationDetails,
-		uploadBrokerVerificationDocs: runVerificationSimulation,
+		profile,
+		isLoading,
+		uploadBrokerVerificationDocs: fileLicence,
+		saveProfile,
 	} = useBrokerData();
 
-	// Verification state
-	const [nib, setNib] = useState(verificationDetails.nib || "");
-	const [licenseNumber, setLicenseNumber] = useState(
-		verificationDetails.financialLicenseNumber || "",
-	);
-	const [licenseAuthority, setLicenseAuthority] = useState(
-		verificationDetails.licenseAuthority ||
-			"Financial Services Authority (OJK)",
-	);
-	const [legalEntityName, setLegalEntityName] = useState(
-		verificationDetails.legalEntityName || "Capital Green Securities Inc.",
-	);
-
-	// Profile Form state
-	const [repName, setRepName] = useState("Budi Santoso, CSA");
-	const [email, setEmail] = useState("budi.santoso@greensecurities.com");
-	const [phone, setPhone] = useState("+62 812-9876-5432");
-	const [address, setAddress] = useState(
-		"Financial Club Tower 18th Fl, SCBD, South Jakarta, 12190",
-	);
-	const [isSaved, setIsSaved] = useState(false);
+	// Verification state: the firm profile arrives from the API, so the form
+	// adopts it on first load and submits licence data for platform review.
+	const [nib, setNib] = useState("");
+	const [licenseNumber, setLicenseNumber] = useState("");
+	const [licenseAuthority, setLicenseAuthority] = useState("");
+	const [legalEntityName, setLegalEntityName] = useState("");
+	const [repName, setRepName] = useState("");
+	const [email, setEmail] = useState("");
+	const [phone, setPhone] = useState("");
+	const [address, setAddress] = useState("");
+	const [loaded, setLoaded] = useState(false);
 	const [isVerifying, setIsVerifying] = useState(false);
 
-	const handleStartVerification = () => {
+	// Adopt the API profile once it arrives (and after each save).
+	useEffect(() => {
+		if (isLoading || loaded) return;
+		setNib(verificationDetails.nib ?? "");
+		setLicenseNumber(verificationDetails.financialLicenseNumber ?? "");
+		setLicenseAuthority(
+			verificationDetails.licenseAuthority ??
+				"Financial Services Authority (OJK)",
+		);
+		setLegalEntityName(verificationDetails.legalEntityName);
+		setRepName(profile.representative);
+		setEmail(profile.contactEmail);
+		setPhone(profile.contactPhone);
+		setAddress(profile.address);
+		setLoaded(true);
+	}, [isLoading, loaded, profile, verificationDetails]);
+
+	const handleStartVerification = (e: React.FormEvent) => {
+		e.preventDefault();
 		setIsVerifying(true);
-		setTimeout(() => {
-			runVerificationSimulation(
-				legalEntityName,
-				nib,
-				licenseNumber,
-				licenseAuthority,
-			);
-			setIsVerifying(false);
-		}, 1500);
+		fileLicence(legalEntityName, nib, licenseNumber, licenseAuthority);
+		setIsVerifying(false);
 	};
 
 	const handleSaveProfile = (e: React.FormEvent) => {
 		e.preventDefault();
-		setIsSaved(true);
-		setTimeout(() => setIsSaved(false), 3000);
+		saveProfile({
+			representative: repName,
+			contactEmail: email,
+			contactPhone: phone,
+			address,
+		});
 	};
 
 	return (
@@ -172,10 +179,10 @@ export function BrokerSettingsPage() {
 									</div>
 								</div>
 							) : (
-								<div className="space-y-4">
+								<form onSubmit={handleStartVerification} className="space-y-4">
 									<p className="text-xs text-muted-foreground">
-										Please submit your securities brokerage license documents
-										for automated verification.
+										File your securities brokerage licence data. The platform
+										verifies it before you can receive project assignments.
 									</p>
 
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -222,30 +229,10 @@ export function BrokerSettingsPage() {
 										</div>
 									</div>
 
-									<div className="border-2 border-dashed border-border rounded-xl p-6 text-center bg-muted/20">
-										<FontAwesomeIcon
-											icon={faFileUpload}
-											className="text-3xl text-muted-foreground mb-2"
-										/>
-										<p className="text-xs font-semibold">
-											Upload License & Operational Permit Documents (PDF)
-										</p>
-										<p className="text-[11px] text-muted-foreground mt-1">
-											Maximum 10MB per file. Official regulatory license and
-											corporate charter copy.
-										</p>
-										<Button
-											variant="outline"
-											size="sm"
-											className="mt-3 text-xs"
-										>
-											Select Document File
-										</Button>
-									</div>
-
 									<div className="flex justify-end pt-2">
 										<Button
 											onClick={handleStartVerification}
+											type="submit"
 											disabled={isVerifying}
 											className="bg-[#03442C] text-white hover:bg-[#03442C]/90 gap-2 text-xs"
 										>
@@ -262,7 +249,7 @@ export function BrokerSettingsPage() {
 											)}
 										</Button>
 									</div>
-								</div>
+								</form>
 							)}
 						</CardContent>
 					</Card>
@@ -283,13 +270,6 @@ export function BrokerSettingsPage() {
 						</CardHeader>
 						<CardContent className="p-6">
 							<form onSubmit={handleSaveProfile} className="space-y-4">
-								{isSaved && (
-									<div className="p-3 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-lg text-xs flex items-center gap-2">
-										<FontAwesomeIcon icon={faCheckCircle} />
-										Broker representative profile successfully updated!
-									</div>
-								)}
-
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 									<div className="space-y-2">
 										<Label className="text-xs">

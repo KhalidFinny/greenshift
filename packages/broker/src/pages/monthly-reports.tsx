@@ -116,6 +116,10 @@ export function BrokerMonthlyReportsPage() {
 								<Button
 									size="sm"
 									className="bg-[#03442C] text-white hover:bg-[#03442C]/90 gap-1.5 text-xs"
+									onClick={() =>
+										report.pdfExportUrl &&
+										window.location.assign(report.pdfExportUrl)
+									}
 								>
 									<FontAwesomeIcon icon={faDownload} />
 									Download Report PDF

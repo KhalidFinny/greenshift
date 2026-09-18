@@ -1,11 +1,12 @@
 import { Hono } from "hono";
 
 import type { ApiEnv } from "./env";
-import { adminRoutes } from "./routes/admin";
-import { authRoutes } from "./routes/auth";
-import { healthRoutes } from "./routes/health";
-import { investorRoutes } from "./routes/investor";
-import { vendorRoutes } from "./routes/vendor";
+import { adminRoutes } from "./modules/admin/admin.routes";
+import { authRoutes } from "./modules/auth/auth.routes";
+import { brokerRoutes } from "./modules/broker/broker.routes";
+import { healthRoutes } from "./modules/health/health.routes";
+import { investorRoutes } from "./modules/investor/investor.routes";
+import { vendorRoutes } from "./modules/vendor/vendor.routes";
 
 export const app = new Hono<ApiEnv>();
 
@@ -26,6 +27,7 @@ app.route("/api/auth", authRoutes);
 app.route("/api/investor", investorRoutes);
 app.route("/api/admin", adminRoutes);
 app.route("/api/vendor", vendorRoutes);
+app.route("/api/broker", brokerRoutes);
 
 export type AppType = typeof app;
 

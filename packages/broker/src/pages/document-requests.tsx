@@ -295,6 +295,7 @@ export function BrokerDocumentRequestsPage() {
 		createDocumentRequest,
 		approveDocument,
 		rejectDocument,
+		startReview,
 	} = useBrokerData();
 
 	const [searchQuery, setSearchQuery] = useState("");
@@ -416,6 +417,20 @@ export function BrokerDocumentRequestsPage() {
 										</span>
 
 										{doc.status === "SUBMITTED" && (
+											<div className="flex items-center gap-2">
+												<Button
+													size="sm"
+													variant="outline"
+													onClick={() => startReview(doc.id)}
+													className="text-xs gap-1.5"
+												>
+													<FontAwesomeIcon icon={faFileAlt} />
+													Start Review
+												</Button>
+											</div>
+										)}
+										{(doc.status === "SUBMITTED" ||
+											doc.status === "UNDER_REVIEW") && (
 											<div className="flex items-center gap-2">
 												<RejectDocumentModal
 													request={doc}

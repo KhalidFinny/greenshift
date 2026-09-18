@@ -1,8 +1,12 @@
 import {
+	faBuilding,
+	faFileAlt,
 	faFilter,
+	faInfoCircle,
 	faMapMarkerAlt,
 	faSearch,
 	faTimesCircle,
+	faTruck,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -26,6 +30,7 @@ import {
 } from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { BOND_STATUS_LABELS, workflowLabel } from "../lib/lifecycle";
 import type { BrokerAssignedProject } from "../lib/types";
 import { useBrokerData } from "../lib/use-broker-data";
 
@@ -37,9 +42,7 @@ function formatRupiah(amount: number) {
 	}).format(amount);
 }
 
-{
-	/* Modal Decline Assignment (Mandatory Reason per spec) */
-}
+/** Decline an assignment: a reason is mandatory (§5). */
 function DeclineAssignmentModal({
 	project,
 	onDecline,
@@ -122,23 +125,313 @@ function DeclineAssignmentModal({
 	);
 }
 
+/** Ask the company for information before deciding on the assignment (§21). */
+function RequestInformationModal({
+	project,
+	onRequest,
+}: {
+	project: BrokerAssignedProject;
+	onRequest: (projectId: string, message: string) => Promise<unknown>;
+}) {
+	const [open, setOpen] = useState(false);
+	const [message, setMessage] = useState("");
+	const [busy, setBusy] = useState(false);
+
+	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		if (!message.trim()) return;
+		setBusy(true);
+		try {
+			await onRequest(project.id, message);
+			setOpen(false);
+		} finally {
+			setBusy(false);
+		}
+	};
+
+	return (
+		<Dialog open={open} onOpenChange={setOpen}>
+			<DialogTrigger asChild>
+				<Button size="sm" variant="outline" className="text-xs gap-1.5">
+					<FontAwesomeIcon icon={faInfoCircle} />
+					Request Information
+				</Button>
+			</DialogTrigger>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle className="flex items-center gap-2">
+						<FontAwesomeIcon icon={faInfoCircle} className="text-emerald-600" />
+						Request Information from the Company
+					</DialogTitle>
+				</DialogHeader>
+
+				<form onSubmit={handleSubmit} className="space-y-4 pt-2 text-xs">
+					<div className="rounded-lg bg-muted p-3">
+						<p className="font-semibold text-foreground">{project.title}</p>
+						<p className="text-muted-foreground mt-0.5">
+							Client: {project.companyName}
+						</p>
+					</div>
+
+					<div className="space-y-1.5">
+						<Label htmlFor="info-message" className="text-xs font-semibold">
+							Information required before deciding:
+						</Label>
+						<textarea
+							id="info-message"
+							rows={4}
+							className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+							value={message}
+							onChange={(e) => setMessage(e.target.value)}
+							placeholder="Describe the information or documents you need..."
+							required
+						/>
+					</div>
+
+					{project.informationRequest && (
+						<p className="rounded-lg bg-muted p-3 text-[11px] text-muted-foreground">
+							Already requested: {project.informationRequest}
+						</p>
+					)}
+
+					<div className="flex justify-end gap-2 pt-2 border-t border-border">
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => setOpen(false)}
+						>
+							Cancel
+						</Button>
+						<Button
+							type="submit"
+							disabled={busy}
+							className="bg-[#03442C] text-white hover:bg-[#03442C]/90"
+						>
+							Send Request
+						</Button>
+					</div>
+				</form>
+			</DialogContent>
+		</Dialog>
+	);
+}
+
+/**
+ * One assignment card. Shows the financing information the broker needs (§11):
+ * parties, value, LVV GRK validation, risk, lifecycle stage, bond status,
+ * open document requests and the last monitoring report date.
+ */
+function AssignedProjectCard({
+	project,
+	onAccept,
+	onDecline,
+	onRequestInformation,
+}: {
+	project: BrokerAssignedProject;
+	onAccept: (projectId: string) => void;
+	onDecline: (projectId: string, reason: string) => void;
+	onRequestInformation: (
+		projectId: string,
+		message: string,
+	) => Promise<unknown>;
+}) {
+	const pending = !project.isAccepted && !project.declineReason;
+
+	return (
+		<Card className="flex flex-col justify-between">
+			<CardHeader className="space-y-3 pb-3">
+				<div className="flex flex-wrap items-center gap-2">
+					<Badge className="bg-[#03442C] text-white">
+						{workflowLabel(project.workflowStatus)}
+					</Badge>
+					<Badge
+						variant="outline"
+						className={
+							project.lvvGrkStatus === "VERIFIED"
+								? "border-emerald-500 text-emerald-700 dark:text-emerald-300"
+								: "border-amber-500 text-amber-700 dark:text-amber-300"
+						}
+					>
+						{project.lvvGrkStatus === "VERIFIED"
+							? "LVV GRK Verified"
+							: "LVV GRK Pending"}
+					</Badge>
+					{project.outstandingRequestsCount > 0 && (
+						<Badge className="bg-amber-600 text-white">
+							{project.outstandingRequestsCount} open request
+							{project.outstandingRequestsCount === 1 ? "" : "s"}
+						</Badge>
+					)}
+				</div>
+				<CardTitle className="text-base line-clamp-2">
+					{project.title}
+				</CardTitle>
+				<p className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
+					<FontAwesomeIcon icon={faBuilding} />
+					{project.companyName}
+				</p>
+				<p className="text-xs text-muted-foreground flex items-center gap-1.5">
+					<FontAwesomeIcon icon={faTruck} />
+					{project.vendorName || "Vendor not recorded"}
+				</p>
+			</CardHeader>
+
+			<CardContent className="space-y-4 text-xs">
+				<div className="grid grid-cols-2 gap-2 rounded-lg bg-muted p-2.5">
+					<div>
+						<p className="text-muted-foreground">Project Value</p>
+						<p className="font-semibold text-foreground mt-0.5">
+							{formatRupiah(project.projectValue)}
+						</p>
+					</div>
+					<div>
+						<p className="text-muted-foreground">Bond Target</p>
+						<p className="font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5">
+							{formatRupiah(project.bondInfo.totalAmount)}
+						</p>
+					</div>
+				</div>
+
+				<div className="flex items-center justify-between text-muted-foreground">
+					<span className="flex items-center gap-1">
+						<FontAwesomeIcon icon={faMapMarkerAlt} className="text-red-500" />
+						{project.location || "Location not recorded"}
+					</span>
+					<span>
+						Risk:{" "}
+						<strong className="text-foreground">
+							{project.riskAssessment.overallRiskLevel}
+						</strong>
+					</span>
+				</div>
+
+				<div className="flex items-center justify-between text-muted-foreground">
+					<span>
+						Bond:{" "}
+						<strong className="text-foreground">
+							{BOND_STATUS_LABELS[project.bondInfo.status] ??
+								project.bondInfo.status}
+						</strong>
+					</span>
+					<span className="flex items-center gap-1">
+						<FontAwesomeIcon icon={faFileAlt} className="text-purple-600" />
+						{project.lastReportDate
+							? `Report: ${project.lastReportDate}`
+							: "No report yet"}
+					</span>
+				</div>
+
+				{project.milestones.length > 0 && (
+					<div className="rounded-lg border border-border p-2.5">
+						<div className="flex items-center justify-between">
+							<span className="text-muted-foreground">Implementation</span>
+							<span className="font-semibold text-foreground">
+								{Math.round(
+									project.milestones.reduce(
+										(sum, milestone) => sum + milestone.completionPercent,
+										0,
+									) / project.milestones.length,
+								)}
+								%
+							</span>
+						</div>
+						<p className="mt-1 text-muted-foreground">
+							{
+								project.milestones.filter(
+									(milestone) => milestone.status === "APPROVED",
+								).length
+							}
+							/{project.milestones.length} milestones approved
+						</p>
+					</div>
+				)}
+
+				{pending ? (
+					<div className="space-y-2 pt-2 border-t border-border">
+						<div className="rounded-lg bg-amber-50 p-2 text-[11px] text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+							New assignment pending confirmation.
+						</div>
+						<div className="flex flex-wrap items-center justify-between gap-2">
+							<DeclineAssignmentModal project={project} onDecline={onDecline} />
+							<div className="flex items-center gap-2">
+								<RequestInformationModal
+									project={project}
+									onRequest={onRequestInformation}
+								/>
+								<Button
+									size="sm"
+									onClick={() => onAccept(project.id)}
+									className="bg-[#03442C] text-white hover:bg-[#03442C]/90 text-xs"
+								>
+									Accept Assignment
+								</Button>
+							</div>
+						</div>
+					</div>
+				) : project.declineReason ? (
+					<div className="rounded-lg bg-red-50 p-2.5 text-[11px] text-red-900 dark:bg-red-950/40 dark:text-red-200 space-y-1 pt-2 border-t border-border">
+						<p className="font-bold">Assignment Declined by Broker:</p>
+						<p className="italic">"{project.declineReason}"</p>
+					</div>
+				) : (
+					<div className="flex items-center justify-between gap-2 pt-2 border-t border-border">
+						<Link to="/broker/projects/$id" params={{ id: project.id }}>
+							<Button
+								size="sm"
+								className="w-full bg-[#03442C] text-white hover:bg-[#03442C]/90"
+							>
+								Project Detail
+							</Button>
+						</Link>
+					</div>
+				)}
+			</CardContent>
+		</Card>
+	);
+}
+
 export function BrokerAssignedProjectsPage() {
-	const { projects, acceptAssignment, declineAssignment } = useBrokerData();
+	const { projects, acceptAssignment, declineAssignment, requestInformation } =
+		useBrokerData();
 	const [searchQuery, setSearchQuery] = useState("");
 
 	const filteredProjects = projects.filter(
-		(p) =>
-			p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			p.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			p.vendorName.toLowerCase().includes(searchQuery.toLowerCase()),
+		(project) =>
+			project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+			project.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+			project.vendorName.toLowerCase().includes(searchQuery.toLowerCase()),
 	);
+
+	const inStage = (...stages: BrokerAssignedProject["workflowStatus"][]) =>
+		filteredProjects.filter((project) =>
+			stages.includes(project.workflowStatus),
+		);
+
+	const renderGrid = (items: BrokerAssignedProject[]) => (
+		<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+			{items.map((project) => (
+				<AssignedProjectCard
+					key={project.id}
+					project={project}
+					onAccept={acceptAssignment}
+					onDecline={declineAssignment}
+					onRequestInformation={requestInformation}
+				/>
+			))}
+		</div>
+	);
+
+	const collection = inStage("ASSIGNED", "DECLINED", "DOCUMENT_COLLECTION");
+	const review = inStage("UNDER_REVIEW");
+	const bond = inStage("READY_FOR_BOND_ISSUANCE", "BOND_ISSUANCE");
+	const monitoring = inStage("MONITORING", "COMPLETED");
 
 	return (
 		<div className="space-y-6">
 			<div>
 				<h1 className="text-2xl font-bold">Assigned Verified Projects</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
-					GHG LVV verified green projects allocated by client companies for
+					LVV GRK verified green projects allocated by client companies for
 					external green bond underwriting and preparation.
 				</p>
 			</div>
@@ -164,202 +457,34 @@ export function BrokerAssignedProjectsPage() {
 			</div>
 
 			<Tabs defaultValue="all">
-				<TabsList className="grid w-full grid-cols-4">
+				<TabsList className="grid w-full grid-cols-5">
 					<TabsTrigger value="all">All ({filteredProjects.length})</TabsTrigger>
+					<TabsTrigger value="collection">
+						Assignment ({collection.length})
+					</TabsTrigger>
 					<TabsTrigger value="under_review">
-						Under Review (
-						{
-							filteredProjects.filter(
-								(p) =>
-									p.workflowStatus === "UNDER_REVIEW" ||
-									p.workflowStatus === "DOCUMENT_COLLECTION",
-							).length
-						}
-						)
+						Review ({review.length})
 					</TabsTrigger>
-					<TabsTrigger value="bond_issuance">
-						Bond Issuance (
-						{
-							filteredProjects.filter(
-								(p) =>
-									p.workflowStatus === "READY_FOR_BOND_ISSUANCE" ||
-									p.workflowStatus === "BOND_ISSUANCE",
-							).length
-						}
-						)
-					</TabsTrigger>
+					<TabsTrigger value="bond_issuance">Bond ({bond.length})</TabsTrigger>
 					<TabsTrigger value="monitoring">
-						Monitoring (
-						{
-							filteredProjects.filter((p) => p.workflowStatus === "MONITORING")
-								.length
-						}
-						)
+						Monitoring ({monitoring.length})
 					</TabsTrigger>
 				</TabsList>
 
 				<TabsContent value="all" className="mt-6">
-					<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-						{filteredProjects.map((proj) => (
-							<Card key={proj.id} className="flex flex-col justify-between">
-								<CardHeader className="space-y-3 pb-3">
-									<Badge className="bg-[#03442C] text-white">
-										{proj.workflowStatus.replace(/_/g, " ")}
-									</Badge>
-									<CardTitle className="text-base line-clamp-2">
-										{proj.title}
-									</CardTitle>
-									<p className="text-xs text-muted-foreground font-medium">
-										Client: {proj.companyName}
-									</p>
-									<p className="text-xs text-muted-foreground">
-										Contractor / Vendor: {proj.vendorName}
-									</p>
-								</CardHeader>
-
-								<CardContent className="space-y-4 text-xs">
-									<div className="grid grid-cols-2 gap-2 rounded-lg bg-muted p-2.5">
-										<div>
-											<p className="text-muted-foreground">Project Value</p>
-											<p className="font-semibold text-foreground mt-0.5">
-												{formatRupiah(proj.projectValue)}
-											</p>
-										</div>
-										<div>
-											<p className="text-muted-foreground">Bond Target</p>
-											<p className="font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5">
-												{formatRupiah(proj.bondInfo.totalAmount)}
-											</p>
-										</div>
-									</div>
-
-									<div className="flex items-center justify-between text-muted-foreground">
-										<span className="flex items-center gap-1">
-											<FontAwesomeIcon
-												icon={faMapMarkerAlt}
-												className="text-red-500"
-											/>
-											{proj.location}
-										</span>
-										<span>
-											Risk:{" "}
-											<strong className="text-foreground">
-												{proj.riskAssessment.overallRiskLevel}
-											</strong>
-										</span>
-									</div>
-
-									{/* Accept / Decline actions for newly assigned projects */}
-									{!proj.isAccepted && !proj.declineReason ? (
-										<div className="space-y-2 pt-2 border-t border-border">
-											<div className="rounded-lg bg-amber-50 p-2 text-[11px] text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
-												New assignment pending confirmation.
-											</div>
-											<div className="flex items-center justify-between gap-2">
-												<DeclineAssignmentModal
-													project={proj}
-													onDecline={declineAssignment}
-												/>
-												<Button
-													size="sm"
-													onClick={() => acceptAssignment(proj.id)}
-													className="bg-[#03442C] text-white hover:bg-[#03442C]/90 text-xs"
-												>
-													Accept Assignment
-												</Button>
-											</div>
-										</div>
-									) : proj.declineReason ? (
-										<div className="rounded-lg bg-red-50 p-2.5 text-[11px] text-red-900 dark:bg-red-950/40 dark:text-red-200 space-y-1 pt-2 border-t border-border">
-											<p className="font-bold">
-												Assignment Declined by Broker:
-											</p>
-											<p className="italic">"{proj.declineReason}"</p>
-										</div>
-									) : (
-										<div className="flex items-center justify-between gap-2 pt-2 border-t border-border">
-											<Link to="/broker/projects/$id" params={{ id: proj.id }}>
-												<Button
-													size="sm"
-													className="w-full bg-[#03442C] text-white hover:bg-[#03442C]/90"
-												>
-													Project Detail
-												</Button>
-											</Link>
-										</div>
-									)}
-								</CardContent>
-							</Card>
-						))}
-					</div>
+					{renderGrid(filteredProjects)}
 				</TabsContent>
-
+				<TabsContent value="collection" className="mt-6">
+					{renderGrid(collection)}
+				</TabsContent>
 				<TabsContent value="under_review" className="mt-6">
-					<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-						{filteredProjects
-							.filter(
-								(p) =>
-									p.workflowStatus === "UNDER_REVIEW" ||
-									p.workflowStatus === "DOCUMENT_COLLECTION",
-							)
-							.map((proj) => (
-								<Card key={proj.id} className="flex flex-col justify-between">
-									<CardHeader className="space-y-3 pb-3">
-										<CardTitle className="text-base line-clamp-2">
-											{proj.title}
-										</CardTitle>
-									</CardHeader>
-									<CardContent className="space-y-4 text-xs">
-										<Link to="/broker/projects/$id" params={{ id: proj.id }}>
-											<Button
-												size="sm"
-												className="w-full bg-[#03442C] text-white hover:bg-[#03442C]/90"
-											>
-												Open Project →
-											</Button>
-										</Link>
-									</CardContent>
-								</Card>
-							))}
-					</div>
+					{renderGrid(review)}
 				</TabsContent>
-
 				<TabsContent value="bond_issuance" className="mt-6">
-					<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-						{filteredProjects
-							.filter(
-								(p) =>
-									p.workflowStatus === "READY_FOR_BOND_ISSUANCE" ||
-									p.workflowStatus === "BOND_ISSUANCE",
-							)
-							.map((proj) => (
-								<Card key={proj.id} className="flex flex-col justify-between">
-									<CardHeader className="space-y-3 pb-3">
-										<CardTitle className="text-base line-clamp-2">
-											{proj.title}
-										</CardTitle>
-									</CardHeader>
-									<CardContent className="space-y-4 text-xs">
-										<Link to="/broker/projects/$id" params={{ id: proj.id }}>
-											<Button
-												size="sm"
-												className="w-full bg-[#03442C] text-white hover:bg-[#03442C]/90"
-											>
-												Open Project →
-											</Button>
-										</Link>
-									</CardContent>
-								</Card>
-							))}
-					</div>
+					{renderGrid(bond)}
 				</TabsContent>
-
 				<TabsContent value="monitoring" className="mt-6">
-					<Card>
-						<CardContent className="p-8 text-center text-xs text-muted-foreground">
-							No projects in the long-term monitoring phase yet.
-						</CardContent>
-					</Card>
+					{renderGrid(monitoring)}
 				</TabsContent>
 			</Tabs>
 		</div>

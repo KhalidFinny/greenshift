@@ -37,6 +37,49 @@ export const apiRoutes = {
 		method: "PATCH",
 		path: "/api/admin/vendors/:id/verify",
 	},
+	adminBrokers: { method: "GET", path: "/api/admin/brokers" },
+	adminVerifyBroker: {
+		method: "PATCH",
+		path: "/api/admin/brokers/:id/verify",
+	},
+	brokerProfile: { method: "GET", path: "/api/broker/profile" },
+	brokerSaveProfile: { method: "PUT", path: "/api/broker/profile" },
+	brokerProjects: { method: "GET", path: "/api/broker/projects" },
+	brokerProjectRespond: {
+		method: "POST",
+		path: "/api/broker/projects/:id/response",
+	},
+	brokerProjectStatus: {
+		method: "PATCH",
+		path: "/api/broker/projects/:id/status",
+	},
+	brokerProjectBond: {
+		method: "PATCH",
+		path: "/api/broker/projects/:id/bond",
+	},
+	brokerDocumentRequests: {
+		method: "GET",
+		path: "/api/broker/document-requests",
+	},
+	brokerCreateDocumentRequest: {
+		method: "POST",
+		path: "/api/broker/document-requests",
+	},
+	brokerReviewDocument: {
+		method: "PATCH",
+		path: "/api/broker/document-requests/:id",
+	},
+	brokerReports: { method: "GET", path: "/api/broker/reports" },
+	brokerReport: { method: "GET", path: "/api/broker/reports/:id" },
+	brokerReportPdf: { method: "GET", path: "/api/broker/reports/:id/pdf" },
+	brokerNotifications: {
+		method: "GET",
+		path: "/api/broker/notifications",
+	},
+	brokerReadNotification: {
+		method: "PATCH",
+		path: "/api/broker/notifications/:id",
+	},
 	vendorProjects: { method: "GET", path: "/api/vendor/projects" },
 	vendorProjectDetail: {
 		method: "GET",
@@ -616,4 +659,237 @@ export interface VendorProcurementStatusItem {
 	reviewedAt?: string | null;
 	amount?: number;
 	companyName?: string;
+}
+
+// ── Broker role ───────────────────────────────────────────
+// The broker prepares a verified project for bond issuance. The bond process
+// itself (issuance, sale, distribution, escrow, investors) happens outside
+// GreenShift and is only tracked at a high level here.
+
+/** Verification result derived from the broker profile (§6). */
+export const brokerVerificationStatuses = [
+	"NOT_VERIFIED",
+	"VERIFIED",
+	"REJECTED",
+] as const;
+export type BrokerVerificationStatus =
+	(typeof brokerVerificationStatuses)[number];
+
+export interface BrokerProfile {
+	id: number;
+	userId: number;
+	companyName: string;
+	description: string | null;
+	representative: string | null;
+	contactEmail: string | null;
+	contactPhone: string | null;
+	website: string | null;
+	address: string | null;
+	nib: string | null;
+	financialLicenseNumber: string | null;
+	licenseAuthority: string | null;
+	verificationStatus: BrokerVerificationStatus;
+	submittedAt: string | null;
+	verifiedAt: string | null;
+	rejectionReason: string | null;
+}
+
+export interface BrokerProfileBody {
+	companyName: string;
+	description?: string;
+	representative?: string;
+	contactEmail?: string;
+	contactPhone?: string;
+	website?: string;
+	address?: string;
+	nib?: string;
+	financialLicenseNumber?: string;
+	licenseAuthority?: string;
+}
+
+export interface BrokerRiskAssessment {
+	overallRiskLevel: string | null;
+	financialRisk: string | null;
+	technicalRisk: string | null;
+	implementationRisk: string | null;
+	environmentalRisk: string | null;
+	notes: string | null;
+}
+
+export interface BrokerBondInfo {
+	status: string;
+	bondSerialNumber: string | null;
+	totalAmount: number;
+	tenorMonths: number | null;
+	couponRatePercent: number | null;
+	issuanceDate: string | null;
+	maturityDate: string | null;
+	brokerRepresentative: string | null;
+}
+
+export interface BrokerFinancialProjections {
+	irrPercent: number | null;
+	npvAmount: number | null;
+	paybackYears: number | null;
+}
+
+export interface BrokerProjectDocument {
+	id: number;
+	type: string;
+	fileName: string;
+	fileUrl: string | null;
+	uploadedAt: string;
+}
+
+export interface BrokerMilestone {
+	id: number;
+	stepNumber: number;
+	title: string;
+	status: string;
+	completionPercent: number | null;
+	startDate: string | null;
+	dueDate: string | null;
+}
+
+/** A project the Company assigned to this Broker (§11). */
+export interface BrokerAssignedProject {
+	id: number;
+	title: string;
+	companyName: string;
+	companyEmail: string;
+	vendorName: string | null;
+	industrySector: string | null;
+	location: string | null;
+	projectValue: number;
+	lvvGrkStatus: "VERIFIED" | "PENDING";
+	lvvGrkVerificationDate: string | null;
+	blueprintStatus: string | null;
+	workflowStatus: string;
+	riskAssessment: BrokerRiskAssessment;
+	bondInfo: BrokerBondInfo;
+	financialProjections: BrokerFinancialProjections;
+	assignedAt: string;
+	isAccepted: boolean;
+	declineReason: string | null;
+	informationRequest: string | null;
+	outstandingRequestsCount: number;
+	lastReportDate: string | null;
+	description: string | null;
+	documents: BrokerProjectDocument[];
+	milestones: BrokerMilestone[];
+}
+
+/** Assignment decision (§21): accept, ask for information, or decline with a reason. */
+export interface BrokerAssignmentResponseBody {
+	action: "ACCEPT" | "DECLINE" | "REQUEST_INFORMATION";
+	reason?: string;
+	message?: string;
+}
+
+export interface BrokerProjectStatusBody {
+	status: string;
+}
+
+export interface BrokerBondUpdateBody {
+	status: string;
+	serialNumber?: string;
+	amount?: number;
+	tenorMonths?: number;
+	couponRatePercent?: number;
+	issuanceDate?: string;
+	maturityDate?: string;
+}
+
+export interface BrokerDocumentRequest {
+	id: number;
+	projectId: number;
+	projectTitle: string;
+	companyName: string;
+	category: string;
+	documentTypeName: string;
+	requiredPeriod: string | null;
+	reason: string;
+	deadlineDate: string | null;
+	additionalNotes: string | null;
+	status: string;
+	submittedFileName: string | null;
+	submittedFileUrl: string | null;
+	submittedAt: string | null;
+	rejectionReason: string | null;
+	reviewedAt: string | null;
+}
+
+export interface BrokerDocumentRequestBody {
+	projectId: number;
+	category: string;
+	documentTypeName: string;
+	reason: string;
+	deadlineDate: string;
+	requiredPeriod?: string;
+	additionalNotes?: string;
+}
+
+export interface BrokerDocumentReviewBody {
+	action: "START_REVIEW" | "APPROVE" | "REJECT";
+	reason?: string;
+}
+
+/**
+ * Official monthly monitoring report as delivered to the Broker (§30-§34).
+ * Progress comes from the project's milestones, energy and carbon from the
+ * MRV report of the period, the remaining figures from the published report.
+ */
+export interface BrokerMonthlyReport {
+	id: number;
+	projectId: number;
+	projectTitle: string;
+	companyName: string;
+	vendorName: string | null;
+	period: string;
+	overallStatus: string;
+	plannedProgressPercent: number;
+	actualProgressPercent: number;
+	completedMilestonesCount: number;
+	currentMilestoneTitle: string | null;
+	plannedBudgetAmount: number;
+	actualSpendingAmount: number;
+	expectedEnergySavingsKwh: number;
+	actualEnergySavingsKwh: number;
+	expectedCarbonReductionTons: number;
+	actualCarbonReductionTons: number;
+	projectedRoiPercent: number;
+	actualRoiPerformancePercent: number;
+	detectedRisksOrAnomalies: string[];
+	overallConclusion: string;
+	submittedAt: string;
+	pdfPath: string;
+}
+
+export interface BrokerNotification {
+	id: number;
+	category: string;
+	title: string;
+	message: string | null;
+	createdAt: string;
+	isRead: boolean;
+	linkUrl: string | null;
+}
+
+export interface AdminBroker {
+	id: number;
+	userId: number;
+	companyName: string;
+	representative: string | null;
+	email: string;
+	nib: string | null;
+	financialLicenseNumber: string | null;
+	licenseAuthority: string | null;
+	submittedAt: string | null;
+	verifiedAt: string | null;
+	rejectionReason: string | null;
+}
+
+export interface VerifyBrokerBody {
+	verified: boolean;
+	rejectionReason?: string;
 }

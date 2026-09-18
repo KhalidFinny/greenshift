@@ -5,8 +5,8 @@ import {
 	TrendingUp,
 	Truck,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useInView } from "../../hooks/useInView";
 
 const actors = [
@@ -177,25 +177,34 @@ export default function EcosystemSection() {
 						isVisible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
 					}`}
 				>
-					{/* Left: Circular ecosystem */}
-					<div className="hidden lg:flex lg:justify-center">
+					{/* Left: Circular ecosystem. `--o` is one design pixel of the
+					    orbit, capped at a real pixel: the ring shrinks with its
+					    column instead of overflowing the grid track. */}
+					<div className="hidden lg:flex lg:justify-center [container-type:inline-size]">
 						<div
 							className="relative"
-							style={{
-								width: `${RADIUS * 2 + 120}px`,
-								height: `${RADIUS * 2 + 120}px`,
-							}}
+							style={
+								{
+									"--o": `min(1px, calc(100cqw / ${ORBIT}))`,
+									width: `calc(var(--o) * ${ORBIT})`,
+									height: `calc(var(--o) * ${ORBIT})`,
+								} as CSSProperties
+							}
 						>
 							{/* Orbit ring */}
 							<div
 								className="absolute inset-0 m-auto rounded-full border border-[#03442C]/12"
-								style={{ width: `${RADIUS * 2}px`, height: `${RADIUS * 2}px` }}
+								style={{
+									width: `calc(var(--o) * ${RADIUS * 2})`,
+									height: `calc(var(--o) * ${RADIUS * 2})`,
+								}}
 								aria-hidden="true"
 							/>
 
 							{/* SVG connecting lines + orbiting ball */}
 							<svg
 								className="absolute inset-0 h-full w-full"
+								viewBox={`0 0 ${ORBIT} ${ORBIT}`}
 								aria-hidden="true"
 							>
 								{actors.map((actor, i) => {
@@ -252,27 +261,27 @@ export default function EcosystemSection() {
 										onClick={() => handleNodeClick(i)}
 										className="group absolute flex cursor-pointer flex-col items-center text-center transition-all duration-500 motion-reduce:transition-none"
 										style={{
-											left: `calc(50% + ${x}px - 60px)`,
-											top: `calc(50% + ${y}px - 44px)`,
-											width: "120px",
+											left: `calc(50% + var(--o) * ${x - 60})`,
+											top: `calc(50% + var(--o) * ${y - 44})`,
+											width: `calc(var(--o) * 120)`,
 										}}
 									>
 										<div
-											className={`flex h-[60px] w-[60px] items-center justify-center rounded-full border transition-all duration-500 motion-reduce:transition-none ${
+											className={`flex h-[calc(var(--o)*60)] w-[calc(var(--o)*60)] items-center justify-center rounded-full border transition-all duration-500 motion-reduce:transition-none ${
 												isActive
 													? "border-[#03442C]/30 bg-[#03442C]"
 													: "border-[#03442C]/15 bg-white opacity-60 group-hover:opacity-90"
 											}`}
 										>
 											<NodeIcon
-												className={`h-[24px] w-[24px] transition-colors duration-500 motion-reduce:transition-none ${
+												className={`h-[calc(var(--o)*24)] w-[calc(var(--o)*24)] transition-colors duration-500 motion-reduce:transition-none ${
 													isActive ? "text-white" : "text-[#03442C]"
 												}`}
 												strokeWidth={1.5}
 											/>
 										</div>
 										<p
-											className={`mt-2 text-base font-semibold leading-tight transition-colors duration-500 motion-reduce:transition-none ${
+											className={`mt-[calc(var(--o)*8)] text-[length:calc(var(--o)*16)] font-semibold leading-tight transition-colors duration-500 motion-reduce:transition-none ${
 												isActive ? "text-[#1C1C1C]" : "text-[#4A4A4A]"
 											}`}
 										>
@@ -284,11 +293,11 @@ export default function EcosystemSection() {
 
 							{/* Center logo */}
 							<div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-								<div className="flex h-[100px] w-[100px] items-center justify-center rounded-full border border-[#03442C]/20 bg-white">
+								<div className="flex h-[calc(var(--o)*100)] w-[calc(var(--o)*100)] items-center justify-center rounded-full border border-[#03442C]/20 bg-white">
 									<img
 										src="/logo-short.svg"
 										alt="GreenShift"
-										className="h-[48px] w-auto"
+										className="h-[calc(var(--o)*48)] w-auto"
 									/>
 								</div>
 							</div>

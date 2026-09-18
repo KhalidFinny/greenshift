@@ -1,6 +1,7 @@
 import type {
 	AdminAnomalyResponse,
 	AdminBlueprint,
+	AdminBroker,
 	AdminInvestment,
 	AdminProject,
 	AdminRoiPayment,
@@ -11,6 +12,17 @@ import type {
 	AuthResponse,
 	BlueprintUpdateBody,
 	BondMarketResponse,
+	BrokerAssignedProject,
+	BrokerAssignmentResponseBody,
+	BrokerBondUpdateBody,
+	BrokerDocumentRequest,
+	BrokerDocumentRequestBody,
+	BrokerDocumentReviewBody,
+	BrokerMonthlyReport,
+	BrokerNotification,
+	BrokerProfile,
+	BrokerProfileBody,
+	BrokerProjectStatusBody,
 	CsrfResponse,
 	LoginBody,
 	OkResponse,
@@ -37,6 +49,7 @@ import type {
 	VendorProfileBody,
 	VendorProjectDetail,
 	VendorProjectListItem,
+	VerifyBrokerBody,
 	VerifyUserBody,
 	VerifyVendorBody,
 } from "@greenshift/api/contracts";
@@ -169,6 +182,21 @@ export const api = {
 					body: JSON.stringify({ verified } satisfies VerifyVendorBody),
 				},
 			),
+		brokers: (params?: { limit?: number }) =>
+			request<{ brokers: AdminBroker[] }>(
+				apiRoutes.adminBrokers.path + query(params),
+			),
+		verifyBroker: (id: number, verified: boolean, rejectionReason?: string) =>
+			request<OkResponse>(
+				apiRoutes.adminVerifyBroker.path.replace(":id", String(id)),
+				{
+					method: apiRoutes.adminVerifyBroker.method,
+					body: JSON.stringify({
+						verified,
+						rejectionReason,
+					} satisfies VerifyBrokerBody),
+				},
+			),
 	},
 	vendor: {
 		projects: (params?: { status?: string; limit?: number }) =>
@@ -283,6 +311,81 @@ export const api = {
 					method: apiRoutes.vendorAddMilestoneEvidence.method,
 					body: JSON.stringify(body),
 				},
+			),
+	},
+	broker: {
+		profile: () =>
+			request<{ profile: BrokerProfile }>(apiRoutes.brokerProfile.path),
+		saveProfile: (body: BrokerProfileBody) =>
+			request<{ profile: BrokerProfile }>(apiRoutes.brokerSaveProfile.path, {
+				method: apiRoutes.brokerSaveProfile.method,
+				body: JSON.stringify(body satisfies BrokerProfileBody),
+			}),
+		projects: () =>
+			request<{ projects: BrokerAssignedProject[] }>(
+				apiRoutes.brokerProjects.path,
+			),
+		respondAssignment: (
+			projectId: number,
+			body: BrokerAssignmentResponseBody,
+		) =>
+			request<OkResponse>(
+				apiRoutes.brokerProjectRespond.path.replace(":id", String(projectId)),
+				{
+					method: apiRoutes.brokerProjectRespond.method,
+					body: JSON.stringify(body satisfies BrokerAssignmentResponseBody),
+				},
+			),
+		updateProjectStatus: (projectId: number, status: string) =>
+			request<OkResponse>(
+				apiRoutes.brokerProjectStatus.path.replace(":id", String(projectId)),
+				{
+					method: apiRoutes.brokerProjectStatus.method,
+					body: JSON.stringify({ status } satisfies BrokerProjectStatusBody),
+				},
+			),
+		updateBond: (projectId: number, body: BrokerBondUpdateBody) =>
+			request<OkResponse>(
+				apiRoutes.brokerProjectBond.path.replace(":id", String(projectId)),
+				{
+					method: apiRoutes.brokerProjectBond.method,
+					body: JSON.stringify(body satisfies BrokerBondUpdateBody),
+				},
+			),
+		documentRequests: (params?: { limit?: number }) =>
+			request<{ requests: BrokerDocumentRequest[] }>(
+				apiRoutes.brokerDocumentRequests.path + query(params),
+			),
+		createDocumentRequest: (body: BrokerDocumentRequestBody) =>
+			request<{ request: BrokerDocumentRequest }>(
+				apiRoutes.brokerCreateDocumentRequest.path,
+				{
+					method: apiRoutes.brokerCreateDocumentRequest.method,
+					body: JSON.stringify(body satisfies BrokerDocumentRequestBody),
+				},
+			),
+		reviewDocument: (id: number, body: BrokerDocumentReviewBody) =>
+			request<{ request: BrokerDocumentRequest }>(
+				apiRoutes.brokerReviewDocument.path.replace(":id", String(id)),
+				{
+					method: apiRoutes.brokerReviewDocument.method,
+					body: JSON.stringify(body satisfies BrokerDocumentReviewBody),
+				},
+			),
+		reports: () =>
+			request<{ reports: BrokerMonthlyReport[] }>(apiRoutes.brokerReports.path),
+		report: (id: number) =>
+			request<{ report: BrokerMonthlyReport }>(
+				apiRoutes.brokerReport.path.replace(":id", String(id)),
+			),
+		notifications: (params?: { limit?: number }) =>
+			request<{ notifications: BrokerNotification[] }>(
+				apiRoutes.brokerNotifications.path + query(params),
+			),
+		readNotification: (id: number) =>
+			request<OkResponse>(
+				apiRoutes.brokerReadNotification.path.replace(":id", String(id)),
+				{ method: apiRoutes.brokerReadNotification.method },
 			),
 	},
 };

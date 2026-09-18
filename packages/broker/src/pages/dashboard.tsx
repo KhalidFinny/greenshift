@@ -15,6 +15,7 @@ import {
 } from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
 
+import { workflowLabel } from "../lib/lifecycle";
 import { useBrokerData } from "../lib/use-broker-data";
 
 function formatRupiah(amount: number) {
@@ -26,8 +27,15 @@ function formatRupiah(amount: number) {
 }
 
 export function BrokerDashboard() {
-	const { verification, projects, documentRequests, metrics, approveDocument } =
-		useBrokerData();
+	const {
+		verification,
+		projects,
+		documentRequests,
+		notifications,
+		metrics,
+		approveDocument,
+		markNotificationRead,
+	} = useBrokerData();
 
 	const isVerified = verification.status === "VERIFIED";
 	const pendingDocs = documentRequests.filter(
@@ -151,7 +159,7 @@ export function BrokerDashboard() {
 								<div className="flex flex-wrap items-center justify-between gap-2">
 									<div className="flex items-center gap-2">
 										<Badge className="bg-[#03442C] text-white font-semibold">
-											{proj.workflowStatus.replace(/_/g, " ")}
+											{workflowLabel(proj.workflowStatus)}
 										</Badge>
 										<Badge
 											variant="outline"
@@ -248,6 +256,70 @@ export function BrokerDashboard() {
 								Manage All Document Requests →
 							</Button>
 						</Link>
+					</CardContent>
+				</Card>
+
+				{/* Right 1 Col: Notification feed */}
+				<Card className="lg:col-span-3">
+					<CardHeader>
+						<CardTitle className="text-lg">
+							Notifications
+							{metrics.underMonitoringCount > 0 && (
+								<span className="ml-2 text-xs font-normal text-muted-foreground">
+									{metrics.underMonitoringCount} project(s) under monitoring
+								</span>
+							)}
+						</CardTitle>
+					</CardHeader>
+					<CardContent className="space-y-3 text-xs">
+						{notifications.length === 0 ? (
+							<p className="py-6 text-center text-muted-foreground">
+								No notifications yet.
+							</p>
+						) : (
+							notifications.map((notification) => (
+								<div
+									key={notification.id}
+									className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 ${
+										notification.isRead
+											? "border-border"
+											: "border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/30"
+									}`}
+								>
+									<div>
+										<Badge variant="outline" className="text-[11px]">
+											{notification.category}
+										</Badge>
+										<h4 className="mt-1 font-semibold text-sm">
+											{notification.title}
+										</h4>
+										<p className="mt-0.5 text-muted-foreground">
+											{notification.message}
+										</p>
+										<p className="mt-1 text-[11px] text-muted-foreground">
+											{notification.timestamp}
+										</p>
+									</div>
+									<div className="flex items-center gap-2">
+										<Link to={notification.linkUrl}>
+											<Button variant="outline" size="sm" className="text-xs">
+												Open
+											</Button>
+										</Link>
+										{!notification.isRead && (
+											<Button
+												size="sm"
+												variant="ghost"
+												className="text-xs"
+												onClick={() => markNotificationRead(notification.id)}
+											>
+												Mark read
+											</Button>
+										)}
+									</div>
+								</div>
+							))
+						)}
 					</CardContent>
 				</Card>
 			</div>

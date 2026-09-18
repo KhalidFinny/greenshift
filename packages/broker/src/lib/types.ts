@@ -19,6 +19,7 @@ export interface BrokerVerificationDetails {
 
 export type BrokerProjectWorkflowStatus =
 	| "ASSIGNED"
+	| "DECLINED"
 	| "DOCUMENT_COLLECTION"
 	| "UNDER_REVIEW"
 	| "READY_FOR_BOND_ISSUANCE"
@@ -116,6 +117,35 @@ export interface ProjectRiskAssessmentSummary {
 	notes: string;
 }
 
+export interface BrokerProjectDocument {
+	id: string;
+	type: string;
+	fileName: string;
+	fileUrl: string | null;
+	uploadedAt: string;
+}
+
+export interface BrokerProjectMilestone {
+	id: string;
+	stepNumber: number;
+	title: string;
+	status: string;
+	completionPercent: number;
+	startDate: string | null;
+	dueDate: string | null;
+}
+
+/** Firm profile shown on the broker settings page (§39). */
+export interface BrokerProfileDetails {
+	companyName: string;
+	description: string;
+	representative: string;
+	contactEmail: string;
+	contactPhone: string;
+	website: string;
+	address: string;
+}
+
 export interface BrokerAssignedProject {
 	id: string;
 	title: string;
@@ -127,12 +157,14 @@ export interface BrokerAssignedProject {
 	projectValue: number;
 	lvvGrkStatus: "VERIFIED" | "PENDING";
 	lvvGrkVerificationDate?: string;
+	blueprintStatus?: string | null;
 	workflowStatus: BrokerProjectWorkflowStatus;
 	riskAssessment: ProjectRiskAssessmentSummary;
 	bondInfo: ExternalBondInfo;
 	assignedAt: string;
 	isAccepted: boolean;
 	declineReason?: string;
+	informationRequest?: string | null;
 	outstandingRequestsCount: number;
 	lastReportDate?: string;
 	description: string;
@@ -141,6 +173,10 @@ export interface BrokerAssignedProject {
 		npvAmount: number;
 		paybackYears: number;
 	};
+	/** Project documents GreenShift already holds for this project (§13). */
+	documents: BrokerProjectDocument[];
+	/** Delivery milestones behind the reported progress (§13). */
+	milestones: BrokerProjectMilestone[];
 }
 
 export interface BrokerNotification {

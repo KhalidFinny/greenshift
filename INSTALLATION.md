@@ -66,6 +66,10 @@ server has started at least once.
 
 The public surfaces (`/`, `/bonds`) need no account; an investor account lands on the bond catalog.
 
+`bun run db:setup` only creates the accounts: a fresh `broker1` has no licence filed yet, so the broker
+dashboard shows the verification gate until the profile is submitted and verified (admin → broker
+verification, or the seed fixtures, which ship a verified broker with assignments in every lifecycle stage).
+
 ## Project conventions
 
 - Role packages (`packages/<role>`) import only from `@greenshift/core`, `@greenshift/ui` and `@tanstack/*`,
@@ -91,7 +95,8 @@ bun run db:setup
 # Regenerate the seed fixtures from scripts/seed.ts
 bun scripts/seed.ts > scripts/seed.sql
 
-# Load the seed data (users, projects, tenders, proposals, blueprints, MRV reports)
+# Load the seed data (users, projects, tenders, proposals, blueprints, MRV reports,
+# broker assignments with document requests and monthly reports)
 bunx wrangler d1 execute greenshift-db --local --file=scripts/seed.sql
 
 # After a schema change: generate a new migration

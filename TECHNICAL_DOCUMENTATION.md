@@ -44,7 +44,7 @@ scripts/          Demo-user seeder (db:setup) and seed-fixture generator
 |---|---|---|---|
 | `business` | `/business` | `packages/business` | Placeholder shell; no API surface yet. |
 | `vendor` | `/vendor` | `packages/vendor` | `/api/vendor/*` (profile, opportunities, proposals, negotiations, notifications, leaderboard, portfolio, milestones, MRV reports). |
-| `broker` | `/broker` | `packages/broker` | Local demo dataset (`packages/broker/src/lib/demo-data.ts`); no API surface yet. |
+| `broker` | `/broker` | `packages/broker` | `/api/broker/*` (assigned projects, document requests, monthly reports with PDF export, notifications, profile). |
 | `admin` | `/admin` | `packages/admin` | `/api/admin/*` plus static demo constants for the chart/console tiles. |
 | `investor` | `/bonds` | `packages/investor` | `GET /api/investor/market` (D1 only; the catalog renders an empty state when nothing is published). |
 
@@ -61,6 +61,31 @@ Import rules, enforced by convention and folder discipline:
 Why not Module Federation: federation splits builds and loads remote entries at runtime, which is pointless
 for a single Worker bundle. The organizational benefits (isolated packages, few merge conflicts) come from the
 import contract without the runtime cost.
+
+## 2b. Backend module layout
+
+`apps/api/src` is organised feature-first, with the route -> service -> repository split applied per feature:
+
+```
+apps/api/src/
+  index.ts          app assembly: error/not-found handlers and the module mounts
+  env.ts            Worker bindings (DB, KV, R2)
+  contracts.ts      the shared request/response contract the frontend imports
+  db/               Drizzle instance and schema
+  lib/              cross-cutting infrastructure: session, password, csrf, authz, rate-limit,
+                    http, format, mutation-limit, pdf
+  modules/
+    <module>/                 one module per role: auth, investor, vendor, broker, admin, health
+      <module>.routes.ts      module router: shared middleware (session, role, CSRF) and feature mounts
+      <module>.shared.ts      helpers used by more than one feature of the module
+      <feature>/
+        <feature>.routes.ts      controllers: validate the request, call the service/repository, shape the JSON
+        <feature>.service.ts     business rules: state transitions, guards, orchestration, audit + notifications
+        <feature>.repository.ts  all Drizzle access for the feature
+```
+
+A feature only gets a `.service.ts` when it holds rules beyond reading and shaping data — there are no
+pass-through layers. Route handlers never query Drizzle directly, and repositories never touch Hono contexts.
 
 ## 3. Request lifecycle
 
@@ -164,6 +189,34 @@ step-up required, `429` rate limited, `500` internal.
 | DELETE | `/api/vendor/portfolio/:id` | Remove a portfolio reference. |
 | POST | `/api/vendor/milestones/:id/evidence` | Attach delivery evidence to a milestone of an awarded project. |
 
+### Broker (role `broker`)
+
+Assigned projects, document requests and reports require a verified broker profile (`requireVerifiedBroker`);
+profile and notification endpoints stay reachable while verification is pending.
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/broker/profile` | Firm profile plus derived verification status; creates the profile on first read. |
+| PUT | `/api/broker/profile` | Save the firm profile; filing licence data records a verification submission. |
+| GET | `/api/broker/projects` | Assigned projects with parties, contract value, LVV GRK status, risk assessment, bond tracking, project documents, delivery milestones and open request count. |
+| POST | `/api/broker/projects/:id/response` | Accept, request information about, or decline an assignment (a decline requires a reason). |
+| PATCH | `/api/broker/projects/:id/status` | Move the broker lifecycle (§20); illegal transitions return `409`. |
+| PATCH | `/api/broker/projects/:id/bond` | Track the external bond (status, serial, amount, tenor, coupon, dates). |
+| GET | `/api/broker/document-requests` | Document requests raised against assigned projects. |
+| POST | `/api/broker/document-requests` | Request a document from the company (free-form type, period, reason, deadline). |
+| PATCH | `/api/broker/document-requests/:id` | `START_REVIEW`, `APPROVE`, or `REJECT` (a rejection requires a reason). |
+| GET | `/api/broker/reports` | Monthly monitoring reports for assigned projects. |
+| GET | `/api/broker/reports/:id` | One composed report. |
+| GET | `/api/broker/reports/:id/pdf` | The report as a generated PDF (`application/pdf`, attachment). |
+| GET | `/api/broker/notifications` | Notification feed. |
+| PATCH | `/api/broker/notifications/:id` | Mark one notification read (idempotent). |
+
+Each report is composed from source data rather than stored prose: progress from `project_milestones`, energy
+and carbon from the period's `emission_reports` row, and the official figures the company published in
+`emission_reports.report_data`. Fields with no source stay at `0` instead of being estimated. The PDF is
+written by `apps/api/src/lib/pdf.ts`, a dependency-free PDF 1.4 generator, because Workers cannot run the
+usual PDF libraries.
+
 ### Admin (role `admin`, step-up for mutations)
 
 | Method | Path | Description |
@@ -182,17 +235,21 @@ step-up required, `429` rate limited, `500` internal.
 | GET | `/api/admin/anomalies` | Read-only red-flag rule engine. |
 | GET | `/api/admin/vendors` | Vendor profiles. |
 | PATCH | `/api/admin/vendors/:id/verify` | Verify or unverify a vendor profile. |
+| GET | `/api/admin/brokers` | Broker profiles with licence filing and verification state. |
+| PATCH | `/api/admin/brokers/:id/verify` | Verify or reject a broker profile (a rejection requires a reason). |
 
 Request and response types live in `apps/api/src/contracts.ts` and are re-exported to the frontend through
 `@greenshift/api`, so client and server share one typed contract. `apiRoutes` in the same file is the single
 list of method/path pairs the frontend client calls.
 
-Not every view is API-backed yet: the broker dashboard renders entirely from
-`packages/broker/src/lib/demo-data.ts` and has no endpoints. The bond catalog, the vendor dashboard and the
-admin dashboard read from the API — the vendor UI keeps only project bookmarks in local storage, its
-verification-document form has no backend field yet, and the performance tiles are derived from awarded
-projects, milestones, MRV reports and the platform rating (fields the API does not store, such as client
-endorsements, stay at 0 rather than being estimated).
+Not every view is API-backed yet: the admin dashboard reads `/api/admin/*` but still renders its chart and
+console tiles from static constants (`packages/admin/src/lib/demo-data.ts`), and the business dashboard is a
+placeholder shell. The bond catalog, the vendor dashboard and the broker dashboard read from the API — the
+vendor and broker UIs keep only client-side UI state locally, their verification-document forms have no
+backend file field yet, and the vendor performance tiles are derived from awarded projects, milestones, MRV
+reports and the platform rating (fields the API does not store, such as client endorsements, stay at 0 rather
+than being estimated). The broker's bond-preparation checklist mirrors `/api/broker/projects/:id/status`
+transitions, so the UI cannot move a project into a state the API rejects.
 
 ## 7. Data model
 
@@ -232,6 +289,9 @@ SQL migrations in `drizzle/`. The schema is also the source of the shared types.
 | `project_milestones` | Delivery milestones of an awarded project. |
 | `milestone_evidence` | Files a vendor attaches to a milestone. |
 | `vendor_portfolio_items` | Portfolio references a vendor authored. |
+| `broker_profiles` | Broker firm profile, licence filing and verification state, one per broker user. |
+| `broker_assignments` | Company-to-broker assignment: broker lifecycle status, assignment decision, bond tracking. |
+| `document_requests` | Broker document requests to the company, with submission and review state. |
 
 **Lifecycles**
 
@@ -239,6 +299,9 @@ SQL migrations in `drizzle/`. The schema is also the source of the shared types.
 - Blueprint: `draft -> audit -> validated | rejected -> published`
 - Proposal: `submitted -> reviewed -> revision -> accepted | rejected`
 - Tender: `open -> evaluation -> closed -> awarded`
+- Broker assignment: `ASSIGNED -> DOCUMENT_COLLECTION <-> UNDER_REVIEW -> READY_FOR_BOND_ISSUANCE -> BOND_ISSUANCE -> MONITORING -> COMPLETED` (plus `DECLINED`); forward steps only, with a one-step correction
+- Document request: `REQUESTED -> SUBMITTED -> UNDER_REVIEW -> APPROVED | REJECTED -> RESUBMISSION`
+- External bond: `NOT_STARTED -> IN_PROGRESS -> ISSUED` (tracked only; issuance happens outside GreenShift)
 
 **Unique constraints** (enforced in the database, and what make the `ON CONFLICT` upserts atomic):
 
@@ -250,6 +313,8 @@ SQL migrations in `drizzle/`. The schema is also the source of the shared types.
 | `proposal_revisions_proposal_number_unique` | One row per revision number. |
 | `investments_bond_serial_unique` | Unique bond serial (nullable). |
 | `roi_payments_escrow_tx_unique` | Unique escrow transaction id (nullable). |
+| `broker_profiles_user_id_unique` | One broker profile per user. |
+| `broker_assignments_project_broker_unique` | One assignment per project and broker. |
 
 ## 8. Data access (Drizzle only)
 
@@ -290,8 +355,9 @@ The Worker, D1, KV and R2 bindings are declared in `wrangler.jsonc`; `bun run de
 
 - `bun run typecheck` (tsc) and `bun run check` (Biome) are the gate for every change.
 - The route tree is regenerated with `bun run generate-routes`.
-- Local end-to-end checks exercise login, the vendor profile/proposal flows, the admin stats and anomaly
-  console, and the public bond catalog.
+- Local end-to-end checks exercise login, the vendor profile/proposal flows, the broker assignment and
+  document review flows (including the PDF export), the admin stats and anomaly console, and the public bond
+  catalog.
 
 ## 11. UI component conventions
 
