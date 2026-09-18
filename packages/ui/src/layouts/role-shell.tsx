@@ -2,15 +2,21 @@ import {
 	faBell,
 	faBriefcase,
 	faChartLine,
+	faChartPie,
 	faChevronDown,
 	faChevronUp,
 	faCircleUser,
-	faCoins,
+	faClipboardList,
 	faFileLines,
+	faGavel,
 	faGauge,
+	faGear,
+	faHandshake,
 	faLayerGroup,
+	faLeaf,
 	faRightFromBracket,
 	faServer,
+	faTasks,
 	faTruck,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -27,8 +33,81 @@ interface RoleShellProps {
 	navItems: Array<{ to: string; label: string }>;
 }
 
+function getSidebarIcon(item: { to: string; label: string }) {
+	const to = item.to.toLowerCase();
+	const label = item.label.toLowerCase();
+
+	if (
+		to === "/vendor" ||
+		to === "/investor" ||
+		to === "/admin" ||
+		to === "/business" ||
+		label === "dashboard"
+	) {
+		return faGauge;
+	}
+	if (
+		to.includes("deals") ||
+		label.includes("deal")
+	) {
+		return faHandshake;
+	}
+	if (
+		to.includes("opportunities") ||
+		label.includes("opportunit")
+	) {
+		return faLeaf;
+	}
+	if (to.includes("tenders") || label.includes("tender") || label.includes("lelang")) {
+		return faGavel;
+	}
+	if (to.includes("active-projects") || label.includes("active")) {
+		return faTasks;
+	}
+	if (
+		to.includes("portfolio") ||
+		label.includes("portfolio") ||
+		to.includes("performance") ||
+		label.includes("performance") ||
+		label.includes("kinerja")
+	) {
+		return faBriefcase;
+	}
+	if (
+		to.includes("settings") ||
+		label.includes("settings") ||
+		label.includes("pengaturan")
+	) {
+		return faGear;
+	}
+	if (to.includes("projects") || label.includes("projects") || label.includes("proyek")) {
+		return faLeaf;
+	}
+	if (to.includes("analytics") || label.includes("analytics")) {
+		return faChartPie;
+	}
+	if (to.includes("monthly-report") || label.includes("monthly report")) {
+		return faChartLine;
+	}
+	if (to.includes("market") || label.includes("market")) {
+		return faLayerGroup;
+	}
+	if (to.includes("vendors") || label.includes("vendors")) {
+		return faTruck;
+	}
+	if (to.includes("system") || label.includes("system")) {
+		return faServer;
+	}
+	if (to.includes("audit") || label.includes("audit")) {
+		return faClipboardList;
+	}
+
+	return faFileLines;
+}
+
 export function RoleShell({ children, title, navItems }: RoleShellProps) {
 	const {
+		user,
 		name,
 		initials,
 		homeHref,
@@ -36,6 +115,10 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 		accountRef,
 		accountMenuOpen,
 		toggleAccountMenu,
+		notifRef,
+		notifMenuOpen,
+		toggleNotifMenu,
+		closeNotifMenu,
 		openProfile,
 		handleLogout,
 	} = useRoleShell();
@@ -62,22 +145,7 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 					>
 						{navItems.map((item) => {
 							const isActive = activePath === item.to;
-							const icon =
-								item.label === "Dashboard"
-									? faGauge
-									: item.label === "Analytics"
-										? faChartLine
-										: item.label === "Projects"
-											? faBriefcase
-											: item.label === "Portfolio"
-												? faCoins
-												: item.label === "Green Market"
-													? faLayerGroup
-													: item.label === "Vendors"
-														? faTruck
-														: item.label === "System"
-															? faServer
-															: faFileLines;
+							const icon = getSidebarIcon(item);
 							return (
 								<Link
 									key={item.to}
@@ -112,14 +180,103 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 					</div>
 
 					<div className="flex items-center gap-3">
+t				{/* Bell Icon Notification Dropdown Section */}
+					<div ref={notifRef} className="relative">
 						<button
 							type="button"
-							aria-label="Notifications"
-							className="flex size-10 items-center justify-center rounded-lg text-sidebar-foreground/70 transition-colors hover:bg-foreground/5 hover:text-foreground"
+							onClick={toggleNotifMenu}
+							aria-label="Notifikasi"
+							className="relative flex size-10 items-center justify-center rounded-lg text-sidebar-foreground/70 transition-colors hover:bg-foreground/5 hover:text-foreground"
 						>
 							<FontAwesomeIcon icon={faBell} className="size-5" />
-						</button>
+							<span className="absolute right-2 top-2 flex size-2 rounded-full bg-emerald-600 ring-2 ring-white" />
+						{/* Bell Icon Notification Dropdown Section */}
+						<div ref={notifRef} className="relative">
+							<button
+								type="button"
+								onClick={toggleNotifMenu}
+								aria-label="Notifikasi"
+								className="relative flex size-10 items-center justify-center rounded-lg text-sidebar-foreground/70 transition-colors hover:bg-foreground/5 hover:text-foreground"
+							>
+								<FontAwesomeIcon icon={faBell} className="size-5" />
+								<span className="absolute right-2 top-2 flex size-2 rounded-full bg-emerald-600 ring-2 ring-white" />
+							</button>
 
+							{notifMenuOpen && (
+								<div
+									role="menu"
+									className="absolute right-0 top-full mt-2 w-80 overflow-hidden rounded-xl border border-border bg-white shadow-xl z-50"
+								>
+									<div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-3">
+										<div className="flex items-center gap-2">
+											<FontAwesomeIcon icon={faBell} className="size-4 text-emerald-600" />
+											<span className="text-sm font-semibold text-foreground">
+												Pusat Notifikasi
+											</span>
+										</div>
+										<span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
+											2 Baru
+										</span>
+									</div>
+
+									<div className="max-h-72 overflow-y-auto divide-y divide-border text-xs">
+										<Link
+											to={user ? (`/${user.role}/notifications` as any) : "/vendor/notifications"}
+											onClick={closeNotifMenu}
+											className="block p-3 transition-colors hover:bg-muted/50 no-underline"
+										>
+											<div className="flex items-start gap-2.5">
+												<span className="mt-1 size-2 rounded-full bg-blue-500 shrink-0" />
+												<div>
+													<p className="font-semibold text-foreground">
+														Permintaan Negosiasi Baru
+													</p>
+													<p className="mt-0.5 text-muted-foreground line-clamp-2">
+														PT Sentra Graha Medika mengajukan revisi harga & garansi.
+													</p>
+													<span className="mt-1 block text-[10px] text-muted-foreground">
+														10 menit yang lalu
+													</span>
+												</div>
+											</div>
+										</Link>
+
+										<Link
+											to={user ? (`/${user.role}/notifications` as any) : "/vendor/notifications"}
+											onClick={closeNotifMenu}
+											className="block p-3 transition-colors hover:bg-muted/50 no-underline"
+										>
+											<div className="flex items-start gap-2.5">
+												<span className="mt-1 size-2 rounded-full bg-emerald-500 shrink-0" />
+												<div>
+													<p className="font-semibold text-foreground">
+														Perubahan Peringkat Lelang
+													</p>
+													<p className="mt-0.5 text-muted-foreground line-clamp-2">
+														Tawaran Anda pada Solar PV Pabrik Tekstil berada di posisi 2.
+													</p>
+													<span className="mt-1 block text-[10px] text-muted-foreground">
+														2 jam yang lalu
+													</span>
+												</div>
+											</div>
+										</Link>
+									</div>
+
+									<div className="border-t border-border bg-muted/20 p-2.5 text-center">
+										<Link
+											to={user ? (`/${user.role}/notifications` as any) : "/vendor/notifications"}
+											onClick={closeNotifMenu}
+											className="block rounded-lg py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 transition-colors no-underline"
+										>
+											Lihat Semua Notifikasi →
+										</Link>
+									</div>
+								</div>
+							)}
+						</div>
+
+						{/* User Profile Avatar Dropdown */}
 						<div ref={accountRef} className="relative">
 							<button
 								type="button"

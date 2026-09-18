@@ -1,0 +1,271 @@
+import {
+	faCamera,
+	faCloudUploadAlt,
+	faFileAlt,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+	Badge,
+	Button,
+	Card,
+	CardContent,
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+	Input,
+	Label,
+} from "@greenshift/ui";
+import { useState } from "react";
+import type { EvidenceFile, ProjectMilestone } from "../lib/types";
+import { MILESTONE_STATUS_LABEL } from "../lib/labels";
+
+interface MilestoneTrackerCardProps {
+	projectId: string;
+	milestones: ProjectMilestone[];
+	onSubmitEvidence: (
+		activeProjectId: string,
+		milestoneId: string,
+		evidenceItem: EvidenceFile,
+		notes: string,
+	) => void;
+}
+
+function SubmitMilestoneEvidenceDialog({
+	projectId,
+	milestone,
+	onSubmitEvidence,
+}: {
+	projectId: string;
+	milestone: ProjectMilestone;
+	onSubmitEvidence: (
+		activeProjectId: string,
+		milestoneId: string,
+		evidenceItem: EvidenceFile,
+		notes: string,
+	) => void;
+}) {
+	const [open, setOpen] = useState(false);
+	const [fileName, setFileName] = useState("");
+	const [fileType, setFileType] = useState<EvidenceFile["type"]>("photo");
+	const [vendorNotes, setVendorNotes] = useState("");
+
+	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		if (!fileName.trim()) return;
+
+		const newItem: EvidenceFile = {
+			id: `ev-${Date.now()}`,
+			name: fileName,
+			type: fileType,
+			url: "#",
+			uploadedAt: new Date().toISOString().split("T")[0],
+		};
+
+		onSubmitEvidence(projectId, milestone.id, newItem, vendorNotes);
+		setOpen(false);
+		setFileName("");
+		setVendorNotes("");
+	};
+
+	return (
+		<Dialog open={open} onOpenChange={setOpen}>
+			<DialogTrigger asChild>
+				<Button
+					size="sm"
+					className="gap-1.5 bg-[#03442C] text-xs text-white hover:bg-[#03442C]/90"
+				>
+					<FontAwesomeIcon icon={faCloudUploadAlt} />
+					Upload Milestone Evidence
+				</Button>
+			</DialogTrigger>
+			<DialogContent className="max-w-md">
+				<DialogHeader>
+					<DialogTitle className="flex items-center gap-2">
+						<FontAwesomeIcon icon={faCamera} className="text-emerald-600" />
+						Upload Physical Evidence for Milestone 0{milestone.stepNumber}
+					</DialogTitle>
+				</DialogHeader>
+
+				<form onSubmit={handleSubmit} className="space-y-4 pt-2 text-xs">
+					<div className="rounded-lg bg-muted p-3">
+						<p className="font-semibold text-foreground">{milestone.title}</p>
+						<p className="mt-0.5 text-muted-foreground">
+							{milestone.description}
+						</p>
+					</div>
+
+					<div className="space-y-1.5">
+						<Label htmlFor="ev-name" className="text-xs font-semibold">
+							Evidence File / Document Name:
+						</Label>
+						<Input
+							id="ev-name"
+							value={fileName}
+							onChange={(e) => setFileName(e.target.value)}
+							placeholder="e.g. Inverter_Wiring_Inspection_Photo.jpg"
+							required
+						/>
+					</div>
+
+					<div className="space-y-1.5">
+						<Label htmlFor="ev-type" className="text-xs font-semibold">
+							Evidence Type:
+						</Label>
+						<select
+							id="ev-type"
+							className="w-full rounded-md border border-input bg-background p-2 text-xs"
+							value={fileType}
+							onChange={(e) =>
+								setFileType(e.target.value as EvidenceFile["type"])
+							}
+						>
+							<option value="photo">Field Photo (Photo)</option>
+							<option value="video">Video Documentation</option>
+							<option value="document">Document / BAST (Handover Certificate)</option>
+							<option value="inspection">Inspection / Testing Report</option>
+							<option value="energy_data">Energy Log / Smart Meter Data</option>
+						</select>
+					</div>
+
+					<div className="space-y-1.5">
+						<Label htmlFor="ev-notes" className="text-xs font-semibold">
+							Vendor Execution Notes:
+						</Label>
+						<textarea
+							id="ev-notes"
+							rows={3}
+							className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+							value={vendorNotes}
+							onChange={(e) => setVendorNotes(e.target.value)}
+							placeholder="Detail physical milestones achieved and installation specs..."
+						/>
+					</div>
+
+					<p className="text-[11px] italic text-muted-foreground">
+						* After uploading evidence, the milestone status advances to
+						"Under Review" for client inspection and sign-off.
+					</p>
+
+					<div className="flex justify-end gap-2 border-t border-border pt-2">
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => setOpen(false)}
+						>
+							Cancel
+						</Button>
+						<Button
+							type="submit"
+							className="bg-[#03442C] text-white hover:bg-[#03442C]/90"
+						>
+							Submit Evidence for Client Review
+						</Button>
+					</div>
+				</form>
+			</DialogContent>
+		</Dialog>
+	);
+}
+
+export function MilestoneTrackerCard({
+	projectId,
+	milestones,
+	onSubmitEvidence,
+}: MilestoneTrackerCardProps) {
+	return (
+		<div className="space-y-4">
+			<div className="flex items-center justify-between">
+				<h3 className="text-lg font-bold">Agreed Milestones Tracker</h3>
+				<span className="text-xs text-muted-foreground">
+					* Milestones are jointly scheduled with the Client upon contract execution.
+				</span>
+			</div>
+
+			<div className="space-y-4">
+				{milestones.map((ms) => {
+					const isDone =
+						ms.status === "COMPLETED" || ms.status === "APPROVED";
+					return (
+						<Card
+							key={ms.id}
+							className={isDone ? "border-emerald-500/50 bg-emerald-50/20" : ""}
+						>
+							<CardContent className="space-y-4 p-5 text-xs">
+								<div className="flex flex-wrap items-start justify-between gap-3">
+									<div className="space-y-1">
+										<div className="flex items-center gap-2">
+											<Badge variant="outline" className="font-bold">
+												Milestone 0{ms.stepNumber}
+											</Badge>
+											<Badge
+												className={
+													isDone
+														? "bg-emerald-600 text-white"
+														: ms.status === "SUBMITTED_FOR_REVIEW"
+														? "bg-blue-600 text-white"
+														: "bg-muted text-muted-foreground"
+												}
+											>
+												{MILESTONE_STATUS_LABEL[ms.status]}
+											</Badge>
+										</div>
+										<h4 className="mt-1 text-base font-bold text-foreground">
+											{ms.title}
+										</h4>
+										<p className="text-muted-foreground">{ms.description}</p>
+									</div>
+
+									{!isDone && (
+										<SubmitMilestoneEvidenceDialog
+											projectId={projectId}
+											milestone={ms}
+											onSubmitEvidence={onSubmitEvidence}
+										/>
+									)}
+								</div>
+
+								{/* Evidence List */}
+								{ms.evidence.length > 0 && (
+									<div className="space-y-2 rounded-lg bg-muted p-3">
+										<p className="font-semibold text-foreground">
+											Uploaded Execution Evidence:
+										</p>
+										<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+											{ms.evidence.map((ev) => (
+												<div
+													key={ev.id}
+													className="flex items-center justify-between rounded-md border border-border bg-card p-2 text-xs"
+												>
+													<span className="flex items-center gap-2 truncate">
+														<FontAwesomeIcon
+															icon={faFileAlt}
+															className="text-emerald-600"
+														/>
+														{ev.name}
+													</span>
+													<span className="text-[10px] text-muted-foreground">
+														{ev.uploadedAt}
+													</span>
+												</div>
+											))}
+										</div>
+									</div>
+								)}
+
+								{/* Notes */}
+								{ms.companyReviewNotes && (
+									<div className="rounded-lg bg-emerald-100/60 p-3 text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-200">
+										<p className="font-semibold">Client Review Notes:</p>
+										<p className="mt-0.5">{ms.companyReviewNotes}</p>
+									</div>
+								)}
+							</CardContent>
+						</Card>
+					);
+				})}
+			</div>
+		</div>
+	);
+}
