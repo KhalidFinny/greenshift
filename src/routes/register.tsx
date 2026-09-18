@@ -62,29 +62,15 @@ function RegisterPage() {
 	return (
 		<div className="grid min-h-screen lg:grid-cols-2">
 			<section className="relative hidden flex-col justify-between overflow-hidden bg-[#014A2F] p-12 lg:flex">
-				{/* Background landscape */}
+				{/* Background image */}
 				<img
-					src="/green-1.webp"
+					src="/skysidebar.webp"
 					alt=""
 					aria-hidden="true"
-					className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-40"
+					className="pointer-events-none absolute inset-0 h-full w-full object-cover"
 				/>
-				{/* Dark-to-green gradient overlay */}
-				<div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#014A2F]/90 via-[#014A2F]/60 to-[#03442C]/40" />
-				{/* Subtle radial glow behind the dashboard */}
-				<div className="pointer-events-none absolute left-1/2 top-[42%] h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/20 blur-[120px]" />
-
-				{/* Dashboard preview — floating behind text */}
-				<div className="pointer-events-none absolute inset-x-0 top-[26%] mx-auto w-[78%] max-w-[560px] rotate-[-2deg] opacity-60 blur-[1px]">
-					<div className="overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
-						<img
-							src="/dashboard.webp"
-							alt=""
-							aria-hidden="true"
-							className="h-auto w-full"
-						/>
-					</div>
-				</div>
+				{/* Dark overlay */}
+				<div className="pointer-events-none absolute inset-0 bg-[#014A2F]/75" />
 
 				{/* Logo */}
 				<Link to="/" className="relative z-10 no-underline">

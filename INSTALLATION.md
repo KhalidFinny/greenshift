@@ -137,11 +137,39 @@ bun run preview  # preview the production build locally
 bun run deploy   # build and deploy to Cloudflare (wrangler deploy)
 ```
 
-Apply migrations to the deployed database before releasing:
+`wrangler deploy` needs an authenticated account (`bunx wrangler login`, or a `CLOUDFLARE_API_TOKEN`
+in the environment). The Worker name, the D1 database, the KV namespace and the R2 bucket are declared in
+`wrangler.jsonc`; on a fresh account, create them first and paste the returned IDs into that file:
 
 ```bash
-bunx wrangler d1 migrations apply greenshift-db --remote
+bunx wrangler d1 create greenshift-db
+bunx wrangler kv namespace create KV
+bunx wrangler r2 bucket create greenshift-assets
 ```
+
+Deploying publishes the app on `<worker-name>.<your-subdomain>.workers.dev`; the subdomain is created on the
+first deploy of the account.
+
+### Deploying the database
+
+Migrations and fixtures are separate steps, and the deployed database starts empty:
+
+```bash
+# 1. Apply migrations to the deployed database before releasing
+bunx wrangler d1 migrations apply greenshift-db --remote
+
+# 2. Load the demo accounts and fixtures into the deployed database (once, into an
+#    empty database - the file is not idempotent)
+bun scripts/seed.ts > scripts/seed.sql
+bunx wrangler d1 execute greenshift-db --remote --file=scripts/seed.sql
+
+# Inspect what the deployed database holds
+bunx wrangler d1 execute greenshift-db --remote --command "SELECT email, role FROM users"
+```
+
+Passwords are hashed at generation time, so the accounts seeded remotely are the same demo logins
+(`business1` / `vendor1` / `broker1` / `admin`, password `12345678`) - change or remove them before the
+deployment is shared publicly.
 
 ## Quality checks
 
