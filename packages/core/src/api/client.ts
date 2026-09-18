@@ -22,8 +22,16 @@ import type {
 	StepUpBody,
 	StepUpResponse,
 	UpdateStatusBody,
+	VendorLeaderboardResponse,
+	VendorMilestone,
+	VendorMilestoneEvidence,
 	VendorMyProject,
 	VendorMyProjectDetail,
+	VendorNegotiation,
+	VendorNegotiationResponseBody,
+	VendorNotification,
+	VendorPortfolioBody,
+	VendorPortfolioItem,
 	VendorProcurementStatusItem,
 	VendorProfile,
 	VendorProfileBody,
@@ -218,6 +226,63 @@ export const api = {
 			request<OkResponse>(
 				apiRoutes.vendorWithdrawProposal.path.replace(":id", String(id)),
 				{ method: apiRoutes.vendorWithdrawProposal.method },
+			),
+		notifications: (params?: { limit?: number }) =>
+			request<{ notifications: VendorNotification[] }>(
+				apiRoutes.vendorNotifications.path + query(params),
+			),
+		readNotification: (id: number) =>
+			request<OkResponse>(
+				apiRoutes.vendorReadNotification.path.replace(":id", String(id)),
+				{ method: apiRoutes.vendorReadNotification.method },
+			),
+		negotiations: () =>
+			request<{ negotiations: VendorNegotiation[] }>(
+				apiRoutes.vendorNegotiations.path,
+			),
+		respondNegotiation: (id: number, body: VendorNegotiationResponseBody) =>
+			request<{ negotiation: VendorNegotiation }>(
+				apiRoutes.vendorRespondNegotiation.path.replace(":id", String(id)),
+				{
+					method: apiRoutes.vendorRespondNegotiation.method,
+					body: JSON.stringify(body satisfies VendorNegotiationResponseBody),
+				},
+			),
+		leaderboard: () =>
+			request<VendorLeaderboardResponse>(apiRoutes.vendorLeaderboard.path),
+		portfolio: () =>
+			request<{ portfolio: VendorPortfolioItem[] }>(
+				apiRoutes.vendorPortfolio.path,
+			),
+		addPortfolioItem: (body: VendorPortfolioBody) =>
+			request<{ item: VendorPortfolioItem }>(
+				apiRoutes.vendorAddPortfolioItem.path,
+				{
+					method: apiRoutes.vendorAddPortfolioItem.method,
+					body: JSON.stringify(body satisfies VendorPortfolioBody),
+				},
+			),
+		deletePortfolioItem: (id: number) =>
+			request<OkResponse>(
+				apiRoutes.vendorDeletePortfolioItem.path.replace(":id", String(id)),
+				{ method: apiRoutes.vendorDeletePortfolioItem.method },
+			),
+		addMilestoneEvidence: (
+			milestoneId: number,
+			body: { kind: string; fileName: string; notes?: string },
+		) =>
+			request<{
+				evidence: VendorMilestoneEvidence;
+				milestone: VendorMilestone | null;
+			}>(
+				apiRoutes.vendorAddMilestoneEvidence.path.replace(
+					":id",
+					String(milestoneId),
+				),
+				{
+					method: apiRoutes.vendorAddMilestoneEvidence.method,
+					body: JSON.stringify(body),
+				},
 			),
 	},
 };

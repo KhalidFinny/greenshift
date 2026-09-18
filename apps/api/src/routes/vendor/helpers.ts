@@ -3,10 +3,16 @@ import type { Context } from "hono";
 import type {
 	ProposalDetail,
 	ProposalRevisionEntry,
+	VendorMilestone,
+	VendorMilestoneEvidence,
+	VendorMonthlyReport,
 	VendorTenderSummary,
 } from "../../contracts";
 import type { GreenShiftDb } from "../../db";
 import {
+	type emissionReports,
+	type milestoneEvidence,
+	type projectMilestones,
 	projects,
 	proposalRevisions,
 	proposals,
@@ -146,5 +152,63 @@ export async function getProposalDetail(
 			budget: row.project.budget,
 		},
 		revisions: revisions.map(revisionEntry),
+	};
+}
+
+// ── delivery mappers ──────────────────────────────────────
+export function evidenceEntry(
+	row: typeof milestoneEvidence.$inferSelect,
+): VendorMilestoneEvidence {
+	return {
+		id: row.id,
+		kind: row.kind,
+		fileName: row.fileName,
+		fileUrl: row.fileUrl,
+		notes: row.notes,
+		uploadedAt: row.uploadedAt.toISOString(),
+	};
+}
+
+export function milestoneEntry(
+	row: typeof projectMilestones.$inferSelect,
+	evidence: Array<typeof milestoneEvidence.$inferSelect>,
+): VendorMilestone {
+	return {
+		id: row.id,
+		stepNumber: row.stepNumber,
+		title: row.title,
+		description: row.description,
+		startDate: iso(row.startDate),
+		dueDate: iso(row.dueDate),
+		completionPercent: row.completionPercent ?? 0,
+		status: row.status,
+		vendorNotes: row.vendorNotes,
+		companyReviewNotes: row.companyReviewNotes,
+		evidence: evidence.map(evidenceEntry),
+	};
+}
+
+export function monthlyReportEntry(
+	row: typeof emissionReports.$inferSelect,
+): VendorMonthlyReport {
+	const reportData = row.reportData as { evidenceDocs?: string[] } | null;
+	const saved =
+		row.baselineConsumption !== null && row.actualConsumption !== null
+			? row.baselineConsumption - row.actualConsumption
+			: null;
+	return {
+		id: row.id,
+		projectId: row.projectId,
+		period: row.periodStart
+			? row.periodStart.toISOString().slice(0, 7)
+			: row.createdAt.toISOString().slice(0, 7),
+		periodStart: iso(row.periodStart),
+		periodEnd: iso(row.periodEnd),
+		actualConsumption: row.actualConsumption,
+		baselineConsumption: row.baselineConsumption,
+		energySavedKwh: saved,
+		carbonSavedTons: row.emissionReduction,
+		evidenceDocs: reportData?.evidenceDocs ?? [],
+		submittedAt: row.createdAt.toISOString(),
 	};
 }

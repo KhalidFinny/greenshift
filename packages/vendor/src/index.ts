@@ -1,6 +1,5 @@
 // Lib
 
-export * from "./lib/demo-data";
 export * from "./lib/format";
 export * from "./lib/labels";
 export * from "./lib/types";

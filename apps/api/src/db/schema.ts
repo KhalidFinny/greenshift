@@ -621,3 +621,204 @@ export const notifications = sqliteTable(
 		index("idx_notif_read").on(t.userId, t.read),
 	],
 );
+
+// ── negotiations (company revision rounds over a proposal) ─
+export const negotiationStatuses = [
+	"PENDING_VENDOR_RESPONSE",
+	"SUBMITTED_BY_VENDOR",
+	"AGREED",
+	"LOCKED",
+] as const;
+export type NegotiationStatus = (typeof negotiationStatuses)[number];
+
+/** A proposal can be renegotiated at most three times. */
+export const maxNegotiationIterations = 3;
+
+export const negotiations = sqliteTable(
+	"negotiations",
+	{
+		id: integer().primaryKey({ autoIncrement: true }),
+		proposalId: integer("proposal_id")
+			.notNull()
+			.references(() => proposals.id, { onDelete: "cascade" }),
+		iterationNumber: integer("iteration_number").notNull(),
+		status: text({ enum: negotiationStatuses })
+			.notNull()
+			.default("PENDING_VENDOR_RESPONSE"),
+		// What the company asked for
+		requestedPriceReduction: real("requested_price_reduction"),
+		requestedWarrantyYears: integer("requested_warranty_years"),
+		requestedTimelineMonths: integer("requested_timeline_months"),
+		requestedFields: text("requested_fields", { mode: "json" })
+			.$type<string[]>()
+			.default([]),
+		companyNote: text("company_note").notNull(),
+		// What the vendor answered with
+		vendorRevisedPrice: real("vendor_revised_price"),
+		vendorRevisedWarrantyYears: integer("vendor_revised_warranty_years"),
+		vendorRevisedTimelineMonths: integer("vendor_revised_timeline_months"),
+		vendorResponseNote: text("vendor_response_note"),
+		respondedAt: integer("responded_at", { mode: "timestamp_ms" }),
+		createdAt: integer("created_at", { mode: "timestamp_ms" })
+			.notNull()
+			.$defaultFn(() => new Date()),
+		updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+			.notNull()
+			.$defaultFn(() => new Date())
+			.$onUpdateFn(() => new Date()),
+	},
+	(t) => [
+		uniqueIndex("negotiations_proposal_iteration_unique").on(
+			t.proposalId,
+			t.iterationNumber,
+		),
+		index("idx_negotiation_status").on(t.status),
+	],
+);
+
+export const negotiationsRelations = relations(negotiations, ({ one }) => ({
+	proposal: one(proposals, {
+		fields: [negotiations.proposalId],
+		references: [proposals.id],
+	}),
+}));
+
+// ── project_milestones (delivery tracking after award) ───
+export const milestoneStatuses = [
+	"NOT_STARTED",
+	"IN_PROGRESS",
+	"SUBMITTED_FOR_REVIEW",
+	"APPROVED",
+	"REVISION_REQUIRED",
+	"COMPLETED",
+] as const;
+export type MilestoneStatus = (typeof milestoneStatuses)[number];
+
+export const projectMilestones = sqliteTable(
+	"project_milestones",
+	{
+		id: integer().primaryKey({ autoIncrement: true }),
+		projectId: integer("project_id")
+			.notNull()
+			.references(() => projects.id, { onDelete: "cascade" }),
+		stepNumber: integer("step_number").notNull(),
+		title: text().notNull(),
+		description: text(),
+		startDate: integer("start_date", { mode: "timestamp_ms" }),
+		dueDate: integer("due_date", { mode: "timestamp_ms" }),
+		completionPercent: real("completion_percent").default(0),
+		status: text({ enum: milestoneStatuses }).notNull().default("NOT_STARTED"),
+		vendorNotes: text("vendor_notes"),
+		companyReviewNotes: text("company_review_notes"),
+		createdAt: integer("created_at", { mode: "timestamp_ms" })
+			.notNull()
+			.$defaultFn(() => new Date()),
+		updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+			.notNull()
+			.$defaultFn(() => new Date())
+			.$onUpdateFn(() => new Date()),
+	},
+	(t) => [
+		index("idx_milestone_project").on(t.projectId),
+		uniqueIndex("project_milestones_project_step_unique").on(
+			t.projectId,
+			t.stepNumber,
+		),
+	],
+);
+
+export const projectMilestonesRelations = relations(
+	projectMilestones,
+	({ one, many }) => ({
+		project: one(projects, {
+			fields: [projectMilestones.projectId],
+			references: [projects.id],
+		}),
+		evidence: many(milestoneEvidence),
+	}),
+);
+
+// ── milestone_evidence (files attached to a milestone) ───
+export const evidenceKinds = [
+	"photo",
+	"video",
+	"document",
+	"inspection",
+	"energy_data",
+] as const;
+export type EvidenceKind = (typeof evidenceKinds)[number];
+
+export const milestoneEvidence = sqliteTable(
+	"milestone_evidence",
+	{
+		id: integer().primaryKey({ autoIncrement: true }),
+		milestoneId: integer("milestone_id")
+			.notNull()
+			.references(() => projectMilestones.id, { onDelete: "cascade" }),
+		kind: text({ enum: evidenceKinds }).notNull().default("document"),
+		fileName: text("file_name").notNull(),
+		fileUrl: text("file_url"),
+		notes: text(),
+		uploadedAt: integer("uploaded_at", { mode: "timestamp_ms" })
+			.notNull()
+			.$defaultFn(() => new Date()),
+	},
+	(t) => [index("idx_evidence_milestone").on(t.milestoneId)],
+);
+
+export const milestoneEvidenceRelations = relations(
+	milestoneEvidence,
+	({ one }) => ({
+		milestone: one(projectMilestones, {
+			fields: [milestoneEvidence.milestoneId],
+			references: [projectMilestones.id],
+		}),
+	}),
+);
+
+// ── vendor_portfolio_items (vendor-authored references) ──
+export const portfolioItemStatuses = ["COMPLETED", "VERIFIED"] as const;
+export type PortfolioItemStatus = (typeof portfolioItemStatuses)[number];
+
+export const vendorPortfolioItems = sqliteTable(
+	"vendor_portfolio_items",
+	{
+		id: integer().primaryKey({ autoIncrement: true }),
+		vendorId: integer("vendor_id")
+			.notNull()
+			.references(() => vendors.id, { onDelete: "cascade" }),
+		projectName: text("project_name").notNull(),
+		clientName: text("client_name").notNull(),
+		projectType: text("project_type"),
+		location: text(),
+		description: text(),
+		projectValue: real("project_value").notNull(),
+		durationMonths: integer("duration_months"),
+		servicesProvided: text("services_provided"),
+		energySavingPercent: real("energy_saving_percent"),
+		carbonReductionTons: real("carbon_reduction_tons"),
+		completionYear: integer("completion_year"),
+		status: text({ enum: portfolioItemStatuses })
+			.notNull()
+			.default("COMPLETED"),
+		documentName: text("document_name"),
+		createdAt: integer("created_at", { mode: "timestamp_ms" })
+			.notNull()
+			.$defaultFn(() => new Date()),
+		updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+			.notNull()
+			.$defaultFn(() => new Date())
+			.$onUpdateFn(() => new Date()),
+	},
+	(t) => [index("idx_portfolio_vendor").on(t.vendorId)],
+);
+
+export const vendorPortfolioItemsRelations = relations(
+	vendorPortfolioItems,
+	({ one }) => ({
+		vendor: one(vendors, {
+			fields: [vendorPortfolioItems.vendorId],
+			references: [vendors.id],
+		}),
+	}),
+);

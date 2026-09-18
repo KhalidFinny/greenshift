@@ -67,6 +67,33 @@ export const apiRoutes = {
 		method: "DELETE",
 		path: "/api/vendor/proposals/:id",
 	},
+	vendorNotifications: {
+		method: "GET",
+		path: "/api/vendor/notifications",
+	},
+	vendorReadNotification: {
+		method: "PATCH",
+		path: "/api/vendor/notifications/:id",
+	},
+	vendorNegotiations: { method: "GET", path: "/api/vendor/negotiations" },
+	vendorRespondNegotiation: {
+		method: "POST",
+		path: "/api/vendor/negotiations/:id/response",
+	},
+	vendorLeaderboard: { method: "GET", path: "/api/vendor/leaderboard" },
+	vendorPortfolio: { method: "GET", path: "/api/vendor/portfolio" },
+	vendorAddPortfolioItem: {
+		method: "POST",
+		path: "/api/vendor/portfolio",
+	},
+	vendorDeletePortfolioItem: {
+		method: "DELETE",
+		path: "/api/vendor/portfolio/:id",
+	},
+	vendorAddMilestoneEvidence: {
+		method: "POST",
+		path: "/api/vendor/milestones/:id/evidence",
+	},
 } as const;
 
 export interface LoginBody {
@@ -422,13 +449,154 @@ export interface VendorMyProject {
 		location?: string | null;
 		industrySector?: string | null;
 		budget?: number | null;
+		targetEmissionReduction?: number | null;
+		estimatedEnergySaving?: number | null;
 	};
 	tender: VendorTenderSummary | null;
+	milestones?: VendorMilestone[];
+	monthlyReports?: VendorMonthlyReport[];
 }
 
 export interface VendorMyProjectDetail extends VendorProjectDetail {
 	proposal: ProposalDetail;
 	revisions?: ProposalRevisionEntry[];
+	milestones?: VendorMilestone[];
+	monthlyReports?: VendorMonthlyReport[];
+}
+
+export interface VendorNotification {
+	id: number;
+	type: string;
+	title: string;
+	body: string | null;
+	link: string | null;
+	read: boolean;
+	createdAt: string;
+}
+
+export interface VendorNegotiation {
+	id: number;
+	proposalId: number;
+	projectId: number | null;
+	projectTitle: string;
+	companyName: string | null;
+	iterationNumber: number;
+	maxIterations: number;
+	status: string;
+	requestedPriceReduction: number | null;
+	requestedWarrantyYears: number | null;
+	requestedTimelineMonths: number | null;
+	requestedFields: string[];
+	companyNote: string;
+	vendorRevisedPrice: number | null;
+	vendorRevisedWarrantyYears: number | null;
+	vendorRevisedTimelineMonths: number | null;
+	vendorResponseNote: string | null;
+	respondedAt: string | null;
+	updatedAt: string;
+}
+
+export interface VendorNegotiationResponseBody {
+	revisedPrice?: number;
+	revisedWarrantyYears?: number;
+	revisedTimelineMonths?: number;
+	note?: string;
+}
+
+export interface VendorLeaderboardEntry {
+	rank: number;
+	proposalId: number;
+	vendorName: string;
+	isCurrentVendor: boolean;
+	amount: number;
+	updatedAt: string;
+}
+
+/** Ranking of the open-bid tender the vendor is currently bidding on. */
+export interface VendorLeaderboardResponse {
+	tender: {
+		id: number;
+		projectId: number;
+		projectTitle: string;
+		method: string;
+		status: string;
+		deadlineAt: string | null;
+		budgetMax: number | null;
+	} | null;
+	myProposalId: number | null;
+	myAmount: number | null;
+	myRank: number | null;
+	entries: VendorLeaderboardEntry[];
+}
+
+export interface VendorMilestoneEvidence {
+	id: number;
+	kind: string;
+	fileName: string;
+	fileUrl: string | null;
+	notes: string | null;
+	uploadedAt: string;
+}
+
+export interface VendorMilestone {
+	id: number;
+	stepNumber: number;
+	title: string;
+	description: string | null;
+	startDate: string | null;
+	dueDate: string | null;
+	completionPercent: number | null;
+	status: string;
+	vendorNotes: string | null;
+	companyReviewNotes: string | null;
+	evidence: VendorMilestoneEvidence[];
+}
+
+export interface VendorMonthlyReport {
+	id: number;
+	projectId: number;
+	period: string; // "2026-08"
+	periodStart: string | null;
+	periodEnd: string | null;
+	actualConsumption: number | null;
+	baselineConsumption: number | null;
+	energySavedKwh: number | null;
+	carbonSavedTons: number | null;
+	evidenceDocs: string[];
+	submittedAt: string;
+}
+
+export interface VendorPortfolioItem {
+	id: number;
+	projectName: string;
+	clientName: string;
+	projectType: string | null;
+	location: string | null;
+	description: string | null;
+	projectValue: number;
+	durationMonths: number | null;
+	servicesProvided: string | null;
+	energySavingPercent: number | null;
+	carbonReductionTons: number | null;
+	completionYear: number | null;
+	status: string;
+	documentName: string | null;
+}
+
+export interface VendorPortfolioBody {
+	projectName: string;
+	clientName: string;
+	projectType?: string;
+	location?: string;
+	description?: string;
+	projectValue: number;
+	durationMonths?: number;
+	servicesProvided?: string;
+	energySavingPercent?: number;
+	carbonReductionTons?: number;
+	completionYear?: number;
+	status?: string;
+	documentName?: string;
 }
 
 export interface VendorProcurementStatusItem {

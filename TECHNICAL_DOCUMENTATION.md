@@ -43,7 +43,7 @@ scripts/          Demo-user seeder (db:setup) and seed-fixture generator
 | Role | Entry route | Package | Data source |
 |---|---|---|---|
 | `business` | `/business` | `packages/business` | Placeholder shell; no API surface yet. |
-| `vendor` | `/vendor` | `packages/vendor` | `/api/vendor/*` plus local demo state for the leaderboard, notifications and negotiations. |
+| `vendor` | `/vendor` | `packages/vendor` | `/api/vendor/*` (profile, opportunities, proposals, negotiations, notifications, leaderboard, portfolio, milestones, MRV reports). |
 | `broker` | `/broker` | `packages/broker` | Local demo dataset (`packages/broker/src/lib/demo-data.ts`); no API surface yet. |
 | `admin` | `/admin` | `packages/admin` | `/api/admin/*` plus static demo constants for the chart/console tiles. |
 | `investor` | `/bonds` | `packages/investor` | `GET /api/investor/market`, falling back to the demo catalog when the API returns nothing. |
@@ -144,7 +144,7 @@ step-up required, `429` rate limited, `500` internal.
 |---|---|---|
 | GET | `/api/vendor/projects` | Biddable tenders/projects. |
 | GET | `/api/vendor/projects/:id` | Project detail (blueprint financials once published). |
-| GET | `/api/vendor/my-projects` | Projects the vendor has a proposal on. |
+| GET | `/api/vendor/my-projects` | Projects the vendor has a proposal on, with delivery milestones and MRV reports. |
 | GET | `/api/vendor/my-projects/:id` | Own-proposal project detail. |
 | GET | `/api/vendor/procurement-status` | Procurement status with latest revision note. |
 | GET | `/api/vendor/profile` | Vendor profile. |
@@ -152,8 +152,17 @@ step-up required, `429` rate limited, `500` internal.
 | GET | `/api/vendor/proposals` | Own proposals. |
 | POST | `/api/vendor/proposals` | Submit a proposal to an open tender. |
 | GET | `/api/vendor/proposals/:id` | Proposal detail with revision trail. |
-| PATCH | `/api/vendor/proposals/:id` | Edit a submitted proposal or answer a revision. |
+| PATCH | `/api/vendor/proposals/:id` | Edit a submitted proposal, answer a revision, or revise an open bid. |
 | DELETE | `/api/vendor/proposals/:id` | Withdraw a still-`submitted` proposal. |
+| GET | `/api/vendor/negotiations` | Revision rounds the company opened on the vendor's proposals. |
+| POST | `/api/vendor/negotiations/:id/response` | Answer a revision round (counter-offer, proposal revision trail, back to review). |
+| GET | `/api/vendor/notifications` | Notification feed. |
+| PATCH | `/api/vendor/notifications/:id` | Mark one notification read (idempotent). |
+| GET | `/api/vendor/leaderboard` | Ranking of the open-bid tender the vendor is currently bidding on. |
+| GET | `/api/vendor/portfolio` | Portfolio references the vendor authored. |
+| POST | `/api/vendor/portfolio` | Add a portfolio reference. |
+| DELETE | `/api/vendor/portfolio/:id` | Remove a portfolio reference. |
+| POST | `/api/vendor/milestones/:id/evidence` | Attach delivery evidence to a milestone of an awarded project. |
 
 ### Admin (role `admin`, step-up for mutations)
 
@@ -178,10 +187,11 @@ Request and response types live in `apps/api/src/contracts.ts` and are re-export
 `@greenshift/api`, so client and server share one typed contract. `apiRoutes` in the same file is the single
 list of method/path pairs the frontend client calls.
 
-Not every view is API-backed: the broker dashboard renders entirely from
-`packages/broker/src/lib/demo-data.ts`, and the vendor dashboard keeps the open-bid leaderboard,
-notifications and negotiation requests in client state seeded from `packages/vendor/src/lib/demo-data.ts`
-(negotiations have no endpoint yet). Everything else the vendor dashboard shows comes from `/api/vendor/*`.
+Not every view is API-backed yet: the broker dashboard renders entirely from
+`packages/broker/src/lib/demo-data.ts` and has no endpoints, and the bond catalog falls back to
+`packages/investor/src/lib/demo-data.ts` when `GET /api/investor/market` returns an empty catalog. The vendor
+and admin dashboards read from the API; the vendor UI keeps only project bookmarks in local storage, and its
+verification-document form has no backend field yet.
 
 ## 7. Data model
 
@@ -217,6 +227,10 @@ SQL migrations in `drizzle/`. The schema is also the source of the shared types.
 | `emission_reports` | MRV reports with anomaly flag/score. |
 | `audit_logs` | Traceability trail for every mutation. |
 | `notifications` | Per-user notifications. |
+| `negotiations` | Company revision rounds over a proposal (requested terms, vendor counter-offer, status). |
+| `project_milestones` | Delivery milestones of an awarded project. |
+| `milestone_evidence` | Files a vendor attaches to a milestone. |
+| `vendor_portfolio_items` | Portfolio references a vendor authored. |
 
 **Lifecycles**
 

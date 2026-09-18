@@ -1,25 +1,23 @@
 import { api } from "@greenshift/core";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
 	derivePerformanceMetrics,
+	type LeaderboardView,
+	mapLeaderboard,
+	mapNegotiation,
+	mapNotification,
+	mapPortfolioItem,
 	mapProjectToCardData,
 	mapToActiveProject,
 	mapToPortfolioItem,
 	mapToStructuredProposal,
 	mapVerificationStatus,
 } from "./api-mappers";
-// ── Fallback demo data (used when API fails) ─────────────
-import {
-	sampleNegotiations,
-	sampleNotifications,
-	sampleOpenBidLeaderboard,
-} from "./demo-data";
 import type {
 	ActiveVendorProject,
 	EvidenceFile,
 	NegotiationRequest,
-	OpenBidLeaderboardEntry,
 	StructuredProposal,
 	VendorNotification,
 	VendorPerformanceMetrics,
@@ -27,8 +25,28 @@ import type {
 	VendorProjectCardData,
 } from "./types";
 
+const REFRESH_FAST = 60 * 1000;
+const REFRESH_SLOW = 2 * 60 * 1000;
+
+const EMPTY_LEADERBOARD: LeaderboardView = {
+	entries: [],
+	tenderId: null,
+	projectTitle: null,
+	deadlineAt: null,
+	myProposalId: null,
+	myAmount: null,
+	myRank: null,
+};
+
+/**
+ * Everything the vendor dashboard renders comes from `/api/vendor/*`.
+ * Bookmarks are the one exception: saving a project is client-side UI state
+ * with no endpoint yet.
+ */
 export function useVendorData() {
-	// ── Local state (before derived data that depends on them) ─────
+	const queryClient = useQueryClient();
+
+	// ── Local-only UI state ─────────────────────────────────
 	const [savedProjects, setSavedProjects] = useState<Set<string>>(() => {
 		if (typeof window !== "undefined") {
 			const saved = localStorage.getItem("vendor_saved_projects");
@@ -37,39 +55,7 @@ export function useVendorData() {
 		return new Set();
 	});
 
-	const [userPortfolio, setUserPortfolio] = useState<VendorPortfolioItem[]>(
-		() => {
-			if (typeof window !== "undefined") {
-				const saved = localStorage.getItem("vendor_portfolio");
-				return saved ? JSON.parse(saved) : [];
-			}
-			return [];
-		},
-	);
-
-	const [leaderboard, setLeaderboard] = useState<OpenBidLeaderboardEntry[]>(
-		sampleOpenBidLeaderboard,
-	);
-
-	const [readNotifications, setReadNotifications] = useState<Set<string>>(
-		() => {
-			if (typeof window !== "undefined") {
-				const saved = localStorage.getItem("vendor_read_notifications");
-				return saved ? new Set(JSON.parse(saved)) : new Set();
-			}
-			return new Set();
-		},
-	);
-
-	const [negotiations, setNegotiations] = useState<NegotiationRequest[]>(() => {
-		if (typeof window !== "undefined") {
-			const saved = localStorage.getItem("vendor_negotiations");
-			if (saved) return JSON.parse(saved) as NegotiationRequest[];
-		}
-		return sampleNegotiations;
-	});
-
-	// ── Fetch data from API ─────────────────────────────────
+	// ── Queries ─────────────────────────────────────────────
 	const { data: profileData, isLoading: profileLoading } = useQuery({
 		queryKey: ["vendor", "profile"],
 		queryFn: () => api.vendor.profile(),
@@ -79,22 +65,46 @@ export function useVendorData() {
 	const { data: myProjectsData, isLoading: projectsLoading } = useQuery({
 		queryKey: ["vendor", "my-projects"],
 		queryFn: () => api.vendor.myProjects(),
-		staleTime: 2 * 60 * 1000,
+		staleTime: REFRESH_SLOW,
 	});
 
 	const { data: marketProjectsData } = useQuery({
 		queryKey: ["vendor", "projects"],
 		queryFn: () => api.vendor.projects(),
-		staleTime: 2 * 60 * 1000,
+		staleTime: REFRESH_SLOW,
 	});
 
 	const { data: proposalsData } = useQuery({
 		queryKey: ["vendor", "proposals"],
 		queryFn: () => api.vendor.proposals(),
-		staleTime: 2 * 60 * 1000,
+		staleTime: REFRESH_SLOW,
 	});
 
-	// ── Derived data ───────────────────────────────────────
+	const { data: notificationsData } = useQuery({
+		queryKey: ["vendor", "notifications"],
+		queryFn: () => api.vendor.notifications(),
+		staleTime: REFRESH_FAST,
+	});
+
+	const { data: negotiationsData } = useQuery({
+		queryKey: ["vendor", "negotiations"],
+		queryFn: () => api.vendor.negotiations(),
+		staleTime: REFRESH_FAST,
+	});
+
+	const { data: leaderboardData } = useQuery({
+		queryKey: ["vendor", "leaderboard"],
+		queryFn: () => api.vendor.leaderboard(),
+		staleTime: REFRESH_FAST,
+	});
+
+	const { data: portfolioData } = useQuery({
+		queryKey: ["vendor", "portfolio"],
+		queryFn: () => api.vendor.portfolio(),
+		staleTime: REFRESH_SLOW,
+	});
+
+	// ── Derived data ────────────────────────────────────────
 	const profile = profileData?.profile;
 	const myProjects = myProjectsData?.projects ?? [];
 
@@ -119,17 +129,25 @@ export function useVendorData() {
 			.filter((p): p is ActiveVendorProject => p !== null);
 	}, [myProjects]);
 
+	// Portfolio = awarded projects from the API plus the references the vendor
+	// authored in the portfolio tab.
 	const apiPortfolio: VendorPortfolioItem[] = useMemo(() => {
 		return myProjects
 			.map(mapToPortfolioItem)
 			.filter((p): p is VendorPortfolioItem => p !== null);
 	}, [myProjects]);
 
+	const authoredPortfolio: VendorPortfolioItem[] = useMemo(() => {
+		return (portfolioData?.portfolio ?? []).map(mapPortfolioItem);
+	}, [portfolioData]);
+
 	const portfolio: VendorPortfolioItem[] = useMemo(() => {
-		const apiIds = new Set(apiPortfolio.map((p) => p.id));
-		const uniqueUserItems = userPortfolio.filter((p) => !apiIds.has(p.id));
-		return [...apiPortfolio, ...uniqueUserItems];
-	}, [apiPortfolio, userPortfolio]);
+		const apiIds = new Set(apiPortfolio.map((item) => item.id));
+		return [
+			...apiPortfolio,
+			...authoredPortfolio.filter((item) => !apiIds.has(item.id)),
+		];
+	}, [apiPortfolio, authoredPortfolio]);
 
 	const proposals: StructuredProposal[] = useMemo(() => {
 		const items = proposalsData?.proposals ?? [];
@@ -139,36 +157,121 @@ export function useVendorData() {
 	const performanceMetrics: VendorPerformanceMetrics = useMemo(() => {
 		if (!profile) {
 			return {
-				completionRatePercent: 95,
-				onTimeCompletionPercent: 92,
-				technicalPerformanceScore: 90,
-				energySavingAchievementPercent: 100,
-				carbonReductionAchievementPercent: 100,
-				averageProjectValue: 8500000000,
+				completionRatePercent: 0,
+				onTimeCompletionPercent: 0,
+				technicalPerformanceScore: 0,
+				energySavingAchievementPercent: 0,
+				carbonReductionAchievementPercent: 0,
+				averageProjectValue: 0,
 				totalCompletedProjects: 0,
-				clientApprovalRatePercent: 95,
-				historicalTrend: [
-					{ period: "24Q1", score: 85 },
-					{ period: "24Q3", score: 88 },
-					{ period: "25Q1", score: 90 },
-					{ period: "25Q3", score: 93 },
-					{ period: "26Q1", score: 95 },
-				],
-				bastRating: 4.7,
-				retentionRate: "High",
+				clientApprovalRatePercent: 0,
+				historicalTrend: [],
+				bastRating: 0,
+				retentionRate: "Unknown",
 			};
 		}
 		return derivePerformanceMetrics(profile, myProjects);
 	}, [profile, myProjects]);
 
-	const notifications: VendorNotification[] = sampleNotifications;
+	const negotiations: NegotiationRequest[] = useMemo(() => {
+		return (negotiationsData?.negotiations ?? []).map(mapNegotiation);
+	}, [negotiationsData]);
 
-	const notificationsWithRead: VendorNotification[] = useMemo(() => {
-		return notifications.map((n) => ({
-			...n,
-			isRead: readNotifications.has(n.id) || n.isRead,
-		}));
-	}, [notifications, readNotifications]);
+	const notifications: VendorNotification[] = useMemo(() => {
+		return (notificationsData?.notifications ?? []).map(mapNotification);
+	}, [notificationsData]);
+
+	const leaderboard: LeaderboardView = useMemo(() => {
+		return leaderboardData
+			? mapLeaderboard(leaderboardData)
+			: EMPTY_LEADERBOARD;
+	}, [leaderboardData]);
+
+	// ── Mutations ───────────────────────────────────────────
+	const { mutate: markRead } = useMutation({
+		mutationFn: (id: number) => api.vendor.readNotification(id),
+		onSuccess: () =>
+			queryClient.invalidateQueries({ queryKey: ["vendor", "notifications"] }),
+	});
+
+	const { mutate: respondToNegotiation } = useMutation({
+		mutationFn: ({
+			id,
+			body,
+		}: {
+			id: number;
+			body: {
+				revisedPrice?: number;
+				revisedWarrantyYears?: number;
+				revisedTimelineMonths?: number;
+				note?: string;
+			};
+		}) => api.vendor.respondNegotiation(id, body),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["vendor", "negotiations"] });
+			queryClient.invalidateQueries({ queryKey: ["vendor", "proposals"] });
+			queryClient.invalidateQueries({ queryKey: ["vendor", "my-projects"] });
+		},
+	});
+
+	// Revising an open bid writes the new amount on the proposal itself.
+	const { mutate: reviseBid } = useMutation({
+		mutationFn: ({
+			proposalId,
+			amount,
+		}: {
+			proposalId: number;
+			amount: number;
+		}) => api.vendor.updateProposal(proposalId, { amount }),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["vendor", "leaderboard"] });
+			queryClient.invalidateQueries({ queryKey: ["vendor", "proposals"] });
+		},
+	});
+
+	const { mutate: createPortfolioItem } = useMutation({
+		mutationFn: (item: VendorPortfolioItem) =>
+			api.vendor.addPortfolioItem({
+				projectName: item.projectName,
+				clientName: item.clientName,
+				projectType: item.projectType,
+				location: item.location,
+				description: item.description,
+				projectValue: item.projectValue,
+				durationMonths: item.durationMonths,
+				servicesProvided: item.servicesProvided,
+				energySavingPercent: item.energySavingPercent,
+				carbonReductionTons: item.carbonReductionTons,
+				completionYear: item.completionYear,
+				status: item.status,
+				documentName: item.documentName,
+			}),
+		onSuccess: () =>
+			queryClient.invalidateQueries({ queryKey: ["vendor", "portfolio"] }),
+	});
+
+	const { mutate: removePortfolioItem } = useMutation({
+		mutationFn: (id: number) => api.vendor.deletePortfolioItem(id),
+		onSuccess: () =>
+			queryClient.invalidateQueries({ queryKey: ["vendor", "portfolio"] }),
+	});
+
+	const { mutate: sendMilestoneEvidence } = useMutation({
+		mutationFn: ({
+			milestoneId,
+			body,
+		}: {
+			milestoneId: number;
+			body: {
+				kind: string;
+				fileName: string;
+				notes?: string;
+				fileUrl?: string;
+			};
+		}) => api.vendor.addMilestoneEvidence(milestoneId, body),
+		onSuccess: () =>
+			queryClient.invalidateQueries({ queryKey: ["vendor", "my-projects"] }),
+	});
 
 	// ── Actions ─────────────────────────────────────────────
 	const toggleSaveProject = (projectId: string) => {
@@ -190,24 +293,9 @@ export function useVendorData() {
 	};
 
 	const placeOpenBid = (newPrice: number) => {
-		setLeaderboard((prev) => {
-			const updated = prev.map((item) =>
-				item.isCurrentVendor
-					? {
-							...item,
-							currentPrice: newPrice,
-							updatedAt: new Date().toISOString(),
-						}
-					: item,
-			);
-			return updated
-				.sort((a, b) => a.currentPrice - b.currentPrice)
-				.map((item, idx) => ({ ...item, rank: idx + 1 }));
-		});
-	};
-
-	const submitProposal = (newProposal: StructuredProposal) => {
-		console.log("Submit proposal:", newProposal);
+		const proposalId = leaderboard.myProposalId;
+		if (!proposalId) return;
+		reviseBid({ proposalId: Number(proposalId), amount: newPrice });
 	};
 
 	const submitNegotiationResponse = (
@@ -217,61 +305,43 @@ export function useVendorData() {
 		revisedTimeline?: number,
 		responseNote?: string,
 	) => {
-		setNegotiations((prev) => {
-			const updated = prev.map(
-				(negotiation): NegotiationRequest =>
-					negotiation.id === negId
-						? {
-								...negotiation,
-								status: "SUBMITTED_BY_VENDOR",
-								vendorRevisedPrice:
-									revisedPrice ?? negotiation.vendorRevisedPrice,
-								vendorRevisedWarrantyYears:
-									revisedWarranty ?? negotiation.vendorRevisedWarrantyYears,
-								vendorRevisedTimelineMonths:
-									revisedTimeline ?? negotiation.vendorRevisedTimelineMonths,
-								vendorResponseNote:
-									responseNote ?? negotiation.vendorResponseNote,
-								updatedAt: new Date().toISOString(),
-							}
-						: negotiation,
-			);
-			if (typeof window !== "undefined") {
-				localStorage.setItem("vendor_negotiations", JSON.stringify(updated));
-			}
-			return updated;
+		respondToNegotiation({
+			id: Number(negId),
+			body: {
+				revisedPrice,
+				revisedWarrantyYears: revisedWarranty,
+				revisedTimelineMonths: revisedTimeline,
+				note: responseNote,
+			},
 		});
 	};
 
 	const submitMilestoneEvidence = (
-		activeProjectId: string,
+		_activeProjectId: string,
 		milestoneId: string,
-		_evidenceItem: EvidenceFile,
-		_notes: string,
+		evidenceItem: EvidenceFile,
+		notes: string,
 	) => {
-		console.log("Submit evidence:", activeProjectId, milestoneId);
+		sendMilestoneEvidence({
+			milestoneId: Number(milestoneId),
+			body: {
+				kind: evidenceItem.type,
+				fileName: evidenceItem.name,
+				notes,
+			},
+		});
 	};
 
 	const addPortfolioItem = (item: VendorPortfolioItem) => {
-		setUserPortfolio((prev) => {
-			const updated = [item, ...prev];
-			if (typeof window !== "undefined") {
-				localStorage.setItem("vendor_portfolio", JSON.stringify(updated));
-			}
-			return updated;
-		});
+		createPortfolioItem(item);
 	};
 
 	const deletePortfolioItem = (itemId: string) => {
-		setUserPortfolio((prev) => {
-			const updated = prev.filter((p) => p.id !== itemId);
-			if (typeof window !== "undefined") {
-				localStorage.setItem("vendor_portfolio", JSON.stringify(updated));
-			}
-			return updated;
-		});
+		removePortfolioItem(Number(itemId));
 	};
 
+	// Verification documents have no backend field yet (they pair with the
+	// admin verification flow), so the settings form is not persisted.
 	const uploadVerificationDocs = (
 		_nib: string,
 		_npwp: string,
@@ -282,33 +352,28 @@ export function useVendorData() {
 	};
 
 	const markNotificationRead = (notifId: string) => {
-		setReadNotifications((prev) => {
-			const next = new Set(prev);
-			next.add(notifId);
-			if (typeof window !== "undefined") {
-				localStorage.setItem(
-					"vendor_read_notifications",
-					JSON.stringify([...next]),
-				);
-			}
-			return next;
-		});
+		markRead(Number(notifId));
 	};
 
 	return {
 		isLoading: profileLoading || projectsLoading,
 		verification,
 		projects,
-		leaderboard,
+		leaderboard: leaderboard.entries,
+		leaderboardMeta: {
+			myRank: leaderboard.myRank,
+			myAmount: leaderboard.myAmount,
+			projectTitle: leaderboard.projectTitle,
+			deadlineAt: leaderboard.deadlineAt,
+		},
 		proposals,
 		negotiations,
 		activeProjects,
 		portfolio,
 		performanceMetrics,
-		notifications: notificationsWithRead,
+		notifications,
 		toggleSaveProject,
 		placeOpenBid,
-		submitProposal,
 		submitNegotiationResponse,
 		submitMilestoneEvidence,
 		addPortfolioItem,

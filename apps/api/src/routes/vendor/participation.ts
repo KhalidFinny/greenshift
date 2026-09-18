@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { createFactory } from "hono/factory";
 import type {
@@ -8,6 +8,9 @@ import type {
 } from "../../contracts";
 import { createDb } from "../../db";
 import {
+	emissionReports,
+	milestoneEvidence,
+	projectMilestones,
 	projects,
 	proposalRevisions,
 	proposals,
@@ -16,7 +19,14 @@ import {
 	vendors,
 } from "../../db/schema";
 import type { ApiEnv } from "../../env";
-import { iso, parseLimit, revisionEntry, tenderSummary } from "./helpers";
+import {
+	iso,
+	milestoneEntry,
+	monthlyReportEntry,
+	parseLimit,
+	revisionEntry,
+	tenderSummary,
+} from "./helpers";
 
 const factory = createFactory<ApiEnv>();
 
@@ -65,6 +75,8 @@ participationRoutes.get(
 					location: project.location,
 					industrySector: project.industrySector,
 					budget: project.budget,
+					targetEmissionReduction: project.targetEmissionReduction,
+					estimatedEnergySaving: project.estimatedEnergySaving,
 				},
 				tender: tenderSummary(tender),
 				proposal: {
@@ -76,7 +88,51 @@ participationRoutes.get(
 				},
 			});
 		}
-		return c.json({ projects: [...byProject.values()] });
+
+		// Delivery data for the projects in this page, so the active-project
+		// views do not need one request per project.
+		const projects_ = [...byProject.values()];
+		const projectIds = projects_.map((item) => item.project.id);
+		if (projectIds.length) {
+			const milestoneRows = await db
+				.select()
+				.from(projectMilestones)
+				.where(inArray(projectMilestones.projectId, projectIds))
+				.orderBy(projectMilestones.stepNumber);
+
+			const milestoneIds = milestoneRows.map((milestone) => milestone.id);
+			const evidenceRows = milestoneIds.length
+				? await db
+						.select()
+						.from(milestoneEvidence)
+						.where(inArray(milestoneEvidence.milestoneId, milestoneIds))
+						.orderBy(milestoneEvidence.uploadedAt)
+				: [];
+
+			const reportRows = await db
+				.select()
+				.from(emissionReports)
+				.where(inArray(emissionReports.projectId, projectIds))
+				.orderBy(desc(emissionReports.periodStart));
+
+			for (const item of projects_) {
+				item.milestones = milestoneRows
+					.filter((milestone) => milestone.projectId === item.project.id)
+					.map((milestone) =>
+						milestoneEntry(
+							milestone,
+							evidenceRows.filter(
+								(evidence) => evidence.milestoneId === milestone.id,
+							),
+						),
+					);
+				item.monthlyReports = reportRows
+					.filter((report) => report.projectId === item.project.id)
+					.map(monthlyReportEntry);
+			}
+		}
+
+		return c.json({ projects: projects_ });
 	}),
 );
 
@@ -132,6 +188,29 @@ participationRoutes.get(
 			.where(eq(proposalRevisions.proposalId, row.proposal.id))
 			.orderBy(proposalRevisions.revisionNumber);
 
+		// Delivery state: milestones with their evidence, plus the MRV reports
+		// the vendor filed for this project.
+		const milestoneRows = await db
+			.select()
+			.from(projectMilestones)
+			.where(eq(projectMilestones.projectId, row.project.id))
+			.orderBy(projectMilestones.stepNumber);
+
+		const milestoneIds = milestoneRows.map((milestone) => milestone.id);
+		const evidenceRows = milestoneIds.length
+			? await db
+					.select()
+					.from(milestoneEvidence)
+					.where(inArray(milestoneEvidence.milestoneId, milestoneIds))
+					.orderBy(milestoneEvidence.uploadedAt)
+			: [];
+
+		const reportRows = await db
+			.select()
+			.from(emissionReports)
+			.where(eq(emissionReports.projectId, row.project.id))
+			.orderBy(desc(emissionReports.periodStart));
+
 		const detail: VendorMyProjectDetail = {
 			id: row.project.id,
 			title: row.project.title,
@@ -155,6 +234,15 @@ participationRoutes.get(
 				reviewedAt: iso(row.proposal.reviewedAt),
 			},
 			revisions: revisions.map(revisionEntry),
+			milestones: milestoneRows.map((milestone) =>
+				milestoneEntry(
+					milestone,
+					evidenceRows.filter(
+						(evidence) => evidence.milestoneId === milestone.id,
+					),
+				),
+			),
+			monthlyReports: reportRows.map(monthlyReportEntry),
 		};
 		return c.json({ project: detail });
 	}),

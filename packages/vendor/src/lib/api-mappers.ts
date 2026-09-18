@@ -1,4 +1,10 @@
 import type {
+	VendorLeaderboardResponse as ApiLeaderboard,
+	VendorMilestone as ApiMilestone,
+	VendorMonthlyReport as ApiMonthlyReport,
+	VendorNegotiation as ApiNegotiation,
+	VendorNotification as ApiNotification,
+	VendorPortfolioItem as ApiPortfolioItem,
 	ProposalSummary,
 	VendorMyProject,
 	VendorProfile,
@@ -7,8 +13,13 @@ import type {
 import type {
 	ActiveVendorProject,
 	CompanyVerificationDetails,
+	MonthlyEnergyReport,
+	NegotiationRequest,
+	OpenBidLeaderboardEntry,
 	ProcurementMethod,
+	ProjectMilestone,
 	StructuredProposal,
+	VendorNotification,
 	VendorPerformanceMetrics,
 	VendorPortfolioItem,
 	VendorProjectCardData,
@@ -68,24 +79,41 @@ export function mapProjectToCardData(
 	};
 }
 
-// ── Active Project (from myProjects with AGREED proposal) ─
+// ── Active Project (from myProjects with an awarded proposal) ─
 export function mapToActiveProject(
 	myProject: VendorMyProject,
 ): ActiveVendorProject | null {
-	// Only include projects with AGREED proposal (awarded/active)
-	if (myProject.proposal.status !== "AGREED") {
+	// Only projects whose proposal was accepted are in delivery.
+	if (!isAwardedProposal(myProject.proposal.status)) {
 		return null;
 	}
 
 	const project = myProject.project;
 	const proposal = myProject.proposal;
+	const milestones = (myProject.milestones ?? []).map(mapMilestone);
+	const monthlyReports = (myProject.monthlyReports ?? []).map(mapMonthlyReport);
 
-	// Calculate mock progress based on proposal age
-	const submittedDate = new Date(proposal.submittedAt ?? Date.now());
-	const monthsElapsed = Math.floor(
-		(Date.now() - submittedDate.getTime()) / (1000 * 60 * 60 * 24 * 30),
-	);
-	const progress = Math.min(90, monthsElapsed * 15);
+	const progress =
+		milestones.length > 0
+			? Math.round(
+					milestones.reduce(
+						(sum, milestone) => sum + milestone.completionPercent,
+						0,
+					) / milestones.length,
+				)
+			: 0;
+	const current =
+		milestones.find(
+			(milestone) =>
+				milestone.status !== "COMPLETED" && milestone.status !== "APPROVED",
+		) ?? milestones[milestones.length - 1];
+
+	const latestReport = monthlyReports[0];
+	const baseline = latestReport?.baselineConsumptionKwh ?? 0;
+	const actualSavingsPercent =
+		baseline > 0 && latestReport?.energySavedKwh != null
+			? Math.round((latestReport.energySavedKwh / baseline) * 1000) / 10
+			: undefined;
 
 	return {
 		id: String(project.id),
@@ -95,22 +123,25 @@ export function mapToActiveProject(
 		location: project.location ?? "Unknown",
 		agreedBudget: proposal.amount,
 		overallProgressPercent: progress,
-		currentMilestoneTitle:
-			progress < 30
-				? "Site Survey & Engineering Design"
-				: progress < 60
-					? "Procurement & Delivery"
-					: progress < 90
-						? "Installation & Wiring"
-						: "Commissioning & Handover",
-		deadlineDate: new Date(
-			Date.now() + (12 - monthsElapsed) * 30 * 24 * 60 * 60 * 1000,
-		).toISOString(),
-		status: progress >= 90 ? "COMMISSIONING" : "IN_PROGRESS",
-		milestones: [], // Would need detail endpoint
-		monthlyReports: [], // Would need detail endpoint
-		expectedEnergySavingsPercent: 20,
-		expectedCarbonReductionTons: 500,
+		currentMilestoneTitle: current?.title ?? "Not started",
+		deadlineDate:
+			milestones[milestones.length - 1]?.dueDate ??
+			proposal.submittedAt ??
+			new Date().toISOString(),
+		status:
+			progress >= 100
+				? "COMPLETED"
+				: progress >= 90
+					? "COMMISSIONING"
+					: "IN_PROGRESS",
+		milestones,
+		monthlyReports,
+		// The blueprint target is not part of this contract yet, so the
+		// expected savings stay at 0 until the project exposes them.
+		expectedEnergySavingsPercent: 0,
+		actualEnergySavingsPercent: actualSavingsPercent,
+		expectedCarbonReductionTons: project.targetEmissionReduction ?? 0,
+		actualCarbonReductionTons: latestReport?.carbonSavedTons ?? undefined,
 	};
 }
 
@@ -118,7 +149,7 @@ export function mapToActiveProject(
 export function mapToPortfolioItem(
 	myProject: VendorMyProject,
 ): VendorPortfolioItem | null {
-	if (myProject.proposal.status !== "AGREED") {
+	if (!isAwardedProposal(myProject.proposal.status)) {
 		return null;
 	}
 
@@ -155,7 +186,7 @@ export function mapToStructuredProposal(
 		projectTitle: proposal.projectTitle ?? "Unknown Project",
 		companyName: proposal.vendorCompanyName ?? "Unknown",
 		procurementMethod: "OPEN_BIDDING",
-		status: proposal.status as StructuredProposal["status"],
+		status: mapProposalStatus(proposal.status),
 		executiveSummary: "",
 		technicalSolution: "",
 		equipmentSpecs: "",
@@ -188,8 +219,8 @@ export function derivePerformanceMetrics(
 	profile: VendorProfile,
 	myProjects: VendorMyProject[],
 ): VendorPerformanceMetrics {
-	const agreedProjects = myProjects.filter(
-		(p) => p.proposal.status === "AGREED",
+	const agreedProjects = myProjects.filter((p) =>
+		isAwardedProposal(p.proposal.status),
 	);
 	const totalProjects = myProjects.length;
 	const completedCount = agreedProjects.length;
@@ -239,14 +270,166 @@ export function derivePerformanceMetrics(
 
 // ── Helpers ──────────────────────────────────────────────
 function mapProcurementMethod(method?: string | null): ProcurementMethod {
-	switch (method?.toUpperCase()) {
-		case "OPEN_BIDDING":
-			return "OPEN_BIDDING";
-		case "CLOSED_BIDDING":
+	switch (method?.toLowerCase()) {
+		case "closed":
+		case "closed_bidding":
 			return "CLOSED_BIDDING";
-		case "DIRECT_SELECTION":
+		case "direct":
+		case "direct_selection":
 			return "DIRECT_SELECTION";
 		default:
 			return "OPEN_BIDDING";
 	}
+}
+
+/** DB proposal status -> UI status vocabulary. */
+const PROPOSAL_STATUS: Record<string, StructuredProposal["status"]> = {
+	submitted: "SUBMITTED",
+	reviewed: "UNDER_EVALUATION",
+	revision: "NEGOTIATION",
+	accepted: "SELECTED",
+	rejected: "REJECTED",
+};
+
+export function mapProposalStatus(
+	status: string,
+): StructuredProposal["status"] {
+	return PROPOSAL_STATUS[status.toLowerCase()] ?? "DRAFT";
+}
+
+/** A proposal counts as awarded in either vocabulary. */
+export function isAwardedProposal(status: string): boolean {
+	const normalized = status.toLowerCase();
+	return normalized === "accepted" || normalized === "agreed";
+}
+
+// ── Notifications ────────────────────────────────────────
+const NOTIFICATION_CATEGORY: Record<string, VendorNotification["category"]> = {
+	negotiation: "Negotiation",
+	deadline: "Tenders",
+	status_change: "Projects",
+	verification: "Verification",
+	system: "System",
+};
+
+export function mapNotification(row: ApiNotification): VendorNotification {
+	return {
+		id: String(row.id),
+		category: NOTIFICATION_CATEGORY[row.type.toLowerCase()] ?? "System",
+		title: row.title,
+		message: row.body ?? "",
+		timestamp: row.createdAt,
+		isRead: row.read,
+		linkUrl: row.link ?? "/vendor",
+	};
+}
+
+// ── Negotiations ─────────────────────────────────────────
+export function mapNegotiation(row: ApiNegotiation): NegotiationRequest {
+	return {
+		id: String(row.id),
+		proposalId: String(row.proposalId),
+		projectId: String(row.projectId ?? 0),
+		projectTitle: row.projectTitle,
+		companyName: row.companyName ?? "Unknown Company",
+		iterationNumber: row.iterationNumber,
+		maxIterations: row.maxIterations,
+		status: row.status as NegotiationRequest["status"],
+		requestedPriceReduction: row.requestedPriceReduction ?? undefined,
+		requestedWarrantyYears: row.requestedWarrantyYears ?? undefined,
+		requestedTimelineMonths: row.requestedTimelineMonths ?? undefined,
+		requestedFields: row.requestedFields,
+		companyNote: row.companyNote,
+		vendorResponseNote: row.vendorResponseNote ?? undefined,
+		vendorRevisedPrice: row.vendorRevisedPrice ?? undefined,
+		vendorRevisedWarrantyYears: row.vendorRevisedWarrantyYears ?? undefined,
+		vendorRevisedTimelineMonths: row.vendorRevisedTimelineMonths ?? undefined,
+		updatedAt: row.updatedAt,
+	};
+}
+
+// ── Open-bid leaderboard ─────────────────────────────────
+export interface LeaderboardView {
+	entries: OpenBidLeaderboardEntry[];
+	tenderId: string | null;
+	projectTitle: string | null;
+	deadlineAt: string | null;
+	myProposalId: string | null;
+	myAmount: number | null;
+	myRank: number | null;
+}
+
+export function mapLeaderboard(response: ApiLeaderboard): LeaderboardView {
+	return {
+		entries: response.entries.map((entry) => ({
+			rank: entry.rank,
+			vendorName: entry.vendorName,
+			isCurrentVendor: entry.isCurrentVendor,
+			currentPrice: entry.amount,
+			updatedAt: entry.updatedAt,
+		})),
+		tenderId: response.tender ? String(response.tender.id) : null,
+		projectTitle: response.tender?.projectTitle ?? null,
+		deadlineAt: response.tender?.deadlineAt ?? null,
+		myProposalId: response.myProposalId ? String(response.myProposalId) : null,
+		myAmount: response.myAmount,
+		myRank: response.myRank,
+	};
+}
+
+// ── Portfolio entries authored by the vendor ─────────────
+export function mapPortfolioItem(row: ApiPortfolioItem): VendorPortfolioItem {
+	return {
+		id: String(row.id),
+		projectName: row.projectName,
+		clientName: row.clientName,
+		projectType: row.projectType ?? "Energy Efficiency",
+		location: row.location ?? "Unknown",
+		description: row.description ?? "",
+		projectValue: row.projectValue,
+		durationMonths: row.durationMonths ?? 0,
+		servicesProvided: row.servicesProvided ?? "",
+		energySavingPercent: row.energySavingPercent ?? 0,
+		carbonReductionTons: row.carbonReductionTons ?? 0,
+		completionYear: row.completionYear ?? new Date().getFullYear(),
+		status: row.status === "VERIFIED" ? "VERIFIED" : "COMPLETED",
+		documentName: row.documentName ?? undefined,
+	};
+}
+
+// ── Delivery (milestones + MRV reports) ──────────────────
+export function mapMilestone(row: ApiMilestone): ProjectMilestone {
+	return {
+		id: String(row.id),
+		stepNumber: row.stepNumber,
+		title: row.title,
+		description: row.description ?? "",
+		startDate: row.startDate ?? "",
+		dueDate: row.dueDate ?? "",
+		completionPercent: row.completionPercent ?? 0,
+		status: row.status as ProjectMilestone["status"],
+		evidence: row.evidence.map((file) => ({
+			id: String(file.id),
+			name: file.fileName,
+			type: file.kind as ProjectMilestone["evidence"][number]["type"],
+			url: file.fileUrl ?? "#",
+			uploadedAt: file.uploadedAt,
+		})),
+		vendorNotes: row.vendorNotes ?? undefined,
+		companyReviewNotes: row.companyReviewNotes ?? undefined,
+	};
+}
+
+export function mapMonthlyReport(row: ApiMonthlyReport): MonthlyEnergyReport {
+	return {
+		id: String(row.id),
+		projectId: String(row.projectId),
+		period: row.period,
+		energySavedKwh: row.energySavedKwh ?? 0,
+		carbonSavedTons: row.carbonSavedTons ?? 0,
+		actualConsumptionKwh: row.actualConsumption ?? 0,
+		baselineConsumptionKwh: row.baselineConsumption ?? 0,
+		evidenceDocs: row.evidenceDocs,
+		submittedAt: row.submittedAt,
+	};
 }
