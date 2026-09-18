@@ -418,7 +418,7 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 														<Button
 															size="sm"
 															variant="outline"
-															onClick={() => window.open(doc.pdfExportUrl, "_blank")}
+															onClick={() => window.open(doc.submittedFileUrl, "_blank")}
 															className="gap-1.5 text-xs"
 														>
 															<FontAwesomeIcon icon={faEye} />

@@ -17,6 +17,8 @@ import type {
 	StructuredProposal,
 	OpenBidLeaderboardEntry,
 	VendorNotification,
+	EvidenceFile,
+	NegotiationRequest,
 } from "./types";
 
 // ── Fallback demo data (used when API fails) ─────────────
@@ -145,7 +147,7 @@ export function useVendorData() {
 		return derivePerformanceMetrics(profile, myProjects);
 	}, [profile, myProjects]);
 
-	const negotiations: never[] = [];
+	const negotiations: NegotiationRequest[] = [];
 
 	const notifications: VendorNotification[] = sampleNotifications;
 
@@ -191,10 +193,10 @@ export function useVendorData() {
 
 	const submitNegotiationResponse = (
 		negId: string,
-		revisedPrice?: number,
-		revisedWarranty?: number,
-		revisedTimeline?: number,
-		responseNote?: string,
+		_revisedPrice?: number,
+		_revisedWarranty?: number,
+		_revisedTimeline?: number,
+		_responseNote?: string,
 	) => {
 		console.log("Negotiation response:", negId);
 	};
@@ -202,8 +204,8 @@ export function useVendorData() {
 	const submitMilestoneEvidence = (
 		activeProjectId: string,
 		milestoneId: string,
-		evidenceItem: never,
-		notes: string,
+		_evidenceItem: EvidenceFile,
+		_notes: string,
 	) => {
 		console.log("Submit evidence:", activeProjectId, milestoneId);
 	};
@@ -229,10 +231,10 @@ export function useVendorData() {
 	};
 
 	const uploadVerificationDocs = (
-		nib: string,
-		npwp: string,
-		legalDocName: string,
-		escoCertName: string,
+		_nib: string,
+		_npwp: string,
+		_legalDocName: string,
+		_escoCertName: string,
 	) => {
 		console.log("Upload verification docs");
 	};

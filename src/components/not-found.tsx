@@ -2,7 +2,7 @@ import { Button } from "@greenshift/ui";
 import { useRouter } from "@tanstack/react-router";
 
 // Full-viewport 404 cover. Rendered by the root route for unmatched paths
-// and by the auth layouts for unmatched subpaths (e.g. /investor/404-test);
+// and by the auth layouts for unmatched subpaths (e.g. /vendor/404-test);
 // the fixed overlay hides the shell (sidebar included) in both cases.
 export function NotFoundComponent() {
 	const router = useRouter();

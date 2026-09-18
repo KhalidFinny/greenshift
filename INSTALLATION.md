@@ -33,6 +33,8 @@ dashboard. The role-scoped login page also offers a one-click dev login.
 ```bash
 bun run dev:business   # business role only       (port 3001)
 bun run dev:vendor     # vendor role only         (port 3002)
+bun run dev:investor   # investor role only       (port 3004)
+bun run dev:broker     # broker role only         (port 3005)
 bun run dev:admin      # admin role only          (port 3006)
 bun run dev:landing    # public site only         (port 3007)
 bun run dev:auth       # login/auth work          (port 3008)
@@ -45,10 +47,12 @@ All seeded passwords are `12345678`. You may type the username or the full email
 | Username | Email | Role |
 |---|---|---|
 | `business1` | `business1@greenshift.dev` | business |
+| `investor1` | `investor1@greenshift.dev` | investor |
 | `vendor1` | `vendor1@greenshift.dev` | vendor |
+| `broker1` | `broker1@greenshift.dev` | broker |
 | `admin` | `admin@greenshift.dev` | admin |
 
-The public surfaces (`/`, `/bonds`) need no account.
+The public surfaces (`/`, `/bonds`) need no account; an investor account lands on the bond catalog.
 
 ## Database setup
 
@@ -58,8 +62,12 @@ D1 is the source of truth. Migrations live in `drizzle/` and the schema in `apps
 # Apply migrations to the local D1 database
 bunx wrangler d1 migrations apply greenshift-db --local
 
+# Seed the demo users (idempotent; needs the local database, which the dev server
+# creates on its first start)
+bun run db:setup
+
 # Regenerate the seed fixtures from scripts/seed.ts
-bunx tsx scripts/seed.ts > scripts/seed.sql
+bun scripts/seed.ts > scripts/seed.sql
 
 # Load the seed data (users, projects, tenders, proposals, blueprints, MRV reports)
 bunx wrangler d1 execute greenshift-db --local --file=scripts/seed.sql
