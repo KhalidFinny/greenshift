@@ -10,7 +10,11 @@ import {
 	mapVerificationStatus,
 } from "./api-mappers";
 // ── Fallback demo data (used when API fails) ─────────────
-import { sampleNotifications, sampleOpenBidLeaderboard } from "./demo-data";
+import {
+	sampleNegotiations,
+	sampleNotifications,
+	sampleOpenBidLeaderboard,
+} from "./demo-data";
 import type {
 	ActiveVendorProject,
 	EvidenceFile,
@@ -56,6 +60,14 @@ export function useVendorData() {
 			return new Set();
 		},
 	);
+
+	const [negotiations, setNegotiations] = useState<NegotiationRequest[]>(() => {
+		if (typeof window !== "undefined") {
+			const saved = localStorage.getItem("vendor_negotiations");
+			if (saved) return JSON.parse(saved) as NegotiationRequest[];
+		}
+		return sampleNegotiations;
+	});
 
 	// ── Fetch data from API ─────────────────────────────────
 	const { data: profileData, isLoading: profileLoading } = useQuery({
@@ -149,8 +161,6 @@ export function useVendorData() {
 		return derivePerformanceMetrics(profile, myProjects);
 	}, [profile, myProjects]);
 
-	const negotiations: NegotiationRequest[] = [];
-
 	const notifications: VendorNotification[] = sampleNotifications;
 
 	const notificationsWithRead: VendorNotification[] = useMemo(() => {
@@ -202,12 +212,35 @@ export function useVendorData() {
 
 	const submitNegotiationResponse = (
 		negId: string,
-		_revisedPrice?: number,
-		_revisedWarranty?: number,
-		_revisedTimeline?: number,
-		_responseNote?: string,
+		revisedPrice?: number,
+		revisedWarranty?: number,
+		revisedTimeline?: number,
+		responseNote?: string,
 	) => {
-		console.log("Negotiation response:", negId);
+		setNegotiations((prev) => {
+			const updated = prev.map(
+				(negotiation): NegotiationRequest =>
+					negotiation.id === negId
+						? {
+								...negotiation,
+								status: "SUBMITTED_BY_VENDOR",
+								vendorRevisedPrice:
+									revisedPrice ?? negotiation.vendorRevisedPrice,
+								vendorRevisedWarrantyYears:
+									revisedWarranty ?? negotiation.vendorRevisedWarrantyYears,
+								vendorRevisedTimelineMonths:
+									revisedTimeline ?? negotiation.vendorRevisedTimelineMonths,
+								vendorResponseNote:
+									responseNote ?? negotiation.vendorResponseNote,
+								updatedAt: new Date().toISOString(),
+							}
+						: negotiation,
+			);
+			if (typeof window !== "undefined") {
+				localStorage.setItem("vendor_negotiations", JSON.stringify(updated));
+			}
+			return updated;
+		});
 	};
 
 	const submitMilestoneEvidence = (

@@ -6,7 +6,7 @@ import type { NegotiationRequest, StructuredProposal } from "../lib/types";
 
 interface TenderDetailHeroProps {
 	proposal: StructuredProposal;
-	negotiation: NegotiationRequest;
+	negotiation?: NegotiationRequest;
 }
 
 export function TenderDetailHero({
@@ -54,8 +54,9 @@ export function TenderDetailHero({
 					<div>
 						<p className="text-emerald-200">Negotiation Iteration</p>
 						<p className="mt-1 text-sm font-bold text-emerald-300">
-							Revision {negotiation.iterationNumber} of{" "}
-							{negotiation.maxIterations}
+							{negotiation
+								? `Revision ${negotiation.iterationNumber} of ${negotiation.maxIterations}`
+								: "None"}
 						</p>
 					</div>
 				</div>

@@ -20,7 +20,7 @@ export interface NavItem {
 }
 
 export const roleNav: Record<UserRole, NavItem[]> = {
-	business: [{ to: "/business", label: "Business menu1" }],
+	business: [{ to: "/business", label: "Dashboard" }],
 	investor: [{ to: "/bonds", label: "Green Market" }],
 	vendor: [
 		{ to: "/vendor", label: "Dashboard" },

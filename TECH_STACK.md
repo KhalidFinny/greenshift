@@ -21,6 +21,10 @@ JSON API at `/api/*`. Data lives in D1 (SQLite), sessions and rate limits in KV,
 | TypeScript | 6.0 | Strict typing across all packages. |
 | Tailwind CSS | 4.1 | Utility-first styling (`@tailwindcss/vite`). |
 | shadcn/ui + react-aria | 1.19 | Accessible component primitives. |
+| @visx/* | 4.0 | Chart scales, grids, groups, shapes and patterns (`packages/ui/src/components/charts`). |
+| Motion | 13.x | Chart and UI animation (`motion/react`). |
+| d3-shape | 3.2 | Pie/arc geometry for the chart package. |
+| Number Flow | 0.6 | Animated numeric transitions on statistic cards. |
 | Font Awesome | 7.x | Icons. |
 | DM Sans | 5.x | The single typeface, self-hosted via fontsource. |
 
@@ -64,11 +68,13 @@ packages/core/   Shared frontend contract (auth, guards, typed API client)
 packages/landing/    Landing page
 packages/business/   Business dashboard
 packages/vendor/     Vendor dashboard
+packages/broker/     Broker dashboard
 packages/admin/      Admin dashboard
 packages/investor/   Public bond catalog
 src/             TanStack Start app: routes, router, Worker entry (server.ts)
 drizzle/         Generated D1 migrations
-scripts/         Seed data generator
+docs/            Role specifications (broker, vendor)
+scripts/         Demo-user seeder and seed-fixture generator
 ```
 
 ## Constraints and conventions
@@ -92,8 +98,12 @@ for routing, data fetching, tables, and forms.
 | Forms | TanStack Form | `useAppForm` + `TextField`/`PasswordField`/`SubmitButton` in `packages/ui/src/components/form/form.tsx`, used by login, register, and the step-up dialog |
 | Devtools | TanStack Devtools (Query/Router) | dev builds only |
 
-Audit result: Router, Start, and Query were already in place; Table and Form were added and adopted everywhere
-(hard-coded `<table>` markup and `useState` form handling are gone from the app). No other library duplicates a
-TanStack concern, so nothing else was replaced. Candidates deliberately not adopted yet: `react-virtual` (tables
-use pagination instead of windowing), `react-pacer` (search filters a bounded client-side dataset), and
-`react-store` (shared UI state is small and lives in React context).
+Router, Start and Query cover routing, SSR and server state; Table and Form were added and adopted everywhere
+(no page hand-writes table markup or manages form state with `useState`). No other library duplicates a
+TanStack concern, so nothing else was replaced. Deliberately not adopted:
+
+| Candidate | Why not |
+|---|---|
+| `react-virtual` | Tables use pagination instead of windowing. |
+| `react-pacer` | Search filters a bounded client-side dataset. |
+| `react-store` | Shared UI state is small and lives in React context. |

@@ -71,6 +71,7 @@ export interface ExpectedImpact {
 
 export interface StructuredProposal {
 	id: string;
+	tenderId: string;
 	projectId: string;
 	projectTitle: string;
 	companyName: string;

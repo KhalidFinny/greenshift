@@ -150,6 +150,7 @@ export function mapToStructuredProposal(
 ): StructuredProposal {
 	return {
 		id: String(proposal.id),
+		tenderId: String(proposal.tenderId ?? 0),
 		projectId: String(proposal.projectId ?? 0),
 		projectTitle: proposal.projectTitle ?? "Unknown Project",
 		companyName: proposal.vendorCompanyName ?? "Unknown",

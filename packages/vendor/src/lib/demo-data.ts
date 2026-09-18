@@ -324,6 +324,7 @@ export const sampleOpenBidLeaderboard: OpenBidLeaderboardEntry[] = [
 export const sampleProposals: StructuredProposal[] = [
 	{
 		id: "prop-101",
+		tenderId: "tender-1",
 		projectId: "proj-1",
 		projectTitle: "1.2 MWp Rooftop Solar PV Installation for Textile Facility",
 		companyName: "PT Sinar Tekstil Indonesia",
@@ -363,6 +364,7 @@ export const sampleProposals: StructuredProposal[] = [
 	},
 	{
 		id: "prop-102",
+		tenderId: "tender-2",
 		projectId: "proj-2",
 		projectTitle: "High-Efficiency HVAC & Smart Chiller Retrofit",
 		companyName: "PT Sentra Graha Medika",

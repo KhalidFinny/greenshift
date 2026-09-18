@@ -1,7 +1,9 @@
 # Installation and Usage
 
 Everything runs locally: the dev server simulates the API, D1, KV and R2, so no external backend or cloud
-account is required for development.
+account is required for development. This document covers requirements, running the app, the demo accounts, the
+database workflow and deployment; the architecture is in
+[TECHNICAL_DOCUMENTATION.md](TECHNICAL_DOCUMENTATION.md) and the stack in [TECH_STACK.md](TECH_STACK.md).
 
 ## Requirements
 
@@ -40,19 +42,39 @@ bun run dev:landing    # public site only         (port 3007)
 bun run dev:auth       # login/auth work          (port 3008)
 ```
 
-### Seeded accounts
+`vite` picks the next free port if one is taken; the terminal prints the URL it actually used.
 
-All seeded passwords are `12345678`. You may type the username or the full email.
+### Dev-only switches
+
+- `VITE_ROLE=<role>` scopes the app to one role (this is what the role-scoped scripts set) and is rejected for
+  a role that does not exist.
+- `VITE_SCOPE=landing` serves only the public site; every other route redirects to `/`.
+
+## Login
+
+All passwords are `12345678`. You may type the username or the full email. The demo accounts live in the local
+D1 database, so create them once with `bun run db:setup` (see [Database setup](#database-setup)) after the dev
+server has started at least once.
 
 | Username | Email | Role |
 |---|---|---|
 | `business1` | `business1@greenshift.dev` | business |
-| `investor1` | `investor1@greenshift.dev` | investor |
 | `vendor1` | `vendor1@greenshift.dev` | vendor |
 | `broker1` | `broker1@greenshift.dev` | broker |
 | `admin` | `admin@greenshift.dev` | admin |
+| `investor1` | `investor1@greenshift.dev` | investor |
 
 The public surfaces (`/`, `/bonds`) need no account; an investor account lands on the bond catalog.
+
+## Project conventions
+
+- Role packages (`packages/<role>`) import only from `@greenshift/core`, `@greenshift/ui` and `@tanstack/*`,
+  and never from another role package. The boundaries are documented in
+  [TECHNICAL_DOCUMENTATION.md § 2](TECHNICAL_DOCUMENTATION.md#2-monorepo-and-package-boundaries).
+- UI work follows [agent.md](agent.md): shared `@greenshift/ui` components used as-is, one typeface, design
+  tokens instead of literal colours, Font Awesome icons.
+- Semantic HTML and the shared utilities are mandatory; do not re-implement something that already exists in
+  `@greenshift/ui` or `@greenshift/core`.
 
 ## Database setup
 
@@ -111,6 +133,9 @@ bun run generate-routes  # regenerate the TanStack Router route tree
 ## Troubleshooting
 
 - **Port already in use**: Vite automatically tries the next free port; check the terminal for the actual URL.
+- **`imported but could not be resolved` from the dependency pre-bundler**: a dependency is missing from the
+  lockfile; run `bun install` and restart the dev server (Vite re-optimizes when the lockfile changes).
+- **Login rejects a demo account**: the accounts are rows in D1, not code — run `bun run db:setup`.
 - **Stale data after schema changes**: regenerate and re-apply migrations, then re-run the seed.
 - **`PROPOSAL_CONFLICT` / duplicate errors in demos**: the unique indexes enforce one proposal per vendor per
   tender; reset the local database and reseed to start clean.
