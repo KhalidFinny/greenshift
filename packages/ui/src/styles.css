@@ -169,9 +169,31 @@ body {
   margin-inline: auto;
 }
 
+/* ── Landing hero composition ───────────────────────────────────────
+   The hero fills the viewport and stacks absolutely positioned layers, so
+   its content cannot reflow. Instead it is laid out on a fixed 2400x1200
+   design canvas: `--u` is ONE canvas pixel at the current viewport and
+   every content size in the hero is a multiple of it, while positions stay
+   in percentages of the stage. The whole composition therefore scales as a
+   single rigid unit — identical framing at every window size, aspect ratio
+   and browser zoom level, with nothing pushed into anything else.
+   All hero sizes are the 2400x1200 (u = 1) values. */
+#hero {
+  --u: min(100vw / 2400, 100vh / 1200);
+}
+
+/* Below the desktop layout the hero keeps its own stacked, responsive
+   sizing, so the canvas pixel falls back to a plain pixel: parallax offsets
+   measured in `--u` stay the same length they have always been. */
+@media (width < 1024px) {
+  #hero {
+    --u: 1px;
+  }
+}
+
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-12px); }
+  50% { transform: translateY(calc(var(--u, 1px) * -12)); }
 }
 
 .animate-float {

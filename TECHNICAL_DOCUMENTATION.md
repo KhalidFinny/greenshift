@@ -46,7 +46,7 @@ scripts/          Demo-user seeder (db:setup) and seed-fixture generator
 | `vendor` | `/vendor` | `packages/vendor` | `/api/vendor/*` (profile, opportunities, proposals, negotiations, notifications, leaderboard, portfolio, milestones, MRV reports). |
 | `broker` | `/broker` | `packages/broker` | Local demo dataset (`packages/broker/src/lib/demo-data.ts`); no API surface yet. |
 | `admin` | `/admin` | `packages/admin` | `/api/admin/*` plus static demo constants for the chart/console tiles. |
-| `investor` | `/bonds` | `packages/investor` | `GET /api/investor/market`, falling back to the demo catalog when the API returns nothing. |
+| `investor` | `/bonds` | `packages/investor` | `GET /api/investor/market` (D1 only; the catalog renders an empty state when nothing is published). |
 
 `roleHome` and `roleNav` in `packages/core/src/auth/index.ts` are the single source of truth for a role's home
 route and sidebar; `requireRole` uses them for redirects.
@@ -188,10 +188,11 @@ Request and response types live in `apps/api/src/contracts.ts` and are re-export
 list of method/path pairs the frontend client calls.
 
 Not every view is API-backed yet: the broker dashboard renders entirely from
-`packages/broker/src/lib/demo-data.ts` and has no endpoints, and the bond catalog falls back to
-`packages/investor/src/lib/demo-data.ts` when `GET /api/investor/market` returns an empty catalog. The vendor
-and admin dashboards read from the API; the vendor UI keeps only project bookmarks in local storage, and its
-verification-document form has no backend field yet.
+`packages/broker/src/lib/demo-data.ts` and has no endpoints. The bond catalog, the vendor dashboard and the
+admin dashboard read from the API — the vendor UI keeps only project bookmarks in local storage, its
+verification-document form has no backend field yet, and the performance tiles are derived from awarded
+projects, milestones, MRV reports and the platform rating (fields the API does not store, such as client
+endorsements, stay at 0 rather than being estimated).
 
 ## 7. Data model
 

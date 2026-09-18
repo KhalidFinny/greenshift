@@ -110,7 +110,7 @@ export function useVendorData() {
 
 	const verification = useMemo(() => {
 		if (!profile) {
-			return { status: "NOT_VERIFIED" as const };
+			return { status: "NOT_VERIFIED" as const, certifications: [] };
 		}
 		return mapVerificationStatus(profile);
 	}, [profile]);
@@ -273,6 +273,18 @@ export function useVendorData() {
 			queryClient.invalidateQueries({ queryKey: ["vendor", "my-projects"] }),
 	});
 
+	const { mutate: saveProfile } = useMutation({
+		mutationFn: (body: { companyName: string; description: string }) =>
+			api.vendor.saveProfile({
+				companyName: body.companyName,
+				description: body.description,
+				certifications: profile?.certifications ?? [],
+				portfolio: profile?.portfolio ?? [],
+			}),
+		onSuccess: () =>
+			queryClient.invalidateQueries({ queryKey: ["vendor", "profile"] }),
+	});
+
 	// ── Actions ─────────────────────────────────────────────
 	const toggleSaveProject = (projectId: string) => {
 		setSavedProjects((prev) => {
@@ -358,6 +370,7 @@ export function useVendorData() {
 	return {
 		isLoading: profileLoading || projectsLoading,
 		verification,
+		profile,
 		projects,
 		leaderboard: leaderboard.entries,
 		leaderboardMeta: {
@@ -380,5 +393,6 @@ export function useVendorData() {
 		deletePortfolioItem,
 		uploadVerificationDocs,
 		markNotificationRead,
+		saveProfile,
 	};
 }

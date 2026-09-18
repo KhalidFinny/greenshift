@@ -6,6 +6,7 @@ export type VerificationStatus =
 
 export interface CompanyVerificationDetails {
 	status: VerificationStatus;
+	certifications: string[];
 	nib?: string;
 	npwp?: string;
 	legalDocUrl?: string;

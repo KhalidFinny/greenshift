@@ -7,11 +7,8 @@ import { SecurityCard } from "../organisms/security-card";
 import { VerificationStatusCard } from "../organisms/verification-status-card";
 
 export function VendorSettingsPage() {
-	const { verification, uploadVerificationDocs } = useVendorData();
-
-	const handleSaveProfile = () => {
-		alert("Profil perusahaan berhasil disimpan.");
-	};
+	const { verification, uploadVerificationDocs, profile, saveProfile } =
+		useVendorData();
 
 	return (
 		<div className="space-y-6">
@@ -34,12 +31,19 @@ export function VendorSettingsPage() {
 
 				{/* Company Profile Tab */}
 				<TabsContent value="profile" className="mt-6">
-					<CompanyProfileForm onSave={handleSaveProfile} />
+					<CompanyProfileForm
+						companyName={profile?.companyName}
+						description={profile?.description ?? undefined}
+						onSave={saveProfile}
+					/>
 				</TabsContent>
 
 				{/* Certifications Tab */}
 				<TabsContent value="certifications" className="mt-6">
-					<CertificationsCard />
+					<CertificationsCard
+						certifications={verification.certifications}
+						verified={verification.status === "VERIFIED"}
+					/>
 				</TabsContent>
 
 				{/* Documents Tab */}

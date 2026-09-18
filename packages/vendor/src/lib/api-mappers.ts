@@ -31,6 +31,7 @@ export function mapVerificationStatus(
 ): CompanyVerificationDetails {
 	return {
 		status: profile.verified ? "VERIFIED" : "NOT_VERIFIED",
+		certifications: profile.certifications ?? [],
 		nib: undefined, // Not stored in backend yet
 		npwp: undefined,
 		legalDocUrl: undefined,
@@ -219,52 +220,81 @@ export function derivePerformanceMetrics(
 	profile: VendorProfile,
 	myProjects: VendorMyProject[],
 ): VendorPerformanceMetrics {
-	const agreedProjects = myProjects.filter((p) =>
+	const awarded = myProjects.filter((p) =>
 		isAwardedProposal(p.proposal.status),
 	);
-	const totalProjects = myProjects.length;
-	const completedCount = agreedProjects.length;
 
-	// Calculate average project value
-	const avgValue =
-		agreedProjects.reduce((sum, p) => sum + (p.proposal.amount ?? 0), 0) /
-		Math.max(completedCount, 1);
+	// Delivery state across the awarded projects.
+	const milestones = awarded.flatMap((p) => p.milestones ?? []);
+	const settled = milestones.filter(
+		(m) => m.status === "COMPLETED" || m.status === "APPROVED",
+	);
+	const overdue = milestones.filter(
+		(m) =>
+			m.dueDate !== null &&
+			new Date(m.dueDate) < new Date() &&
+			m.status !== "COMPLETED" &&
+			m.status !== "APPROVED",
+	);
+	const completionRatePercent = milestones.length
+		? Math.round((settled.length / milestones.length) * 100)
+		: 0;
+	const onTimeCompletionPercent = milestones.length
+		? Math.round(
+				((milestones.length - overdue.length) / milestones.length) * 100,
+			)
+		: 0;
 
-	// Derive rating-based metrics
-	const ratingScore = profile.rating ?? 4.5;
-	const approvalPercent = Math.round(ratingScore * 20); // 5.0 → 100%
-
-	// Calculate completion rate (agreed / total proposals)
-	const completionRate =
-		totalProjects > 0 ? Math.round((completedCount / totalProjects) * 100) : 0;
-
-	// On-time is slightly lower than completion
-	const onTimeRate = Math.max(85, completionRate - 3);
-
-	// Technical score is weighted average
-	const technicalScore = Math.round(
-		ratingScore * 15 + completionRate * 0.3 + onTimeRate * 0.2,
+	// MRV: measured savings and carbon against the project targets the API
+	// exposes on each awarded project.
+	const reports = awarded.flatMap((p) => p.monthlyReports ?? []);
+	const baseline = reports.reduce(
+		(sum, report) => sum + (report.baselineConsumption ?? 0),
+		0,
+	);
+	const saved = reports.reduce(
+		(sum, report) => sum + (report.energySavedKwh ?? 0),
+		0,
+	);
+	const actualCarbon = reports.reduce(
+		(sum, report) => sum + (report.carbonSavedTons ?? 0),
+		0,
+	);
+	const targetCarbon = awarded.reduce(
+		(sum, p) => sum + (p.project.targetEmissionReduction ?? 0),
+		0,
 	);
 
+	const averageProjectValue = awarded.length
+		? Math.round(
+				awarded.reduce((sum, p) => sum + p.proposal.amount, 0) / awarded.length,
+			)
+		: 0;
+
 	return {
-		completionRatePercent: Math.min(99, completionRate + 80), // Boost for demo
-		onTimeCompletionPercent: Math.min(98, onTimeRate + 80),
-		technicalPerformanceScore: Math.min(98, technicalScore),
-		energySavingAchievementPercent: 104,
-		carbonReductionAchievementPercent: 106,
-		averageProjectValue: avgValue || 8500000000,
-		totalCompletedProjects: completedCount || profile.totalProjects || 0,
-		clientApprovalRatePercent: approvalPercent || 95,
-		historicalTrend: [
-			{ period: "24Q1", score: 82 },
-			{ period: "24Q3", score: 87 },
-			{ period: "25Q1", score: 90 },
-			{ period: "25Q3", score: 94 },
-			{ period: "26Q1", score: 96 },
-		],
-		bastRating: ratingScore,
-		retentionRate:
-			ratingScore >= 4.5 ? "High" : ratingScore >= 3.5 ? "Medium" : "Low",
+		completionRatePercent,
+		onTimeCompletionPercent,
+		// The platform rating (0-5, set when an admin verifies the vendor)
+		// is the only quality signal the API stores.
+		technicalPerformanceScore: Math.round((profile.rating ?? 0) * 20),
+		energySavingAchievementPercent: baseline
+			? Math.round((saved / baseline) * 1000) / 10
+			: 0,
+		carbonReductionAchievementPercent: targetCarbon
+			? Math.round((actualCarbon / targetCarbon) * 1000) / 10
+			: 0,
+		averageProjectValue,
+		totalCompletedProjects: awarded.filter(
+			(p) =>
+				(p.milestones?.length ?? 0) > 0 &&
+				(p.milestones ?? []).every(
+					(m) => m.status === "COMPLETED" || m.status === "APPROVED",
+				),
+		).length,
+		// No endorsement source in the API yet.
+		clientApprovalRatePercent: 0,
+		historicalTrend: [],
+		bastRating: profile.rating ?? 0,
 	};
 }
 

@@ -5,6 +5,12 @@ import { useParallax } from "../../hooks/useParallax";
 import FloatingPill from "../atoms/FloatingPill";
 import DashboardShowcase from "../molecules/DashboardShowcase";
 
+// The hero is a viewport-filling stage whose layers are absolutely
+// positioned, so it cannot reflow: it is laid out on a fixed 2400x1200
+// design canvas (see `--u` in styles.css) and every content size below is a
+// multiple of that canvas pixel from `lg` up, while positions stay in
+// percentages. Sizes are the u = 1 values; the small-screen layout keeps
+// the original responsive classes.
 // Background images render immediately on load; only the title (first) and
 // the floating pills + dashboard (after) animate in.
 export default function HeroSection() {
@@ -101,12 +107,12 @@ export default function HeroSection() {
 
 			<div
 				className={cn(
-					"pointer-events-none relative z-10 flex h-full flex-col items-center px-6 pt-24 text-center transition-all duration-700 motion-reduce:transition-none",
+					"pointer-events-none relative z-10 flex h-full flex-col items-center px-6 pt-24 text-center transition-all duration-700 motion-reduce:transition-none lg:px-[calc(var(--u)*24)] lg:pt-[max(96px,calc(var(--u)*96))]",
 					titleIn ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0",
 				)}
 			>
 				<h1
-					className="text-[clamp(2.5rem,6vw,4.0625rem)] font-bold leading-[1.05] text-white"
+					className="text-[clamp(2.5rem,6vw,4.0625rem)] font-bold leading-[1.05] text-white lg:text-[length:calc(var(--u)*65)]"
 					style={{
 						fontFamily: "'IBM Plex Sans Variable', sans-serif",
 						textShadow: "0 4px 40px rgba(0,0,0,0.8)",
@@ -116,7 +122,7 @@ export default function HeroSection() {
 				</h1>
 
 				<p
-					className="mt-6 max-w-[1200px] font-medium text-lg leading-snug text-white/90 md:text-[24px]"
+					className="mt-6 max-w-[1200px] font-medium text-lg leading-snug text-white/90 md:text-[24px] lg:mt-[calc(var(--u)*24)] lg:max-w-[calc(var(--u)*1200)] lg:text-[length:calc(var(--u)*24)]"
 					style={{
 						fontFamily: "'DM Sans Variable', sans-serif",
 						textShadow: "0 4px 40px rgba(0,0,0,0.8)",
@@ -125,7 +131,7 @@ export default function HeroSection() {
 					<img
 						src="/logo-white.webp"
 						alt="GreenShift"
-						className="mr-3 inline-block h-[42px] align-middle"
+						className="mr-3 inline-block h-[42px] align-middle lg:mr-[calc(var(--u)*12)] lg:h-[calc(var(--u)*42)]"
 					/>
 					helps industrial companies validate energy efficiency projects, build
 					blueprints, and monitor ROI in one measurable and transparent
@@ -133,14 +139,14 @@ export default function HeroSection() {
 				</p>
 
 				<nav
-					className="pointer-events-auto mt-10 flex flex-col items-center gap-4 sm:flex-row sm:gap-[46px]"
+					className="pointer-events-auto mt-10 flex flex-col items-center gap-4 sm:flex-row sm:gap-[46px] lg:mt-[calc(var(--u)*40)] lg:gap-[calc(var(--u)*46)]"
 					aria-label="Hero actions"
 				>
 					<Link
 						to="/register"
 						className={cn(
 							buttonVariants({ variant: "default" }),
-							"h-[42px] w-[180px] cursor-pointer rounded-[10px] bg-[#f7f7f9] text-base text-[#1a1a1a] normal-case tracking-normal hover:bg-white",
+							"h-[42px] w-[180px] cursor-pointer rounded-[10px] bg-[#f7f7f9] text-base text-[#1a1a1a] normal-case tracking-normal hover:bg-white lg:h-[calc(var(--u)*42)] lg:w-[calc(var(--u)*180)] lg:rounded-[calc(var(--u)*10)] lg:text-[length:calc(var(--u)*16)]",
 						)}
 					>
 						Get Started Free
@@ -149,7 +155,7 @@ export default function HeroSection() {
 						href="mailto:contact@greenshift.com?subject=Project%20%26%20Investment"
 						className={cn(
 							buttonVariants({ variant: "outline" }),
-							"h-[42px] w-[180px] cursor-pointer rounded-[10px] border-[3px] border-white bg-transparent text-base text-white normal-case tracking-normal hover:bg-white hover:text-[#1a1a1a]",
+							"h-[42px] w-[180px] cursor-pointer rounded-[10px] border-[3px] border-white bg-transparent text-base text-white normal-case tracking-normal hover:bg-white hover:text-[#1a1a1a] lg:h-[calc(var(--u)*42)] lg:w-[calc(var(--u)*180)] lg:rounded-[calc(var(--u)*10)] lg:border-[length:calc(var(--u)*3)] lg:text-[length:calc(var(--u)*16)]",
 						)}
 					>
 						Contact Us

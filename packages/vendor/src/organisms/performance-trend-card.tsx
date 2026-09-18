@@ -1,13 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@greenshift/ui";
 
-const defaultPerformanceData = [
-	{ period: "24Q1", score: 85 },
-	{ period: "24Q3", score: 90 },
-	{ period: "25Q1", score: 90 },
-	{ period: "25Q3", score: 95 },
-	{ period: "26Q1", score: 100 },
-];
-
 interface PerformanceTrendCardProps {
 	historicalTrend?: { period: string; score: number }[];
 }
@@ -204,10 +196,7 @@ function TrendLineChart({
 export function PerformanceTrendCard({
 	historicalTrend,
 }: PerformanceTrendCardProps) {
-	const trendData =
-		historicalTrend && historicalTrend.length > 0
-			? historicalTrend
-			: defaultPerformanceData;
+	const trendData = historicalTrend ?? [];
 
 	return (
 		<Card className="overflow-hidden border border-border bg-card">
@@ -217,7 +206,13 @@ export function PerformanceTrendCard({
 				</CardTitle>
 			</CardHeader>
 			<CardContent className="pt-2 pb-6 px-6">
-				<TrendLineChart data={trendData} />
+				{trendData.length > 1 ? (
+					<TrendLineChart data={trendData} />
+				) : (
+					<p className="py-12 text-center text-sm text-muted-foreground">
+						No verified performance history yet.
+					</p>
+				)}
 			</CardContent>
 		</Card>
 	);

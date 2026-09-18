@@ -8,13 +8,8 @@ import {
 	CardTitle,
 } from "@greenshift/ui";
 
-const DEFAULT_DOCS = [
-	"Akta_Pendirian_PT_Nusantara_Energy.pdf",
-	"SIUP_NIB_Terbaru_2026.pdf",
-];
-
 export function DocumentsVaultCard({
-	documents = DEFAULT_DOCS,
+	documents = [],
 }: {
 	documents?: string[];
 }) {
@@ -26,6 +21,11 @@ export function DocumentsVaultCard({
 				</CardTitle>
 			</CardHeader>
 			<CardContent className="space-y-3 text-xs">
+				{documents.length === 0 && (
+					<p className="text-muted-foreground">
+						Belum ada dokumen perusahaan yang diunggah.
+					</p>
+				)}
 				{documents.map((doc) => (
 					<div
 						key={doc}
