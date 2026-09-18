@@ -6,6 +6,7 @@ import {
 	Truck,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { useInView } from "../../hooks/useInView";
 
 const actors = [
@@ -52,6 +53,8 @@ const actors = [
 ];
 
 const RADIUS = 210;
+/** Orbit box: the ring plus the label gutter around it, in design px. */
+const ORBIT = RADIUS * 2 + 120;
 const DEGREES_PER_SEC = 72 / 6; // 6s per node, 30s per full cycle
 const RESUME_DELAY = 8000;
 

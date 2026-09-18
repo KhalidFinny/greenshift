@@ -45,7 +45,7 @@ export default function HeroSection() {
 				className="pointer-events-none absolute inset-0"
 				style={{
 					zIndex: 1,
-					transform: `translateY(${yBg}px)`,
+					transform: `translateY(calc(var(--u) * ${yBg}))`,
 					willChange: "transform",
 				}}
 			>
@@ -59,7 +59,7 @@ export default function HeroSection() {
 			<div
 				className="pointer-events-none absolute bottom-0 left-0 right-0 z-2 flex justify-center px-8 transition-opacity duration-1000 motion-reduce:transition-none"
 				style={{
-					transform: `translateY(${yDashboard}px)`,
+					transform: `translateY(calc(var(--u) * ${yDashboard}))`,
 					willChange: "transform",
 					opacity: decorIn ? 1 : 0,
 				}}
@@ -70,7 +70,7 @@ export default function HeroSection() {
 			<div
 				className="pointer-events-none absolute inset-x-0 bottom-0 z-3"
 				style={{
-					transform: `translateY(${yFg}px)`,
+					transform: `translateY(calc(var(--u) * ${yFg}))`,
 					willChange: "transform",
 				}}
 			>
