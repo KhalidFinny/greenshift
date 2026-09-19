@@ -26,6 +26,7 @@ import { Route as AuthAdminSystemRouteImport } from './routes/_auth.admin.system
 import { Route as AuthAdminUsersRouteImport } from './routes/_auth.admin.users'
 import { Route as AuthAdminVendorsRouteImport } from './routes/_auth.admin.vendors'
 import { Route as AuthBusinessIndexRouteImport } from './routes/_auth.business.index'
+import { Route as AuthBusinessProyekRouteImport } from './routes/_auth.business.proyek'
 import { Route as AuthInvestorIndexRouteImport } from './routes/_auth.investor.index'
 import { Route as AuthInvestorMarketRouteImport } from './routes/_auth.investor.market'
 import { Route as AuthInvestorPortfolioRouteImport } from './routes/_auth.investor.portfolio'
@@ -116,6 +117,11 @@ const AuthBusinessIndexRoute = AuthBusinessIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthBusinessRoute,
 } as any)
+const AuthBusinessProyekRoute = AuthBusinessProyekRouteImport.update({
+  id: '/proyek',
+  path: '/proyek',
+  getParentRoute: () => AuthBusinessRoute,
+} as any)
 const AuthInvestorIndexRoute = AuthInvestorIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -157,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/admin/system': typeof AuthAdminSystemRoute
   '/admin/users': typeof AuthAdminUsersRoute
   '/admin/vendors': typeof AuthAdminVendorsRoute
+  '/business/proyek': typeof AuthBusinessProyekRoute
   '/investor/market': typeof AuthInvestorMarketRoute
   '/investor/portfolio': typeof AuthInvestorPortfolioRouteWithChildren
   '/admin/': typeof AuthAdminIndexRoute
@@ -176,6 +183,7 @@ export interface FileRoutesByTo {
   '/admin/system': typeof AuthAdminSystemRoute
   '/admin/users': typeof AuthAdminUsersRoute
   '/admin/vendors': typeof AuthAdminVendorsRoute
+  '/business/proyek': typeof AuthBusinessProyekRoute
   '/investor/market': typeof AuthInvestorMarketRoute
   '/investor/portfolio': typeof AuthInvestorPortfolioRouteWithChildren
   '/admin': typeof AuthAdminIndexRoute
@@ -201,6 +209,7 @@ export interface FileRoutesById {
   '/_auth/admin/system': typeof AuthAdminSystemRoute
   '/_auth/admin/users': typeof AuthAdminUsersRoute
   '/_auth/admin/vendors': typeof AuthAdminVendorsRoute
+  '/_auth/business/proyek': typeof AuthBusinessProyekRoute
   '/_auth/investor/market': typeof AuthInvestorMarketRoute
   '/_auth/investor/portfolio': typeof AuthInvestorPortfolioRouteWithChildren
   '/_auth/admin/': typeof AuthAdminIndexRoute
@@ -226,6 +235,7 @@ export interface FileRouteTypes {
     | '/admin/system'
     | '/admin/users'
     | '/admin/vendors'
+    | '/business/proyek'
     | '/investor/market'
     | '/investor/portfolio'
     | '/admin/'
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
     | '/admin/system'
     | '/admin/users'
     | '/admin/vendors'
+    | '/business/proyek'
     | '/investor/market'
     | '/investor/portfolio'
     | '/admin'
@@ -269,6 +280,7 @@ export interface FileRouteTypes {
     | '/_auth/admin/system'
     | '/_auth/admin/users'
     | '/_auth/admin/vendors'
+    | '/_auth/business/proyek'
     | '/_auth/investor/market'
     | '/_auth/investor/portfolio'
     | '/_auth/admin/'
@@ -406,6 +418,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthBusinessIndexRouteImport
       parentRoute: typeof AuthBusinessRoute
     }
+    '/_auth/business/proyek': {
+      id: '/_auth/business/proyek'
+      path: '/proyek'
+      fullPath: '/business/proyek'
+      preLoaderRoute: typeof AuthBusinessProyekRouteImport
+      parentRoute: typeof AuthBusinessRoute
+    }
     '/_auth/investor/': {
       id: '/_auth/investor/'
       path: '/'
@@ -469,10 +488,12 @@ const AuthAdminRouteWithChildren = AuthAdminRoute._addFileChildren(
 )
 
 interface AuthBusinessRouteChildren {
+  AuthBusinessProyekRoute: typeof AuthBusinessProyekRoute
   AuthBusinessIndexRoute: typeof AuthBusinessIndexRoute
 }
 
 const AuthBusinessRouteChildren: AuthBusinessRouteChildren = {
+  AuthBusinessProyekRoute: AuthBusinessProyekRoute,
   AuthBusinessIndexRoute: AuthBusinessIndexRoute,
 }
 
