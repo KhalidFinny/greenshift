@@ -22,7 +22,7 @@ export const Route = createFileRoute("/login")({
 		const user = await getSessionFn();
 		const devRole = getDevRole();
 		if (user && (!devRole || user.role === devRole)) {
-			throw redirect({ to: roleHome[user.role] });
+			throw redirect({ to: roleHome[user.role] as "/" });
 		}
 	},
 	component: LoginPage,

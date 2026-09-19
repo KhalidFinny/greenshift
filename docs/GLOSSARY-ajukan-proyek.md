@@ -83,3 +83,12 @@ as. Structural changes from ADR-008 are noted per section.
   `GET /api/business/projects/:id/risk` and renders `RiskAssessmentBody`; the
   download icon opens the project's first ready document, and says so when none
   is ready yet.
+
+## Matchmaking — Vendor Matchmaking (ADR-008)
+
+- Routes `/business/matchmaking` (list) + `/business/matchmaking/$projectId`
+  (detail); nav item "Vendor Matchmaking".
+- Own `MATCHMAKING_PROJECTS` rows with optional `selectedVendor`;
+  empty shows "Belum ada", filled shows name + success icon.
+- Detail stub: 65/35 grid, SMART cards, procurement methods, ringkasan,
+  match factors, calc box. Static demo; real scoring later.

@@ -23,6 +23,7 @@ export const roleNav: Record<UserRole, NavItem[]> = {
 	business: [
 		{ to: "/business", label: "Dashboard" },
 		{ to: "/business/projects", label: "My Projects" },
+		{ to: "/business/matchmaking", label: "Vendor Matchmaking" },
 	],
 	// Origin wired /investor, /investor/portfolio and /investor/market, but none
 	// of those route files exist on either branch. The public bond catalog is
@@ -54,7 +55,7 @@ export function requireRole(role: UserRole) {
 	return ({ context }: { context: { user: AuthUser | null } }) => {
 		if (!context.user) throw redirect({ to: "/login" });
 		if (context.user.role !== role)
-			throw redirect({ to: roleHome[context.user.role] });
+			throw redirect({ to: roleHome[context.user.role] as "/" });
 	};
 }
 
