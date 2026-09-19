@@ -22,6 +22,7 @@ export const roleNav: Record<UserRole, NavItem[]> = {
 	business: [
 		{ to: "/business", label: "Ajukan Proyek" },
 		{ to: "/business/proyek", label: "Proyek Saya" },
+		{ to: "/business/matchmaking", label: "Vendor Matchmaking" },
 	],
 	investor: [
 		{ to: "/investor", label: "Dashboard" },
