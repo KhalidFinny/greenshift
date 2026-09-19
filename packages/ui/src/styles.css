@@ -142,6 +142,11 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+html {
+	height: 100%;
+	overflow: hidden;
+	overscroll-behavior: none;
+}
 /* No global scroll-behavior:smooth: it turns the router's per-navigation
    scroll reset into a glide that makes the header and page "race" during
    page transitions. Section scrolling is smoothed explicitly in JS. */
@@ -149,10 +154,11 @@
   scroll-margin-top: 6rem;
 }
 
-html,
 body,
 #app {
-  min-height: 100%;
+	height: 100%;
+	overflow: hidden;
+	overscroll-behavior: none;
 }
 
 body {

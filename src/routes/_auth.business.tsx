@@ -6,7 +6,12 @@ import { NotFoundComponent } from "../components/not-found";
 export const Route = createFileRoute("/_auth/business")({
 	beforeLoad: requireRole("business"),
 	component: () => (
-		<RoleShell title="Business" navItems={roleNav.business}>
+		<RoleShell
+			title="Business"
+			navItems={roleNav.business}
+			helpCard
+			showHeaderTitle={false}
+		>
 			<Outlet />
 		</RoleShell>
 	),
