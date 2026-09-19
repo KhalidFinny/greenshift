@@ -1,4 +1,3 @@
-import { publishToast, subscribeToasts, type ToastMessage, type ToastTone } from "@greenshift/core";
 import {
 	faCircleCheck,
 	faCircleExclamation,
@@ -6,13 +5,25 @@ import {
 	faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+	publishToast,
+	subscribeToasts,
+	type ToastMessage,
+	type ToastTone,
+} from "@greenshift/core";
+import {
+	type ReactNode,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 
 import { cn } from "#/lib/utils";
 import { Button } from "./button";
 
 /**
- * Toasts are persisted in sessionStorage so they survive full page loads —
+ * Toasts are persisted in sessionStorage so they survive full page loads:
  * login/register/logout navigate with window.location.assign, which would
  * otherwise wipe an in-memory-only toast mid-flight. sessionStorage is
  * per-tab, so nothing lingers after the tab closes.
@@ -25,7 +36,7 @@ interface ToastItem extends ToastMessage {
 	/** Epoch ms when the toast should dismiss itself. */
 	expiresAt: number;
 	/**
-	 * Restored from sessionStorage after a page load — renders in place
+	 * Restored from sessionStorage after a page load: renders in place
 	 * without the slide-in entry so it reads as continuous, not re-arriving.
 	 */
 	animateIn?: boolean;
@@ -41,12 +52,12 @@ const TONE_META: Record<ToastTone, ToastToneMeta> = {
 	success: {
 		icon: faCircleCheck,
 		iconClass: "text-primary",
-		label: "Berhasil",
+		label: "Success",
 	},
 	error: {
 		icon: faCircleExclamation,
 		iconClass: "text-destructive",
-		label: "Gagal",
+		label: "Failed",
 	},
 	info: {
 		icon: faCircleInfo,
@@ -76,7 +87,10 @@ function readStored(): ToastItem[] {
 				? [
 						{
 							id: item.id,
-							tone: item.tone === "error" || item.tone === "success" ? item.tone : "info",
+							tone:
+								item.tone === "error" || item.tone === "success"
+									? item.tone
+									: "info",
 							title: typeof item.title === "string" ? item.title : undefined,
 							message: item.message,
 							expiresAt: item.expiresAt,
@@ -95,7 +109,7 @@ function writeStored(items: ToastItem[]): void {
 	try {
 		window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(items));
 	} catch {
-		// Storage full / unavailable — toasts still work in memory.
+		// Storage full / unavailable: toasts still work in memory.
 	}
 }
 
@@ -132,7 +146,7 @@ function ToastCard({
 				size="icon"
 				className="-mr-1.5 -mt-1.5 shrink-0"
 				onClick={onClose}
-				aria-label="Tutup notifikasi"
+				aria-label="Dismiss notification"
 			>
 				<FontAwesomeIcon icon={faXmark} />
 			</Button>
@@ -217,7 +231,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 				className="pointer-events-none fixed inset-x-0 top-0 z-[100] flex flex-col items-center gap-2 px-4 pt-4"
 			>
 				{items.map((item) => (
-					<ToastCard key={item.id} item={item} onClose={() => dismiss(item.id)} />
+					<ToastCard
+						key={item.id}
+						item={item}
+						onClose={() => dismiss(item.id)}
+					/>
 				))}
 			</div>
 		</>

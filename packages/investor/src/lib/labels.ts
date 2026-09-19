@@ -2,15 +2,15 @@
 export type StatusTone = "default" | "secondary" | "destructive" | "outline";
 
 /**
- * Table/status badge sizing used across admin — enlarged from the DS default
+ * Table/status badge sizing used across admin: enlarged from the DS default
  * so status chips read at the same size as table text.
  */
 export const STATUS_BADGE_CLASS = "!h-8 rounded-md px-3 text-base";
 
 export const INVEST_STATUS_LABEL: Record<string, string> = {
-	active: "Aktif",
-	completed: "Selesai",
-	defaulted: "Gagal",
+	active: "Active",
+	completed: "Completed",
+	defaulted: "Defaulted",
 };
 
 export const INVEST_STATUS_TONE: Record<string, StatusTone> = {
@@ -20,9 +20,9 @@ export const INVEST_STATUS_TONE: Record<string, StatusTone> = {
 };
 
 export const PAYMENT_STATUS_LABEL: Record<string, string> = {
-	scheduled: "Terjadwal",
-	paid: "Terbayar",
-	failed: "Gagal",
+	scheduled: "Scheduled",
+	paid: "Paid",
+	failed: "Failed",
 };
 
 export const PAYMENT_STATUS_TONE: Record<string, StatusTone> = {
@@ -37,9 +37,9 @@ export function riskMeta(score: number | null | undefined): {
 	tone: StatusTone;
 } {
 	if (typeof score !== "number" || !Number.isFinite(score)) {
-		return { label: "—", tone: "outline" };
+		return { label: "-", tone: "outline" };
 	}
-	if (score < 40) return { label: "Rendah", tone: "outline" };
-	if (score < 70) return { label: "Sedang", tone: "secondary" };
-	return { label: "Tinggi", tone: "destructive" };
+	if (score < 40) return { label: "Low", tone: "outline" };
+	if (score < 70) return { label: "Medium", tone: "secondary" };
+	return { label: "High", tone: "destructive" };
 }

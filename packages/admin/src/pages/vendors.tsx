@@ -1,3 +1,9 @@
+import {
+	faCheckCircle,
+	faHandshake,
+	faStar,
+	faWarehouse,
+} from "@fortawesome/free-solid-svg-icons";
 import type { AdminVendor } from "@greenshift/api/contracts";
 import { api } from "@greenshift/core";
 import {
@@ -12,27 +18,17 @@ import {
 	CardTitle,
 	ChartTooltip,
 	ContentSkeleton,
+	DataTable,
 	EmptyState,
 	Grid,
 	Ring,
 	RingChart,
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
 } from "@greenshift/ui";
-import {
-	faCheckCircle,
-	faHandshake,
-	faStar,
-	faWarehouse,
-} from "@fortawesome/free-solid-svg-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { ColumnDef } from "@tanstack/react-table";
 import { useState } from "react";
-import { useStepUpAction } from "../lib/use-step-up-action";
 import type { ExportSection } from "../lib/export";
+import { useStepUpAction } from "../lib/use-step-up-action";
 import { ExportMenu } from "../organisms/export-menu";
 import { MetricCard } from "../organisms/metric-card";
 import { StepUpDialog } from "../organisms/step-up-dialog";
@@ -40,20 +36,20 @@ import { VendorDetailDialog } from "../organisms/vendor-detail-dialog";
 import { VendorPerformanceDialog } from "../organisms/vendor-performance-dialog";
 
 const MATCH_RATE = [
-	{ label: "Sukses", value: 68, maxValue: 100, color: "var(--chart-1)" },
-	{ label: "Belum match", value: 32, maxValue: 100, color: "var(--chart-5)" },
-] as const;
+	{ label: "Successful", value: 68, maxValue: 100, color: "var(--chart-1)" },
+	{ label: "Not matched", value: 32, maxValue: 100, color: "var(--chart-5)" },
+];
 
 const MATCHES_OVER_TIME = [
 	{ label: "Jan", value: 4 },
 	{ label: "Feb", value: 6 },
 	{ label: "Mar", value: 7 },
 	{ label: "Apr", value: 9 },
-	{ label: "Mei", value: 11 },
+	{ label: "May", value: 11 },
 	{ label: "Jun", value: 12 },
 	{ label: "Jul", value: 14 },
-	{ label: "Agu", value: 18 },
-] as const;
+	{ label: "Aug", value: 18 },
+];
 
 const DEMO_PERFORMANCE_VENDORS: AdminVendor[] = [
 	{
@@ -62,11 +58,11 @@ const DEMO_PERFORMANCE_VENDORS: AdminVendor[] = [
 		email: "ops@ecotech.id",
 		userName: "EcoTech Team",
 		companyName: "EcoTech",
-		description: "Spesialis retrofit HVAC dan optimasi utilitas pabrik.",
-		certifications: ["ISO 50001", "K3 Umum"],
+		description: "HVAC retrofit and factory utility optimization specialist.",
+		certifications: ["ISO 50001", "General OHS"],
 		portfolio: [
-			"Retrofit chiller 600 TR",
-			"Optimasi kompresor pabrik tekstil",
+			"600 TR chiller retrofit",
+			"Textile factory compressor optimization",
 		],
 		rating: 4.6,
 		totalProjects: 7,
@@ -80,9 +76,9 @@ const DEMO_PERFORMANCE_VENDORS: AdminVendor[] = [
 		userName: "GreenWorks Team",
 		companyName: "GreenWorks",
 		description:
-			"Vendor efisiensi energi dengan fokus audit dan LED retrofit.",
-		certifications: ["ISO 9001", "Auditor Energi"],
-		portfolio: ["LED relamping gudang", "Audit energi pabrik FMCG"],
+			"Energy-efficiency vendor focused on audits and LED retrofits.",
+		certifications: ["ISO 9001", "Energy Auditor"],
+		portfolio: ["Warehouse LED relamping", "FMCG factory energy audit"],
 		rating: 4.4,
 		totalProjects: 6,
 		verifiedAt: "2026-06-28T09:00:00.000Z",
@@ -95,9 +91,9 @@ const DEMO_PERFORMANCE_VENDORS: AdminVendor[] = [
 		userName: "SolarX Team",
 		companyName: "SolarX",
 		description:
-			"Implementasi PLTS atap dan monitoring performa energi.",
+			"Rooftop solar implementation and energy performance monitoring.",
 		certifications: ["IEC Solar Installer"],
-		portfolio: ["PLTS atap 500 kWp", "Monitoring energi multi-site"],
+		portfolio: ["500 kWp rooftop solar", "Multi-site energy monitoring"],
 		rating: 4.2,
 		totalProjects: 5,
 		verifiedAt: "2026-06-02T09:00:00.000Z",
@@ -109,10 +105,9 @@ const DEMO_PERFORMANCE_VENDORS: AdminVendor[] = [
 		email: "team@carbonflow.id",
 		userName: "CarbonFlow Team",
 		companyName: "CarbonFlow",
-		description:
-			"Vendor retrofit boiler dan heat recovery untuk industri berat.",
+		description: "Boiler retrofit and heat-recovery vendor for heavy industry.",
 		certifications: ["PJK3", "Boiler Specialist"],
-		portfolio: ["Heat recovery kiln", "Retrofit boiler biomassa"],
+		portfolio: ["Heat recovery kiln", "Biomass boiler retrofit"],
 		rating: 4.0,
 		totalProjects: 5,
 		verifiedAt: null,
@@ -120,69 +115,96 @@ const DEMO_PERFORMANCE_VENDORS: AdminVendor[] = [
 	},
 ];
 
-function VendorRow({
-	vendor,
-	onVerify,
-	isPending,
-}: {
-	vendor: AdminVendor;
-	onVerify: (verified: boolean) => void;
-	isPending: boolean;
-}) {
-	const verified = vendor.verifiedAt !== null;
-	return (
-		<TableRow>
-			<TableCell>
-				<p className="font-medium">{vendor.companyName}</p>
-				<p className="text-muted-foreground">{vendor.email}</p>
-			</TableCell>
-			<TableCell>
-				{vendor.certifications.length > 0 ? (
-					<div className="flex flex-wrap gap-1">
-						{vendor.certifications.map((cert) => (
-							<Badge
-								key={cert}
-								variant="secondary"
-								className="text-base px-3 !h-8 rounded-md"
-							>
-								{cert}
-							</Badge>
-						))}
-					</div>
-				) : (
-					<span className="text-muted-foreground">—</span>
-				)}
-			</TableCell>
-			<TableCell>
-				{vendor.portfolio.length > 0 ? (
-					<span>{vendor.portfolio.length} proyek</span>
-				) : (
-					<span className="text-muted-foreground">—</span>
-				)}
-			</TableCell>
-			<TableCell>
-				<span className="tabular-nums">{vendor.rating.toFixed(1)}</span>
-			</TableCell>
-			<TableCell>
+const vendorColumns = (
+	onVerify: (vendor: AdminVendor, verified: boolean) => void,
+	isPending: boolean,
+): ColumnDef<AdminVendor>[] => [
+	{
+		id: "vendor",
+		accessorFn: (vendor) => vendor.companyName,
+		header: "Vendor",
+		cell: ({ row }) => (
+			<>
+				<p className="font-medium">{row.original.companyName}</p>
+				<p className="text-muted-foreground">{row.original.email}</p>
+			</>
+		),
+	},
+	{
+		id: "certifications",
+		accessorFn: (vendor) => vendor.certifications.join(", "),
+		header: "Certifications",
+		cell: ({ row }) =>
+			row.original.certifications.length > 0 ? (
+				<div className="flex flex-wrap gap-1">
+					{row.original.certifications.map((cert) => (
+						<Badge
+							key={cert}
+							variant="secondary"
+							className="text-base px-3 !h-8 rounded-md"
+						>
+							{cert}
+						</Badge>
+					))}
+				</div>
+			) : (
+				<span className="text-muted-foreground">-</span>
+			),
+	},
+	{
+		id: "portfolio",
+		accessorFn: (vendor) => vendor.portfolio.length,
+		header: "Portfolio",
+		cell: ({ row }) =>
+			row.original.portfolio.length > 0 ? (
+				<span>{row.original.portfolio.length} projects</span>
+			) : (
+				<span className="text-muted-foreground">-</span>
+			),
+	},
+	{
+		id: "rating",
+		accessorFn: (vendor) => vendor.rating,
+		header: "Rating",
+		cell: ({ row }) => (
+			<span className="tabular-nums">{row.original.rating.toFixed(1)}</span>
+		),
+	},
+	{
+		id: "verification",
+		accessorFn: (vendor) =>
+			vendor.verifiedAt !== null ? "Verified" : "Not verified",
+		header: "Verification",
+		cell: ({ row }) => {
+			const verified = row.original.verifiedAt !== null;
+			return (
 				<Badge
 					variant={verified ? "default" : "destructive"}
 					className="text-base px-3 !h-8 rounded-md"
 				>
-					{verified ? "Terverifikasi" : "Belum"}
+					{verified ? "Verified" : "Not verified"}
 				</Badge>
-			</TableCell>
-			<TableCell>
+			);
+		},
+	},
+	{
+		id: "actions",
+		header: "Actions",
+		enableSorting: false,
+		cell: ({ row }) => {
+			const verified = row.original.verifiedAt !== null;
+			return (
 				<Button
 					variant={verified ? "outline" : "default"}
-					onClick={() => onVerify(!verified)}
+					onClick={() => onVerify(row.original, !verified)}
 					disabled={isPending}
 				>
-					{verified ? "Cabut verifikasi" : "Verifikasi"}
+					{verified ? "Revoke verification" : "Verify"}
 				</Button>
-			</TableCell>
-		</TableRow>
-	);
-}
+			);
+		},
+	},
+];
 
 export function AdminVendors() {
 	const queryClient = useQueryClient();
@@ -211,7 +233,7 @@ export function AdminVendors() {
 			.run({ id: vendor.id, verified })
 			.catch((err: unknown) =>
 				setVerifyError(
-					err instanceof Error ? err.message : "Verifikasi gagal",
+					err instanceof Error ? err.message : "Verification failed",
 				),
 			);
 	};
@@ -224,8 +246,8 @@ export function AdminVendors() {
 		return (
 			<div className="space-y-4">
 				<EmptyState
-					title="Gagal memuat vendor"
-					description="Tidak dapat mengambil data vendor dan matchmaking."
+					title="Failed to load vendors"
+					description="Unable to retrieve vendor and matchmaking data."
 				/>
 			</div>
 		);
@@ -254,27 +276,29 @@ export function AdminVendors() {
 
 	const vendorExportSections: ExportSection[] = [
 		{
-			title: "Verifikasi Vendor",
+			title: "Vendor Verification",
 			headers: [
 				"Vendor",
 				"Email",
-				"Sertifikasi",
-				"Portofolio",
+				"Certifications",
+				"Portfolio",
 				"Rating",
-				"Verifikasi",
+				"Verification",
 			],
 			rows: vendors.map((vendor) => [
 				vendor.companyName,
 				vendor.email,
-				vendor.certifications.join(", ") || "—",
+				vendor.certifications.join(", ") || "-",
 				vendor.portfolio.length > 0
-					? `${vendor.portfolio.length} proyek`
-					: "—",
+					? `${vendor.portfolio.length} projects`
+					: "-",
 				vendor.rating.toFixed(1),
-				vendor.verifiedAt !== null ? "Terverifikasi" : "Belum",
+				vendor.verifiedAt !== null ? "Verified" : "Not verified",
 			]),
 		},
 	];
+
+	const columns = vendorColumns(handleVerify, verify.isPending);
 
 	return (
 		<div className="space-y-6">
@@ -282,7 +306,7 @@ export function AdminVendors() {
 				<div>
 					<h1 className="text-2xl font-semibold">Vendors</h1>
 					<p className="mt-1 text-base text-muted-foreground">
-						Kurasi dan verifikasi vendor.
+						Vendor curation and verification.
 					</p>
 				</div>
 				<ExportMenu
@@ -295,28 +319,28 @@ export function AdminVendors() {
 			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 				{[
 					{
-						label: "Total Vendor",
+						label: "Total Vendors",
 						value: String(totalVendors || 12),
 						icon: faWarehouse,
-						sub: "vendor terdaftar",
+						sub: "registered vendors",
 					},
 					{
-						label: "Terverifikasi",
+						label: "Verified",
 						value: String(verifiedCount || 8),
 						icon: faCheckCircle,
-						sub: "vendor lolos kurasi",
+						sub: "vendors passed curation",
 					},
 					{
-						label: "Rata-rata Rating",
+						label: "Average Rating",
 						value: averageRating.toFixed(1),
 						icon: faStar,
-						sub: "performa vendor",
+						sub: "vendor performance",
 					},
 					{
-						label: "Total Proyek",
+						label: "Total Projects",
 						value: String(totalProjects),
 						icon: faHandshake,
-						sub: "ditangani vendor",
+						sub: "handled by vendors",
 					},
 				].map((card) => (
 					<MetricCard
@@ -354,11 +378,8 @@ export function AdminVendors() {
 								Target benchmark: 4.5 / 5
 							</p>
 							{performanceSource.length > 5 ? (
-								<Button
-									variant="outline"
-									onClick={() => setPerfOpen(true)}
-								>
-									Lihat Semua ({performanceSource.length})
+								<Button variant="outline" onClick={() => setPerfOpen(true)}>
+									View All ({performanceSource.length})
 								</Button>
 							) : null}
 						</div>
@@ -367,9 +388,7 @@ export function AdminVendors() {
 					<div className="space-y-4 rounded-xl border border-border/60 bg-muted/20 p-4">
 						<div className="space-y-1">
 							<p className="text-base text-muted-foreground">Top performers</p>
-							<p className="text-xl font-semibold">
-								Vendor dengan rating tertinggi
-							</p>
+							<p className="text-xl font-semibold">Highest-rated vendors</p>
 						</div>
 						<ol className="divide-y divide-border">
 							{topVendors.map((vendor, index) => (
@@ -382,7 +401,7 @@ export function AdminVendors() {
 											{vendor.companyName}
 										</p>
 										<p className="text-base text-muted-foreground">
-											{vendor.totalProjects} proyek
+											{vendor.totalProjects} projects
 										</p>
 									</div>
 									<span className="shrink-0 text-xl font-semibold tabular-nums">
@@ -430,9 +449,7 @@ export function AdminVendors() {
 									style={{ backgroundColor: item.color }}
 									aria-hidden="true"
 								/>
-								<p className="text-base text-muted-foreground">
-									{item.label}
-								</p>
+								<p className="text-base text-muted-foreground">{item.label}</p>
 								<p className="text-base font-semibold tabular-nums">
 									{item.value}%
 								</p>
@@ -462,7 +479,7 @@ export function AdminVendors() {
 
 			<Card>
 				<CardHeader>
-					<CardTitle className="text-lg">Verifikasi Vendor</CardTitle>
+					<CardTitle className="text-lg">Vendor Verification</CardTitle>
 				</CardHeader>
 				<CardContent>
 					{verifyError && (
@@ -470,31 +487,17 @@ export function AdminVendors() {
 					)}
 					{vendors.length === 0 ? (
 						<p className="text-base text-muted-foreground">
-							Belum ada vendor terdaftar.
+							No registered vendors yet.
 						</p>
 					) : (
-						<Table className="text-base">
-							<TableHeader>
-								<TableRow>
-									<TableHead>Vendor</TableHead>
-									<TableHead>Sertifikasi</TableHead>
-									<TableHead>Portofolio</TableHead>
-									<TableHead>Rating</TableHead>
-									<TableHead>Verifikasi</TableHead>
-									<TableHead>Aksi</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{vendors.map((vendor) => (
-									<VendorRow
-										key={vendor.id}
-										vendor={vendor}
-										isPending={verify.isPending}
-										onVerify={(verified) => handleVerify(vendor, verified)}
-									/>
-								))}
-							</TableBody>
-						</Table>
+						<DataTable
+							columns={columns}
+							data={vendors}
+							getRowId={(vendor) => String(vendor.id)}
+							ariaLabel="Vendor verification"
+							searchPlaceholder="Search vendors"
+							emptyMessage="No vendors match your search."
+						/>
 					)}
 				</CardContent>
 			</Card>

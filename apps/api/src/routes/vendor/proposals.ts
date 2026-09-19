@@ -1,12 +1,12 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, or, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { createFactory } from "hono/factory";
 import type { ProposalDraftBody, ProposalSummary } from "../../contracts";
 import { createDb } from "../../db";
 import {
 	auditLogs,
-	proposals,
 	projects,
+	proposals,
 	tenders,
 	vendors,
 } from "../../db/schema";
@@ -45,7 +45,7 @@ function proposalSummary(
 	};
 }
 
-// ── proposals (penawaran) ─────────────────────────────────
+// ── proposals ─────────────────────────────────────────────
 proposalsRoutes.get(
 	"/proposals",
 	...factory.createHandlers(async (c) => {
@@ -85,7 +85,7 @@ proposalsRoutes.get(
 		const id = Number(c.req.param("id"));
 		if (!Number.isInteger(id) || id <= 0) {
 			return c.json(
-				{ error: { code: "VALIDATION", message: "ID tidak valid" } },
+				{ error: { code: "VALIDATION", message: "Invalid ID" } },
 				400,
 			);
 		}
@@ -98,7 +98,7 @@ proposalsRoutes.get(
 			.limit(1);
 		if (!profile) {
 			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Penawaran tidak ditemukan" } },
+				{ error: { code: "NOT_FOUND", message: "Proposal not found" } },
 				404,
 			);
 		}
@@ -106,7 +106,7 @@ proposalsRoutes.get(
 		const detail = await getProposalDetail(db, id, profile.id);
 		if (!detail) {
 			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Penawaran tidak ditemukan" } },
+				{ error: { code: "NOT_FOUND", message: "Proposal not found" } },
 				404,
 			);
 		}
@@ -152,7 +152,9 @@ proposalsRoutes.post(
 			})
 		) {
 			return c.json(
-				{ error: { code: "VALIDATION", message: "Input penawaran tidak valid" } },
+				{
+					error: { code: "VALIDATION", message: "Invalid proposal input" },
+				},
 				400,
 			);
 		}
@@ -170,7 +172,8 @@ proposalsRoutes.post(
 				{
 					error: {
 						code: "VALIDATION",
-						message: "Lengkapi profil vendor sebelum mengirim penawaran",
+						message:
+							"Complete your vendor profile before submitting a proposal",
 					},
 				},
 				400,
@@ -181,7 +184,7 @@ proposalsRoutes.post(
 				{
 					error: {
 						code: "FORBIDDEN",
-						message: "Profil vendor belum diverifikasi oleh admin",
+						message: "Vendor profile has not been verified by an admin",
 					},
 				},
 				403,
@@ -195,13 +198,13 @@ proposalsRoutes.post(
 			.limit(1);
 		if (!tender) {
 			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Tender tidak ditemukan" } },
+				{ error: { code: "NOT_FOUND", message: "Tender not found" } },
 				404,
 			);
 		}
 		if (tender.status !== "open") {
 			return c.json(
-				{ error: { code: "TENDER_CLOSED", message: "Tender sudah ditutup" } },
+				{ error: { code: "TENDER_CLOSED", message: "Tender already closed" } },
 				409,
 			);
 		}
@@ -210,7 +213,7 @@ proposalsRoutes.post(
 				{
 					error: {
 						code: "TENDER_DEADLINE",
-						message: "Tenggat tender sudah lewat",
+						message: "Tender deadline has passed",
 					},
 				},
 				409,
@@ -232,47 +235,74 @@ proposalsRoutes.post(
 				{
 					error: {
 						code: "DUPLICATE_PROPOSAL",
-						message: "Anda sudah mengirim penawaran untuk tender ini",
+						message: "You have already submitted a proposal for this tender",
 					},
 				},
 				409,
 			);
 		}
 
-		// Single atomic statement: open + deadline + no-duplicate are re-checked
-		// inside the INSERT ... SELECT WHERE, so concurrent submissions cannot
-		// double-bid a tender. The pre-checks above only provide nicer errors.
+		// Single atomic statement: the tender is re-checked (open + inside its
+		// deadline) inside the INSERT ... SELECT, and the unique
+		// (tender_id, vendor_id) index turns a duplicate bid into a no-op via
+		// ON CONFLICT DO NOTHING. The pre-checks above only give nicer errors.
+		// Drizzle requires the select to mirror every table column, in
+		// declaration order; `id` is null so SQLite assigns the rowid.
 		const now = new Date();
-		const runResult = await db.run(sql`
-			INSERT INTO proposals (tender_id, vendor_id, amount, technical_spec, operational_cost, projected_roi, warranty_period, status, revision_count, submitted_at, created_at, updated_at)
-			SELECT ${tenderId}, ${profile.id}, ${amount}, ${technicalSpec ?? null}, ${operationalCost ?? null}, ${projectedRoi ?? null}, ${warrantyPeriod ?? null}, 'submitted', 0, ${now.getTime()}, ${now.getTime()}, ${now.getTime()}
-			WHERE EXISTS (
-				SELECT 1 FROM tenders t
-				WHERE t.id = ${tenderId}
-					AND t.status = 'open'
-					AND (t.deadline_at IS NULL OR t.deadline_at >= ${now.getTime()})
+		const [inserted] = await db
+			.insert(proposals)
+			.select(
+				db
+					.select({
+						id: sql<number | null>`null`.as("id"),
+						tenderId: sql<number>`${tenderId}`.as("tender_id"),
+						vendorId: sql<number>`${profile.id}`.as("vendor_id"),
+						amount: sql<number>`${amount}`.as("amount"),
+						technicalSpec: sql<string | null>`${technicalSpec ?? null}`.as(
+							"technical_spec",
+						),
+						operationalCost: sql<number | null>`${operationalCost ?? null}`.as(
+							"operational_cost",
+						),
+						projectedRoi: sql<number | null>`${projectedRoi ?? null}`.as(
+							"projected_roi",
+						),
+						warrantyPeriod: sql<number | null>`${warrantyPeriod ?? null}`.as(
+							"warranty_period",
+						),
+						status: sql<string>`'submitted'`.as("status"),
+						revisionCount: sql<number>`0`.as("revision_count"),
+						submittedAt: sql<number>`${now.getTime()}`.as("submitted_at"),
+						reviewedAt: sql<number | null>`null`.as("reviewed_at"),
+						createdAt: sql<number>`${now.getTime()}`.as("created_at"),
+						updatedAt: sql<number>`${now.getTime()}`.as("updated_at"),
+					})
+					.from(tenders)
+					.where(
+						and(
+							eq(tenders.id, tenderId),
+							eq(tenders.status, "open"),
+							or(isNull(tenders.deadlineAt), gte(tenders.deadlineAt, now)),
+						),
+					),
 			)
-			AND NOT EXISTS (
-				SELECT 1 FROM proposals p WHERE p.tender_id = ${tenderId} AND p.vendor_id = ${profile.id}
-			)
-			RETURNING id
-		`);
-		const firstRow = runResult.results?.[0] as
-			| Record<string, unknown>
-			| undefined;
-		const insertedId = Number(firstRow?.id);
-		if (!Number.isInteger(insertedId) || insertedId <= 0) {
+			.onConflictDoNothing({
+				target: [proposals.tenderId, proposals.vendorId],
+			})
+			.returning({ id: proposals.id });
+
+		if (!inserted) {
 			return c.json(
 				{
 					error: {
 						code: "PROPOSAL_CONFLICT",
-						message: "Penawaran gagal dikirim: tender ditutup atau penawaran sudah ada",
+						message:
+							"Proposal could not be submitted: the tender is closed or a proposal already exists",
 					},
 				},
 				409,
 			);
 		}
-		const inserted = { id: insertedId };
 
 		await db.insert(auditLogs).values({
 			userId,
@@ -296,7 +326,7 @@ proposalsRoutes.post(
 			.limit(1);
 		if (!row) {
 			return c.json(
-				{ error: { code: "INTERNAL", message: "Gagal memuat penawaran" } },
+				{ error: { code: "INTERNAL", message: "Failed to load proposal" } },
 				500,
 			);
 		}
@@ -315,7 +345,7 @@ proposalsRoutes.delete(
 		const id = Number(c.req.param("id"));
 		if (!Number.isInteger(id) || id <= 0) {
 			return c.json(
-				{ error: { code: "VALIDATION", message: "ID tidak valid" } },
+				{ error: { code: "VALIDATION", message: "Invalid ID" } },
 				400,
 			);
 		}
@@ -328,7 +358,7 @@ proposalsRoutes.delete(
 			.limit(1);
 		if (!profile) {
 			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Penawaran tidak ditemukan" } },
+				{ error: { code: "NOT_FOUND", message: "Proposal not found" } },
 				404,
 			);
 		}
@@ -341,7 +371,7 @@ proposalsRoutes.delete(
 			.limit(1);
 		if (!row) {
 			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Penawaran tidak ditemukan" } },
+				{ error: { code: "NOT_FOUND", message: "Proposal not found" } },
 				404,
 			);
 		}
@@ -351,7 +381,8 @@ proposalsRoutes.delete(
 				{
 					error: {
 						code: "PROPOSAL_LOCKED",
-						message: "Hanya penawaran yang belum diproses yang dapat ditarik",
+						message:
+							"Only proposals that have not yet been processed can be withdrawn",
 					},
 				},
 				409,

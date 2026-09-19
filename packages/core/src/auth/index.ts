@@ -8,9 +8,9 @@ export * from "./use-idle-session-expiry";
 
 export const roleHome = {
 	business: "/business",
-	investor: "/investor",
 	vendor: "/vendor",
 	admin: "/admin",
+	broker: "/broker",
 } as const satisfies Record<UserRole, string>;
 
 export interface NavItem {
@@ -28,7 +28,19 @@ export const roleNav: Record<UserRole, NavItem[]> = {
 		{ to: "/investor/portfolio", label: "Portfolio" },
 		{ to: "/investor/market", label: "Green Market" },
 	],
-	vendor: [{ to: "/vendor", label: "Vendor menu1" }],
+	vendor: [
+		{ to: "/vendor", label: "Dashboard" },
+		{ to: "/vendor/opportunities", label: "Discover" },
+		{ to: "/vendor/deals", label: "Active Deals" },
+		{ to: "/vendor/portfolio", label: "Portfolio" },
+		{ to: "/vendor/settings", label: "Settings" },
+	],
+	broker: [
+		{ to: "/broker", label: "Dashboard" },
+		{ to: "/broker/projects", label: "Assigned Projects" },
+		{ to: "/broker/monthly-reports", label: "Monthly Reports" },
+		{ to: "/broker/settings", label: "Settings" },
+	],
 	admin: [
 		{ to: "/admin", label: "Dashboard" },
 		{ to: "/admin/analytics", label: "Analytics" },

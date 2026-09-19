@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { faLock } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { api } from "@greenshift/core";
 import {
 	Button,
@@ -8,11 +9,9 @@ import {
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-	Input,
-	Label,
+	useAppForm,
 } from "@greenshift/ui";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faLock } from "@fortawesome/free-solid-svg-icons";
+import { useState } from "react";
 
 interface StepUpDialogProps {
 	isOpen: boolean;
@@ -20,56 +19,74 @@ interface StepUpDialogProps {
 	onSuccess: () => void;
 }
 
-export function StepUpDialog({ isOpen, onClose, onSuccess }: StepUpDialogProps) {
-	const [password, setPassword] = useState("");
-	const [isSubmitting, setIsSubmitting] = useState(false);
+export function StepUpDialog({
+	isOpen,
+	onClose,
+	onSuccess,
+}: StepUpDialogProps) {
 	const [error, setError] = useState<string | null>(null);
 
-	const handleSubmit = async () => {
-		setIsSubmitting(true);
-		setError(null);
-		try {
-			await api.auth.stepUp(password);
-			onSuccess();
-			onClose();
-		} catch (e: unknown) {
-			setError(e instanceof Error ? e.message : "Gagal konfirmasi kata sandi");
-		} finally {
-			setIsSubmitting(false);
-		}
-	};
+	const form = useAppForm({
+		defaultValues: { password: "" },
+		onSubmit: async ({ value }) => {
+			setError(null);
+			try {
+				await api.auth.stepUp(value.password);
+				form.reset();
+				onSuccess();
+				onClose();
+			} catch (e: unknown) {
+				setError(
+					e instanceof Error ? e.message : "Password confirmation failed",
+				);
+			}
+		},
+	});
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onClose}>
 			<DialogContent>
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2 text-xl">
-						<FontAwesomeIcon icon={faLock} /> Konfirmasi Keamanan
+						<FontAwesomeIcon icon={faLock} /> Security Confirmation
 					</DialogTitle>
 					<DialogDescription className="text-base">
-						Masukkan kata sandi Anda untuk melanjutkan aksi sensitif ini.
+						Enter your password to continue with this sensitive action.
 					</DialogDescription>
 				</DialogHeader>
-				<div className="space-y-4 py-4">
-					<div className="space-y-2">
-						<Label htmlFor="password">Kata Sandi</Label>
-						<Input
-							id="password"
-							type="password"
-							value={password}
-							onChange={(e) => setPassword(e.target.value)}
-						/>
+				<form
+					onSubmit={(event) => {
+						event.preventDefault();
+						void form.handleSubmit();
+					}}
+					noValidate
+				>
+					<div className="space-y-4 py-4">
+						<form.AppField
+							name="password"
+							validators={{
+								onChange: ({ value }) =>
+									value ? undefined : "Password is required",
+							}}
+						>
+							{(field) => (
+								<field.PasswordField
+									label="Password"
+									autoComplete="current-password"
+								/>
+							)}
+						</form.AppField>
+						{error && <p className="text-base text-destructive">{error}</p>}
 					</div>
-					{error && <p className="text-base text-destructive">{error}</p>}
-				</div>
-				<DialogFooter>
-					<Button variant="outline" onClick={onClose}>
-						Batal
-					</Button>
-					<Button onClick={handleSubmit} disabled={isSubmitting || !password}>
-						Konfirmasi
-					</Button>
-				</DialogFooter>
+					<DialogFooter>
+						<Button type="button" variant="outline" onClick={onClose}>
+							Cancel
+						</Button>
+						<form.AppForm>
+							<form.SubmitButton>Confirm</form.SubmitButton>
+						</form.AppForm>
+					</DialogFooter>
+				</form>
 			</DialogContent>
 		</Dialog>
 	);

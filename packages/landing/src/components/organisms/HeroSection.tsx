@@ -82,19 +82,19 @@ export default function HeroSection() {
 				)}
 			>
 				<li className="absolute left-[8%] top-[42%]">
-					<FloatingPill animation="float">Penilaian Risiko Proyek</FloatingPill>
+					<FloatingPill animation="float">Project Risk Assessment</FloatingPill>
 				</li>
 				<li className="absolute right-[8%] top-[48%]">
 					<FloatingPill animation="float-delayed">
-						Pencocokan Vendor Cerdas
+						Smart Vendor Matching
 					</FloatingPill>
 				</li>
 				<li className="absolute left-[8%] top-[58%]">
-					<FloatingPill animation="float-slow">Pelacakan ROI</FloatingPill>
+					<FloatingPill animation="float-slow">ROI Tracking</FloatingPill>
 				</li>
 				<li className="absolute right-[8%] top-[65%]">
 					<FloatingPill animation="float-slow-delayed">
-						Pasar Hijau
+						Green Market
 					</FloatingPill>
 				</li>
 			</ul>
@@ -127,9 +127,9 @@ export default function HeroSection() {
 						alt="GreenShift"
 						className="mr-3 inline-block h-[42px] align-middle"
 					/>
-					membantu perusahaan industri memvalidasi proyek efisiensi energi,
-					menyusun blueprint dan memantau ROI dalam satu ekosistem yang terukur
-					dan transparan.
+					helps industrial companies validate energy efficiency projects, build
+					blueprints, and monitor ROI in one measurable and transparent
+					ecosystem.
 				</p>
 
 				<nav
@@ -143,16 +143,16 @@ export default function HeroSection() {
 							"h-[42px] w-[180px] cursor-pointer rounded-[10px] bg-[#f7f7f9] text-base text-[#1a1a1a] normal-case tracking-normal hover:bg-white",
 						)}
 					>
-						Mulai Gratis
+						Get Started Free
 					</Link>
 					<a
-						href="mailto:contact@greenshift.com?subject=Proyek%20%26%20Investasi"
+						href="mailto:contact@greenshift.com?subject=Project%20%26%20Investment"
 						className={cn(
 							buttonVariants({ variant: "outline" }),
 							"h-[42px] w-[180px] cursor-pointer rounded-[10px] border-[3px] border-white bg-transparent text-base text-white normal-case tracking-normal hover:bg-white hover:text-[#1a1a1a]",
 						)}
 					>
-						Hubungi Kami
+						Contact Us
 					</a>
 				</nav>
 			</div>

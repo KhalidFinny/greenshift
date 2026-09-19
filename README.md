@@ -1,38 +1,59 @@
 # GreenShift
 
-Platform MRV untuk Pembiayaan Hijau — role-based dashboards for **business**, **investor**, **vendor**, and **admin**, served from one Cloudflare Worker.
+**MRV platform for green financing.** GreenShift validates industrial energy-efficiency projects, builds a
+*Green Project Blueprint*, and connects projects to green funding through licensed SCF partners.
 
-## Stack
+The application ships role-based dashboards for **business**, **vendor**, and **admin**, plus a public
+**bond catalog**, all served from a single Cloudflare Worker.
 
-- **Frontend** — TanStack Start (SSR + file routes) + React 19 + TanStack Router/Query
-- **Backend** — Hono API mounted in the same worker (`/api/*`), typed session auth (PBKDF2 + KV sessions)
-- **Data** — Cloudflare D1 (Drizzle ORM), KV (sessions), R2
-- **UI** — Tailwind CSS v4 + shadcn/ui (react-aria), 10px radius design system
-- **Tooling** — Bun workspace monorepo (`apps/*`, `packages/*`), Vite 8 via the Cloudflare plugin, Biome, TypeScript strict
+## Documentation
+
+| Document | Contents |
+|---|---|
+| [INSTALLATION.md](INSTALLATION.md) | Requirements, install, running, seeded accounts, database setup, build and deploy. |
+| [TECH_STACK.md](TECH_STACK.md) | Technology stack and repository layout by technology. |
+| [TECHNICAL_DOCUMENTATION.md](TECHNICAL_DOCUMENTATION.md) | Architecture, package boundaries, auth, security, HTTP API reference, data model, data-access conventions. |
+
+## Features
+
+| Surface | What it does |
+|---|---|
+| Landing (`/`) | Public marketing site: hero, how it works, ecosystem, FAQ, contact. |
+| Bond catalog (`/bonds`) | Public catalog of verified bond listings. Bonds are sold via brokers, so there is no buy/portfolio flow. |
+| Business dashboard | Create projects, submit them for assessment, review risk results, open tenders. |
+| Vendor dashboard | Browse open tenders, submit proposals, respond to revision requests, track procurement status. |
+| Admin console | Verify users/vendors, drive the project and blueprint lifecycle, pay out ROI, review the audit trail, and watch the anomaly/red-flag console. |
 
 ## Quick start
 
 ```bash
 bun install
-bun run dev          # full app at localhost:3000
-bun run dev:business # role-scoped dev server (business only, port 3001)
+bun run dev
 ```
 
-Login with `business1` / `investor1` / `vendor1` / `admin` (password `12345678`).
+Open http://localhost:3000. Seeded logins (password `12345678`): `business1`, `vendor1`, `admin`.
 
-## Structure
+See [INSTALLATION.md](INSTALLATION.md) for role-scoped dev servers, the database workflow and deployment.
+
+## Repository layout
 
 ```
-apps/api/        BE — Hono API, D1 schema, sessions
-packages/ui/     design system (shadcn, RoleShell, Header/Footer)
-packages/core/   FE shared contract (auth, guards, typed API client)
-packages/landing/  landing page
-packages/{business,investor,vendor,admin}/  role packages
-src/             web app (routes, router, worker entry)
+apps/api/        Backend: Hono API, Drizzle schema, auth/sessions
+packages/ui/     Design system
+packages/core/   Shared frontend contract
+packages/landing/    Landing page
+packages/business/   Business dashboard
+packages/vendor/     Vendor dashboard
+packages/admin/      Admin dashboard
+packages/investor/   Public bond catalog
+src/             Web app: TanStack Start routes, router, Worker entry
+scripts/         Seed data generator
+drizzle/         D1 migrations
 ```
 
-See **[HOW_TO_RUN.md](HOW_TO_RUN.md)** for commands and per-package guidance, and **[docs/MICROFRONTEND.md](docs/MICROFRONTEND.md)** for the microfrontend architecture.
+## Quality checks
 
-## Scripts
-
-`dev` / `dev:<role>` / `dev:landing` / `dev:auth` · `build` · `deploy` · `typecheck` · `db:generate` · `format` / `lint` / `check`
+```bash
+bun run typecheck   # tsc --noEmit
+bun run check       # biome check
+```

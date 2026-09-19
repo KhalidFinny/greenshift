@@ -8,12 +8,6 @@ export const apiRoutes = {
 	stepUp: { method: "POST", path: "/api/auth/step-up" },
 	logout: { method: "POST", path: "/api/auth/logout" },
 	investorMarket: { method: "GET", path: "/api/investor/market" },
-	investorBuyBond: { method: "POST", path: "/api/investor/bonds" },
-	investorPortfolio: { method: "GET", path: "/api/investor/portfolio" },
-	investorPortfolioDetail: {
-		method: "GET",
-		path: "/api/investor/portfolio/:id",
-	},
 	adminUsers: { method: "GET", path: "/api/admin/users" },
 	adminVerifyUser: {
 		method: "PATCH",
@@ -109,83 +103,46 @@ export interface OkResponse {
 	ok: true;
 }
 
-export interface BuyBondBody {
-	projectId: number;
-	amount: number;
-}
-
 export interface BlueprintSummary {
 	irr?: number;
 	npv?: number;
 	paybackPeriod?: number;
 }
 
-export interface MarketProject {
+/**
+ * Listing lifecycle on the public bond dashboard.
+ *
+ * `verified` mirrors an OJK-cleared bond that brokers can list; `on_progress`
+ * is everything still working through assessment/audit. GreenShift never
+ * settles a trade: verified listings hand off to a broker app via Trima+.
+ */
+export const bondStatuses = ["verified", "on_progress"] as const;
+export type BondStatus = (typeof bondStatuses)[number];
+
+/** A single bond listing shown on the public bond dashboard. */
+export interface BondListing {
 	id: number;
 	title: string;
+	/** Broker-facing code investors search for in Trima+/IPOT. */
+	bondCode: string | null;
 	companyName: string | null;
 	industrySector: string | null;
 	location: string | null;
+	/** Issuance amount (project budget), in IDR. */
 	budget: number | null;
 	riskScore: number | null;
 	targetEmissionReduction: number | null;
 	estimatedEnergySaving: number | null;
 	funded: number;
 	fundingProgress: number;
+	status: BondStatus;
+	/** When the listing became verified; drives the date shown on the card. */
+	verifiedAt: string | null;
 	blueprint: BlueprintSummary;
 }
 
-export interface BondSummary {
-	id: number;
-	projectId: number;
-	amount: number;
-	roiPaid: number;
-	status: string;
-	bondSerialNumber: string | null;
-	investedAt: string | null;
-}
-
-export interface PortfolioProject {
-	id: number;
-	title: string;
-	status: string;
-	industrySector: string | null;
-	location: string | null;
-	targetEmissionReduction: number | null;
-	estimatedEnergySaving: number | null;
-}
-
-export interface PortfolioItem {
-	investment: BondSummary;
-	project: PortfolioProject;
-	blueprint: BlueprintSummary;
-}
-
-export interface PortfolioDetail {
-	investment: BondSummary;
-	project: PortfolioProject;
-	blueprint: BlueprintSummary;
-	payments: RoiPaymentSummary[];
-	emissionReports: EmissionSummary[];
-}
-
-export interface RoiPaymentSummary {
-	id: number;
-	amount: number;
-	period: string | null;
-	status: string;
-	escrowTxId: string | null;
-	paidAt: string | null;
-}
-
-export interface EmissionSummary {
-	id: number;
-	periodStart: string | null;
-	periodEnd: string | null;
-	emissionReduction: number | null;
-	actualConsumption: number | null;
-	baselineConsumption: number | null;
-	anomalyFlagged: boolean | null;
+export interface BondMarketResponse {
+	bonds: BondListing[];
 }
 
 export interface VerifyUserBody {

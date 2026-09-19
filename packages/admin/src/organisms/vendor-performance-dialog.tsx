@@ -1,24 +1,104 @@
-import { useEffect, useState } from "react";
 import type { AdminVendor } from "@greenshift/api/contracts";
 import {
 	Badge,
 	Button,
+	DataTable,
 	Dialog,
 	DialogContent,
 	DialogDescription,
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
 } from "@greenshift/ui";
+import type { ColumnDef } from "@tanstack/react-table";
+import { useEffect, useState } from "react";
 import { RatingBar } from "./rating-bar";
 
 const PAGE_SIZE = 8;
+
+interface VendorRow {
+	vendor: AdminVendor;
+	rank: number;
+}
+
+function vendorColumns(
+	onViewDetails: (vendor: AdminVendor) => void,
+): ColumnDef<VendorRow>[] {
+	return [
+		{
+			id: "rank",
+			accessorFn: (row) => row.rank,
+			header: "#",
+			enableSorting: false,
+			meta: {
+				headClassName: "w-12",
+				className: "font-semibold tabular-nums text-muted-foreground",
+			},
+			cell: ({ row }) => row.original.rank,
+		},
+		{
+			id: "company",
+			accessorFn: (row) => row.vendor.companyName,
+			header: "Company",
+			meta: { className: "font-medium" },
+			cell: ({ row }) => row.original.vendor.companyName,
+		},
+		{
+			id: "rating",
+			accessorFn: (row) => row.vendor.rating,
+			header: "Rating",
+			meta: { headClassName: "w-44" },
+			cell: ({ row }) => (
+				<div className="flex items-center gap-2">
+					<RatingBar rating={row.original.vendor.rating} className="w-24" />
+					<span className="font-semibold tabular-nums">
+						{row.original.vendor.rating.toFixed(1)}
+					</span>
+				</div>
+			),
+		},
+		{
+			id: "projects",
+			accessorFn: (row) => row.vendor.totalProjects,
+			header: "Projects",
+			meta: {
+				headClassName: "text-right",
+				className: "text-right tabular-nums",
+			},
+			cell: ({ row }) => row.original.vendor.totalProjects,
+		},
+		{
+			id: "verification",
+			accessorFn: (row) =>
+				row.vendor.verifiedAt !== null ? "Verified" : "Not verified",
+			header: "Verification",
+			cell: ({ row }) => {
+				const verified = row.original.vendor.verifiedAt !== null;
+				return (
+					<Badge
+						variant={verified ? "default" : "secondary"}
+						className="!h-8 px-3 text-base rounded-md"
+					>
+						{verified ? "Verified" : "Not verified"}
+					</Badge>
+				);
+			},
+		},
+		{
+			id: "actions",
+			header: "Actions",
+			enableSorting: false,
+			cell: ({ row }) => (
+				<Button
+					variant="outline"
+					onClick={() => onViewDetails(row.original.vendor)}
+				>
+					Detail
+				</Button>
+			),
+		},
+	];
+}
 
 interface VendorPerformanceDialogProps {
 	open: boolean;
@@ -37,7 +117,12 @@ export function VendorPerformanceDialog({
 	const sorted = [...vendors].sort((a, b) => b.rating - a.rating);
 	const pageCount = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
 	const safePage = Math.min(page, pageCount);
-	const rows = sorted.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+	const rows: VendorRow[] = sorted
+		.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+		.map((vendor, index) => ({
+			vendor,
+			rank: (safePage - 1) * PAGE_SIZE + index + 1,
+		}));
 
 	useEffect(() => {
 		if (open) setPage(1);
@@ -51,77 +136,28 @@ export function VendorPerformanceDialog({
 						Vendor Performance
 					</DialogTitle>
 					<DialogDescription className="text-base">
-						Peringkat {sorted.length} vendor — rating pada skala 0–5.
+						Ranking of {sorted.length} vendors, rating on a 0–5 scale.
 					</DialogDescription>
 				</DialogHeader>
 
 				<div className="flex-1 overflow-y-auto">
 					{sorted.length === 0 ? (
 						<p className="p-6 text-base text-muted-foreground">
-							Belum ada data vendor.
+							No vendor data yet.
 						</p>
 					) : (
-						<Table className="text-base">
-							<TableHeader>
-								<TableRow>
-									<TableHead className="w-12">#</TableHead>
-									<TableHead>Perusahaan</TableHead>
-									<TableHead className="w-44">Rating</TableHead>
-									<TableHead className="text-right">Proyek</TableHead>
-									<TableHead>Verifikasi</TableHead>
-									<TableHead>Aksi</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{rows.map((vendor, index) => {
-									const rank = (safePage - 1) * PAGE_SIZE + index + 1;
-									const verified = vendor.verifiedAt !== null;
-									return (
-										<TableRow key={vendor.id}>
-											<TableCell className="font-semibold tabular-nums text-muted-foreground">
-												{rank}
-											</TableCell>
-											<TableCell className="font-medium">
-												{vendor.companyName}
-											</TableCell>
-											<TableCell>
-												<div className="flex items-center gap-2">
-													<RatingBar rating={vendor.rating} className="w-24" />
-													<span className="font-semibold tabular-nums">
-														{vendor.rating.toFixed(1)}
-													</span>
-												</div>
-											</TableCell>
-											<TableCell className="text-right tabular-nums">
-												{vendor.totalProjects}
-											</TableCell>
-											<TableCell>
-												<Badge
-													variant={verified ? "default" : "secondary"}
-													className="!h-8 px-3 text-base rounded-md"
-												>
-													{verified ? "Terverifikasi" : "Belum"}
-												</Badge>
-											</TableCell>
-											<TableCell>
-												<Button
-													variant="outline"
-													onClick={() => onViewDetails(vendor)}
-												>
-													Detail
-												</Button>
-											</TableCell>
-										</TableRow>
-									);
-								})}
-							</TableBody>
-						</Table>
+						<DataTable
+							columns={vendorColumns(onViewDetails)}
+							data={rows}
+							getRowId={(row) => String(row.vendor.id)}
+							ariaLabel="Vendor performance"
+						/>
 					)}
 				</div>
 
 				<DialogFooter className="shrink-0 items-center justify-between border-t border-border px-6 py-4">
 					<p className="text-base text-muted-foreground">
-						Halaman {safePage} dari {pageCount}
+						Page {safePage} of {pageCount}
 					</p>
 					<div className="flex gap-2">
 						<Button
@@ -129,13 +165,13 @@ export function VendorPerformanceDialog({
 							disabled={safePage <= 1}
 							onClick={() => setPage(safePage - 1)}
 						>
-							Sebelumnya
+							Previous
 						</Button>
 						<Button
 							disabled={safePage >= pageCount}
 							onClick={() => setPage(safePage + 1)}
 						>
-							Berikutnya
+							Next
 						</Button>
 					</div>
 				</DialogFooter>

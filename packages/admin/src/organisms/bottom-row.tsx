@@ -3,7 +3,13 @@ import {
 	faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button, Card, CardContent, CardHeader, CardTitle } from "@greenshift/ui";
+import {
+	Button,
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
 
 interface PendingAction {
@@ -67,7 +73,7 @@ function UptimeSparkline({ data }: { data: UptimePoint[] }) {
 	return (
 		<div>
 			<svg viewBox={`0 0 ${width} ${height}`} className="h-12 w-full">
-				<title>Uptime 24 jam terakhir</title>
+				<title>Uptime over the last 24 hours</title>
 				<polyline
 					points={points}
 					fill="none"
@@ -97,9 +103,9 @@ export function BottomRow({
 			<Card>
 				<CardHeader>
 					<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-						<CardTitle className="text-xl">Aksi Tertunda</CardTitle>
+						<CardTitle className="text-xl">Pending Actions</CardTitle>
 						<Button asChild variant="outline" className="!h-9 px-4 text-base">
-							<Link to="/admin/audit-logs">Lihat selengkapnya</Link>
+							<Link to="/admin/audit-logs">View more</Link>
 						</Button>
 					</div>
 				</CardHeader>
@@ -138,9 +144,9 @@ export function BottomRow({
 
 			<Card>
 				<CardHeader className="space-y-2">
-					<CardTitle className="text-xl">Kesehatan Sistem</CardTitle>
+					<CardTitle className="text-xl">System Health</CardTitle>
 					<p className="text-base text-muted-foreground">
-						Rangkuman performa 24 jam terakhir
+						Performance summary of the last 24 hours
 					</p>
 				</CardHeader>
 				<CardContent className="space-y-5 pt-0">

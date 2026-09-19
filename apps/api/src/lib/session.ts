@@ -10,7 +10,7 @@ const SESSION_PREFIX = "greenshift:session:";
 export const STEP_UP_TTL_MS = 10 * 60 * 1000;
 // Idle window: a session is dropped when no authenticated request has been
 // seen for this long (checked on every session read, SSR included).
-// OWASP idle range for low-risk apps is 15–30 min — 15 min is the default
+// OWASP idle range for low-risk apps is 15–30 min: 15 min is the default
 // (demo/testing can shorten via SESSION_IDLE_MINUTES).
 export const SESSION_IDLE_MS_DEFAULT = 15 * 60 * 1000;
 // Refresh the stored lastActiveAt at most this often to keep the session
@@ -23,7 +23,7 @@ export interface SessionPayload {
 	stepUpUntil: number | null;
 	/** Epoch ms of the most recent authenticated request. */
 	lastActiveAt: number;
-	/** Epoch ms when the session was created — enforces the absolute cap. */
+	/** Epoch ms when the session was created: enforces the absolute cap. */
 	issuedAt: number;
 }
 
@@ -56,11 +56,7 @@ function normalizeSession(
 	parsed: Partial<SessionPayload>,
 ): SessionPayload | null {
 	const userId = parsed.userId;
-	if (
-		typeof userId !== "number" ||
-		!Number.isInteger(userId) ||
-		userId <= 0
-	) {
+	if (typeof userId !== "number" || !Number.isInteger(userId) || userId <= 0) {
 		return null;
 	}
 
@@ -74,7 +70,7 @@ function normalizeSession(
 		parsed.stepUpUntil > Date.now()
 			? parsed.stepUpUntil
 			: null;
-	// Sessions written before idle tracking get a fresh timestamp — they are
+	// Sessions written before idle tracking get a fresh timestamp: they are
 	// rewritten once (needsUpgrade below) and expire normally from then on.
 	const lastActiveAt =
 		typeof parsed.lastActiveAt === "number" &&
@@ -82,7 +78,7 @@ function normalizeSession(
 		parsed.lastActiveAt > 0
 			? parsed.lastActiveAt
 			: Date.now();
-	// Sessions written before absolute-cap tracking get a fresh timestamp —
+	// Sessions written before absolute-cap tracking get a fresh timestamp:
 	// they are rewritten once (needsUpgrade below) and expire normally.
 	const issuedAt =
 		typeof parsed.issuedAt === "number" &&
@@ -133,13 +129,13 @@ export async function getSessionUser(
 		const now = Date.now();
 		const maxIdle = idleMs(env);
 		if (now - parsed.lastActiveAt > maxIdle) {
-			// Inactive past the threshold — drop the session so the next SSR
+			// Inactive past the threshold: drop the session so the next SSR
 			// load or API call lands back on the login page.
 			await env.KV.delete(key);
 			return null;
 		}
 		if (now - parsed.issuedAt > SESSION_MAX_MS) {
-			// Absolute cap reached regardless of activity — periodic
+			// Absolute cap reached regardless of activity: periodic
 			// re-authentication (OWASP absolute timeout).
 			await env.KV.delete(key);
 			return null;
@@ -164,7 +160,11 @@ export async function elevateSession(
 ): Promise<SessionPayload | null> {
 	const session = await getSessionUser(env, token);
 	if (!session) return null;
-	const next = { ...session, stepUpUntil: elevatedUntil, lastActiveAt: Date.now() };
+	const next = {
+		...session,
+		stepUpUntil: elevatedUntil,
+		lastActiveAt: Date.now(),
+	};
 	await writeSession(env, token, next);
 	return next;
 }

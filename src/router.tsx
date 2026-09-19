@@ -20,6 +20,9 @@ export function getRouter() {
 			user: null as AuthUser | null,
 		} satisfies RouterContext,
 		scrollRestoration: true,
+		// Native cross-fade between routes instead of an instant swap. Falls
+		// back to a plain swap when the browser lacks the View Transitions API.
+		defaultViewTransition: true,
 		defaultPreload: "intent",
 		defaultPreloadStaleTime: 0,
 	});

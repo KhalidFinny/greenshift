@@ -7,34 +7,34 @@ import {
 
 const faqs = [
 	{
-		question: "Apakah GreenShift menyediakan akun gratis?",
+		question: "Does GreenShift offer a free account?",
 		answer:
-			"Ya. Daftar gratis untuk mengeksplorasi platform: profil perusahaan, penilaian proyek dasar, blueprint, simulasi ROI, dan pencarian vendor dengan dataset demo.",
+			"Yes. Register for free to explore the platform: company profile, basic project assessment, blueprints, ROI simulation, and vendor search with a demo dataset.",
 	},
 	{
-		question: "Bagaimana cara memulai?",
+		question: "How do I get started?",
 		answer:
-			"Daftar akun gratis, lengkapi profil perusahaan Anda, dan ajukan proyek efisiensi energi pertama. Tim GreenShift memvalidasi setiap pengajuan sebelum proyek melanjutkan ke tahap berikutnya.",
+			"Register for a free account, complete your company profile, and submit your first energy efficiency project. The GreenShift team validates every submission before the project moves to the next stage.",
 	},
 	{
-		question: "Apakah saya perlu data teknis untuk memulai?",
+		question: "Do I need technical data to get started?",
 		answer:
-			"Tidak perlu. Cukup isi profil perusahaan dan unggah dokumen pendukung seperti tagihan listrik atau audit energi. Sistem memvalidasi setiap informasi secara otomatis agar prosesnya cepat dan transparan.",
+			"Not at all. Just fill in your company profile and upload supporting documents such as electricity bills or energy audits. The system validates every piece of information automatically so the process stays fast and transparent.",
 	},
 	{
-		question: "Bagaimana proyek saya mendapatkan pendanaan?",
+		question: "How does my project get funded?",
 		answer:
-			"Setelah proyek divalidasi dan blueprint-nya disusun, proyek siap menarik minat mitra investasi kami. GreenShift menjembatani kebutuhan pembiayaan Anda dengan investor yang berkomitmen pada transisi energi.",
+			"Once the project is validated and its blueprint is prepared, it is ready to attract our investment partners. GreenShift bridges your financing needs with investors committed to the energy transition.",
 	},
 	{
-		question: "Bagaimana saya memantau proyek setelah didanai?",
+		question: "How do I monitor a project after it is funded?",
 		answer:
-			"Akses dashboard real-time untuk melacak performa proyek, pengembalian investasi, dan dampak pengurangan emisi karbon. Semua data tersedia dalam satu tempat.",
+			"Access a real-time dashboard to track project performance, investment returns, and carbon emission reduction impact. All data is available in one place.",
 	},
 	{
-		question: "Siapa saja yang terlibat dalam ekosistem GreenShift?",
+		question: "Who is involved in the GreenShift ecosystem?",
 		answer:
-			"Perusahaan industri, vendor energi, validator independen, mitra SCF berizin OJK, dan investor, semua bekerja dalam satu ekosistem yang terukur dan transparan.",
+			"Industrial companies, energy vendors, independent validators, OJK-licensed SCF partners, and investors all work within one measurable and transparent ecosystem.",
 	},
 ];
 
@@ -47,10 +47,10 @@ export default function FaqSection() {
 						FAQ
 					</p>
 					<h2 className="mt-4 text-[40px] font-bold leading-tight text-[#1C1C1C]">
-						Pertanyaan yang sering diajukan
+						Frequently asked questions
 					</h2>
 					<p className="mt-6 text-lg leading-relaxed text-[#555555]">
-						Tidak menemukan jawaban? Email kami di{" "}
+						Didn't find your answer? Email us at{" "}
 						<a
 							href="mailto:contact@greenshift.com"
 							className="font-semibold text-[#00712D] underline underline-offset-2 hover:text-[#03442C]"
@@ -62,10 +62,15 @@ export default function FaqSection() {
 				</header>
 
 				<div className="mt-16 grid gap-x-16 lg:grid-cols-2">
-					<Accordion type="single" collapsible className="border-t border-[#03442C]/20">
+					<Accordion
+						type="single"
+						collapsible
+						className="border-t border-[#03442C]/20"
+					>
 						{faqs.slice(0, 3).map((faq) => (
 							<AccordionItem
-								key={faq.question} value={faq.question}
+								key={faq.question}
+								value={faq.question}
 								className="border-b border-[#03442C]/20"
 							>
 								<AccordionTrigger className="py-6 text-xl font-semibold text-[#1C1C1C]">
@@ -77,10 +82,15 @@ export default function FaqSection() {
 							</AccordionItem>
 						))}
 					</Accordion>
-					<Accordion type="single" collapsible className="border-t border-[#03442C]/20">
+					<Accordion
+						type="single"
+						collapsible
+						className="border-t border-[#03442C]/20"
+					>
 						{faqs.slice(3).map((faq) => (
 							<AccordionItem
-								key={faq.question} value={faq.question}
+								key={faq.question}
+								value={faq.question}
 								className="border-b border-[#03442C]/20"
 							>
 								<AccordionTrigger className="py-6 text-xl font-semibold text-[#1C1C1C]">

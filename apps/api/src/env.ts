@@ -11,7 +11,7 @@ export interface Env {
 	R2: R2Bucket;
 	/**
 	 * Inactivity timeout in minutes before a session is invalidated.
-	 * Optional — defaults to 2 minutes when unset (see lib/session.ts).
+	 * Optional: defaults to 2 minutes when unset (see lib/session.ts).
 	 */
 	SESSION_IDLE_MINUTES?: string;
 }

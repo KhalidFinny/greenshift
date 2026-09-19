@@ -57,7 +57,7 @@ export function AdminDashboard() {
 	) {
 		return (
 			<div className="space-y-4">
-				<p className="text-muted-foreground">Gagal memuat dashboard.</p>
+				<p className="text-muted-foreground">Failed to load dashboard.</p>
 				<Button
 					variant="outline"
 					onClick={() => {
@@ -66,7 +66,7 @@ export function AdminDashboard() {
 						blueprintsQuery.refetch();
 					}}
 				>
-					Coba lagi
+					Try again
 				</Button>
 			</div>
 		);
@@ -93,35 +93,39 @@ export function AdminDashboard() {
 
 	const sections: ExportSection[] = [
 		{
-			title: "Akun Terbaru",
+			title: "Latest Accounts",
 			headers: [
-				"Pengguna",
+				"User",
 				"Email",
-				"Peran",
-				"Perusahaan",
-				"Profil Vendor",
-				"Verifikasi",
-				"Terdaftar",
+				"Role",
+				"Company",
+				"Vendor Profile",
+				"Verification",
+				"Registered",
 			],
-			rows: users.slice(0, 5).map((user) => [
-				user.name,
-				user.email,
-				user.role,
-				user.companyName ?? "—",
-				user.vendorProfile ? "✓" : "—",
-				user.verifiedAt !== null ? "Terverifikasi" : "Belum",
-				formatDateTime(user.createdAt),
-			]),
+			rows: users
+				.slice(0, 5)
+				.map((user) => [
+					user.name,
+					user.email,
+					user.role,
+					user.companyName ?? "-",
+					user.vendorProfile ? "✓" : "-",
+					user.verifiedAt !== null ? "Verified" : "Not verified",
+					formatDateTime(user.createdAt),
+				]),
 		},
 		{
-			title: "Blueprint Terbaru",
-			headers: ["Proyek", "Status", "Validasi", "Catatan"],
-			rows: blueprints.slice(0, 5).map((bp) => [
-				bp.projectTitle,
-				BLUEPRINT_META[bp.status]?.label ?? bp.status,
-				formatDateTime(bp.validatedAt),
-				bp.auditNote ?? "—",
-			]),
+			title: "Latest Blueprints",
+			headers: ["Project", "Status", "Validation", "Note"],
+			rows: blueprints
+				.slice(0, 5)
+				.map((bp) => [
+					bp.projectTitle,
+					BLUEPRINT_META[bp.status]?.label ?? bp.status,
+					formatDateTime(bp.validatedAt),
+					bp.auditNote ?? "-",
+				]),
 		},
 	];
 
@@ -131,7 +135,7 @@ export function AdminDashboard() {
 				<div>
 					<h1 className="text-2xl font-semibold">Dashboard</h1>
 					<p className="mt-1 text-base text-muted-foreground">
-						Ringkasan platform pembiayaan hijau.
+						Green financing platform overview.
 					</p>
 				</div>
 				<ExportMenu

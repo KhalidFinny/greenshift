@@ -4,7 +4,7 @@ import { useAuth } from "./use-auth";
 
 /**
  * Client-side inactivity window for authenticated sessions. Mirrors the
- * server default in apps/api/src/lib/session.ts — keep both in sync. The
+ * server default in apps/api/src/lib/session.ts: keep both in sync. The
  * server value can be shortened via the SESSION_IDLE_MINUTES env var for
  * demo/testing; the server check then enforces earlier than this watcher.
  */
@@ -36,14 +36,17 @@ export function useIdleSessionExpiry(): void {
 			lastActiveRef.current = Date.now();
 		};
 		for (const event of ACTIVITY_EVENTS) {
-			window.addEventListener(event, markActive, { passive: true, capture: true });
+			window.addEventListener(event, markActive, {
+				passive: true,
+				capture: true,
+			});
 		}
 
 		const expire = async () => {
 			if (expiringRef.current) return;
 			expiringRef.current = true;
-			// Logout is silent here — the request layer's generic "Berhasil
-			// keluar" toast would be misleading for an expiry kick. On success
+			// Logout is silent here: the request layer's generic "Signed out
+			// successfully" toast would be misleading for an expiry kick. On success
 			// the router invalidate (inside logout) re-runs the guards and
 			// redirects to /login as an SPA transition, so this toast and the
 			// page state survive. Hard navigation only when the server is
@@ -55,9 +58,9 @@ export function useIdleSessionExpiry(): void {
 			}
 			publishToast({
 				tone: "info",
-				title: "Sesi berakhir",
+				title: "Session expired",
 				message:
-					"Anda tidak aktif selama beberapa menit. Silakan masuk kembali.",
+					"You have been inactive for several minutes. Please sign in again.",
 			});
 		};
 

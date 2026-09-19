@@ -1,10 +1,10 @@
 import { getDevRole } from "@greenshift/core";
 import {
-	CaraKerjaSection,
 	CtaSection,
-	EkosistemSection,
+	EcosystemSection,
 	FaqSection,
 	HeroSection,
+	HowItWorksSection,
 } from "@greenshift/landing";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
@@ -15,8 +15,8 @@ export const Route = createFileRoute("/")({
 	component: () => (
 		<main>
 			<HeroSection />
-			<CaraKerjaSection />
-			<EkosistemSection />
+			<HowItWorksSection />
+			<EcosystemSection />
 			<FaqSection />
 			<CtaSection />
 		</main>

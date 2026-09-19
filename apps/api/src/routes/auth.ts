@@ -27,8 +27,8 @@ import {
 	elevateSession,
 	readCookie,
 	SESSION_COOKIE,
-	sessionCookie,
 	STEP_UP_TTL_MS,
+	sessionCookie,
 } from "../lib/session";
 
 const factory = createFactory<ApiEnv>();
@@ -42,8 +42,6 @@ const MAX_COMPANY = 200;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 let dummyHashPromise: Promise<string> | null = null;
-
-
 
 authRoutes.post(
 	"/login",
@@ -63,7 +61,7 @@ authRoutes.post(
 				{
 					error: {
 						code: "VALIDATION",
-						message: "Email dan password wajib diisi",
+						message: "Email and password are required",
 					},
 				},
 				400,
@@ -71,7 +69,7 @@ authRoutes.post(
 		}
 		if (email.length > MAX_EMAIL || password.length > MAX_PASSWORD) {
 			return c.json(
-				{ error: { code: "VALIDATION", message: "Input tidak valid" } },
+				{ error: { code: "VALIDATION", message: "Invalid input" } },
 				400,
 			);
 		}
@@ -101,7 +99,7 @@ authRoutes.post(
 				{
 					error: {
 						code: "INVALID_CREDENTIALS",
-						message: "Email atau password salah",
+						message: "Email or password is incorrect",
 					},
 				},
 				401,
@@ -112,7 +110,7 @@ authRoutes.post(
 				{
 					error: {
 						code: "INVALID_CREDENTIALS",
-						message: "Email atau password salah",
+						message: "Email or password is incorrect",
 					},
 				},
 				401,
@@ -155,7 +153,7 @@ authRoutes.post(
 				{
 					error: {
 						code: "VALIDATION",
-						message: "Nama, email, kata sandi, dan nama perusahaan wajib diisi",
+						message: "Name, email, password, and company name are required",
 					},
 				},
 				400,
@@ -163,7 +161,7 @@ authRoutes.post(
 		}
 		if (!EMAIL_RE.test(email)) {
 			return c.json(
-				{ error: { code: "VALIDATION", message: "Email tidak valid" } },
+				{ error: { code: "VALIDATION", message: "Invalid email" } },
 				400,
 			);
 		}
@@ -172,7 +170,7 @@ authRoutes.post(
 				{
 					error: {
 						code: "VALIDATION",
-						message: "Kata sandi minimal 8 karakter",
+						message: "Password must be at least 8 characters",
 					},
 				},
 				400,
@@ -185,7 +183,7 @@ authRoutes.post(
 			companyName.length > MAX_COMPANY
 		) {
 			return c.json(
-				{ error: { code: "VALIDATION", message: "Input tidak valid" } },
+				{ error: { code: "VALIDATION", message: "Invalid input" } },
 				400,
 			);
 		}
@@ -205,7 +203,7 @@ authRoutes.post(
 				{
 					error: {
 						code: "EMAIL_TAKEN",
-						message: "Email sudah terdaftar",
+						message: "Email already registered",
 					},
 				},
 				409,
@@ -231,7 +229,7 @@ authRoutes.post(
 					{
 						error: {
 							code: "EMAIL_TAKEN",
-							message: "Email sudah terdaftar",
+							message: "Email already registered",
 						},
 					},
 					409,
@@ -285,7 +283,7 @@ authRoutes.post(
 		const password = typeof body?.password === "string" ? body.password : "";
 		if (!password || password.length > MAX_PASSWORD) {
 			return c.json(
-				{ error: { code: "VALIDATION", message: "Password tidak valid" } },
+				{ error: { code: "VALIDATION", message: "Invalid password" } },
 				400,
 			);
 		}
@@ -309,7 +307,7 @@ authRoutes.post(
 			.limit(1);
 		if (!user?.hashedPassword) {
 			return c.json(
-				{ error: { code: "UNAUTHORIZED", message: "Sesi tidak valid" } },
+				{ error: { code: "UNAUTHORIZED", message: "Invalid session" } },
 				401,
 			);
 		}
@@ -318,7 +316,7 @@ authRoutes.post(
 				{
 					error: {
 						code: "INVALID_CREDENTIALS",
-						message: "Password konfirmasi salah",
+						message: "Incorrect confirmation password",
 					},
 				},
 				401,
@@ -348,7 +346,10 @@ authRoutes.post(
 	requireSession,
 	requireCsrf,
 	...factory.createHandlers(async (c) => {
-		await destroySession(c.env, readCookie(c.req.header("cookie"), SESSION_COOKIE));
+		await destroySession(
+			c.env,
+			readCookie(c.req.header("cookie"), SESSION_COOKIE),
+		);
 		c.header("Set-Cookie", clearSessionCookie());
 		return c.json({ ok: true });
 	}),

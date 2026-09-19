@@ -42,11 +42,11 @@ All passwords are `12345678`. Type the username or `username@greenshift.dev`:
 ## Frontend packages
 
 | Package | Purpose |
-|---|---|
+|---|---|-
 | `src/` | Web app — routes, router, entry (the composition layer) |
 | `packages/ui` (`@greenshift/ui`) | Design system — shadcn components, RoleShell, Header/Footer, loaders, EmptyState, `cn` |
 | `packages/core` (`@greenshift/core`) | Shared FE contract — `useAuth`, guards, `roleNav`/`roleHome`, typed API client + `request`, query |
-| `packages/landing` (`@greenshift/landing`) | Landing page components + hooks |
+| `packages/landin-g` (`@greenshift/landing`) | Landing page components + hooks |
 | `packages/business` \| `investor` \| `vendor` \| `admin` | Role dashboards |
 
 ## Rules (must)

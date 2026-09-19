@@ -43,7 +43,7 @@ export function VendorDetailDialog({
 							variant={verified ? "default" : "secondary"}
 							className="shrink-0 !h-8 px-3 text-base rounded-md"
 						>
-							{verified ? "Terverifikasi" : "Belum diverifikasi"}
+							{verified ? "Verified" : "Not verified"}
 						</Badge>
 					</div>
 				</DialogHeader>
@@ -64,27 +64,29 @@ export function VendorDetailDialog({
 							</dd>
 						</div>
 						<div>
-							<dt className="text-base text-muted-foreground">Total Proyek</dt>
+							<dt className="text-base text-muted-foreground">
+								Total Projects
+							</dt>
 							<dd className="mt-1 text-base font-semibold tabular-nums">
 								{vendor.totalProjects}
 							</dd>
 						</div>
 						<div>
-							<dt className="text-base text-muted-foreground">Terdaftar</dt>
+							<dt className="text-base text-muted-foreground">Registered</dt>
 							<dd className="mt-1 text-base font-semibold tabular-nums">
 								{formatDateTime(vendor.createdAt)}
 							</dd>
 						</div>
 						<div>
-							<dt className="text-base text-muted-foreground">Verifikasi</dt>
+							<dt className="text-base text-muted-foreground">Verification</dt>
 							<dd className="mt-1 text-base font-semibold tabular-nums">
-								{verified ? formatDateTime(vendor.verifiedAt) : "Belum"}
+								{verified ? formatDateTime(vendor.verifiedAt) : "Not yet"}
 							</dd>
 						</div>
 					</dl>
 
 					<section className="space-y-2">
-						<h3 className="text-base font-semibold">Sertifikasi</h3>
+						<h3 className="text-base font-semibold">Certifications</h3>
 						{vendor.certifications.length > 0 ? (
 							<div className="flex flex-wrap gap-2">
 								{vendor.certifications.map((cert) => (
@@ -98,12 +100,12 @@ export function VendorDetailDialog({
 								))}
 							</div>
 						) : (
-							<p className="text-base text-muted-foreground">—</p>
+							<p className="text-base text-muted-foreground">-</p>
 						)}
 					</section>
 
 					<section className="space-y-2">
-						<h3 className="text-base font-semibold">Portofolio</h3>
+						<h3 className="text-base font-semibold">Portfolio</h3>
 						{vendor.portfolio.length > 0 ? (
 							<ul className="space-y-1">
 								{vendor.portfolio.map((item) => (
@@ -113,14 +115,14 @@ export function VendorDetailDialog({
 								))}
 							</ul>
 						) : (
-							<p className="text-base text-muted-foreground">—</p>
+							<p className="text-base text-muted-foreground">-</p>
 						)}
 					</section>
 				</div>
 
 				<DialogFooter className="shrink-0 border-t border-border px-6 py-4">
 					<DialogClose asChild>
-						<Button variant="outline">Tutup</Button>
+						<Button variant="outline">Close</Button>
 					</DialogClose>
 				</DialogFooter>
 			</DialogContent>

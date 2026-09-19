@@ -5,11 +5,10 @@ import {
 	roleHome,
 	useAuth,
 } from "@greenshift/core";
-import { Button, Input, Label, Spinner } from "@greenshift/ui";
+import { Button, useAppForm } from "@greenshift/ui";
 import { ArrowLeft02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import type { FormEvent } from "react";
 import { useState } from "react";
 import { getSessionFn } from "../lib/session";
 
@@ -36,10 +35,7 @@ const DEV_PASSWORD = import.meta.env.DEV ? "12345678" : "";
 
 function LoginPage() {
 	const { login } = useAuth();
-	const [identifier, setIdentifier] = useState("");
-	const [password, setPassword] = useState("");
 	const [error, setError] = useState<string | null>(null);
-	const [submitting, setSubmitting] = useState(false);
 
 	const devRole = getDevRole();
 	const devUsername = devRole
@@ -49,37 +45,40 @@ function LoginPage() {
 		: null;
 
 	async function loginWith(identifierValue: string, passwordValue: string) {
-		setSubmitting(true);
 		setError(null);
 		try {
 			const user = await login(resolveEmail(identifierValue), passwordValue);
 			const devRole = getDevRole();
 			if (devRole && user.role !== devRole) {
-				setError(`Akun ${user.role} tidak tersedia pada server dev:${devRole}`);
+				setError(
+					`${user.role} account is not available on the dev server:${devRole}`,
+				);
 				return;
 			}
 			// No full page load: useAuth.login() invalidates the router, the
 			// login route's beforeLoad re-runs with the fresh session and
-			// redirects to the role home — so toasts (and UI state) survive
+			// redirects to the role home: so toasts (and UI state) survive
 			// the transition uninterrupted.
 		} catch (err) {
 			setError(
-				err instanceof ApiError ? err.message : "Terjadi kesalahan, coba lagi",
+				err instanceof ApiError
+					? err.message
+					: "Something went wrong, please try again",
 			);
-		} finally {
-			setSubmitting(false);
 		}
 	}
 
-	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-		event.preventDefault();
-		await loginWith(identifier, password);
-	}
+	const form = useAppForm({
+		defaultValues: { identifier: "", password: "" },
+		onSubmit: async ({ value }) => {
+			await loginWith(value.identifier, value.password);
+		},
+	});
 
 	async function handleDevLogin() {
 		if (!import.meta.env.DEV || !devUsername) return;
-		setIdentifier(devUsername);
-		setPassword(DEV_PASSWORD);
+		form.setFieldValue("identifier", devUsername);
+		form.setFieldValue("password", DEV_PASSWORD);
 		await loginWith(devUsername, DEV_PASSWORD);
 	}
 
@@ -91,11 +90,11 @@ function LoginPage() {
 				</Link>
 				<div className="max-w-md">
 					<h2 className="text-4xl font-semibold leading-tight text-white">
-						Platform MRV untuk Pembiayaan Hijau
+						MRV Platform for Green Financing
 					</h2>
 					<p className="mt-4 text-base leading-relaxed text-white/70">
-						Kelola proyek, tender, dan laporan MRV dalam satu platform —
-						transparan untuk bisnis, vendor, investor, dan pengawas.
+						Manage projects, tenders, and MRV reports in one platform.
+						Transparent for businesses, vendors, and regulators.
 					</p>
 				</div>
 				<p className="text-sm text-white/50">© 2026 GreenShift</p>
@@ -108,35 +107,48 @@ function LoginPage() {
 						className="mb-10 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground no-underline transition-colors hover:text-foreground"
 					>
 						<HugeiconsIcon icon={ArrowLeft02Icon} />
-						Kembali
+						Go back
 					</Link>
-					<h1 className="text-3xl font-semibold">Masuk ke GreenShift</h1>
+					<h1 className="text-3xl font-semibold">Sign in to GreenShift</h1>
 					<p className="mt-2 text-muted-foreground">
-						Akses dashboard sesuai peran Anda.
+						Access the dashboard for your role.
 					</p>
-					<form onSubmit={handleSubmit} className="mt-8 space-y-6" noValidate>
-						<div className="space-y-2">
-							<Label htmlFor="identifier">Email atau username</Label>
-							<Input
-								id="identifier"
-								type="text"
-								required
-								autoComplete="username"
-								value={identifier}
-								onChange={(event) => setIdentifier(event.target.value)}
-							/>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="password">Password</Label>
-							<Input
-								id="password"
-								type="password"
-								required
-								autoComplete="current-password"
-								value={password}
-								onChange={(event) => setPassword(event.target.value)}
-							/>
-						</div>
+					<form
+						onSubmit={(event) => {
+							event.preventDefault();
+							void form.handleSubmit();
+						}}
+						className="mt-8 space-y-6"
+						noValidate
+					>
+						<form.AppField
+							name="identifier"
+							validators={{
+								onChange: ({ value }) =>
+									value.trim() ? undefined : "Email or username is required",
+							}}
+						>
+							{(field) => (
+								<field.TextField
+									label="Email or username"
+									autoComplete="username"
+								/>
+							)}
+						</form.AppField>
+						<form.AppField
+							name="password"
+							validators={{
+								onChange: ({ value }) =>
+									value ? undefined : "Password is required",
+							}}
+						>
+							{(field) => (
+								<field.PasswordField
+									label="Password"
+									autoComplete="current-password"
+								/>
+							)}
+						</form.AppField>
 						{error && (
 							<p
 								role="alert"
@@ -145,44 +157,34 @@ function LoginPage() {
 								{error}
 							</p>
 						)}
-						<Button
-							type="submit"
-							disabled={submitting}
-							className="w-full cursor-pointer"
-						>
-							{submitting ? (
-								<span className="inline-flex items-center gap-2">
-									<Spinner className="size-4" />
-									Memproses…
-								</span>
-							) : (
-								"Masuk"
-							)}
-						</Button>
+						<form.AppForm>
+							<form.SubmitButton className="w-full cursor-pointer">
+								Sign in
+							</form.SubmitButton>
+						</form.AppForm>
 					</form>
 					{import.meta.env.DEV && devRole && devUsername && (
 						<div className="mt-6 rounded-lg border border-dashed border-border p-4">
-							<p className="text-sm font-medium">Dev mode — {devRole}</p>
+							<p className="text-sm font-medium">Dev mode: {devRole}</p>
 							<p className="mt-1 text-sm text-muted-foreground">
-								Login otomatis dengan akun dev role ini.
+								Automatically sign in with this dev role account.
 							</p>
 							<Button
 								variant="outline"
-								disabled={submitting}
 								onClick={handleDevLogin}
 								className="mt-3 w-full cursor-pointer"
 							>
-								Masuk sebagai {devUsername}
+								Sign in as {devUsername}
 							</Button>
 						</div>
 					)}
 					<p className="mt-6 text-center text-sm text-muted-foreground">
-						Belum punya akun?{" "}
+						Don't have an account?{" "}
 						<Link
 							to="/register"
 							className="font-medium text-primary underline-offset-4 hover:underline"
 						>
-							Daftar
+							Register
 						</Link>
 					</p>
 				</div>

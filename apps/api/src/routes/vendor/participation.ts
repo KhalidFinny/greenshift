@@ -8,9 +8,9 @@ import type {
 } from "../../contracts";
 import { createDb } from "../../db";
 import {
+	projects,
 	proposalRevisions,
 	proposals,
-	projects,
 	tenders,
 	users,
 	vendors,
@@ -86,7 +86,7 @@ participationRoutes.get(
 		const id = Number(c.req.param("id"));
 		if (!Number.isInteger(id) || id <= 0) {
 			return c.json(
-				{ error: { code: "VALIDATION", message: "ID tidak valid" } },
+				{ error: { code: "VALIDATION", message: "Invalid ID" } },
 				400,
 			);
 		}
@@ -99,7 +99,7 @@ participationRoutes.get(
 			.limit(1);
 		if (!profile) {
 			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Proyek tidak ditemukan" } },
+				{ error: { code: "NOT_FOUND", message: "Project not found" } },
 				404,
 			);
 		}
@@ -121,7 +121,7 @@ participationRoutes.get(
 
 		if (!row) {
 			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Proyek tidak ditemukan" } },
+				{ error: { code: "NOT_FOUND", message: "Project not found" } },
 				404,
 			);
 		}
@@ -180,7 +180,9 @@ participationRoutes.get(
 				tender: tenders,
 				project: projects,
 				companyName: users.name,
-				latestNote: sql<string | null>`(select note from proposal_revisions pr where pr.proposal_id = proposals.id order by pr.id desc limit 1)`,
+				latestNote: sql<
+					string | null
+				>`(select note from proposal_revisions pr where pr.proposal_id = proposals.id order by pr.id desc limit 1)`,
 			})
 			.from(proposals)
 			.innerJoin(tenders, eq(proposals.tenderId, tenders.id))

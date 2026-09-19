@@ -1,42 +1,38 @@
-import {
-	type AdminAnomalyResponse,
-	type AdminBlueprint,
-	type AdminInvestment,
-	type AdminProject,
-	type AdminRoiPayment,
-	type AdminStats,
-	type AdminUser,
-	type AdminVendor,
-	type AuditLogEntry,
-	type AuthResponse,
-	type BondSummary,
-	type BuyBondBody,
-	type CsrfResponse,
-	apiRoutes,
-	type BlueprintUpdateBody,
-	type LoginBody,
-	type MarketProject,
-	type OkResponse,
-	type PortfolioDetail,
-	type PortfolioItem,
-	type ProposalDetail,
-	type ProposalDraftBody,
-	type ProposalSummary,
-	type ProposalUpdateBody,
-	type RegisterBody,
-	type StepUpBody,
-	type StepUpResponse,
-	type UpdateStatusBody,
-	type VendorMyProject,
-	type VendorMyProjectDetail,
-	type VendorProcurementStatusItem,
-	type VendorProfile,
-	type VendorProfileBody,
-	type VendorProjectDetail,
-	type VendorProjectListItem,
-	type VerifyUserBody,
-	type VerifyVendorBody,
+import type {
+	AdminAnomalyResponse,
+	AdminBlueprint,
+	AdminInvestment,
+	AdminProject,
+	AdminRoiPayment,
+	AdminStats,
+	AdminUser,
+	AdminVendor,
+	AuditLogEntry,
+	AuthResponse,
+	BlueprintUpdateBody,
+	BondMarketResponse,
+	CsrfResponse,
+	LoginBody,
+	OkResponse,
+	ProposalDetail,
+	ProposalDraftBody,
+	ProposalSummary,
+	ProposalUpdateBody,
+	RegisterBody,
+	StepUpBody,
+	StepUpResponse,
+	UpdateStatusBody,
+	VendorMyProject,
+	VendorMyProjectDetail,
+	VendorProcurementStatusItem,
+	VendorProfile,
+	VendorProfileBody,
+	VendorProjectDetail,
+	VendorProjectListItem,
+	VerifyUserBody,
+	VerifyVendorBody,
 } from "@greenshift/api/contracts";
+import { apiRoutes } from "@greenshift/api/contracts";
 import type { AuthUser } from "../auth/types";
 import { request } from "./http";
 
@@ -53,7 +49,7 @@ function query(params?: Record<string, string | number | undefined>) {
 /**
  * Typed client for the single GreenShift API.
  * Paths, methods, and body shapes come from the shared contract in
- * @greenshift/api — nothing API-related is hardcoded here.
+ * @greenshift/api: nothing API-related is hardcoded here.
  */
 export const api = {
 	auth: {
@@ -91,19 +87,7 @@ export const api = {
 			}),
 	},
 	investor: {
-		market: () =>
-			request<{ projects: MarketProject[] }>(apiRoutes.investorMarket.path),
-		buyBond: (body: BuyBondBody) =>
-			request<{ investment: BondSummary }>(apiRoutes.investorBuyBond.path, {
-				method: apiRoutes.investorBuyBond.method,
-				body: JSON.stringify(body satisfies BuyBondBody),
-			}),
-		portfolio: () =>
-			request<{ items: PortfolioItem[] }>(apiRoutes.investorPortfolio.path),
-		portfolioDetail: (id: number) =>
-			request<PortfolioDetail>(
-				apiRoutes.investorPortfolioDetail.path.replace(":id", String(id)),
-			),
+		market: () => request<BondMarketResponse>(apiRoutes.investorMarket.path),
 	},
 	admin: {
 		users: (params?: { role?: string; limit?: number }) =>
@@ -202,13 +186,10 @@ export const api = {
 		profile: () =>
 			request<{ profile: VendorProfile }>(apiRoutes.vendorProfile.path),
 		saveProfile: (body: VendorProfileBody) =>
-			request<{ profile: VendorProfile }>(
-				apiRoutes.vendorSaveProfile.path,
-				{
-					method: apiRoutes.vendorSaveProfile.method,
-					body: JSON.stringify(body satisfies VendorProfileBody),
-				},
-			),
+			request<{ profile: VendorProfile }>(apiRoutes.vendorSaveProfile.path, {
+				method: apiRoutes.vendorSaveProfile.method,
+				body: JSON.stringify(body satisfies VendorProfileBody),
+			}),
 		proposals: (params?: { limit?: number }) =>
 			request<{ proposals: ProposalSummary[] }>(
 				apiRoutes.vendorProposals.path + query(params),

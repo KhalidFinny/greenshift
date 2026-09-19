@@ -1,9 +1,6 @@
-import type { MarketProject } from "@greenshift/api/contracts";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import {
-	faArrowRight,
 	faBolt,
-	faBookmark,
 	faIndustry,
 	faLeaf,
 	faLocationDot,
@@ -11,82 +8,107 @@ import {
 	faUtensils,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import type { BondListing } from "@greenshift/api/contracts";
 import {
 	Badge,
-	Button,
 	Card,
 	CardContent,
 	CardFooter,
 	CardHeader,
 	CardTitle,
+	cn,
 } from "@greenshift/ui";
 import { formatIdr, formatTonnes, titleCase } from "../lib/format";
-import { riskMeta, STATUS_BADGE_CLASS } from "../lib/labels";
+import { riskMeta } from "../lib/labels";
+import { BondPurchaseActions } from "./bond-purchase-actions";
 
-interface MarketCardProps {
-	project: MarketProject;
-	onBuy: () => void;
-	disabled?: boolean;
+interface BondCardProps {
+	listing: BondListing;
 }
 
-function categoryIconFor(project: MarketProject): IconDefinition {
-	const scope = `${project.title} ${project.industrySector ?? ""}`.toLowerCase();
+const STATUS_META: Record<
+	BondListing["status"],
+	{ label: string; className: string }
+> = {
+	verified: {
+		label: "Verified",
+		className: "border-transparent bg-primary/10 text-primary",
+	},
+	on_progress: {
+		label: "In Progress",
+		className: "border-transparent bg-amber-500/15 text-amber-700",
+	},
+};
+
+function categoryIconFor(listing: BondListing): IconDefinition {
+	const scope =
+		`${listing.title} ${listing.industrySector ?? ""}`.toLowerCase();
 	if (
 		scope.includes("solar") ||
 		scope.includes("plts") ||
 		scope.includes("panel") ||
-		scope.includes("energi")
+		scope.includes("energy") ||
+		scope.includes("electric") ||
+		scope.includes("power")
 	) {
 		return faBolt;
 	}
-	if (scope.includes("logistik") || scope.includes("pergudangan")) {
+	if (scope.includes("logistics") || scope.includes("warehouse")) {
 		return faTruck;
 	}
 	if (
-		scope.includes("makanan") ||
-		scope.includes("minuman") ||
-		scope.includes("f&b") ||
 		scope.includes("food") ||
+		scope.includes("beverage") ||
+		scope.includes("f&b") ||
 		scope.includes("boiler") ||
-		scope.includes("biomassa")
+		scope.includes("biomass")
 	) {
 		return faUtensils;
 	}
 	if (
-		scope.includes("manufaktur") ||
-		scope.includes("logam") ||
-		scope.includes("tekstil") ||
-		scope.includes("kimia")
+		scope.includes("manufacturing") ||
+		scope.includes("metal") ||
+		scope.includes("textile") ||
+		scope.includes("chemical") ||
+		scope.includes("paper")
 	) {
 		return faIndustry;
 	}
 	return faLeaf;
 }
 
-function Metric({ label, value, tone }: { label: string; value: string; tone?: string }) {
+function Metric({
+	label,
+	value,
+	tone,
+}: {
+	label: string;
+	value: string;
+	tone?: string;
+}) {
 	return (
 		<div className="p-3">
-			<p className="text-base text-muted-foreground">{label}</p>
-			<p className={`mt-2 text-lg font-semibold tabular-nums whitespace-nowrap [overflow-wrap:normal] ${tone ?? "text-foreground"}`}>
+			<p className="text-sm text-muted-foreground">{label}</p>
+			<p
+				className={cn(
+					"mt-1 text-lg font-semibold tabular-nums whitespace-nowrap [overflow-wrap:normal]",
+					tone ?? "text-foreground",
+				)}
+			>
 				{value}
 			</p>
 		</div>
 	);
 }
 
-export function MarketCard({ project, onBuy, disabled = false }: MarketCardProps) {
-	const categoryIcon = categoryIconFor(project);
-	const risk = riskMeta(project.riskScore);
-	const remaining = Math.max((project.budget ?? 0) - project.funded, 0);
-	const progress = Math.round(project.fundingProgress * 100);
-	const irr = project.blueprint.irr;
-	const payback = project.blueprint.paybackPeriod;
-	const riskTone =
-		risk.tone === "destructive"
-			? "text-destructive"
-			: risk.tone === "secondary"
-				? "text-amber-600"
-				: "text-primary";
+export function BondCard({ listing }: BondCardProps) {
+	const status = STATUS_META[listing.status];
+	const categoryIcon = categoryIconFor(listing);
+	const risk = riskMeta(listing.riskScore);
+	const progress = Math.round(listing.fundingProgress * 100);
+	const irr = listing.blueprint.irr;
+	const payback = listing.blueprint.paybackPeriod;
+	const verified = listing.status === "verified";
 
 	return (
 		<Card className="flex flex-col">
@@ -96,67 +118,90 @@ export function MarketCard({ project, onBuy, disabled = false }: MarketCardProps
 						<div className="flex size-11 items-center justify-center rounded-full bg-muted text-primary">
 							<FontAwesomeIcon icon={categoryIcon} className="size-5" />
 						</div>
-						<Badge variant="secondary" className={STATUS_BADGE_CLASS}>
-							{titleCase(project.industrySector ?? "Umum")}
+						<Badge variant="secondary" className={status.className}>
+							{status.label}
 						</Badge>
 					</div>
-					<FontAwesomeIcon icon={faBookmark} className="size-5 text-muted-foreground" />
+					<Badge variant="outline">
+						{titleCase(listing.industrySector ?? "General")}
+					</Badge>
 				</div>
 
 				<div className="space-y-2">
-					<CardTitle className="text-2xl leading-snug">{project.title}</CardTitle>
-					<div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-base text-muted-foreground">
-						{project.companyName ? <span>{project.companyName}</span> : null}
+					<CardTitle className="text-2xl leading-snug">
+						{listing.title}
+					</CardTitle>
+					<div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+						{listing.companyName ? <span>{listing.companyName}</span> : null}
 						<span className="flex items-center gap-2">
 							<FontAwesomeIcon icon={faLocationDot} className="size-4" />
-							{project.location ?? "Lokasi belum ditentukan"}
+							{listing.location ?? "Location not specified"}
 						</span>
 					</div>
 				</div>
 			</CardHeader>
 
 			<CardContent className="flex-1 space-y-4">
-				<div>
-					<div className="flex items-center justify-between gap-4">
-						<p className="text-base text-muted-foreground">Progres pendanaan</p>
-						<p className="text-lg font-semibold tabular-nums">{progress}%</p>
-					</div>
-					<div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
-						<div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress}%` }} />
-					</div>
-					<p className="mt-3 text-base tabular-nums text-muted-foreground">
-						{formatIdr(project.funded)} terkumpul / {formatIdr(project.budget)}
-					</p>
-				</div>
-
 				<div className="overflow-hidden rounded-lg border border-border/70">
-					<div className="grid grid-cols-3 divide-x divide-border/70 border-b border-border/70">
+					<div className="grid grid-cols-3 divide-x divide-border/70">
 						<Metric
-							label="Return"
-							value={typeof irr === "number" ? `${irr.toLocaleString("id-ID", { maximumFractionDigits: 1 })}% p.a.` : "—"}
+							label="Coupon"
+							value={
+								typeof irr === "number"
+									? `${irr.toLocaleString("en-US", { maximumFractionDigits: 1 })}%`
+									: "-"
+							}
 							tone="text-primary"
 						/>
-						<Metric label="Tenor" value={typeof payback === "number" ? `${payback} thn` : "—"} />
-						<Metric label="Risiko" value={risk.label} tone={riskTone} />
+						<Metric
+							label="Tenor"
+							value={typeof payback === "number" ? `${payback} thn` : "-"}
+						/>
+						<Metric label="Risk" value={risk.label} />
 					</div>
-					<div className="flex items-center justify-between gap-4 border-b border-border/70 p-3">
-						<p className="text-base text-muted-foreground">Pengurangan Emisi</p>
-						<p className="text-right text-lg font-semibold tabular-nums whitespace-nowrap [overflow-wrap:normal]">
-							{formatTonnes(project.targetEmissionReduction)}
+					<div className="flex items-center justify-between gap-4 border-t border-border/70 p-3">
+						<p className="text-sm text-muted-foreground">Issuance amount</p>
+						<p className="text-lg font-semibold tabular-nums">
+							{formatIdr(listing.budget)}
 						</p>
 					</div>
-					<div className="grid grid-cols-2 divide-x divide-border/70">
-						<Metric label="Pendanaan" value={formatIdr(project.budget)} />
-						<Metric label="Sisa dana" value={formatIdr(remaining)} />
+				</div>
+
+				<div>
+					<div className="flex items-center justify-between gap-4">
+						<p className="text-sm text-muted-foreground">Funding progress</p>
+						<p className="text-sm font-semibold tabular-nums">{progress}%</p>
 					</div>
+					<div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
+						<div
+							className="h-full rounded-full bg-primary transition-all"
+							style={{ width: `${progress}%` }}
+						/>
+					</div>
+					<p className="mt-2 text-sm tabular-nums text-muted-foreground">
+						{formatIdr(listing.funded)} raised ·{" "}
+						{formatTonnes(listing.targetEmissionReduction)} emission reduction
+					</p>
 				</div>
 			</CardContent>
 
-			<CardFooter>
-				<Button size="lg" variant="outline" className="w-full text-base" disabled={disabled || remaining <= 0} onClick={onBuy}>
-					{disabled ? "Data Contoh" : "Lihat Detail"}
-					<FontAwesomeIcon icon={faArrowRight} />
-				</Button>
+			<CardFooter className="flex-col items-stretch gap-3">
+				{verified ? (
+					<>
+						<p className="text-sm text-muted-foreground">
+							Active listing. Buy through a broker:
+						</p>
+						<BondPurchaseActions project={listing} />
+					</>
+				) : (
+					<div className="rounded-lg border border-dashed border-border/70 bg-muted/40 p-3">
+						<p className="text-sm font-medium">Not yet trading</p>
+						<p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+							The bond is still undergoing verification and broker placement.
+							Contact us for information on the offering period.
+						</p>
+					</div>
+				)}
 			</CardFooter>
 		</Card>
 	);

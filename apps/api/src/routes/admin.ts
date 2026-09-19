@@ -1,7 +1,11 @@
 import {
 	and,
+	count,
+	countDistinct,
 	desc,
 	eq,
+	gt,
+	gte,
 	inArray,
 	isNotNull,
 	isNull,
@@ -9,6 +13,7 @@ import {
 	notLike,
 	or,
 	sql,
+	sum,
 } from "drizzle-orm";
 import { Hono } from "hono";
 import { createFactory } from "hono/factory";
@@ -105,7 +110,7 @@ adminRoutes.get(
 		const role = c.req.query("role");
 		if (role && !(userRoles as readonly string[]).includes(role)) {
 			return c.json(
-				{ error: { code: "VALIDATION", message: "Role tidak valid" } },
+				{ error: { code: "VALIDATION", message: "Invalid role" } },
 				400,
 			);
 		}
@@ -153,7 +158,7 @@ adminRoutes.patch(
 			typeof body?.verified !== "boolean"
 		) {
 			return c.json(
-				{ error: { code: "VALIDATION", message: "Input tidak valid" } },
+				{ error: { code: "VALIDATION", message: "Invalid input" } },
 				400,
 			);
 		}
@@ -166,7 +171,7 @@ adminRoutes.patch(
 			.limit(1);
 		if (!user) {
 			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Pengguna tidak ditemukan" } },
+				{ error: { code: "NOT_FOUND", message: "User not found" } },
 				404,
 			);
 		}
@@ -175,7 +180,7 @@ adminRoutes.patch(
 				{
 					error: {
 						code: "FORBIDDEN",
-						message: "Akun admin tidak dapat dideverifikasi",
+						message: "Admin account cannot be unverified",
 					},
 				},
 				403,
@@ -210,7 +215,7 @@ adminRoutes.get(
 		const status = c.req.query("status");
 		if (status && !(projectStatuses as readonly string[]).includes(status)) {
 			return c.json(
-				{ error: { code: "VALIDATION", message: "Status tidak valid" } },
+				{ error: { code: "VALIDATION", message: "Invalid status" } },
 				400,
 			);
 		}
@@ -268,7 +273,7 @@ adminRoutes.patch(
 			!(projectStatuses as readonly string[]).includes(status)
 		) {
 			return c.json(
-				{ error: { code: "VALIDATION", message: "Input tidak valid" } },
+				{ error: { code: "VALIDATION", message: "Invalid input" } },
 				400,
 			);
 		}
@@ -281,7 +286,7 @@ adminRoutes.patch(
 			.limit(1);
 		if (!project) {
 			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Proyek tidak ditemukan" } },
+				{ error: { code: "NOT_FOUND", message: "Project not found" } },
 				404,
 			);
 		}
@@ -315,7 +320,7 @@ adminRoutes.get(
 		const status = c.req.query("status");
 		if (status && !(blueprintStatuses as readonly string[]).includes(status)) {
 			return c.json(
-				{ error: { code: "VALIDATION", message: "Status tidak valid" } },
+				{ error: { code: "VALIDATION", message: "Invalid status" } },
 				400,
 			);
 		}
@@ -362,7 +367,7 @@ adminRoutes.patch(
 			!(blueprintStatuses as readonly string[]).includes(status)
 		) {
 			return c.json(
-				{ error: { code: "VALIDATION", message: "Input tidak valid" } },
+				{ error: { code: "VALIDATION", message: "Invalid input" } },
 				400,
 			);
 		}
@@ -375,7 +380,7 @@ adminRoutes.patch(
 			.limit(1);
 		if (!blueprint) {
 			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Blueprint tidak ditemukan" } },
+				{ error: { code: "NOT_FOUND", message: "Blueprint not found" } },
 				404,
 			);
 		}
@@ -386,7 +391,7 @@ adminRoutes.patch(
 				{
 					error: {
 						code: "VALIDATION",
-						message: "Transisi status tidak valid",
+						message: "Invalid status transition",
 					},
 				},
 				422,
@@ -397,7 +402,7 @@ adminRoutes.patch(
 				{
 					error: {
 						code: "VALIDATION",
-						message: "Blueprint belum lengkap untuk dipublikasikan",
+						message: "Blueprint is not yet complete for publication",
 					},
 				},
 				422,
@@ -485,7 +490,7 @@ adminRoutes.get(
 		if (status) {
 			if (!validStatuses.includes(status)) {
 				return c.json(
-					{ error: { code: "VALIDATION", message: "Status tidak valid" } },
+					{ error: { code: "VALIDATION", message: "Invalid status" } },
 					400,
 				);
 			}
@@ -534,7 +539,7 @@ adminRoutes.get(
 		if (status) {
 			if (!validStatuses.includes(status)) {
 				return c.json(
-					{ error: { code: "VALIDATION", message: "Status tidak valid" } },
+					{ error: { code: "VALIDATION", message: "Invalid status" } },
 					400,
 				);
 			}
@@ -569,7 +574,7 @@ adminRoutes.post(
 		const id = Number(c.req.param("id"));
 		if (!Number.isInteger(id) || id <= 0) {
 			return c.json(
-				{ error: { code: "VALIDATION", message: "ID tidak valid" } },
+				{ error: { code: "VALIDATION", message: "Invalid ID" } },
 				400,
 			);
 		}
@@ -582,7 +587,7 @@ adminRoutes.post(
 			.limit(1);
 		if (!payment) {
 			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Pembayaran tidak ditemukan" } },
+				{ error: { code: "NOT_FOUND", message: "Payment not found" } },
 				404,
 			);
 		}
@@ -591,7 +596,7 @@ adminRoutes.post(
 				{
 					error: {
 						code: "ALREADY_PAID",
-						message: "Pembayaran sudah diproses",
+						message: "Payment already processed",
 					},
 				},
 				409,
@@ -616,7 +621,7 @@ adminRoutes.post(
 				{
 					error: {
 						code: "ALREADY_PAID",
-						message: "Pembayaran sudah diproses",
+						message: "Payment already processed",
 					},
 				},
 				409,
@@ -682,22 +687,22 @@ adminRoutes.get(
 		const [usersByRole, projectsByStatus, investmentAgg, paymentsByStatus] =
 			await Promise.all([
 				db
-					.select({ role: users.role, count: sql<number>`count(*)` })
+					.select({ role: users.role, count: count() })
 					.from(users)
 					.groupBy(users.role),
 				db
-					.select({ status: projects.status, count: sql<number>`count(*)` })
+					.select({ status: projects.status, count: count() })
 					.from(projects)
 					.groupBy(projects.status),
 				db
 					.select({
-						total: sql<number>`count(*)`,
+						total: count(),
 						sum: sql<number>`coalesce(sum(${investments.amount}), 0)`,
 						roiPaid: sql<number>`coalesce(sum(${investments.roiPaid}), 0)`,
 					})
 					.from(investments),
 				db
-					.select({ status: roiPayments.status, count: sql<number>`count(*)` })
+					.select({ status: roiPayments.status, count: count() })
 					.from(roiPayments)
 					.groupBy(roiPayments.status),
 			]);
@@ -716,16 +721,16 @@ adminRoutes.get(
 				})
 				.from(users),
 			db
-				.select({ count: sql<number>`count(distinct ${users.companyName})` })
+				.select({ count: countDistinct(users.companyName) })
 				.from(users)
 				.where(isNotNull(users.companyName)),
 			db
 				.select({
-					count: sql<number>`count(distinct ${investments.investorId})`,
+					count: countDistinct(investments.investorId),
 				})
 				.from(investments),
 			db
-				.select({ status: blueprints.status, count: sql<number>`count(*)` })
+				.select({ status: blueprints.status, count: count() })
 				.from(blueprints)
 				.groupBy(blueprints.status),
 			db
@@ -830,7 +835,7 @@ adminRoutes.patch(
 			typeof body?.verified !== "boolean"
 		) {
 			return c.json(
-				{ error: { code: "VALIDATION", message: "Input tidak valid" } },
+				{ error: { code: "VALIDATION", message: "Invalid input" } },
 				400,
 			);
 		}
@@ -843,7 +848,7 @@ adminRoutes.patch(
 			.limit(1);
 		if (!vendor) {
 			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Vendor tidak ditemukan" } },
+				{ error: { code: "NOT_FOUND", message: "Vendor not found" } },
 				404,
 			);
 		}
@@ -897,10 +902,13 @@ adminRoutes.get(
 		) => {
 			flags.push({
 				id: `${category}.${kind}-${entityId ?? flags.length}`,
+				code: kind,
 				category,
 				severity,
 				title,
+				description: detail,
 				detail,
+				projectId: null,
 				entityType,
 				entityId,
 				entityLabel,
@@ -928,8 +936,8 @@ adminRoutes.get(
 				"blueprint",
 				"published_invalid",
 				"critical",
-				"Blueprint dipublikasikan tanpa validasi",
-				`Blueprint proyek "${projectTitle}" berstatus published tanpa jejak validasi auditor.`,
+				"Blueprint published without validation",
+				`Blueprint for project "${projectTitle}" is published with no auditor validation trail.`,
 				"blueprint",
 				blueprint.id,
 				projectTitle,
@@ -953,9 +961,9 @@ adminRoutes.get(
 				"emission",
 				"anomaly",
 				"high",
-				"Anomali laporan emisi terdeteksi",
+				"Emission report anomaly detected",
 				report.anomalyNote ??
-					`Konsumsi aktual menyimpang dari baseline (skor ${report.anomalyScore ?? "?"}).`,
+					`Actual consumption deviates from baseline (score ${report.anomalyScore ?? "?"}).`,
 				"emission_report",
 				report.id,
 				projectTitle,
@@ -983,8 +991,8 @@ adminRoutes.get(
 				"payout",
 				"failed",
 				"high",
-				"Pembayaran ROI gagal",
-				`Pembayaran ${projectTitle} untuk ${investorEmail} berstatus failed.`,
+				"ROI payment failed",
+				`Payment for ${projectTitle} to ${investorEmail} has status failed.`,
 				"roi_payment",
 				payment.id,
 				investorEmail,
@@ -1006,8 +1014,8 @@ adminRoutes.get(
 					"payout",
 					"no_tx",
 					"high",
-					"Pembayaran tanpa referensi escrow",
-					`Pembayaran ROI ${payment.period ?? `#${payment.id}`} berstatus paid tanpa escrowTxId.`,
+					"Payment without an escrow reference",
+					`ROI payment ${payment.period ?? `#${payment.id}`} has status paid without an escrowTxId.`,
 					"roi_payment",
 					payment.id,
 					null,
@@ -1021,8 +1029,8 @@ adminRoutes.get(
 					"payout",
 					"dup_tx",
 					"high",
-					"Transaksi escrow digunakan dua kali",
-					`${payment.escrowTxId} dipakai oleh pembayaran #${seen.id} dan #${payment.id}.`,
+					"Escrow transaction used twice",
+					`${payment.escrowTxId} is used by payments #${seen.id} and #${payment.id}.`,
 					"roi_payment",
 					payment.id,
 					payment.escrowTxId,
@@ -1045,15 +1053,15 @@ adminRoutes.get(
 			.innerJoin(projects, eq(investments.projectId, projects.id))
 			.where(isNotNull(projects.budget))
 			.groupBy(projects.id, projects.title, projects.budget)
-			.having(sql`sum(${investments.amount}) > ${projects.budget}`)
+			.having(gt(sum(investments.amount), projects.budget))
 			.limit(50);
 		for (const row of overfunded) {
 			push(
 				"funding",
 				"overcap",
 				"high",
-				"Pendanaan melebihi anggaran",
-				`Proyek "${row.projectTitle}" terdanai ${row.funded.toLocaleString("id-ID")} dari anggaran ${row.budget?.toLocaleString("id-ID")}.`,
+				"Funding exceeds budget",
+				`Project "${row.projectTitle}" is funded ${row.funded.toLocaleString("en-US")} against a ${row.budget?.toLocaleString("en-US")} budget.`,
 				"project",
 				row.projectId,
 				row.projectTitle,
@@ -1083,8 +1091,8 @@ adminRoutes.get(
 				"bond",
 				"bad_serial",
 				"low",
-				"Nomor seri obligasi tidak sesuai format",
-				`Obligasi ${investment.bondSerialNumber} (${investorEmail}, ${projectTitle}) di luar format GS-*.`,
+				"Bond serial number does not match the format",
+				`Bond ${investment.bondSerialNumber} (${investorEmail}, ${projectTitle}) is outside the GS-* format.`,
 				"investment",
 				investment.id,
 				investment.bondSerialNumber,
@@ -1101,7 +1109,7 @@ adminRoutes.get(
 			.from(proposals)
 			.innerJoin(tenders, eq(proposals.tenderId, tenders.id))
 			.innerJoin(projects, eq(tenders.projectId, projects.id))
-			.where(sql`${proposals.revisionCount} >= 3`)
+			.where(gte(proposals.revisionCount, 3))
 			.orderBy(desc(proposals.updatedAt))
 			.limit(100);
 		for (const { proposal, projectTitle } of overRevised) {
@@ -1109,8 +1117,8 @@ adminRoutes.get(
 				"proposal",
 				"revision_limit",
 				"medium",
-				"Proposal melewati batas revisi",
-				`Proposal ${projectTitle} mencapai ${proposal.revisionCount} revisi (batas 3).`,
+				"Proposal exceeded the revision limit",
+				`Proposal ${projectTitle} reached ${proposal.revisionCount} revisions (limit 3).`,
 				"proposal",
 				proposal.id,
 				projectTitle,
@@ -1140,8 +1148,8 @@ adminRoutes.get(
 				"tender",
 				"stale",
 				"medium",
-				"Tender melewati tenggat",
-				`Tender ${projectTitle} masih open setelah tenggat ${iso(tender.deadlineAt)?.slice(0, 10)}.`,
+				"Tender past its deadline",
+				`Tender ${projectTitle} is still open past the deadline ${iso(tender.deadlineAt)?.slice(0, 10)}.`,
 				"tender",
 				tender.id,
 				projectTitle,
@@ -1166,8 +1174,8 @@ adminRoutes.get(
 				"user",
 				"unverified",
 				"medium",
-				"Akun belum diverifikasi",
-				`Akun ${user.role} ${user.email} aktif tanpa verifikasi.`,
+				"Account not yet verified",
+				`${user.role} account ${user.email} is active without verification.`,
 				"user",
 				user.id,
 				user.email,
@@ -1187,8 +1195,8 @@ adminRoutes.get(
 				"vendor",
 				"no_profile",
 				"medium",
-				"Vendor tanpa profil",
-				`Akun vendor ${user.email} tidak memiliki profil vendor.`,
+				"Vendor without a profile",
+				`Vendor account ${user.email} has no vendor profile.`,
 				"user",
 				user.id,
 				user.email,
@@ -1214,8 +1222,8 @@ adminRoutes.get(
 				"project",
 				"no_mrv",
 				"low",
-				"Proyek tanpa laporan MRV",
-				`Proyek "${project.title}" berstatus ${project.status} tanpa laporan emisi.`,
+				"Project without an MRV report",
+				`Project "${project.title}" has status ${project.status} with no emission reports.`,
 				"project",
 				project.id,
 				project.title,

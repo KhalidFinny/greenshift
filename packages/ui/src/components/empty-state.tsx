@@ -1,5 +1,5 @@
 export function EmptyState({
-	title = "Masih kosong",
+	title = "Nothing here yet",
 	description,
 }: {
 	title?: string;

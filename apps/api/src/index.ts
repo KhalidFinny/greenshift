@@ -12,16 +12,13 @@ export const app = new Hono<ApiEnv>();
 app.onError((err, c) => {
 	console.error("[api]", err);
 	return c.json(
-		{ error: { code: "INTERNAL", message: "Terjadi kesalahan internal" } },
+		{ error: { code: "INTERNAL", message: "An internal error occurred" } },
 		500,
 	);
 });
 
 app.notFound((c) =>
-	c.json(
-		{ error: { code: "NOT_FOUND", message: "Endpoint tidak ditemukan" } },
-		404,
-	),
+	c.json({ error: { code: "NOT_FOUND", message: "Endpoint not found" } }, 404),
 );
 
 app.route("/api", healthRoutes);

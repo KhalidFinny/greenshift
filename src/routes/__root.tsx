@@ -9,6 +9,7 @@ import {
 	useRouterState,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { useEffect } from "react";
 import { NotFoundComponent } from "../components/not-found";
 import { getSessionFn } from "../lib/session";
 import type { RouterContext } from "../router";
@@ -21,7 +22,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 		meta: [
 			{ charSet: "utf-8" },
 			{ name: "viewport", content: "width=device-width, initial-scale=1" },
-			{ title: "GreenShift — Platform MRV untuk Pembiayaan Hijau" },
+			{ title: "GreenShift: MRV Platform for Green Financing" },
 		],
 		links: [
 			{ rel: "stylesheet", href: appCss },
@@ -36,7 +37,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 	const isHome = useIsHome();
 	// Decide public chrome from the committed route tree, not from pathname +
 	// auth context: during a transition out of an authed page the session is
-	// already cleared while the route is still the old one — a pathname/user
+	// already cleared while the route is still the old one: a pathname/user
 	// mix would flash the public header for a frame.
 	const activeRouteId = useRouterState({
 		select: (state) => state.matches[state.matches.length - 1]?.routeId,
@@ -46,18 +47,25 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			activeRouteId !== "/login" &&
 			activeRouteId !== "/register"
 		: true;
+	// The bonds dashboard is a self-contained public surface: no site footer.
+	const isBondsPage = activeRouteId?.startsWith("/bonds") ?? false;
+
+	// Pick the view-transition variant. Defaults to "fade-through" (no asset
+	// overlap); override live with ?vt=slide-fade|zoom-fade to A/B.
+	useEffect(() => {
+		const variant = new URLSearchParams(window.location.search).get("vt");
+		document.documentElement.dataset.vt = variant ?? "fade-through";
+	}, []);
 
 	return (
-		<html lang="id" suppressHydrationWarning>
+		<html lang="en" suppressHydrationWarning>
 			<head>
 				<HeadContent />
 			</head>
 			<body className="bg-background font-sans text-foreground antialiased [overflow-wrap:anywhere] selection:bg-secondary selection:text-foreground">
-				{isPublicPage ? (
-					<Header variant={isHome ? "transparent" : "default"} />
-				) : null}
+				{isHome ? <Header /> : null}
 				<ToastProvider>{children}</ToastProvider>
-				{isPublicPage ? <Footer /> : null}
+				{isPublicPage && !isBondsPage ? <Footer /> : null}
 				{import.meta.env.DEV && (
 					<TanStackDevtools
 						config={{ position: "bottom-right" }}

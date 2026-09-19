@@ -2,9 +2,9 @@
   "include": ["**/*.ts", "**/*.tsx"],
   "compilerOptions": {
     "target": "ES2022",
-	"jsx": "react-jsx",
-	"module": "ESNext",
-	"lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["vite/client", "@cloudflare/workers-types"],
 
     /* Bundler mode */
@@ -13,8 +13,15 @@
     "verbatimModuleSyntax": true,
     "noEmit": true,
 
-    /* shadcn/ui aliases (components live in packages/ui) */
+    /* Workspace & UI aliases */
     "paths": {
+      "@greenshift/core": ["./packages/core/src"],
+      "@greenshift/ui": ["./packages/ui/src"],
+      "@greenshift/vendor": ["./packages/vendor/src"],
+      "@greenshift/investor": ["./packages/investor/src"],
+      "@greenshift/broker": ["./packages/broker/src"],
+      "@greenshift/business": ["./packages/business/src"],
+      "@greenshift/admin": ["./packages/admin/src"],
       "#/components": ["./packages/ui/src/components"],
       "#/components/*": ["./packages/ui/src/components/*"],
       "#/ui": ["./packages/ui/src/components/ui"],

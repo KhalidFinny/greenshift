@@ -1,5 +1,5 @@
-import { ApiError } from "./errors";
 import { publishToast } from "../toast-bus";
+import { ApiError } from "./errors";
 
 type ErrorBody = { error?: { code?: string; message?: string } } | null;
 type CsrfBody = { csrfToken?: string } | null;
@@ -15,38 +15,38 @@ const SAFE_METHODS: Record<string, true> = {
 };
 
 /**
- * Success message per mutation route. Reads stay silent — their loading and
+ * Success message per mutation route. Reads stay silent: their loading and
  * error states live in the page (skeletons / empty states).
  */
 function successMessageFor(path: string, method: string): string | null {
 	if (path === "/api/auth/step-up") return null; // dialog provides feedback
-	if (path.endsWith("/api/auth/login")) return "Berhasil masuk";
-	if (path.endsWith("/api/auth/register")) return "Akun berhasil dibuat";
-	if (path.endsWith("/api/auth/logout")) return "Berhasil keluar";
-	if (/\/api\/investor\/bonds$/.test(path)) return "Obligasi hijau berhasil dibeli";
+	if (path.endsWith("/api/auth/login")) return "Signed in successfully";
+	if (path.endsWith("/api/auth/register"))
+		return "Account created successfully";
+	if (path.endsWith("/api/auth/logout")) return "Signed out successfully";
 	if (/\/api\/admin\/users\/\d+\/verify$/.test(path))
-		return "Verifikasi pengguna diperbarui";
+		return "User verification updated";
 	if (/\/api\/admin\/vendors\/\d+\/verify$/.test(path))
-		return "Verifikasi vendor diperbarui";
+		return "Vendor verification updated";
 	if (/\/api\/admin\/projects\/\d+\/status$/.test(path))
-		return "Status proyek diperbarui";
+		return "Project status updated";
 	if (/\/api\/admin\/blueprints\/\d+$/.test(path))
-		return "Status blueprint diperbarui";
+		return "Blueprint status updated";
 	if (/\/api\/admin\/roi-payments\/\d+\/payout$/.test(path))
-		return "Pembayaran ROI dicairkan via escrow";
+		return "ROI payment disbursed via escrow";
 	if (path === "/api/vendor/profile" && method === "PUT")
-		return "Profil vendor tersimpan";
+		return "Vendor profile saved";
 	if (path === "/api/vendor/proposals" && method === "POST")
-		return "Proposal berhasil dikirim";
+		return "Proposal submitted successfully";
 	if (/\/api\/vendor\/proposals\/\d+$/.test(path)) {
-		if (method === "PATCH") return "Proposal diperbarui";
-		if (method === "DELETE") return "Proposal ditarik";
+		if (method === "PATCH") return "Proposal updated";
+		if (method === "DELETE") return "Proposal withdrawn";
 	}
-	return "Perubahan berhasil disimpan";
+	return "Changes saved successfully";
 }
 
 function errorMessageFor(status: number, body: ErrorBody): string {
-	return body?.error?.message ?? `Permintaan gagal (${status})`;
+	return body?.error?.message ?? `Request failed (${status})`;
 }
 
 function shouldToast(method: string, init?: RequestOptions): boolean {
@@ -76,12 +76,12 @@ async function fetchCsrfToken(signal?: AbortSignal): Promise<string | null> {
 			const body = (await res.json().catch(() => null)) as ErrorBody;
 			throw new ApiError(
 				res.status,
-				body?.error?.message ?? `Permintaan gagal (${res.status})`,
+				body?.error?.message ?? `Request failed (${res.status})`,
 			);
 		}
 		const body = (await res.json().catch(() => null)) as CsrfBody;
 		return typeof body?.csrfToken === "string" ? body.csrfToken : null;
-		} finally {
+	} finally {
 		clearTimeout(timeout);
 	}
 }
@@ -136,10 +136,10 @@ export async function request<T>(
 			if (shouldToast(method, init)) {
 				publishToast({
 					tone: "error",
-					message: "Waktu permintaan habis, coba lagi",
+					message: "Request timed out, please try again",
 				});
 			}
-			throw new ApiError(504, "Waktu permintaan habis, coba lagi");
+			throw new ApiError(504, "Request timed out, please try again");
 		}
 		throw err;
 	} finally {

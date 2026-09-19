@@ -5,6 +5,7 @@ import {
 	real,
 	sqliteTable,
 	text,
+	uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
 // ── Type helpers ────────────────────────────────────────────
@@ -13,6 +14,7 @@ export const userRoles = [
 	"investor",
 	"vendor",
 	"admin",
+	"broker",
 ] as const;
 export type UserRole = (typeof userRoles)[number];
 
@@ -42,20 +44,21 @@ export const users = sqliteTable(
 		companyName: text("company_name"),
 		phone: text(),
 		avatar: text(),
-		verifiedAt: integer("verified_at", { mode: "timestamp" }),
-		createdAt: integer("created_at", { mode: "timestamp" })
+		verifiedAt: integer("verified_at", { mode: "timestamp_ms" }),
+		createdAt: integer("created_at", { mode: "timestamp_ms" })
 			.notNull()
 			.$defaultFn(() => new Date()),
-		updatedAt: integer("updated_at", { mode: "timestamp" })
+		updatedAt: integer("updated_at", { mode: "timestamp_ms" })
 			.notNull()
-			.$defaultFn(() => new Date()),
+			.$defaultFn(() => new Date())
+			.$onUpdateFn(() => new Date()),
 	},
 	(t) => [index("idx_users_role").on(t.role)],
 );
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
 	projects: many(projects, { relationName: "company_projects" }),
-	vendorProfile: many(vendors),
+	vendorProfile: one(vendors),
 	investments: many(investments),
 	blueprintValidations: many(blueprints),
 }));
@@ -74,12 +77,12 @@ export const vendors = sqliteTable(
 		portfolio: text({ mode: "json" }).$type<string[]>().default([]),
 		rating: real().default(0),
 		totalProjects: integer("total_projects").default(0),
-		verifiedAt: integer("verified_at", { mode: "timestamp" }),
-		createdAt: integer("created_at", { mode: "timestamp" })
+		verifiedAt: integer("verified_at", { mode: "timestamp_ms" }),
+		createdAt: integer("created_at", { mode: "timestamp_ms" })
 			.notNull()
 			.$defaultFn(() => new Date()),
 	},
-	(t) => [index("idx_vendor_user").on(t.userId)],
+	(t) => [uniqueIndex("vendor_profiles_user_id_unique").on(t.userId)],
 );
 
 export const vendorsRelations = relations(vendors, ({ one, many }) => ({
@@ -108,14 +111,15 @@ export const projects = sqliteTable(
 		riskScore: real("risk_score"),
 		riskSummary: text("risk_summary"),
 		// Timestamps
-		submittedAt: integer("submitted_at", { mode: "timestamp" }),
-		completedAt: integer("completed_at", { mode: "timestamp" }),
-		createdAt: integer("created_at", { mode: "timestamp" })
+		submittedAt: integer("submitted_at", { mode: "timestamp_ms" }),
+		completedAt: integer("completed_at", { mode: "timestamp_ms" }),
+		createdAt: integer("created_at", { mode: "timestamp_ms" })
 			.notNull()
 			.$defaultFn(() => new Date()),
-		updatedAt: integer("updated_at", { mode: "timestamp" })
+		updatedAt: integer("updated_at", { mode: "timestamp_ms" })
 			.notNull()
-			.$defaultFn(() => new Date()),
+			.$defaultFn(() => new Date())
+			.$onUpdateFn(() => new Date()),
 	},
 	(t) => [
 		index("idx_projects_company").on(t.companyId),
@@ -157,7 +161,7 @@ export const projectDocuments = sqliteTable(
 			facilityName?: string;
 			[key: string]: unknown;
 		}>(),
-		uploadedAt: integer("uploaded_at", { mode: "timestamp" })
+		uploadedAt: integer("uploaded_at", { mode: "timestamp_ms" })
 			.notNull()
 			.$defaultFn(() => new Date()),
 	},
@@ -190,7 +194,7 @@ export const riskAssessments = sqliteTable(
 		// Mitigation
 		recommendations: text({ mode: "json" }).$type<string[]>().default([]),
 		assessedBy: text("assessed_by"), // system or user id
-		assessedAt: integer("assessed_at", { mode: "timestamp" }),
+		assessedAt: integer("assessed_at", { mode: "timestamp_ms" }),
 	},
 	(t) => [index("idx_risk_project").on(t.projectId)],
 );
@@ -224,7 +228,7 @@ export const vendorMatchScores = sqliteTable(
 		projectRisk: real("project_risk"),
 		totalScore: real("total_score"),
 		rank: integer(),
-		createdAt: integer("created_at", { mode: "timestamp" })
+		createdAt: integer("created_at", { mode: "timestamp_ms" })
 			.notNull()
 			.$defaultFn(() => new Date()),
 	},
@@ -260,14 +264,15 @@ export const tenders = sqliteTable(
 		status: text().notNull().default("open"), // open | evaluation | closed | awarded
 		budgetMin: real("budget_min"),
 		budgetMax: real("budget_max"),
-		deadlineAt: integer("deadline_at", { mode: "timestamp" }),
+		deadlineAt: integer("deadline_at", { mode: "timestamp_ms" }),
 		awardedProposalId: integer("awarded_proposal_id"),
-		createdAt: integer("created_at", { mode: "timestamp" })
+		createdAt: integer("created_at", { mode: "timestamp_ms" })
 			.notNull()
 			.$defaultFn(() => new Date()),
-		updatedAt: integer("updated_at", { mode: "timestamp" })
+		updatedAt: integer("updated_at", { mode: "timestamp_ms" })
 			.notNull()
-			.$defaultFn(() => new Date()),
+			.$defaultFn(() => new Date())
+			.$onUpdateFn(() => new Date()),
 	},
 	(t) => [index("idx_tender_project").on(t.projectId)],
 );
@@ -299,17 +304,18 @@ export const proposals = sqliteTable(
 		status: text().notNull().default("submitted"), // submitted | reviewed | revision | accepted | rejected
 		revisionCount: integer("revision_count").default(0),
 		// Timestamps
-		submittedAt: integer("submitted_at", { mode: "timestamp" }),
-		reviewedAt: integer("reviewed_at", { mode: "timestamp" }),
-		createdAt: integer("created_at", { mode: "timestamp" })
+		submittedAt: integer("submitted_at", { mode: "timestamp_ms" }),
+		reviewedAt: integer("reviewed_at", { mode: "timestamp_ms" }),
+		createdAt: integer("created_at", { mode: "timestamp_ms" })
 			.notNull()
 			.$defaultFn(() => new Date()),
-		updatedAt: integer("updated_at", { mode: "timestamp" })
+		updatedAt: integer("updated_at", { mode: "timestamp_ms" })
 			.notNull()
-			.$defaultFn(() => new Date()),
+			.$defaultFn(() => new Date())
+			.$onUpdateFn(() => new Date()),
 	},
 	(t) => [
-		index("idx_proposal_tender").on(t.tenderId),
+		uniqueIndex("proposals_tender_vendor_unique").on(t.tenderId, t.vendorId),
 		index("idx_proposal_vendor").on(t.vendorId),
 	],
 );
@@ -339,11 +345,16 @@ export const proposalRevisions = sqliteTable(
 		amount: real(),
 		previousAmount: real("previous_amount"),
 		createdBy: text("created_by"), // company | vendor
-		createdAt: integer("created_at", { mode: "timestamp" })
+		createdAt: integer("created_at", { mode: "timestamp_ms" })
 			.notNull()
 			.$defaultFn(() => new Date()),
 	},
-	(t) => [index("idx_revision_proposal").on(t.proposalId)],
+	(t) => [
+		uniqueIndex("proposal_revisions_proposal_number_unique").on(
+			t.proposalId,
+			t.revisionNumber,
+		),
+	],
 );
 
 export const proposalRevisionsRelations = relations(
@@ -383,14 +394,15 @@ export const blueprints = sqliteTable(
 		}>(),
 		auditorId: integer("auditor_id").references(() => users.id),
 		auditNote: text("audit_note"),
-		validatedAt: integer("validated_at", { mode: "timestamp" }),
-		publishedAt: integer("published_at", { mode: "timestamp" }),
-		createdAt: integer("created_at", { mode: "timestamp" })
+		validatedAt: integer("validated_at", { mode: "timestamp_ms" }),
+		publishedAt: integer("published_at", { mode: "timestamp_ms" }),
+		createdAt: integer("created_at", { mode: "timestamp_ms" })
 			.notNull()
 			.$defaultFn(() => new Date()),
-		updatedAt: integer("updated_at", { mode: "timestamp" })
+		updatedAt: integer("updated_at", { mode: "timestamp_ms" })
 			.notNull()
-			.$defaultFn(() => new Date()),
+			.$defaultFn(() => new Date())
+			.$onUpdateFn(() => new Date()),
 	},
 	(t) => [
 		index("idx_blueprint_project").on(t.projectId),
@@ -417,8 +429,8 @@ export const energyForecasts = sqliteTable(
 		projectId: integer("project_id")
 			.notNull()
 			.references(() => projects.id, { onDelete: "cascade" }),
-		periodStart: integer("period_start", { mode: "timestamp" }),
-		periodEnd: integer("period_end", { mode: "timestamp" }),
+		periodStart: integer("period_start", { mode: "timestamp_ms" }),
+		periodEnd: integer("period_end", { mode: "timestamp_ms" }),
 		forecastedConsumption: real("forecasted_consumption"), // kWh
 		forecastedSavings: real("forecasted_savings"), // kWh
 		modelName: text("model_name").default("random_forest"),
@@ -430,7 +442,7 @@ export const energyForecasts = sqliteTable(
 			r2?: number;
 			cvRmse?: number;
 		}>(),
-		createdAt: integer("created_at", { mode: "timestamp" })
+		createdAt: integer("created_at", { mode: "timestamp_ms" })
 			.notNull()
 			.$defaultFn(() => new Date()),
 	},
@@ -462,14 +474,15 @@ export const investments = sqliteTable(
 		roiPaid: real("roi_paid").default(0),
 		status: text().notNull().default("active"), // active | completed | defaulted
 		bondSerialNumber: text("bond_serial_number"),
-		investedAt: integer("invested_at", { mode: "timestamp" }),
-		createdAt: integer("created_at", { mode: "timestamp" })
+		investedAt: integer("invested_at", { mode: "timestamp_ms" }),
+		createdAt: integer("created_at", { mode: "timestamp_ms" })
 			.notNull()
 			.$defaultFn(() => new Date()),
 	},
 	(t) => [
 		index("idx_investment_project").on(t.projectId),
 		index("idx_investment_investor").on(t.investorId),
+		uniqueIndex("investments_bond_serial_unique").on(t.bondSerialNumber),
 	],
 );
 
@@ -497,12 +510,15 @@ export const roiPayments = sqliteTable(
 		period: text(), // e.g. "2026-Q1"
 		status: text().notNull().default("scheduled"), // scheduled | paid | failed
 		escrowTxId: text("escrow_tx_id"),
-		paidAt: integer("paid_at", { mode: "timestamp" }),
-		createdAt: integer("created_at", { mode: "timestamp" })
+		paidAt: integer("paid_at", { mode: "timestamp_ms" }),
+		createdAt: integer("created_at", { mode: "timestamp_ms" })
 			.notNull()
 			.$defaultFn(() => new Date()),
 	},
-	(t) => [index("idx_roi_investment").on(t.investmentId)],
+	(t) => [
+		index("idx_roi_investment").on(t.investmentId),
+		uniqueIndex("roi_payments_escrow_tx_unique").on(t.escrowTxId),
+	],
 );
 
 export const roiPaymentsRelations = relations(roiPayments, ({ one }) => ({
@@ -520,8 +536,8 @@ export const emissionReports = sqliteTable(
 		projectId: integer("project_id")
 			.notNull()
 			.references(() => projects.id, { onDelete: "cascade" }),
-		periodStart: integer("period_start", { mode: "timestamp" }),
-		periodEnd: integer("period_end", { mode: "timestamp" }),
+		periodStart: integer("period_start", { mode: "timestamp_ms" }),
+		periodEnd: integer("period_end", { mode: "timestamp_ms" }),
 		// Energy & emission metrics
 		actualConsumption: real("actual_consumption"),
 		baselineConsumption: real("baseline_consumption"),
@@ -535,8 +551,8 @@ export const emissionReports = sqliteTable(
 		// Full report data
 		reportData: text("report_data", { mode: "json" }),
 		verifiedBy: integer("verified_by").references(() => users.id),
-		verifiedAt: integer("verified_at", { mode: "timestamp" }),
-		createdAt: integer("created_at", { mode: "timestamp" })
+		verifiedAt: integer("verified_at", { mode: "timestamp_ms" }),
+		createdAt: integer("created_at", { mode: "timestamp_ms" })
 			.notNull()
 			.$defaultFn(() => new Date()),
 	},
@@ -571,7 +587,7 @@ export const auditLogs = sqliteTable(
 		entityType: text("entity_type"), // project | tender | proposal | blueprint | etc
 		entityId: integer("entity_id"),
 		metadata: text({ mode: "json" }),
-		createdAt: integer("created_at", { mode: "timestamp" })
+		createdAt: integer("created_at", { mode: "timestamp_ms" })
 			.notNull()
 			.$defaultFn(() => new Date()),
 	},
@@ -596,7 +612,7 @@ export const notifications = sqliteTable(
 		body: text(),
 		read: integer({ mode: "boolean" }).notNull().default(false),
 		link: text(),
-		createdAt: integer("created_at", { mode: "timestamp" })
+		createdAt: integer("created_at", { mode: "timestamp_ms" })
 			.notNull()
 			.$defaultFn(() => new Date()),
 	},

@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState } from "react";
 import { ApiError } from "@greenshift/core";
+import { useCallback, useRef, useState } from "react";
 
 /**
  * Wraps an admin action that the API gates with step-up (428 STEP_UP_REQUIRED).
@@ -50,9 +50,7 @@ export function useStepUpAction<Args extends unknown[]>(
 		const pending = pendingRef.current;
 		pendingRef.current = null;
 		if (!pending) return;
-		void attempt(pending.args)
-			.then(pending.resolve)
-			.catch(pending.reject);
+		void attempt(pending.args).then(pending.resolve).catch(pending.reject);
 	}, [attempt]);
 
 	const closeStepUp = useCallback(() => {

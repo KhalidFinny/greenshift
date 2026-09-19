@@ -15,7 +15,7 @@ export function requireJson(c: Context<ApiEnv>): Response | null {
 			{
 				error: {
 					code: "UNSUPPORTED_MEDIA_TYPE",
-					message: "Content-Type harus application/json",
+					message: "Content-Type must be application/json",
 				},
 			},
 			415,
@@ -32,7 +32,7 @@ export function requireJson(c: Context<ApiEnv>): Response | null {
 			{
 				error: {
 					code: "PAYLOAD_TOO_LARGE",
-					message: "Ukuran payload terlalu besar",
+					message: "Payload too large",
 				},
 			},
 			413,
@@ -47,7 +47,7 @@ export function rateLimited(c: Context<ApiEnv>, retryAfter: number): Response {
 		{
 			error: {
 				code: "RATE_LIMITED",
-				message: "Terlalu banyak percobaan, coba lagi nanti",
+				message: "Too many attempts, please try again later",
 			},
 		},
 		429,
