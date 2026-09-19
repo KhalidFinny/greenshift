@@ -8,6 +8,7 @@ export * from "./use-idle-session-expiry";
 
 export const roleHome = {
 	business: "/business",
+	investor: "/investor",
 	vendor: "/vendor",
 	admin: "/admin",
 	broker: "/broker",
@@ -56,7 +57,7 @@ export function requireRole(role: UserRole) {
 	return ({ context }: { context: { user: AuthUser | null } }) => {
 		if (!context.user) throw redirect({ to: "/login" });
 		if (context.user.role !== role)
-			throw redirect({ to: roleHome[context.user.role] });
+			throw redirect({ to: roleHome[context.user.role] as "/" });
 	};
 }
 
