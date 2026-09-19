@@ -68,3 +68,12 @@ UI copy stays Indonesian; English equivalents below for the team.
   data-ink), never literal yellow/blue/green pills.
 - Row actions: "Detail" text button + "Risk Assessment" outline button
   (chart icon, comment-only `isRiskModalOpen` TODO — no per-row modal).
+
+## Matchmaking — Vendor Matchmaking (ADR-008)
+
+- Routes `/business/matchmaking` (list) + `/business/matchmaking/$projectId`
+  (detail); nav item "Vendor Matchmaking".
+- Own `MATCHMAKING_PROJECTS` rows with optional `selectedVendor`;
+  empty shows "Belum ada", filled shows name + success icon.
+- Detail stub: 65/35 grid, SMART cards, procurement methods, ringkasan,
+  match factors, calc box. Static demo; real scoring later.
