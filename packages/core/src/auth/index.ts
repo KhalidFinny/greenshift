@@ -20,7 +20,13 @@ export interface NavItem {
 }
 
 export const roleNav: Record<UserRole, NavItem[]> = {
-	business: [{ to: "/business", label: "Dashboard" }],
+	business: [
+		{ to: "/business", label: "Ajukan Proyek" },
+		{ to: "/business/proyek", label: "Proyek Saya" },
+	],
+	// Origin wired /investor, /investor/portfolio and /investor/market, but none
+	// of those route files exist on either branch. The public bond catalog is
+	// the surface that is actually built, so the nav points there.
 	investor: [{ to: "/bonds", label: "Green Market" }],
 	vendor: [
 		{ to: "/vendor", label: "Dashboard" },

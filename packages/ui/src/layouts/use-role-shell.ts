@@ -3,12 +3,10 @@ import { roleHome, useAuth } from "@greenshift/core";
 import { useRouterState } from "@tanstack/react-router";
 import type { RefObject } from "react";
 import { useEffect, useRef, useState } from "react";
-import { initialsOf } from "../components/account-avatar";
 
 export interface RoleShellData {
 	user: AuthUser | null;
 	name: string;
-	initials: string;
 	homeHref: string;
 	activePath: string;
 	accountRef: RefObject<HTMLDivElement | null>;
@@ -68,7 +66,6 @@ export function useRoleShell(): RoleShellData {
 	return {
 		user,
 		name,
-		initials: initialsOf(name),
 		homeHref: user ? roleHome[user.role] : "/",
 		activePath,
 		accountRef,
