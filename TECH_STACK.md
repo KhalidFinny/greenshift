@@ -94,8 +94,8 @@ for routing, data fetching, tables, and forms.
 | Routing + URL state | TanStack Router | `src/routes/*`, `src/router.tsx` |
 | SSR + server functions + mutations scope | TanStack Start | `src/server.ts`, `src/routes/*` |
 | Server state (fetching, caching, invalidation) | TanStack Query | every dashboard page (`useQuery` / `useQueryClient`) |
-| Tables | TanStack Table | `DataTable` in `packages/ui/src/components/ui/data-table.tsx`, used by all admin tables |
-| Forms | TanStack Form | `useAppForm` + `TextField`/`PasswordField`/`SubmitButton` in `packages/ui/src/components/form/form.tsx`, used by login, register, and the step-up dialog |
+| Tables | TanStack Table | `DataTable` in `packages/ui/src/components/ui/data-table.tsx`, used by the business dashboard, the project list, and all admin tables |
+| Forms | TanStack Form | `useAppForm` plus the field bundle (`TextField`/`NumberField`/`SelectField`/`TextareaField`/`CheckboxField`/`PasswordField`/`SubmitButton`) in `packages/ui/src/components/form/form.tsx`, used by login, register, the step-up dialog, and the business submission wizard |
 | Devtools | TanStack Devtools (Query/Router) | dev builds only |
 
 Router, Start and Query cover routing, SSR and server state; Table and Form were added and adopted everywhere

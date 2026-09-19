@@ -52,7 +52,6 @@ export function VendorTendersPage() {
 					</TabsTrigger>
 				</TabsList>
 
-				{/* Active Tenders Tab */}
 				<TabsContent value="active" className="mt-6 space-y-6">
 					{!hasOpenBidding && sealedBids.length === 0 ? (
 						<EmptyState
@@ -89,7 +88,6 @@ export function VendorTendersPage() {
 					)}
 				</TabsContent>
 
-				{/* My Proposals Tab */}
 				<TabsContent value="proposals" className="mt-6 space-y-4">
 					{proposals.length === 0 ? (
 						<EmptyState
@@ -109,7 +107,6 @@ export function VendorTendersPage() {
 					)}
 				</TabsContent>
 
-				{/* Negotiations Tab */}
 				<TabsContent value="negotiations" className="mt-6 space-y-4">
 					{negotiations.length === 0 ? (
 						<EmptyState
@@ -128,7 +125,6 @@ export function VendorTendersPage() {
 					)}
 				</TabsContent>
 
-				{/* Completed Tenders Tab */}
 				<TabsContent value="completed" className="mt-6">
 					<EmptyState
 						icon={<FontAwesomeIcon icon={faGavel} />}

@@ -22,13 +22,14 @@ const buttonVariants = cva(
 			},
 			size: {
 				default:
-					"h-10 gap-2 px-4 text-sm/relaxed has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3 [&_svg:not([class*='size-'])]:size-4",
-				xs: "h-8 gap-1.5 rounded-sm px-2.5 text-sm has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
-				sm: "h-9 gap-1.5 px-3 text-sm/relaxed has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5 [&_svg:not([class*='size-'])]:size-4",
+					"h-10 max-sm:h-11 gap-2 px-4 text-sm/relaxed has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3 [&_svg:not([class*='size-'])]:size-4",
+				xs: "h-8 max-sm:h-11 gap-1.5 rounded-sm px-2.5 text-sm has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
+				sm: "h-9 max-sm:h-11 gap-1.5 px-3 text-sm/relaxed has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5 [&_svg:not([class*='size-'])]:size-4",
 				lg: "h-11 gap-2 px-5 text-sm/relaxed has-data-[icon=inline-end]:pr-4 has-data-[icon=inline-start]:pl-4 [&_svg:not([class*='size-'])]:size-5",
-				icon: "size-10 [&_svg:not([class*='size-'])]:size-4",
-				"icon-xs": "size-8 rounded-sm [&_svg:not([class*='size-'])]:size-3.5",
-				"icon-sm": "size-9 [&_svg:not([class*='size-'])]:size-4",
+				icon: "size-10 max-sm:size-11 [&_svg:not([class*='size-'])]:size-4",
+				"icon-xs":
+					"size-8 max-sm:size-11 rounded-sm [&_svg:not([class*='size-'])]:size-3.5",
+				"icon-sm": "size-9 max-sm:size-11 [&_svg:not([class*='size-'])]:size-4",
 				"icon-lg": "size-11 [&_svg:not([class*='size-'])]:size-5",
 			},
 		},

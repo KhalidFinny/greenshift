@@ -67,7 +67,6 @@ export function BrokerReportDetailPage() {
 
 	return (
 		<div className="space-y-6">
-			{/* Back Link & Header */}
 			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 				<div>
 					<Link
@@ -98,7 +97,6 @@ export function BrokerReportDetailPage() {
 				</div>
 			</div>
 
-			{/* Executive Summary Card */}
 			<Card className="overflow-hidden border-t-4 border-t-[#03442C]">
 				<CardHeader className="bg-muted/30 pb-4">
 					<div className="flex flex-wrap items-center justify-between gap-2">
@@ -128,7 +126,6 @@ export function BrokerReportDetailPage() {
 				</CardHeader>
 
 				<CardContent className="p-6 space-y-6">
-					{/* Stakeholders Info */}
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-4 rounded-xl bg-muted/50 p-4 text-sm">
 						<div>
 							<p className="text-muted-foreground">Project Owner (Company)</p>
@@ -152,7 +149,6 @@ export function BrokerReportDetailPage() {
 						</div>
 					</div>
 
-					{/* Key Metrics Breakdown */}
 					<div>
 						<h3 className="text-sm font-semibold mb-3">
 							Key Performance Summary
@@ -227,7 +223,6 @@ export function BrokerReportDetailPage() {
 						</div>
 					</div>
 
-					{/* Milestone & Detailed Performance */}
 					<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 						<Card>
 							<CardHeader className="pb-3">
@@ -302,7 +297,6 @@ export function BrokerReportDetailPage() {
 						</Card>
 					</div>
 
-					{/* Official Conclusion Box */}
 					<div className="rounded-xl border border-border p-4 bg-muted/30 space-y-2 text-sm">
 						<p className="font-semibold text-foreground text-sm flex items-center gap-2">
 							<FontAwesomeIcon icon={faFileAlt} className="text-[#03442C]" />

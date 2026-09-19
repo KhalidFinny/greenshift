@@ -49,6 +49,10 @@ export const apiErrorCodes = {
 
 	// ── missing resources ───────────────────────────────────
 	NOT_FOUND: { status: 404, message: "Resource not found" },
+	NOT_READY: {
+		status: 409,
+		message: "The file is still being processed",
+	},
 
 	// ── conflicting state ───────────────────────────────────
 	CONFLICT: { status: 409, message: "Conflict" },
@@ -87,6 +91,18 @@ export const apiErrorCodes = {
 export type ApiErrorCode = keyof typeof apiErrorCodes;
 
 /**
+ * Extra keys merged into the error body alongside `code` and `message`.
+ *
+ * `fields` maps a request field name to its message so a form can mark every
+ * failing input at once instead of discovering them one round trip at a time.
+ * `projectId` lets a conflicting state name the row that already owns it.
+ */
+export interface ApiErrorDetails {
+	fields?: Record<string, string>;
+	projectId?: number;
+}
+
+/**
  * A failure raised from middleware or from code that cannot return a response.
  * `app.onError` renders it as the same envelope `apiError` produces, so the
  * client sees one contract whether a handler returned or threw.
@@ -96,6 +112,7 @@ export class ApiFailure extends Error {
 		readonly code: ApiErrorCode,
 		message?: string,
 		readonly retryAfterSeconds?: number,
+		readonly details?: ApiErrorDetails,
 	) {
 		super(message ?? apiErrorCodes[code].message);
 		this.name = "ApiFailure";
@@ -104,16 +121,24 @@ export class ApiFailure extends Error {
 
 /**
  * Error envelope: `{ error: { code, message } }` with the status registered
- * for the code. Pass `message` to describe the specific case.
+ * for the code. Pass `message` to describe the specific case, and `details`
+ * to add the per-field map or the owning project id.
  */
 export function apiError(
 	c: Context<ApiEnv>,
 	code: ApiErrorCode,
 	message?: string,
+	details?: ApiErrorDetails,
 ): Response {
 	const spec = apiErrorCodes[code];
 	return c.json(
-		{ error: { code, message: message ?? spec.message } },
+		{
+			error: {
+				code,
+				message: message ?? spec.message,
+				...(details ?? {}),
+			},
+		},
 		spec.status,
 	);
 }

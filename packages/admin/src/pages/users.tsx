@@ -21,11 +21,20 @@ import { TableSkeleton } from "../organisms/table-skeleton";
 
 const ROLE_LABELS: Record<string, string> = {
 	business: "Business",
+	investor: "Investor",
 	vendor: "Vendor",
+	broker: "Broker",
 	admin: "Admin",
 };
 
-const ROLE_OPTIONS = ["business", "vendor", "admin"] as const;
+/** Every role the API can return, so the filter cannot hide a whole group. */
+const ROLE_OPTIONS = [
+	"business",
+	"investor",
+	"vendor",
+	"broker",
+	"admin",
+] as const;
 
 /** Column labels for the loading frame, in table order. */
 const USER_HEADERS = ["User", "Role", "Company", "Verification", "Registered"];
@@ -99,9 +108,9 @@ export function AdminUsers() {
 	return (
 		<div className="space-y-6">
 			<div className="flex flex-wrap items-center justify-end gap-4">
-				<div className="flex items-center gap-2">
+				<div className="flex w-full items-center gap-2 sm:w-auto">
 					<Select value={role} onValueChange={(value) => setRole(value)}>
-						<SelectTrigger className="w-[180px]">
+						<SelectTrigger className="w-full sm:w-[180px]">
 							<SelectValue placeholder="All roles" />
 						</SelectTrigger>
 						<SelectContent>

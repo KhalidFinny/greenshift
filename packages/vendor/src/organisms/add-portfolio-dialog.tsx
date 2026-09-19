@@ -99,7 +99,6 @@ export function AddPortfolioDialog({ onAdd }: AddPortfolioDialogProps) {
 					</DialogTitle>
 				</DialogHeader>
 				<form onSubmit={handleSubmit} className="space-y-5 pt-2 text-sm">
-					{/* Project Info */}
 					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 						<div className="space-y-1.5">
 							<Label htmlFor="p-name" className="text-sm font-semibold">
@@ -200,7 +199,6 @@ export function AddPortfolioDialog({ onAdd }: AddPortfolioDialogProps) {
 						</div>
 					</div>
 
-					{/* Description */}
 					<div className="space-y-1.5">
 						<Label htmlFor="p-desc" className="text-sm font-semibold">
 							Description & Execution Scope
@@ -215,7 +213,6 @@ export function AddPortfolioDialog({ onAdd }: AddPortfolioDialogProps) {
 						/>
 					</div>
 
-					{/* Document Upload Section */}
 					<div className="space-y-2">
 						<Label className="text-sm font-semibold">
 							Supporting Documents
@@ -247,7 +244,6 @@ export function AddPortfolioDialog({ onAdd }: AddPortfolioDialogProps) {
 							</label>
 						</div>
 
-						{/* Uploaded files list */}
 						{documents.length > 0 && (
 							<div className="space-y-2">
 								<p className="text-sm font-medium text-muted-foreground">
@@ -283,7 +279,6 @@ export function AddPortfolioDialog({ onAdd }: AddPortfolioDialogProps) {
 						)}
 					</div>
 
-					{/* Action Buttons */}
 					<div className="flex justify-end gap-2 border-t border-border pt-4">
 						<Button
 							type="button"

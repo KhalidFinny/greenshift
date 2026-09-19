@@ -19,7 +19,6 @@ export function ExecutionDeliveryCard({
 				</CardTitle>
 			</CardHeader>
 			<CardContent className="space-y-5 pt-2 pb-6 px-6">
-				{/* Success Rate */}
 				<div className="space-y-1.5">
 					<p className="text-sm font-medium text-muted-foreground">
 						Success Rate
@@ -39,7 +38,6 @@ export function ExecutionDeliveryCard({
 					</div>
 				</div>
 
-				{/* On-Time */}
 				<div className="space-y-1.5">
 					<p className="text-sm font-medium text-muted-foreground">On-Time</p>
 					<div className="flex items-center gap-3">
@@ -57,7 +55,6 @@ export function ExecutionDeliveryCard({
 					</div>
 				</div>
 
-				{/* Avg Project Value */}
 				<div className="space-y-1 pt-1">
 					<p className="text-sm font-medium text-muted-foreground">
 						Avg Project Value
@@ -86,13 +83,11 @@ export function GreenImpactCard({
 				</CardTitle>
 			</CardHeader>
 			<CardContent className="space-y-5 pt-2 pb-6 px-6">
-				{/* Energy Savings */}
 				<div className="space-y-2">
 					<p className="text-sm font-medium text-muted-foreground">
 						Energy Savings
 					</p>
 
-					{/* Target */}
 					<div className="flex items-center gap-3">
 						<span className="w-12 text-sm text-muted-foreground font-medium shrink-0">
 							Target
@@ -108,7 +103,6 @@ export function GreenImpactCard({
 						</span>
 					</div>
 
-					{/* Actual */}
 					<div className="flex items-center gap-3">
 						<span className="w-12 text-sm font-semibold text-foreground shrink-0">
 							Actual
@@ -127,13 +121,11 @@ export function GreenImpactCard({
 					</div>
 				</div>
 
-				{/* Carbon Reduction */}
 				<div className="space-y-2">
 					<p className="text-sm font-medium text-muted-foreground">
 						Carbon Reduction
 					</p>
 
-					{/* Target */}
 					<div className="flex items-center gap-3">
 						<span className="w-12 text-sm text-muted-foreground font-medium shrink-0">
 							Target
@@ -149,7 +141,6 @@ export function GreenImpactCard({
 						</span>
 					</div>
 
-					{/* Actual */}
 					<div className="flex items-center gap-3">
 						<span className="w-12 text-sm font-semibold text-foreground shrink-0">
 							Actual

@@ -92,8 +92,8 @@ export function VendorProjectDetailPage({ projectId }: { projectId?: string }) {
 									</span>
 									{daysLeft > 0 ? (
 										<span
-											className={`rounded px-2 py-0.5 text-xs font-bold ${
-												isUrgent ? "bg-red-500 text-white" : "bg-white/20"
+											className={`rounded px-2 py-0.5 text-sm font-bold ${
+												isUrgent ? "bg-red-700 text-white" : "bg-white/20"
 											}`}
 										>
 											{daysLeft}d left

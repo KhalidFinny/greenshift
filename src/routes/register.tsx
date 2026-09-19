@@ -6,10 +6,14 @@ import {
 	useAuth,
 } from "@greenshift/core";
 import { useAppForm } from "@greenshift/ui";
-import { ArrowLeft02Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useState } from "react";
+import {
+	AuthInput,
+	AuthLayout,
+	AuthPasswordInput,
+	AuthSubmit,
+} from "../components/auth-layout";
 import { getSessionFn } from "../lib/session";
 
 export const Route = createFileRoute("/register")({
@@ -60,143 +64,130 @@ function RegisterPage() {
 	});
 
 	return (
-		<div className="grid min-h-screen lg:grid-cols-2">
-			<section className="relative hidden flex-col justify-between overflow-hidden bg-[#014A2F] p-12 lg:flex">
-				{/* Background image */}
-				<img
-					src="/skysidebar.webp"
-					alt=""
-					aria-hidden="true"
-					className="pointer-events-none absolute inset-0 h-full w-full object-cover"
-				/>
-				{/* Dark overlay */}
-				<div className="pointer-events-none absolute inset-0 bg-[#014A2F]/75" />
-
-				{/* Logo */}
-				<Link to="/" className="relative z-10 no-underline">
-					<img src="/logo-white.webp" alt="GreenShift" className="h-10" />
-				</Link>
-
-				{/* Text block */}
-				<div className="relative z-10 max-w-md">
-					<h2 className="text-4xl font-semibold leading-tight text-white">
-						MRV Platform for Green Financing
-					</h2>
-					<p className="mt-4 text-base leading-relaxed text-white/70">
-						Manage projects, tenders, and MRV reports in one platform.
-						Transparent for businesses, vendors, and regulators.
-					</p>
-				</div>
-
-				<p className="relative z-10 text-sm text-white/40">© 2026 GreenShift</p>
-			</section>
-
-			<section className="flex items-center justify-center px-6 py-12">
-				<div className="w-full max-w-md">
+		<AuthLayout
+			title="Register for GreenShift"
+			description="Create a company account to start your energy efficiency project."
+			footer={
+				<>
+					Already have an account?{" "}
 					<Link
-						to="/"
-						className="mb-10 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground no-underline transition-colors hover:text-foreground"
+						to="/login"
+						className="ml-1 font-semibold text-[#07815F] hover:underline"
 					>
-						<HugeiconsIcon icon={ArrowLeft02Icon} />
-						Go back
+						Sign in
 					</Link>
-					<h1 className="text-3xl font-semibold">Register for GreenShift</h1>
-					<p className="mt-2 text-muted-foreground">
-						Create a company account to start your energy efficiency project.
-					</p>
-					<form
-						onSubmit={(event) => {
-							event.preventDefault();
-							void form.handleSubmit();
-						}}
-						className="mt-8 space-y-6"
-						noValidate
+				</>
+			}
+		>
+			<form
+				onSubmit={(event) => {
+					event.preventDefault();
+					void form.handleSubmit();
+				}}
+				className="space-y-6"
+				noValidate
+			>
+				<form.AppField
+					name="name"
+					validators={{
+						onChange: ({ value }) => (value ? undefined : "Name is required"),
+					}}
+				>
+					{(field) => (
+						<AuthInput
+							id="name"
+							label="Name"
+							autoComplete="name"
+							placeholder="Your full name"
+							value={field.state.value ?? ""}
+							onBlur={field.handleBlur}
+							onChange={(event) => field.handleChange(event.target.value)}
+							error={field.state.meta.errors[0]}
+						/>
+					)}
+				</form.AppField>
+
+				<form.AppField
+					name="email"
+					validators={{
+						onChange: ({ value }) => {
+							if (!value) return "Email is required";
+							return EMAIL_RE.test(value) ? undefined : "Enter a valid email";
+						},
+					}}
+				>
+					{(field) => (
+						<AuthInput
+							id="email"
+							label="Email"
+							type="email"
+							autoComplete="email"
+							placeholder="you@company.com"
+							value={field.state.value ?? ""}
+							onBlur={field.handleBlur}
+							onChange={(event) => field.handleChange(event.target.value)}
+							error={field.state.meta.errors[0]}
+						/>
+					)}
+				</form.AppField>
+
+				<form.AppField
+					name="companyName"
+					validators={{
+						onChange: ({ value }) =>
+							value ? undefined : "Company name is required",
+					}}
+				>
+					{(field) => (
+						<AuthInput
+							id="companyName"
+							label="Company name"
+							autoComplete="organization"
+							placeholder="PT Contoh Nusantara"
+							value={field.state.value ?? ""}
+							onBlur={field.handleBlur}
+							onChange={(event) => field.handleChange(event.target.value)}
+							error={field.state.meta.errors[0]}
+						/>
+					)}
+				</form.AppField>
+
+				<form.AppField
+					name="password"
+					validators={{
+						onChange: ({ value }) => {
+							if (!value) return "Password is required";
+							return value.length >= 8
+								? undefined
+								: "Password must be at least 8 characters";
+						},
+					}}
+				>
+					{(field) => (
+						<AuthPasswordInput
+							id="password"
+							label="Password"
+							autoComplete="new-password"
+							placeholder="At least 8 characters"
+							value={field.state.value ?? ""}
+							onBlur={field.handleBlur}
+							onChange={(event) => field.handleChange(event.target.value)}
+							error={field.state.meta.errors[0]}
+						/>
+					)}
+				</form.AppField>
+
+				{error ? (
+					<p
+						role="alert"
+						className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700"
 					>
-						<form.AppField
-							name="name"
-							validators={{
-								onChange: ({ value }) =>
-									value ? undefined : "Name is required",
-							}}
-						>
-							{(field) => <field.TextField label="Name" autoComplete="name" />}
-						</form.AppField>
-						<form.AppField
-							name="email"
-							validators={{
-								onChange: ({ value }) => {
-									if (!value) return "Email is required";
-									return EMAIL_RE.test(value)
-										? undefined
-										: "Enter a valid email";
-								},
-							}}
-						>
-							{(field) => (
-								<field.TextField
-									label="Email"
-									type="email"
-									autoComplete="email"
-								/>
-							)}
-						</form.AppField>
-						<form.AppField
-							name="companyName"
-							validators={{
-								onChange: ({ value }) =>
-									value ? undefined : "Company name is required",
-							}}
-						>
-							{(field) => (
-								<field.TextField
-									label="Company name"
-									autoComplete="organization"
-								/>
-							)}
-						</form.AppField>
-						<form.AppField
-							name="password"
-							validators={{
-								onChange: ({ value }) => {
-									if (!value) return "Password is required";
-									return value.length >= 8
-										? undefined
-										: "Password must be at least 8 characters";
-								},
-							}}
-						>
-							{(field) => (
-								<field.PasswordField
-									label="Password"
-									autoComplete="new-password"
-								/>
-							)}
-						</form.AppField>
-						{error && (
-							<p
-								role="alert"
-								className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive"
-							>
-								{error}
-							</p>
-						)}
-						<form.AppForm>
-							<form.SubmitButton className="h-12 w-full cursor-pointer text-base font-semibold">
-								Register
-							</form.SubmitButton>
-						</form.AppForm>
-					</form>
-					<p className="mt-6 text-center text-sm text-muted-foreground">
-						Already have an account?{" "}
-						<Link
-							to="/login"
-							className="font-medium text-primary underline-offset-4 hover:underline"
-						>
-							Sign in
-						</Link>
+						{error}
 					</p>
-				</div>
-			</section>
-		</div>
+				) : null}
+
+				<AuthSubmit>Create account</AuthSubmit>
+			</form>
+		</AuthLayout>
 	);
 }

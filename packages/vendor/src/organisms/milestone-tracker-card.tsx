@@ -260,7 +260,6 @@ export function MilestoneTrackerCard({
 										)}
 									</div>
 
-									{/* Evidence List */}
 									{ms.evidence.length > 0 && (
 										<div className="space-y-2 rounded-lg bg-muted p-3">
 											<p className="font-semibold text-foreground">
@@ -288,7 +287,6 @@ export function MilestoneTrackerCard({
 										</div>
 									)}
 
-									{/* Notes */}
 									{ms.companyReviewNotes && (
 										<div className="rounded-lg bg-emerald-100/60 p-3 text-emerald-950">
 											<p className="font-semibold">Client Review Notes:</p>

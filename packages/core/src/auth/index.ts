@@ -21,8 +21,8 @@ export interface NavItem {
 
 export const roleNav: Record<UserRole, NavItem[]> = {
 	business: [
-		{ to: "/business", label: "Ajukan Proyek" },
-		{ to: "/business/proyek", label: "Proyek Saya" },
+		{ to: "/business", label: "Dashboard" },
+		{ to: "/business/projects", label: "My Projects" },
 	],
 	// Origin wired /investor, /investor/portfolio and /investor/market, but none
 	// of those route files exist on either branch. The public bond catalog is

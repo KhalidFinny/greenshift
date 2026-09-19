@@ -12,7 +12,6 @@ export function PerformanceHeroCard({
 		<Card className="overflow-hidden border border-border bg-card">
 			<CardContent className="p-6">
 				<div className="flex flex-col gap-6">
-					{/* Header with Score */}
 					<div className="flex items-center justify-between">
 						<div className="space-y-1">
 							<h2 className="text-sm md:text-sm font-semibold text-muted-foreground">
@@ -32,7 +31,6 @@ export function PerformanceHeroCard({
 						</div>
 					</div>
 
-					{/* Metrics Grid */}
 					<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 						<div className="rounded-lg bg-muted/50 p-3">
 							<p className="text-sm font-medium text-muted-foreground">

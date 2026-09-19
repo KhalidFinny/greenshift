@@ -1,5 +1,5 @@
-/* Validasi per-step. validateStep1 mengembalikan key + string error yang
- * sama persis dengan validate() dashboard Step 1 (ADR-003). */
+/* Per-step validation. validateStep1 returns error keys and strings that match
+ * the dashboard's Step 1 validate() exactly (ADR-003). */
 
 export interface Step1Values {
 	namaProyek: string;
@@ -16,24 +16,25 @@ export interface Step1Values {
 
 export function validateStep1(v: Step1Values): Record<string, string> {
 	const e: Record<string, string> = {};
-	if (!v.namaProyek.trim()) e.namaProyek = "Nama proyek wajib diisi.";
-	if (!v.lokasi.trim()) e.lokasi = "Lokasi wajib diisi.";
-	if (!v.sektor) e.sektor = "Pilih sektor.";
+	if (!v.namaProyek.trim()) e.namaProyek = "Enter the project name.";
+	if (!v.lokasi.trim()) e.lokasi = "Enter the location.";
+	if (!v.sektor) e.sektor = "Choose a sector.";
 	if (v.konsumsi === null || v.konsumsi < 0)
-		e.konsumsi = "Isi angka valid, cth. 12.500,5.";
+		e.konsumsi = "Enter a valid number, e.g. 12.500,5.";
 	if (v.biaya === null || v.biaya < 0)
-		e.biaya = "Isi rupiah valid, cth. 4.200.000.000.";
+		e.biaya = "Enter a valid amount in rupiah, e.g. 4.200.000.000.";
 	if (v.faktor === null || v.faktor < 0)
-		e.faktor = "Isi faktor valid, cth. 0,85.";
+		e.faktor = "Enter a valid factor, e.g. 0,85.";
 	const targetValid =
 		v.targetPct !== null && v.targetPct >= 0 && v.targetPct <= 100;
-	if (!targetValid) e.targetPct = "Isi 0–100.";
+	if (!targetValid) e.targetPct = "Enter a value between 0 and 100.";
 	if (v.targetMwh === null || v.targetMwh < 0)
-		e.targetMwh = "Isi angka valid, cth. 8.000.";
+		e.targetMwh = "Enter a valid number, e.g. 8.000.";
 	if (!/^Q[1-4]\s+\d{4}$/i.test(v.timeline.trim()))
-		e.timeline = "Format kuartal + tahun, cth. Q1 2026.";
-	if (v.ringkasan.trim().length < 50) e.ringkasan = "Minimal 50 karakter.";
-	if (v.ringkasan.trim().length > 1000) e.ringkasan = "Maksimal 1000 karakter.";
+		e.timeline = "Use quarter + year, e.g. Q1 2026.";
+	if (v.ringkasan.trim().length < 50) e.ringkasan = "At least 50 characters.";
+	if (v.ringkasan.trim().length > 1000)
+		e.ringkasan = "At most 1000 characters.";
 	return e;
 }
 
@@ -51,19 +52,19 @@ export interface Step2Values {
 export function validateStep2(v: Step2Values): Record<string, string> {
 	const e: Record<string, string> = {};
 	if (v.capex === null || v.capex < 0)
-		e.capex = "Isi CAPEX valid, cth. 4.200.000.000.";
+		e.capex = "Enter a valid CAPEX, e.g. 4.200.000.000.";
 	if (
 		v.tenor === null ||
 		!Number.isInteger(v.tenor) ||
 		v.tenor < 1 ||
 		v.tenor > 30
 	)
-		e.tenor = "Isi tenor 1–30 tahun.";
+		e.tenor = "Enter a tenor between 1 and 30 years.";
 	if (v.saving === null || v.saving < 0)
-		e.saving = "Isi penghematan valid, cth. 500.000.000.";
+		e.saving = "Enter a valid annual saving, e.g. 500.000.000.";
 	if (v.pendapatan === null || v.pendapatan < 0)
-		e.pendapatan = "Isi pendapatan valid, cth. 10.000.000.000.";
-	if (!v.jaminan) e.jaminan = "Pilih bentuk jaminan.";
-	if (v.fileCount < 1) e.files = "Unggah minimal 1 dokumen.";
+		e.pendapatan = "Enter a valid revenue, e.g. 10.000.000.000.";
+	if (!v.jaminan) e.jaminan = "Choose a form of collateral.";
+	if (v.fileCount < 1) e.files = "Upload at least 1 document.";
 	return e;
 }

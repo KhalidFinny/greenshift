@@ -50,7 +50,6 @@ export function BrokerMonthlyReportsPage() {
 				</p>
 			</div>
 
-			{/* Search & Filter */}
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
 				<div className="relative flex-1">
 					<FontAwesomeIcon
@@ -140,7 +139,6 @@ export function BrokerMonthlyReportsPage() {
 						</CardHeader>
 
 						<CardContent className="p-6 space-y-6 text-sm">
-							{/* Summary Cards */}
 							<div className="grid grid-cols-2 gap-4 rounded-xl bg-muted p-4 sm:grid-cols-4">
 								<div>
 									<p className="text-muted-foreground">Physical Progress</p>
@@ -171,7 +169,6 @@ export function BrokerMonthlyReportsPage() {
 								</div>
 							</div>
 
-							{/* Overall Conclusion & Anomaly alerts */}
 							<div className="space-y-3">
 								<div className="rounded-lg border border-border p-3 space-y-1">
 									<p className="font-semibold text-foreground">

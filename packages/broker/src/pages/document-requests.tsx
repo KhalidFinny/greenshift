@@ -55,14 +55,14 @@ function RejectDocumentModal({
 				<Button
 					size="sm"
 					variant="outline"
-					className="text-red-600 border-red-200 hover:bg-red-50 text-sm"
+					className="text-red-700 border-red-200 hover:bg-red-50 text-sm"
 				>
 					Reject & Request Revision
 				</Button>
 			</DialogTrigger>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle className="flex items-center gap-2 text-red-600">
+					<DialogTitle className="flex items-center gap-2 text-red-700">
 						<FontAwesomeIcon icon={faTimesCircle} />
 						Reject Document & Request Re-upload
 					</DialogTitle>
@@ -332,7 +332,6 @@ export function BrokerDocumentRequestsPage() {
 				/>
 			</div>
 
-			{/* Search & Filter */}
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
 				<div className="relative flex-1">
 					<FontAwesomeIcon
@@ -353,7 +352,7 @@ export function BrokerDocumentRequestsPage() {
 			</div>
 
 			<Tabs defaultValue="all">
-				<TabsList className="grid w-full grid-cols-4">
+				<TabsList className="flex w-full overflow-x-auto *:shrink-0 *:whitespace-nowrap sm:grid sm:grid-cols-4">
 					<TabsTrigger value="all">All ({filteredRequests.length})</TabsTrigger>
 					<TabsTrigger value="pending">
 						Awaiting Review (
@@ -425,7 +424,6 @@ export function BrokerDocumentRequestsPage() {
 									</p>
 								</div>
 
-								{/* Submitted file review section */}
 								{doc.submittedFileName && (
 									<div className="rounded-lg bg-emerald-50 p-3 flex flex-wrap items-center justify-between gap-3 border border-emerald-200">
 										<span className="flex items-center gap-2 font-semibold text-emerald-950">

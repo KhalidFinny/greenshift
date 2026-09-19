@@ -1,4 +1,10 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@greenshift/ui";
+import {
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+	ShimmerBlock,
+} from "@greenshift/ui";
 import { formatRupiah } from "../lib/format";
 import type { CostBreakdown } from "../lib/types";
 
@@ -19,8 +25,8 @@ export function TenderCostBreakdownCard({
 			<CardContent className="space-y-3 text-sm">
 				{loading ? (
 					<>
-						<div className="h-5 w-full animate-none rounded bg-foreground/10" />
-						<div className="h-5 w-full animate-none rounded bg-foreground/10" />
+						<ShimmerBlock className="h-5 w-full rounded" />
+						<ShimmerBlock className="h-5 w-full rounded" />
 					</>
 				) : (
 					<>

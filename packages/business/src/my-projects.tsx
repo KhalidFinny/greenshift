@@ -5,131 +5,336 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
+	api,
+	type BusinessProjectSummary,
+	publishToast,
+} from "@greenshift/core";
+import {
 	Button,
 	Card,
 	CardContent,
+	DataTable,
 	Dialog,
 	DialogContent,
 	DialogDescription,
 	DialogHeader,
 	DialogTitle,
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
+	EmptyState,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+	ShimmerBlock,
 } from "@greenshift/ui";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
-import {
-	demoRiskForStatus,
-	downloadProjectSummary,
-	MY_PROJECTS,
-	type MyProject,
-	type MyProjectStatus,
-} from "./lib/my-projects";
+import type { ColumnDef } from "@tanstack/react-table";
+import { useMemo, useState } from "react";
 import { formatId } from "./lib/number-format";
 import { RiskAssessmentBody } from "./views/step-4";
 
-function statusPill(status: MyProjectStatus): string {
-	switch (status) {
-		case "Review LVV":
-			return "bg-yellow-100 text-yellow-800";
-		case "Matchmaking":
-			return "bg-blue-100 text-blue-800";
-		case "Verified":
-			return "bg-green-100 text-green-800";
-	}
+/** Status pill colours, keyed by the pill label the API returns. */
+const STATUS_PILL: Record<string, string> = {
+	"Review LVV": "bg-amber-50 text-amber-700",
+	Matchmaking: "bg-blue-50 text-blue-700",
+	Verified: "bg-emerald-50 text-emerald-700",
+};
+
+/** "12 Sep 2026" from an ISO timestamp, or an honest blank. */
+function formatSubmittedAt(iso: string | null): string {
+	if (!iso) return "Not submitted";
+	return new Date(iso).toLocaleDateString("en-GB", { dateStyle: "medium" });
+}
+
+/**
+ * CAPEX in rupiah, or an honest blank. The column and the phone line that
+ * replaces it both read the number through here, so the two cannot drift.
+ */
+function formatCapex(capexRp: number | null): string {
+	return capexRp === null ? "Not filled in" : `Rp ${formatId(capexRp)}`;
+}
+
+/**
+ * Submitted and CAPEX as one line for the phone layout. Below `md` their
+ * columns are hidden, so their headers can no longer label the values and the
+ * line carries the labels instead.
+ */
+function foldedDetail(project: BusinessProjectSummary): string {
+	const submitted = project.submittedAt
+		? `Submitted ${formatSubmittedAt(project.submittedAt)}`
+		: "Not submitted";
+	const capex =
+		project.capexRp === null
+			? "CAPEX not filled in"
+			: `CAPEX ${formatCapex(project.capexRp)}`;
+	return `${submitted} · ${capex}`;
 }
 
 export function MyProjects() {
-	const [riskProject, setRiskProject] = useState<MyProject | null>(null);
+	const [riskProject, setRiskProject] = useState<{
+		id: number;
+		name: string;
+	} | null>(null);
+	const [statusFilter, setStatusFilter] = useState("all");
+	const [sectorFilter, setSectorFilter] = useState("all");
+
+	const projectsQuery = useQuery({
+		queryKey: ["business", "projects"],
+		queryFn: async () => (await api.business.projects({ limit: 50 })).projects,
+	});
+	const projects = projectsQuery.data ?? [];
+
+	const riskQuery = useQuery({
+		queryKey: ["business", "risk", riskProject?.id],
+		enabled: riskProject !== null,
+		queryFn: async () => (await api.business.risk(riskProject?.id ?? 0)).risk,
+	});
+
+	/**
+	 * Downloads the project's first ready document. The file lives behind the
+	 * API rather than in a client-side recap, so a project with nothing uploaded
+	 * yet says so instead of producing an empty file.
+	 */
+	async function downloadFirstDocument(projectId: number) {
+		try {
+			const { documents } = await api.business.documents(projectId);
+			const ready = documents.find((document) => document.downloadUrl);
+			if (!ready?.downloadUrl) {
+				publishToast({
+					tone: "error",
+					message: "No document is ready to download for this project yet.",
+				});
+				return;
+			}
+			window.open(ready.downloadUrl, "_blank", "noopener");
+		} catch {
+			// The shared client already reported the failure as a toast.
+		}
+	}
+
+	/**
+	 * Filter options are read off the loaded rows in the order the list already
+	 * shows them, so a select can only offer a status or sector some project
+	 * actually has, and never a stage that is not in the data.
+	 */
+	const statusOptions = useMemo(
+		() => [...new Set(projects.map((project) => project.status))],
+		[projects],
+	);
+
+	const sectorOptions = useMemo(() => {
+		const sectors = new Set<string>();
+		for (const project of projects) {
+			if (project.sector) sectors.add(project.sector);
+		}
+		return [...sectors];
+	}, [projects]);
+
+	const filteredProjects = useMemo(
+		() =>
+			projects.filter(
+				(project) =>
+					(statusFilter === "all" || project.status === statusFilter) &&
+					(sectorFilter === "all" || project.sector === sectorFilter),
+			),
+		[projects, statusFilter, sectorFilter],
+	);
+
+	const columns = useMemo<ColumnDef<BusinessProjectSummary>[]>(
+		() => [
+			{
+				id: "project",
+				accessorFn: (project) => project.name,
+				header: "Project",
+				// Below `md` the Submitted and CAPEX columns fold into this cell,
+				// so it is the one cell allowed to wrap, and to break a long
+				// token rather than widen the table past its container.
+				meta: { className: "max-md:whitespace-normal max-md:wrap-anywhere" },
+				cell: ({ row }) => (
+					<>
+						<p className="font-medium">{row.original.name}</p>
+						<p className="text-base text-muted-foreground">
+							{row.original.location ?? "Location not filled in"}
+							{row.original.sector ? ` · ${row.original.sector}` : ""}
+						</p>
+						<p className="text-base text-muted-foreground md:hidden">
+							{foldedDetail(row.original)}
+						</p>
+					</>
+				),
+			},
+			{
+				id: "submitted",
+				accessorFn: (project) => project.submittedAt ?? "",
+				header: "Submitted",
+				meta: { className: "max-md:hidden", headClassName: "max-md:hidden" },
+				cell: ({ row }) => formatSubmittedAt(row.original.submittedAt),
+			},
+			{
+				id: "capex",
+				accessorFn: (project) => project.capexRp ?? 0,
+				header: "CAPEX",
+				meta: {
+					className: "tabular-nums max-md:hidden",
+					headClassName: "max-md:hidden",
+				},
+				cell: ({ row }) => formatCapex(row.original.capexRp),
+			},
+			{
+				id: "status",
+				accessorFn: (project) => project.status,
+				header: "Status",
+				cell: ({ row }) => (
+					<span
+						className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
+							STATUS_PILL[row.original.status] ?? "bg-muted text-foreground"
+						}`}
+					>
+						{row.original.status}
+					</span>
+				),
+			},
+			{
+				id: "actions",
+				header: "Actions",
+				cell: ({ row }) => (
+					// Stacked below `md`: two 44px targets in a column leave the
+					// Project and Status columns room to read at 390px.
+					<div className="flex flex-wrap items-center gap-2 max-md:flex-col">
+						<Button
+							type="button"
+							variant="outline"
+							size="sm"
+							className="max-md:h-11 max-md:w-11 max-md:px-0"
+							onClick={() =>
+								setRiskProject({
+									id: row.original.id,
+									name: row.original.name,
+								})
+							}
+						>
+							<FontAwesomeIcon icon={faChartLine} />
+							<span className="max-md:sr-only">Risk assessment</span>
+						</Button>
+						<Button
+							type="button"
+							variant="ghost"
+							size="icon-sm"
+							className="max-md:h-11 max-md:w-11"
+							aria-label={`Download a document for ${row.original.name}`}
+							onClick={() => void downloadFirstDocument(row.original.id)}
+						>
+							<FontAwesomeIcon icon={faDownload} />
+						</Button>
+					</div>
+				),
+			},
+		],
+		[],
+	);
+
 	return (
 		<div className="space-y-6">
-			<div className="flex items-start justify-between gap-4">
-				<div>
-					<h1 className="text-2xl font-semibold">Proyek Saya</h1>
-					<p className="mt-1 text-base text-muted-foreground">
-						Daftar proyek yang telah Anda ajukan beserta statusnya.
-					</p>
+			{/* The filter selects and the primary action are page controls, so
+			    they sit on the background; the card below holds only the table. */}
+			<div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+				<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+					<Select
+						value={statusFilter}
+						onValueChange={setStatusFilter}
+						disabled={projects.length === 0}
+					>
+						<SelectTrigger
+							aria-label="Filter by status"
+							className="w-full sm:w-[220px]"
+						>
+							<SelectValue placeholder="All statuses" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="all">All statuses</SelectItem>
+							{statusOptions.map((option) => (
+								<SelectItem key={option} value={option}>
+									{option}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+					<Select
+						value={sectorFilter}
+						onValueChange={setSectorFilter}
+						disabled={projects.length === 0}
+					>
+						<SelectTrigger
+							aria-label="Filter by sector"
+							className="w-full sm:w-[220px]"
+						>
+							<SelectValue placeholder="All sectors" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="all">All sectors</SelectItem>
+							{sectorOptions.map((option) => (
+								<SelectItem key={option} value={option}>
+									{option}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 				</div>
-				<Button asChild>
-					<Link to="/business">
+				<Button asChild className="w-full sm:w-auto">
+					<Link to="/business/submit">
 						<FontAwesomeIcon icon={faCirclePlus} />
-						Ajukan Proyek Baru
+						Submit a Project
 					</Link>
 				</Button>
 			</div>
 
 			<Card>
 				<CardContent>
-					<Table className="text-base" aria-label="Daftar proyek saya">
-						<TableHeader>
-							<TableRow>
-								<TableHead>Nama Proyek</TableHead>
-								<TableHead>Tanggal Pengajuan</TableHead>
-								<TableHead>Nilai CAPEX</TableHead>
-								<TableHead>Status</TableHead>
-								<TableHead>Aksi</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{MY_PROJECTS.map((project) => (
-								<TableRow key={project.id}>
-									<TableCell>
-										<p className="font-medium">{project.name}</p>
-										<p className="text-muted-foreground">
-											{project.location} · {project.sector}
-										</p>
-									</TableCell>
-									<TableCell className="tabular-nums">
-										{project.submittedAt}
-									</TableCell>
-									<TableCell className="tabular-nums">
-										{project.capex === null
-											? "—"
-											: `Rp ${formatId(project.capex)}`}
-									</TableCell>
-									<TableCell>
-										<span
-											className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border-0 ${statusPill(project.status)}`}
-										>
-											{project.status}
-										</span>
-									</TableCell>
-									<TableCell>
-										<div className="flex items-center gap-2">
-											<Button type="button" variant="link" asChild>
-												<Link to="/business">Detail</Link>
-											</Button>
-											{/* This triggers isRiskModalOpen-equivalent state: setRiskProject opens the Dialog below with this row's assessment. */}
-											<Button
-												type="button"
-												variant="outline"
-												size="sm"
-												onClick={() => setRiskProject(project)}
-											>
-												<FontAwesomeIcon icon={faChartLine} />
-												Risk Assessment
-											</Button>
-											<Button
-												type="button"
-												variant="ghost"
-												size="icon-sm"
-												aria-label={`Unduh Dokumen ${project.name}`}
-												onClick={() => downloadProjectSummary(project)}
-											>
-												<FontAwesomeIcon icon={faDownload} />
-											</Button>
-										</div>
-									</TableCell>
-								</TableRow>
+					{projectsQuery.isPending ? (
+						<div className="space-y-3">
+							{Array.from({ length: 4 }).map((_, index) => (
+								<ShimmerBlock key={index} className="h-14 w-full rounded-lg" />
 							))}
-						</TableBody>
-					</Table>
+						</div>
+					) : projectsQuery.isError ? (
+						<EmptyState
+							tone="error"
+							title="Your projects did not load"
+							description="The list could not reach the projects endpoint. Try again to reload it."
+							action={
+								<Button
+									variant="outline"
+									onClick={() => projectsQuery.refetch()}
+								>
+									Try again
+								</Button>
+							}
+						/>
+					) : projects.length === 0 ? (
+						<EmptyState
+							title="No projects yet"
+							description="Projects you submit appear here with their status, so you can follow each one through verification."
+							action={
+								<Button asChild>
+									<Link to="/business/submit">Submit a Project</Link>
+								</Button>
+							}
+						/>
+					) : (
+						<DataTable
+							columns={columns}
+							data={filteredProjects}
+							getRowId={(project) => String(project.id)}
+							pageSize={10}
+							searchPlaceholder="Search your projects"
+							emptyMessage="No project matches these filters. Set Status and Sector back to All to see every project."
+							ariaLabel="My projects"
+						/>
+					)}
 				</CardContent>
 			</Card>
+
 			<Dialog
 				open={riskProject !== null}
 				onOpenChange={(open) => {
@@ -139,14 +344,25 @@ export function MyProjects() {
 				<DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
 					<DialogHeader>
 						<DialogTitle className="text-lg">
-							Penilaian Risiko — {riskProject?.name}
+							Risk Assessment: {riskProject?.name}
 						</DialogTitle>
 						<DialogDescription className="text-base">
-							Data contoh per status, dihitung via projectRisk().
+							Recomputed from the stored project data.
 						</DialogDescription>
 					</DialogHeader>
-					{riskProject && (
-						<RiskAssessmentBody risk={demoRiskForStatus(riskProject.status)} />
+					{riskQuery.isPending ? (
+						<div className="space-y-3">
+							{Array.from({ length: 4 }).map((_, index) => (
+								<ShimmerBlock key={index} className="h-10 w-full rounded-lg" />
+							))}
+						</div>
+					) : riskQuery.isError || !riskQuery.data ? (
+						<EmptyState
+							title="No risk assessment yet"
+							description="This project does not have enough data to be scored yet."
+						/>
+					) : (
+						<RiskAssessmentBody risk={riskQuery.data} />
 					)}
 				</DialogContent>
 			</Dialog>

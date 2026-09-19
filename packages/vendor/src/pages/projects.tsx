@@ -33,7 +33,6 @@ export function VendorProjectsPage() {
 
 	return (
 		<div className="space-y-6">
-			{/* Search bar */}
 			<div className="relative">
 				<FontAwesomeIcon
 					icon={faSearch}
@@ -48,7 +47,7 @@ export function VendorProjectsPage() {
 			</div>
 
 			<Tabs defaultValue="all">
-				<TabsList className="grid w-full grid-cols-3">
+				<TabsList className="flex w-full overflow-x-auto *:shrink-0 *:whitespace-nowrap sm:grid sm:grid-cols-3">
 					<TabsTrigger value="all">
 						All Projects ({filteredProjects.length})
 					</TabsTrigger>

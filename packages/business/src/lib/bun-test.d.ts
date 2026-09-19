@@ -7,6 +7,8 @@ declare module "bun:test" {
 		toBe(expected: unknown): void;
 		toEqual(expected: unknown): void;
 		toContain(item: unknown): void;
+		toHaveProperty(path: string): void;
+		toHaveLength(length: number): void;
 		toBeNull(): void;
 		toBeFalse(): void;
 		not: BunExpect;

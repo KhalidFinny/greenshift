@@ -67,14 +67,14 @@ function DeclineAssignmentModal({
 				<Button
 					size="sm"
 					variant="outline"
-					className="text-red-600 border-red-200 hover:bg-red-50 text-sm"
+					className="text-red-700 border-red-200 hover:bg-red-50 text-sm"
 				>
 					Decline Assignment
 				</Button>
 			</DialogTrigger>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle className="flex items-center gap-2 text-red-600">
+					<DialogTitle className="flex items-center gap-2 text-red-700">
 						<FontAwesomeIcon icon={faTimesCircle} />
 						Decline Project Assignment
 					</DialogTitle>
@@ -249,7 +249,7 @@ function AssignedProjectCard({
 						variant="outline"
 						className={
 							project.lvvGrkStatus === "VERIFIED"
-								? "border-emerald-500 text-emerald-700"
+								? "border-emerald-700 text-emerald-700"
 								: "border-amber-500 text-amber-700"
 						}
 					>
@@ -448,7 +448,6 @@ export function BrokerAssignedProjectsPage() {
 				</p>
 			</div>
 
-			{/* Search & Filter Bar */}
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
 				<div className="relative flex-1">
 					<FontAwesomeIcon
@@ -469,7 +468,7 @@ export function BrokerAssignedProjectsPage() {
 			</div>
 
 			<Tabs defaultValue="all">
-				<TabsList className="grid w-full grid-cols-5">
+				<TabsList className="flex w-full overflow-x-auto *:shrink-0 *:whitespace-nowrap sm:grid sm:grid-cols-5">
 					<TabsTrigger value="all">All ({filteredProjects.length})</TabsTrigger>
 					<TabsTrigger value="collection">
 						Assignment ({collection.length})

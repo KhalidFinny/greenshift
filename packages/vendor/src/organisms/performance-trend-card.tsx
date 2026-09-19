@@ -44,7 +44,7 @@ function TrendLineChart({
 		<div className="w-full overflow-x-auto">
 			<svg
 				viewBox={`0 0 ${width} ${height}`}
-				className="h-auto w-full min-w-[480px] select-none"
+				className="h-auto w-full min-w-[480px] max-sm:min-w-[360px] select-none"
 				role="img"
 				aria-label="Verified Performance Score Trend"
 			>
@@ -72,12 +72,10 @@ function TrendLineChart({
 					</linearGradient>
 				</defs>
 
-				{/* Horizontal Grid lines & Y-axis ticks */}
 				{ticks.map((tick) => {
 					const y = getY(tick);
 					return (
 						<g key={tick}>
-							{/* Horizontal grid line across */}
 							<line
 								x1={padding.left}
 								y1={y}
@@ -88,7 +86,6 @@ function TrendLineChart({
 								strokeDasharray="4 4"
 							/>
 
-							{/* Y-axis tick mark ┤ */}
 							<line
 								x1={padding.left - 5}
 								y1={y}
@@ -99,12 +96,11 @@ function TrendLineChart({
 								strokeWidth="1.5"
 							/>
 
-							{/* Y-axis label */}
 							<text
 								x={padding.left - 10}
 								y={y + 4}
 								textAnchor="end"
-								className="fill-muted-foreground text-sm font-mono font-medium"
+								className="fill-muted-foreground text-sm font-medium tabular-nums"
 							>
 								{tick}
 							</text>
@@ -112,7 +108,6 @@ function TrendLineChart({
 					);
 				})}
 
-				{/* Y-axis baseline */}
 				<line
 					x1={padding.left}
 					y1={padding.top}
@@ -123,7 +118,6 @@ function TrendLineChart({
 					strokeWidth="1.5"
 				/>
 
-				{/* X-axis baseline └──────────────────────────── */}
 				<line
 					x1={padding.left}
 					y1={padding.top + chartHeight}
@@ -134,10 +128,8 @@ function TrendLineChart({
 					strokeWidth="1.5"
 				/>
 
-				{/* Area gradient under line */}
 				<path d={areaD} fill="url(#scoreAreaGradient)" />
 
-				{/* Trend line */}
 				<path
 					d={pathD}
 					fill="none"
@@ -147,50 +139,45 @@ function TrendLineChart({
 					strokeLinejoin="round"
 				/>
 
-				{/* Data points & X-axis labels */}
 				{data.map((d, i) => {
 					const cx = getX(i);
 					const cy = getY(d.score);
 
 					return (
 						<g key={d.period} className="group/point cursor-pointer">
-							{/* Hover vertical guide */}
 							<line
 								x1={cx}
 								y1={padding.top}
 								x2={cx}
 								y2={padding.top + chartHeight}
 								stroke="currentColor"
-								className="text-emerald-500/40 opacity-0 transition-opacity group-hover/point:opacity-100"
+								className="text-emerald-700 opacity-0 transition-opacity group-hover/point:opacity-100"
 								strokeDasharray="2 2"
 							/>
 
-							{/* X-axis Tick label (e.g. 24Q1, 24Q3, 25Q1, 25Q3, 26Q1) */}
 							<text
 								x={cx}
 								y={padding.top + chartHeight + 22}
 								textAnchor="middle"
-								className="fill-muted-foreground text-sm font-medium transition-colors group-hover/point:fill-emerald-600 group-hover/point:font-bold"
+								className="fill-muted-foreground text-sm font-medium transition-colors group-hover/point:fill-emerald-700 group-hover/point:font-bold"
 							>
 								{d.period}
 							</text>
 
-							{/* Point value label */}
 							<text
 								x={cx}
 								y={cy - 12}
 								textAnchor="middle"
-								className="fill-foreground text-sm font-bold transition-all group-hover/point:fill-emerald-600"
+								className="fill-foreground text-sm font-bold transition-all group-hover/point:fill-emerald-700"
 							>
 								{d.score}
 							</text>
 
-							{/* Point circle (●) */}
 							<circle
 								cx={cx}
 								cy={cy}
 								r="5.5"
-								className="fill-emerald-600 stroke-card transition-all group-hover/point:r-[7.5px]"
+								className="fill-emerald-700 stroke-card transition-all group-hover/point:r-[7.5px]"
 								strokeWidth="2.5"
 							/>
 						</g>

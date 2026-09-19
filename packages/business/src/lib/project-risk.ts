@@ -1,12 +1,12 @@
-/* ADR-006.7: Project Risk Assessment turunan (bukan statis).
- * Skor 0-100 = rata-rata empat kontribusi risiko (Finansial/Teknis/
- * Implementasi dari tone Langkah 1 + Pembiayaan dari credit score
- * Langkah 2). Input kosong semua -> null, tidak pernah angka palsu.
+/* ADR-006.7: the project risk assessment is derived, not stored.
+ * Score 0-100 = the mean of four contributions (Financial/Technical/
+ * Implementation from the Step 1 tones, plus Financing from the Step 2 credit
+ * score). All inputs empty -> null, never an invented number.
  */
 
-export type ProjectRiskTone = "Rendah" | "Sedang" | "Tinggi" | null;
+export type ProjectRiskTone = "Low" | "Medium" | "High" | null;
 
-export type ProjectRiskLevel = "Rendah" | "Moderat" | "Tinggi";
+export type ProjectRiskLevel = "Low" | "Medium" | "High";
 
 export interface ProjectRiskInput {
 	finansial: ProjectRiskTone;
@@ -36,11 +36,11 @@ export interface ProjectRiskResult {
 
 export function toneToPct(tone: ProjectRiskTone): number {
 	switch (tone) {
-		case "Rendah":
+		case "Low":
 			return 15;
-		case "Sedang":
+		case "Medium":
 			return 55;
-		case "Tinggi":
+		case "High":
 			return 85;
 		default:
 			return 0;
@@ -49,21 +49,21 @@ export function toneToPct(tone: ProjectRiskTone): number {
 
 export function pembiayaanTone(creditScore: number | null): ProjectRiskTone {
 	if (creditScore === null) return null;
-	if (creditScore >= 55) return "Rendah";
-	if (creditScore >= 35) return "Sedang";
-	return "Tinggi";
+	if (creditScore >= 55) return "Low";
+	if (creditScore >= 35) return "Medium";
+	return "High";
 }
 
 export function levelForRiskScore(score: number): ProjectRiskLevel {
-	if (score < 40) return "Rendah";
-	if (score < 70) return "Moderat";
-	return "Tinggi";
+	if (score < 40) return "Low";
+	if (score < 70) return "Medium";
+	return "High";
 }
 
 const MITIGATIONS: string[] = [
-	"Lengkapi dokumen pendukung yang belum diunggah sebelum kirim.",
-	"Perkuat struktur pembiayaan (tenor, agunan, proyeksi penghematan).",
-	"Tinjau ulang asumsi teknis dan jadwal implementasi bersama tim.",
+	"Upload the supporting documents that are still missing before submitting.",
+	"Strengthen the financing structure: tenor, collateral, projected saving.",
+	"Review the technical assumptions and the implementation schedule with your team.",
 ];
 
 export function projectRisk(input: ProjectRiskInput): ProjectRiskResult | null {
@@ -83,20 +83,20 @@ export function projectRisk(input: ProjectRiskInput): ProjectRiskResult | null {
 	const breakdown: ProjectRiskBreakdown[] = [
 		{
 			key: "finansial",
-			label: "Finansial",
+			label: "Financial",
 			tone: finansial,
 			pct: toneToPct(finansial),
 		},
-		{ key: "teknis", label: "Teknis", tone: teknis, pct: toneToPct(teknis) },
+		{ key: "teknis", label: "Technical", tone: teknis, pct: toneToPct(teknis) },
 		{
 			key: "implementasi",
-			label: "Implementasi",
+			label: "Implementation",
 			tone: implementasi,
 			pct: toneToPct(implementasi),
 		},
 		{
 			key: "pembiayaan",
-			label: "Pembiayaan",
+			label: "Financing",
 			tone: pembiayaanTone(creditScore),
 			pct: pembiayaanPct,
 		},
@@ -109,16 +109,16 @@ export function projectRisk(input: ProjectRiskInput): ProjectRiskResult | null {
 
 	const factors: string[] = [];
 	for (const row of breakdown) {
-		if (row.tone === "Tinggi") factors.push(`Risiko ${row.label} tinggi`);
+		if (row.tone === "High") factors.push(`${row.label} risk is high`);
 	}
 	const docRatio = docsTotal > 0 ? docsDone / docsTotal : 0;
-	if (docRatio < 0.5) factors.push("Kelengkapan dokumen rendah");
+	if (docRatio < 0.5) factors.push("Document completeness is low");
 
 	let worst = breakdown[0];
 	for (const row of breakdown) {
 		if (row.pct > worst.pct) worst = row;
 	}
-	const summary = `Risiko proyek ${level} — area tertinggi: ${worst.label}.`;
+	const summary = `Overall project risk: ${level}. Highest area: ${worst.label}.`;
 
 	return {
 		score,

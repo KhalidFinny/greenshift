@@ -1,4 +1,5 @@
 import {
+	faBars,
 	faBell,
 	faBellSlash,
 	faBriefcase,
@@ -6,7 +7,6 @@ import {
 	faChartPie,
 	faChevronDown,
 	faChevronUp,
-	faCircleQuestion,
 	faCircleUser,
 	faClipboardList,
 	faFileLines,
@@ -25,7 +25,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { api } from "@greenshift/core";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { AccountAvatar } from "../components/account-avatar";
 import { ShimmerBlock } from "../components/loaders/skeleton-loader";
 import { cn } from "../lib/utils";
@@ -35,7 +35,6 @@ interface RoleShellProps {
 	children: ReactNode;
 	title: string;
 	navItems: Array<{ to: string; label: string }>;
-	helpCard?: boolean;
 	showHeaderTitle?: boolean;
 }
 
@@ -44,6 +43,7 @@ interface RoleShellProps {
 const ROLES_WITH_FEED: Record<string, true> = {
 	vendor: true,
 	broker: true,
+	business: true,
 };
 
 interface ShellNotification {
@@ -142,7 +142,6 @@ export function RoleShell({
 	children,
 	title,
 	navItems,
-	helpCard = false,
 	showHeaderTitle = true,
 }: RoleShellProps) {
 	const {
@@ -182,6 +181,19 @@ export function RoleShell({
 					createdAt: n.createdAt,
 				}));
 			}
+			if (role === "business") {
+				const { notifications } = await api.business.notifications({
+					limit: 5,
+				});
+				return notifications.map((n) => ({
+					id: n.id,
+					title: n.title,
+					body: n.body,
+					link: n.link,
+					read: n.read,
+					createdAt: n.createdAt,
+				}));
+			}
 			if (role === "broker") {
 				const { notifications } = await api.broker.notifications({ limit: 5 });
 				return notifications.map((n) => ({
@@ -209,11 +221,47 @@ export function RoleShell({
 				? "/broker/settings"
 				: null;
 
+	// Mobile navigation. The sidebar stays ONE element at every width: below `lg`
+	// it slides in over the content rather than being duplicated into a second
+	// copy, which would give two elements the same view-transition name and
+	// break the page transition.
+	const [sidebarOpen, setSidebarOpen] = useState(false);
+
+	// Navigating closes it: the drawer covers the page the user just chose.
+	useEffect(() => {
+		setSidebarOpen(false);
+	}, [activePath]);
+
+	useEffect(() => {
+		if (!sidebarOpen) return;
+		function onKeyDown(event: KeyboardEvent) {
+			if (event.key === "Escape") setSidebarOpen(false);
+		}
+		document.addEventListener("keydown", onKeyDown);
+		return () => document.removeEventListener("keydown", onKeyDown);
+	}, [sidebarOpen]);
+
 	return (
 		<div className="fixed inset-0 flex w-full overflow-hidden overscroll-none">
+			{/* Dimming layer for the mobile drawer. Below `lg` only, and it is the
+			    only place the sidebar can be dismissed by tapping outside it. */}
+			{sidebarOpen ? (
+				<button
+					type="button"
+					aria-label="Close navigation menu"
+					onClick={() => setSidebarOpen(false)}
+					className="fixed inset-0 z-40 cursor-default bg-black/40 lg:hidden"
+				/>
+			) : null}
 			<aside
+				id="shell-sidebar"
 				data-shell-sidebar
-				className="sticky top-0 flex h-dvh w-64 shrink-0 flex-col self-start overflow-hidden border-r border-border bg-white text-sidebar-foreground"
+				className={cn(
+					// Off-canvas below `lg`, docked beside the content from `lg` up.
+					"fixed inset-y-0 left-0 z-50 flex h-dvh w-64 shrink-0 flex-col overflow-hidden border-r border-border bg-white text-sidebar-foreground transition-transform duration-200 ease-out",
+					"lg:sticky lg:top-0 lg:z-auto lg:translate-x-0 lg:self-start lg:transition-none",
+					sidebarOpen ? "translate-x-0" : "-translate-x-full",
+				)}
 			>
 				<div
 					aria-hidden="true"
@@ -221,7 +269,10 @@ export function RoleShell({
 				/>
 				<div className="relative flex h-full flex-col">
 					<div className="p-4">
-						<Link to={homeHref} className="flex justify-center no-underline">
+						<Link
+							to={homeHref}
+							className="flex min-h-11 items-center justify-center no-underline"
+						>
 							<img src="/logo-long.svg" alt="GreenShift" className="w-40" />
 						</Link>
 					</div>
@@ -239,7 +290,7 @@ export function RoleShell({
 									to={item.to}
 									aria-current={isActive ? "page" : undefined}
 									className={cn(
-										"flex items-center gap-3 rounded-lg px-3 py-2 text-base font-medium text-sidebar-foreground transition-colors",
+										"flex items-center gap-3 rounded-lg px-3 py-2.5 text-base font-medium text-sidebar-foreground transition-colors",
 										isActive
 											? "bg-primary font-semibold text-primary-foreground"
 											: "hover:bg-foreground/5 hover:text-foreground",
@@ -251,111 +302,35 @@ export function RoleShell({
 							);
 						})}
 					</nav>
-
-					<div className="mt-auto flex flex-col gap-4">
-						{helpCard && (
-							<div className="px-3">
-								<div className="rounded-lg bg-card p-3 ring-1 ring-foreground/10">
-									<div className="flex items-start gap-2">
-										<FontAwesomeIcon
-											icon={faCircleQuestion}
-											className="mt-0.5 size-4 shrink-0"
-										/>
-										<div className="min-w-0">
-											<p className="text-base font-semibold">Butuh bantuan?</p>
-											<p className="mt-1 text-base text-muted-foreground">
-												Tim GreenShift siap membantu pengisian data energi.
-											</p>
-										</div>
-									</div>
-								</div>
-							</div>
-						)}
-						<footer className="border-t border-border p-3">
-							<div
-								ref={accountRef}
-								className="relative rounded-xl border border-gray-100 bg-white p-3 shadow-sm"
-							>
-								<button
-									type="button"
-									onClick={toggleAccountMenu}
-									aria-haspopup="menu"
-									aria-expanded={accountMenuOpen}
-									className="flex w-full cursor-pointer items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-foreground/5"
-								>
-									<AccountAvatar
-										name={name}
-										avatarKey={user?.avatarKey ?? null}
-										fallbackClassName="bg-foreground/10 font-semibold text-foreground"
-									/>
-									<span className="min-w-0 flex-1">
-										<span className="block truncate text-base font-semibold text-foreground">
-											{name || "Pengguna"}
-										</span>
-										<span className="block truncate text-base text-muted-foreground">
-											{title}
-										</span>
-									</span>
-									<FontAwesomeIcon
-										icon={accountMenuOpen ? faChevronUp : faChevronDown}
-										className="size-4 shrink-0 text-sidebar-foreground/60"
-									/>
-								</button>
-								{accountMenuOpen && (
-									<div
-										role="menu"
-										className="absolute bottom-full right-0 left-0 z-50 mb-2 overflow-hidden rounded-lg border border-border bg-white shadow-lg"
-									>
-										{/* Origin navigated to /profile, but that route was a
-										    placeholder and no longer exists; the account surface
-										    is the role's settings page. Rendered only for the
-										    roles that actually have one. */}
-										{settingsPath ? (
-											<Link
-												to={settingsPath}
-												role="menuitem"
-												onClick={closeAccountMenu}
-												className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium text-foreground no-underline transition-colors hover:bg-foreground/5"
-											>
-												<FontAwesomeIcon
-													icon={faCircleUser}
-													className="size-4 shrink-0"
-												/>
-												Profile
-											</Link>
-										) : null}
-										<button
-											type="button"
-											role="menuitem"
-											onClick={handleLogout}
-											className="flex w-full items-center gap-3 border-t border-border px-4 py-2.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/5"
-										>
-											<FontAwesomeIcon
-												icon={faRightFromBracket}
-												className="size-4 shrink-0"
-											/>
-											Logout
-										</button>
-									</div>
-								)}
-							</div>
-						</footer>
-					</div>
 				</div>
 			</aside>
 
 			<main className="flex min-w-0 flex-1 flex-col overflow-hidden">
 				<header
 					data-shell-header
-					className="sticky top-0 z-10 flex items-center justify-between bg-background px-6 py-4"
+					className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-border bg-background px-3 py-2 sm:gap-3 sm:px-6 sm:py-4"
 				>
-					{showHeaderTitle ? (
-						<div className="text-2xl font-semibold text-foreground">
-							{activeNavLabel}
-						</div>
-					) : (
-						<div aria-hidden="true" />
-					)}
+					<div className="flex min-w-0 items-center gap-1 sm:gap-2">
+						{/* Labelled rather than a bare icon: a hamburger with no word
+						    assumes the user knows what hides behind it. */}
+						<button
+							type="button"
+							onClick={() => setSidebarOpen(true)}
+							aria-expanded={sidebarOpen}
+							aria-controls="shell-sidebar"
+							className="-ml-1 flex min-h-11 shrink-0 items-center gap-2 rounded-lg px-2 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-foreground/5 hover:text-foreground lg:hidden"
+						>
+							<FontAwesomeIcon icon={faBars} className="size-5" />
+							Menu
+						</button>
+						{showHeaderTitle ? (
+							<div className="truncate text-lg font-semibold text-foreground sm:text-2xl">
+								{activeNavLabel}
+							</div>
+						) : (
+							<div aria-hidden="true" />
+						)}
+					</div>
 					<div className="flex items-center gap-3">
 						{/* Notifications. Only roles with a real feed get the bell; for the
 						    rest it would be a control with nothing behind it. */}
@@ -369,11 +344,11 @@ export function RoleShell({
 											? `Notifications, ${unreadCount} unread`
 											: "Notifications"
 									}
-									className="relative flex size-10 items-center justify-center rounded-lg text-sidebar-foreground/70 transition-colors hover:bg-foreground/5 hover:text-foreground"
+									className="relative flex size-11 items-center justify-center rounded-lg text-sidebar-foreground/70 transition-colors hover:bg-foreground/5 hover:text-foreground"
 								>
 									<FontAwesomeIcon icon={faBell} className="size-5" />
 									{unreadCount > 0 ? (
-										<span className="absolute right-1 top-1 flex size-5 items-center justify-center rounded-full bg-emerald-700 text-sm font-semibold text-white ring-2 ring-white">
+										<span className="absolute right-0.5 top-0.5 flex size-5 items-center justify-center rounded-full bg-emerald-700 text-sm font-semibold text-white ring-2 ring-white">
 											{unreadCount > 9 ? "9+" : unreadCount}
 										</span>
 									) : null}
@@ -382,7 +357,7 @@ export function RoleShell({
 								{notifMenuOpen ? (
 									<div
 										role="menu"
-										className="absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-xl border border-border bg-white shadow-xl"
+										className="absolute right-0 top-full z-50 mt-2 w-[min(20rem,calc(100vw-3rem))] overflow-hidden rounded-xl border border-border bg-white shadow-xl"
 									>
 										<div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-3">
 											<span className="text-sm font-semibold text-foreground">
@@ -478,10 +453,67 @@ export function RoleShell({
 								) : null}
 							</div>
 						) : null}
+						<div ref={accountRef} className="relative">
+							<button
+								type="button"
+								onClick={toggleAccountMenu}
+								aria-haspopup="menu"
+								aria-expanded={accountMenuOpen}
+								aria-label={`Account menu for ${name || "your account"}`}
+								className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-1.5 text-left transition-colors hover:bg-foreground/5"
+							>
+								<AccountAvatar
+									name={name}
+									avatarKey={user?.avatarKey ?? null}
+									className="size-8"
+									fallbackClassName="bg-foreground/10 font-semibold text-foreground"
+								/>
+								<span className="hidden max-w-40 truncate text-base font-medium text-foreground sm:block">
+									{name || "Pengguna"}
+								</span>
+								<FontAwesomeIcon
+									icon={accountMenuOpen ? faChevronUp : faChevronDown}
+									className="hidden size-4 shrink-0 text-muted-foreground sm:block"
+								/>
+							</button>
+							{accountMenuOpen && (
+								<div
+									role="menu"
+									className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-lg border border-border bg-white shadow-lg"
+								>
+									{settingsPath ? (
+										<Link
+											to={settingsPath}
+											role="menuitem"
+											onClick={closeAccountMenu}
+											className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium text-foreground no-underline transition-colors hover:bg-foreground/5"
+										>
+											<FontAwesomeIcon
+												icon={faCircleUser}
+												className="size-4 shrink-0"
+											/>
+											Profile
+										</Link>
+									) : null}
+									<button
+										type="button"
+										role="menuitem"
+										onClick={handleLogout}
+										className="flex w-full items-center gap-3 border-t border-border px-4 py-2.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/5"
+									>
+										<FontAwesomeIcon
+											icon={faRightFromBracket}
+											className="size-4 shrink-0"
+										/>
+										Logout
+									</button>
+								</div>
+							)}
+						</div>
 					</div>
 				</header>
 
-				<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pt-8 pb-20">
+				<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-6 pb-16 sm:px-6 sm:pt-8 sm:pb-20">
 					{children}
 				</div>
 			</main>

@@ -114,7 +114,7 @@ function getDaysLeft(deadline: string): number {
 }
 
 function getUrgencyColor(daysLeft: number): string {
-	if (daysLeft <= 3) return "text-red-600";
+	if (daysLeft <= 3) return "text-red-700";
 	if (daysLeft <= 7) return "text-amber-700";
 	return "text-muted-foreground";
 }
@@ -130,7 +130,6 @@ export function VendorProjectCard({
 	return (
 		<Card className="group flex flex-col overflow-hidden transition-all hover:shadow-md">
 			<CardContent className="flex flex-1 flex-col p-5">
-				{/* Top row: title left, match circle right */}
 				<div className="mb-4 flex items-center justify-between gap-3">
 					<div className="min-w-0 flex-1">
 						{project ? (
@@ -182,7 +181,6 @@ export function VendorProjectCard({
 					</div>
 				</div>
 
-				{/* Procurement badge */}
 				<div className="mb-4">
 					{!project ? (
 						<ShimmerBlock className="h-5 w-24 rounded-md" />
@@ -211,7 +209,6 @@ export function VendorProjectCard({
 					)}
 				</div>
 
-				{/* Budget + carbon */}
 				<div className="mb-4 space-y-2">
 					<div className="flex items-center justify-between">
 						<span className="text-sm text-muted-foreground">Budget</span>
@@ -237,7 +234,6 @@ export function VendorProjectCard({
 					</div>
 				</div>
 
-				{/* Location + deadline */}
 				<div className="mb-4 flex items-center justify-between text-sm text-muted-foreground">
 					{project ? (
 						<span className="flex items-center gap-1.5">
@@ -261,7 +257,6 @@ export function VendorProjectCard({
 
 				<div className="mt-auto" />
 
-				{/* Actions */}
 				<div className="flex items-center gap-2 border-t border-border pt-4">
 					{project ? (
 						<>

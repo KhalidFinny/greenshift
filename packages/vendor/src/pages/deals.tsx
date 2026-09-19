@@ -83,10 +83,6 @@ export function VendorDealsPage() {
 	return (
 		<div className="space-y-6">
 			<Tabs value={stage} onValueChange={(v) => setStage(v as Stage)}>
-				{/* Stage strip with the page's one action inline, so the action shares
-				    the row instead of taking one of its own. The list's own height
-				    utility is variant-prefixed, so the override must match the
-				    variant or it loses on specificity. */}
 				<div className="flex flex-wrap items-center justify-between gap-4">
 					<TabsList className="flex w-fit flex-wrap items-center gap-1 rounded-xl border border-border bg-card p-1 group-data-horizontal/tabs:h-auto">
 						{STAGES.map((s) => (
@@ -209,7 +205,6 @@ export function VendorDealsPage() {
 					)}
 				</TabsContent>
 
-				{/* 2. Submitted proposals */}
 				<TabsContent value="proposals" className="mt-6 space-y-4">
 					{!isLoading && proposals.length === 0 ? (
 						<EmptyState
@@ -229,7 +224,6 @@ export function VendorDealsPage() {
 					)}
 				</TabsContent>
 
-				{/* 3. Negotiation */}
 				<TabsContent value="negotiation" className="mt-6 space-y-4">
 					{!isLoading && negotiations.length === 0 ? (
 						<EmptyState

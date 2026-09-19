@@ -1,16 +1,20 @@
 # Glossary — GreenShift Project Submission Wizard (Steps 1–4)
 
-UI copy stays Indonesian; English equivalents below for the team.
+The business surface ships in English (owner decision, audit F-28); the
+Indonesian labels below are kept as the translation reference they were written
+as. Structural changes from ADR-008 are noted per section.
 
 ## Wizard
 
 - Wizard steps (COMPANY names, per ADR-006; supersede the old Step 1-internal
-  names): 01. Profil & Kebutuhan, 02. Kelayakan Finansial,
-  03. Dokumen Pendukung, 04. Review & Kirim.
-- Navigation: "Kembali" (Back, never validates) + "Simpan & Lanjut"
-  (Save & Continue, validates current step). "Kirim Pengajuan Proyek"
-  (Submit Project, Step 4) stays disabled until both declaration
-  checkboxes are ticked.
+  names): 01. Project Profile, 02. Financial Eligibility,
+  03. Supporting Documents, 04. Review & Submit.
+- ADR-008: the wizard has no page title. Its own header is sticky and spans the
+  content end to end, and it carries both the step strip and the action bar on
+  one line at `sm` and up: Back (never validates) plus the primary action, which
+  is "Save & continue" on steps 1 to 3 and "Submit the Project" on step 4. The
+  submit action stays disabled until both declaration checkboxes are ticked, and
+  there is no bottom action row.
 
 ## Step 1 — Profil & Kebutuhan (implemented)
 
@@ -26,11 +30,16 @@ UI copy stays Indonesian; English equivalents below for the team.
   labelled "Kecamatan, Kabupaten/Kota, Provinsi" (BPS 2018); bundled CSVs
   under `public/kecamatan/`. "Lokasi tidak ditemukan" on zero matches.
 - Live donut: `PieChart` whose value = target % (45% fallback).
-- Risk Preview — `Preview Risiko`: 3 derived badges (Financial/Technical/Implementation):
-  Low/Medium/High (`Rendah`/`Sedang`/`Tinggi`), or "Not yet filled" (`Belum diisi`) when inputs are empty.
-- Energy-baseline docs — `Dokumen yang Disiapkan`: 3 required rows (12-month bills,
-  load profile, permits/legality), each Done/Missing (`Sudah`/`Belum`) via local upload.
-  Separate from Step 3's legal/technical docs (ADR-005).
+- Risk Preview — one full-width row per tone (Financial/Technical/Implementation)
+  with its badge: Low/Medium/High, or "Not filled in" when the inputs are empty.
+  ADR-008: the three tones stack as rows instead of sitting in a three-column box
+  grid, and the rail holds only this card and the donut summary.
+- Energy-baseline docs — "Documents to Prepare": 3 required rows (12 months of
+  electricity bills, load profile/account, site permit/legality), each uploaded
+  through the draft. Separate from Step 3's legal/technical docs (ADR-005).
+  ADR-008: this section sits in the middle column as Step 1's last section (it
+  used to be at the bottom of the right rail), with one compact card per document
+  carrying its own upload control.
 
 ## Step 2 — Kelayakan Finansial (ADR-004, implemented)
 
@@ -58,13 +67,19 @@ UI copy stays Indonesian; English equivalents below for the team.
   a compact score row + "Lihat Detail Penilaian Risiko" outline button;
   full dashboard opens in a controlled system Dialog modal (Round 5).
 
-## MyProjects — Proyek Saya (ADR-007)
+## MyProjects — My Projects (ADR-007, revised by ADR-008)
 
-- Route `/business/proyek` ("Proyek Saya"); wizard keeps `/business`
-  ("Ajukan Proyek"). Both in `roleNav.business`; shell marks active.
-- Demo rows (3): Review LVV / Matchmaking / Verified with name,
-  location/sector muted line, tanggal pengajuan, CAPEX.
-- Status pills: system `Badge` + status dot (amber/primary/green
-  data-ink), never literal yellow/blue/green pills.
-- Row actions: "Detail" text button + "Risk Assessment" outline button
-  (chart icon, comment-only `isRiskModalOpen` TODO — no per-row modal).
+- Route `/business/projects`; the wizard lives at `/business/submit`. Both are
+  reachable from `roleNav.business` and the shell marks the active one.
+- ADR-008: no page title or description; one toolbar row carries the status and
+  sector filters (options read off the loaded rows) plus "Submit a Project", and
+  the table itself is the shared `DataTable` with its sorting, search, and
+  pagination. Below `md`, Submitted and CAPEX fold into the project cell so a
+  phone needs no sideways drag.
+- Rows come from `GET /api/business/projects`: name with a muted
+  location/sector line, submitted date, CAPEX, and the status pill the API
+  returns (`Review LVV`, `Matchmaking`, `Verified`).
+- Row actions: "Risk assessment" opens a controlled `Dialog` that fetches
+  `GET /api/business/projects/:id/risk` and renders `RiskAssessmentBody`; the
+  download icon opens the project's first ready document, and says so when none
+  is ready yet.

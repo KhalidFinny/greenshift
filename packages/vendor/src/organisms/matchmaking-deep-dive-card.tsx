@@ -31,7 +31,7 @@ export function MatchmakingDeepDive({
 				<CardContent>
 					<div className="flex flex-col gap-8 sm:flex-row">
 						<div className="flex shrink-0 flex-col items-center justify-center">
-							<div className="relative flex h-32 w-32 items-center justify-center rounded-full border-4 border-emerald-500 bg-emerald-50">
+							<div className="relative flex h-32 w-32 items-center justify-center rounded-full border-4 border-emerald-700 bg-emerald-50">
 								<ShimmerBlock className="h-12 w-16" />
 							</div>
 							<p className="mt-3 text-sm font-medium text-muted-foreground">
@@ -87,9 +87,8 @@ export function MatchmakingDeepDive({
 			</CardHeader>
 			<CardContent>
 				<div className="flex flex-col gap-8 sm:flex-row">
-					{/* Overall score */}
 					<div className="flex shrink-0 flex-col items-center justify-center">
-						<div className="relative flex h-32 w-32 items-center justify-center rounded-full border-4 border-emerald-500 bg-emerald-50">
+						<div className="relative flex h-32 w-32 items-center justify-center rounded-full border-4 border-emerald-700 bg-emerald-50">
 							<span className="text-5xl font-bold leading-none text-emerald-700">
 								{matchmaking.overallMatch}
 							</span>
@@ -102,7 +101,6 @@ export function MatchmakingDeepDive({
 						</p>
 					</div>
 
-					{/* Per-criterion breakdown */}
 					<div className="flex-1 space-y-4">
 						{MATCH_CRITERIA.map((criterion) => {
 							const score = matchmaking[criterion.key];

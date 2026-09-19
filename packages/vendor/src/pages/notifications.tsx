@@ -59,7 +59,7 @@ export function VendorNotificationsPage() {
 			</div>
 
 			<Tabs defaultValue="all">
-				<TabsList className="grid w-full grid-cols-6">
+				<TabsList className="flex w-full overflow-x-auto *:shrink-0 *:whitespace-nowrap sm:grid sm:grid-cols-6">
 					<TabsTrigger value="all">All ({notifications.length})</TabsTrigger>
 					<TabsTrigger value="unread">
 						Unread ({notifications.filter((n) => !n.isRead).length})

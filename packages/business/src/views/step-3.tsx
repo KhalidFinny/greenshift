@@ -1,5 +1,4 @@
 import {
-	faCircleQuestion,
 	faCloudArrowUp,
 	faFileLines,
 	faTrash,
@@ -28,42 +27,42 @@ export interface Step3Section {
 
 export const STEP3_SECTIONS: Step3Section[] = [
 	{
-		title: "Legalitas Entitas",
+		title: "Entity Legality",
 		items: [
 			{
 				id: "akta",
-				title: "Akta Perusahaan",
-				desc: "Akta pendirian dan perubahan terakhir.",
+				title: "Company Deed",
+				desc: "Deed of incorporation and the latest amendment.",
 			},
 			{
 				id: "nib",
 				title: "NIB & NPWP",
-				desc: "Nomor Induk Berusaha dan NPWP perusahaan.",
+				desc: "Business Identification Number and the company tax number.",
 			},
 			{
 				id: "profil",
-				title: "Profil Perusahaan",
-				desc: "Profil singkat kegiatan usaha.",
+				title: "Company Profile",
+				desc: "A short profile of the business activity.",
 			},
 		],
 	},
 	{
-		title: "Dokumen Teknis & Mitigasi Emisi",
+		title: "Technical Documents & Emission Mitigation",
 		items: [
 			{
 				id: "studi",
-				title: "Studi Kelayakan",
-				desc: "Kajian teknis dan finansial proyek.",
+				title: "Feasibility Study",
+				desc: "The technical and financial review of the project.",
 			},
 			{
 				id: "dram",
 				title: "DRAM",
-				desc: "Rencana aksi mitigasi emisi gas rumah kaca.",
+				desc: "Greenhouse gas mitigation action plan.",
 			},
 			{
 				id: "spek",
-				title: "Spesifikasi Teknis",
-				desc: "Spesifikasi peralatan yang digunakan.",
+				title: "Technical Specification",
+				desc: "Specification of the equipment to be installed.",
 			},
 		],
 	},
@@ -80,6 +79,11 @@ export interface Step3ViewProps {
 	onRemove: (id: string) => void;
 }
 
+const SECTION_HELP = [
+	"Company legality records, saved with your draft.",
+	"Technical and emission mitigation records, saved with your draft.",
+];
+
 export function Step3View({ docs, onUpload, onRemove }: Step3ViewProps) {
 	const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
 	const done = STEP3_SECTIONS.flatMap((s) => s.items).filter(
@@ -88,24 +92,24 @@ export function Step3View({ docs, onUpload, onRemove }: Step3ViewProps) {
 
 	return (
 		<div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-			<div className="min-w-0 space-y-6">
+			<div className="min-w-0 space-y-8">
 				{STEP3_SECTIONS.map((section, si) => (
-					<Card key={section.title}>
-						<CardHeader>
-							<CardTitle className="text-lg">
+					<section key={section.title} className="space-y-4">
+						<div>
+							<h2 className="text-lg font-semibold">
 								{si === 0 ? "A" : "B"}. {section.title}
-							</CardTitle>
-							<CardDescription className="text-base">
-								Unggah berkas pendukung, tersimpan lokal.
-							</CardDescription>
-						</CardHeader>
-						<CardContent className="space-y-3">
+							</h2>
+							<p className="mt-1 text-sm text-muted-foreground">
+								{SECTION_HELP[si]}
+							</p>
+						</div>
+						<ul className="divide-y divide-border">
 							{section.items.map((doc) => {
 								const name = docs[doc.id];
 								return (
-									<div
+									<li
 										key={doc.id}
-										className="flex items-center justify-between gap-3 rounded-md border border-border p-3"
+										className="flex items-center justify-between gap-3 py-2"
 									>
 										<div className="flex min-w-0 items-center gap-3">
 											<FontAwesomeIcon
@@ -113,10 +117,10 @@ export function Step3View({ docs, onUpload, onRemove }: Step3ViewProps) {
 												className="size-4 shrink-0 text-muted-foreground"
 											/>
 											<div className="min-w-0">
-												<p className="truncate text-base font-medium">
+												<p className="truncate text-sm font-medium">
 													{doc.title}
 												</p>
-												<p className="truncate text-base text-muted-foreground">
+												<p className="truncate text-sm text-muted-foreground">
 													{name ?? doc.desc}
 												</p>
 											</div>
@@ -128,7 +132,7 @@ export function Step3View({ docs, onUpload, onRemove }: Step3ViewProps) {
 												}}
 												type="file"
 												className="sr-only"
-												aria-label={`Unggah ${doc.title}`}
+												aria-label={`Upload ${doc.title}`}
 												onChange={(ev) =>
 													onUpload(doc.id, ev.target.files?.[0])
 												}
@@ -138,7 +142,7 @@ export function Step3View({ docs, onUpload, onRemove }: Step3ViewProps) {
 													type="button"
 													variant="ghost"
 													size="icon-sm"
-													aria-label={`Hapus ${doc.title}`}
+													aria-label={`Remove ${doc.title}`}
 													onClick={() => onRemove(doc.id)}
 												>
 													<FontAwesomeIcon icon={faTrash} />
@@ -151,24 +155,24 @@ export function Step3View({ docs, onUpload, onRemove }: Step3ViewProps) {
 													onClick={() => fileRefs.current[doc.id]?.click()}
 												>
 													<FontAwesomeIcon icon={faCloudArrowUp} />
-													Unggah
+													Upload
 												</Button>
 											)}
 										</div>
-									</div>
+									</li>
 								);
 							})}
-						</CardContent>
-					</Card>
+						</ul>
+					</section>
 				))}
 			</div>
 
 			<aside className="min-w-0 space-y-6">
 				<Card>
 					<CardHeader>
-						<CardTitle className="text-lg">Status Kelengkapan</CardTitle>
-						<CardDescription className="text-base">
-							{done} / {STEP3_TOTAL} Dokumen Terunggah
+						<CardTitle className="text-lg">Completeness</CardTitle>
+						<CardDescription className="text-sm">
+							{done} / {STEP3_TOTAL} documents uploaded
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
@@ -177,7 +181,7 @@ export function Step3View({ docs, onUpload, onRemove }: Step3ViewProps) {
 							aria-valuenow={done}
 							aria-valuemin={0}
 							aria-valuemax={STEP3_TOTAL}
-							aria-label="Kelengkapan dokumen"
+							aria-label="Document completeness"
 							className="h-2 overflow-hidden rounded-full bg-muted"
 						>
 							<div
@@ -189,18 +193,15 @@ export function Step3View({ docs, onUpload, onRemove }: Step3ViewProps) {
 				</Card>
 
 				<Card>
-					<CardContent className="flex items-start gap-3 pt-6">
-						<FontAwesomeIcon
-							icon={faCircleQuestion}
-							className="mt-1 size-5 shrink-0"
-						/>
-						<div>
-							<p className="text-base font-semibold">Panduan LVV GRK</p>
-							<p className="mt-1 text-base text-muted-foreground">
-								Dokumen teknis akan divalidasi Lembaga Validasi/Verifikasi gas
-								rumah kaca. Pastikan DRAM konsisten dengan target reduksi emisi.
-							</p>
-						</div>
+					<CardHeader>
+						<CardTitle className="text-lg">GHG LVV Guide</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<p className="text-sm text-muted-foreground">
+							Technical documents are validated by a greenhouse gas Validation
+							and Verification Body. Make sure the DRAM is consistent with the
+							emission reduction target.
+						</p>
 					</CardContent>
 				</Card>
 			</aside>

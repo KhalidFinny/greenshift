@@ -145,6 +145,45 @@ export const apiRoutes = {
 		path: "/api/vendor/milestones/:id/evidence",
 	},
 	health: { method: "GET", path: "/api/health" },
+
+	// ── business role (wizard -> project submission) ────────
+	businessDraft: { method: "PUT", path: "/api/business/drafts/:draftId" },
+	businessDraftResume: {
+		method: "GET",
+		path: "/api/business/drafts/:draftId",
+	},
+	businessUploadDocument: {
+		method: "POST",
+		path: "/api/business/drafts/:draftId/documents",
+	},
+	businessDeleteDocument: {
+		method: "DELETE",
+		path: "/api/business/drafts/:draftId/documents/:docId",
+	},
+	// Creates a project while consuming a draft and scoring it, so it reads as
+	// an action rather than a plain collection POST.
+	businessSubmit: { method: "POST", path: "/api/business/projects/submit" },
+	businessNotifications: {
+		method: "GET",
+		path: "/api/business/notifications",
+	},
+	businessReadNotification: {
+		method: "PATCH",
+		path: "/api/business/notifications/:id",
+	},
+	businessProjects: { method: "GET", path: "/api/business/projects" },
+	businessProjectRisk: {
+		method: "GET",
+		path: "/api/business/projects/:id/risk",
+	},
+	businessProjectDocuments: {
+		method: "GET",
+		path: "/api/business/projects/:id/documents",
+	},
+	businessDownloadDocument: {
+		method: "GET",
+		path: "/api/business/projects/:id/documents/:docId/download",
+	},
 } as const;
 
 /** Read-only binding probes behind `GET /api/health`. */
@@ -769,6 +808,181 @@ export interface VendorProcurementStatusItem {
 	reviewedAt?: string | null;
 	amount?: number;
 	companyName?: string;
+}
+
+// ── Business role ─────────────────────────────────────────
+// The wizard collects a project in three steps and submits it for LVV review.
+// Every field name here is the one the frontend already uses, so neither side
+// keeps a translation table.
+
+/** Step 1: what the project is and what it is expected to save. */
+export interface BusinessStep1 {
+	namaProyek: string;
+	lokasi: string;
+	sektor: string;
+	konsumsiMwh: number;
+	biayaRp: number;
+	faktorEmisi: number;
+	targetPct: number;
+	targetMwh: number;
+	timeline: string;
+	ringkasan: string;
+}
+
+/** Step 2: how it is financed. `fileIds` are draft document ids. */
+export interface BusinessStep2 {
+	capexRp: number;
+	tenorTahun: number;
+	penghematanRp: number;
+	pendapatanRp: number;
+	jaminan: string;
+	fileIds: string[];
+}
+
+/** Step 3: the document checklist, slot name to draft document id. */
+export interface BusinessStep3 {
+	docStates: Record<string, string | null>;
+}
+
+/**
+ * A partial Step 1 or Step 2 block. On autosave an absent key means the field
+ * was not touched, while an explicit `null` means it was cleared.
+ */
+export type BusinessStep1Patch = Partial<{
+	[K in keyof BusinessStep1]: BusinessStep1[K] | null;
+}>;
+export type BusinessStep2Patch = Partial<{
+	[K in keyof BusinessStep2]: BusinessStep2[K] | null;
+}>;
+
+/** Body of `PUT /api/business/drafts/:draftId`. Every block is optional. */
+export interface BusinessDraftBody {
+	step?: 1 | 2 | 3;
+	step1?: BusinessStep1Patch;
+	step2?: BusinessStep2Patch;
+	step3?: BusinessStep3;
+}
+
+/** The stored draft, merged. Null blocks have never been touched. */
+export interface BusinessDraft {
+	id: string;
+	step: number | null;
+	updatedAt: string | null;
+	step1: BusinessStep1Patch | null;
+	step2: BusinessStep2Patch | null;
+	step3: BusinessStep3 | null;
+}
+
+export interface BusinessDraftResponse {
+	draft: BusinessDraft;
+}
+
+/** Body of `POST /api/business/projects/submit`: every block is required. */
+export interface BusinessSubmitBody {
+	draftId: string;
+	step1: BusinessStep1;
+	step2: BusinessStep2;
+	step3: BusinessStep3;
+	consent: boolean;
+	declaration: boolean;
+}
+
+/**
+ * The submitted project, with the scores the server derived. The client never
+ * computes these, so they are absent from the request body by design.
+ */
+export interface BusinessSubmittedProject {
+	id: number;
+	title: string;
+	status: string;
+	submittedAt: string | null;
+	/** Tonnes of CO2e per year: consumption x emission factor. */
+	baselineTco2: number | null;
+	creditScore: number | null;
+	creditRating: string | null;
+	riskScore: number | null;
+	riskLevel: string | null;
+}
+
+export interface BusinessSubmitResponse {
+	project: BusinessSubmittedProject;
+}
+
+/** One row of the project table. `status` is the pill label, not the DB enum. */
+export interface BusinessProjectSummary {
+	id: number;
+	name: string;
+	location: string | null;
+	sector: string | null;
+	submittedAt: string | null;
+	capexRp: number | null;
+	/** "Review LVV" | "Matchmaking" | "Verified". */
+	status: string;
+}
+
+export interface BusinessProjectsResponse {
+	projects: BusinessProjectSummary[];
+}
+
+/**
+ * The model's closed vocabularies. The frontend declares the same unions, so
+ * typing them here keeps the response renderable without a cast on either side.
+ */
+export const riskTones = ["Low", "Medium", "High"] as const;
+export type RiskTone = (typeof riskTones)[number];
+export const riskLevels = ["Low", "Medium", "High"] as const;
+export type RiskLevel = (typeof riskLevels)[number];
+
+export interface BusinessRiskBreakdown {
+	key: string;
+	label: string;
+	/** Null when the contributing input has not been provided yet. */
+	tone: RiskTone | null;
+	pct: number;
+}
+
+/** Mirrors the frontend `ProjectRiskResult` so it renders untouched. */
+export interface BusinessRisk {
+	score: number;
+	level: RiskLevel;
+	success: number;
+	breakdown: BusinessRiskBreakdown[];
+	factors: string[];
+	mitigations: string[];
+	summary: string;
+}
+
+/** One row of the company feed the shell bell renders. */
+export interface BusinessNotification {
+	id: number;
+	type: string;
+	title: string;
+	body: string | null;
+	link: string | null;
+	read: boolean;
+	createdAt: string;
+}
+
+export interface BusinessRiskResponse {
+	risk: BusinessRisk;
+}
+
+/** An uploaded wizard file. `slot` is the checklist key it fills. */
+export interface BusinessDocument {
+	id: string;
+	slot: string;
+	fileName: string;
+	ocrStatus: string | null;
+	/** Null while OCR is still processing, so the UI can disable the action. */
+	downloadUrl?: string | null;
+}
+
+export interface BusinessDocumentResponse {
+	document: BusinessDocument;
+}
+
+export interface BusinessDocumentsResponse {
+	documents: BusinessDocument[];
 }
 
 // ── Broker role ───────────────────────────────────────────

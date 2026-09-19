@@ -297,10 +297,10 @@ export function AdminProjects() {
 
 			<Card>
 				<CardHeader>
-					<div className="flex items-center justify-between gap-4">
+					<div className="flex flex-wrap items-center justify-between gap-4">
 						<CardTitle className="text-xl">Project List</CardTitle>
 						<Select value={status} onValueChange={(value) => setStatus(value)}>
-							<SelectTrigger className="w-[220px]">
+							<SelectTrigger className="w-full sm:w-[220px]">
 								<SelectValue placeholder="All statuses" />
 							</SelectTrigger>
 							<SelectContent>

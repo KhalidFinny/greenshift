@@ -257,7 +257,7 @@ export function ProjectDetailDialog({
 								value={nextStatus}
 								onValueChange={(value) => setNextStatus(value)}
 							>
-								<SelectTrigger className="w-[220px]">
+								<SelectTrigger className="w-full sm:w-[220px]">
 									<SelectValue />
 								</SelectTrigger>
 								<SelectContent>

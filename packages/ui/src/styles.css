@@ -32,8 +32,11 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.508 0.118 165.612);
-  --primary-foreground: oklch(0.979 0.021 166.113);
+  /* The three brand greens recorded in CLAUDE.md, so the hex literals the role
+     pages carry and the token layer resolve to the same colour: brand green for
+     primary actions and the focus ring, the accent for the motif band. */
+  --primary: #00712D;
+  --primary-foreground: #FFFFFF;
   --secondary: oklch(0.967 0.001 286.375);
   --secondary-foreground: oklch(0.21 0.006 285.885);
   --muted: oklch(0.97 0 0);
@@ -44,7 +47,7 @@
   --destructive-foreground: #FFFFFF;
   --border: oklch(0.922 0 0);
   --input: #828282;
-  --ring: #07815F;
+  --ring: #00712D;
   --chart-1: oklch(0.845 0.143 164.978);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.596 0.145 163.225);
@@ -53,7 +56,7 @@
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.596 0.145 163.225);
+  --sidebar-primary: #00712D;
   --sidebar-primary-foreground: oklch(0.979 0.021 166.113);
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
@@ -106,6 +109,15 @@
 }
 
 html {
+	min-height: 100%;
+}
+/* The role shell positions itself `fixed inset-0` and scrolls its own content,
+   so while it is mounted the document behind it must not scroll or rubber-band.
+   Scoped to the shell with :has() rather than applied globally: the landing
+   page and the public bond catalog scroll the document, and a global lock froze
+   both of them. It also froze the landing header, whose compact state is driven
+   by a scroll listener that could then never fire. */
+html:has([data-shell-sidebar]) {
 	height: 100%;
 	overflow: hidden;
 	overscroll-behavior: none;
@@ -119,6 +131,11 @@ html {
 
 body,
 #app {
+	min-height: 100%;
+}
+
+html:has([data-shell-sidebar]) body,
+html:has([data-shell-sidebar]) #app {
 	height: 100%;
 	overflow: hidden;
 	overscroll-behavior: none;

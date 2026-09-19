@@ -53,7 +53,7 @@ export function matchStrength(total: number): {
 		return { label: "Strong fit", className: "bg-emerald-700 text-white" };
 	}
 	if (total >= 75) {
-		return { label: "Good fit", className: "bg-emerald-600 text-white" };
+		return { label: "Good fit", className: "bg-emerald-700 text-white" };
 	}
 	return { label: "Fair fit", className: "bg-muted text-foreground" };
 }

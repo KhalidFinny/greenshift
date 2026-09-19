@@ -39,9 +39,6 @@ export function VendorPortfolioPage() {
 				</div>
 			</div>
 
-			{/* Totals: one line per figure, in a single strip, so a one-digit count
-			    does not occupy a three-line tower. Hidden when there is nothing to
-			    total, since four zeroes tell the reader nothing. */}
 			{portfolio.length > 0 ? (
 				<dl className="flex flex-wrap items-center gap-x-10 gap-y-3 rounded-xl border border-border bg-card px-5 py-4">
 					{[

@@ -24,6 +24,15 @@ import type {
 	BrokerProfile,
 	BrokerProfileBody,
 	BrokerProjectStatusBody,
+	BusinessDocumentResponse,
+	BusinessDocumentsResponse,
+	BusinessDraftBody,
+	BusinessDraftResponse,
+	BusinessNotification,
+	BusinessProjectsResponse,
+	BusinessRiskResponse,
+	BusinessSubmitBody,
+	BusinessSubmitResponse,
 	CsrfResponse,
 	HealthResponse,
 	LoginBody,
@@ -128,6 +137,82 @@ export const api = {
 		 */
 		avatarPath: (key: string) =>
 			`${apiRoutes.accountAvatar.path}?v=${encodeURIComponent(key)}`,
+	},
+	business: {
+		/**
+		 * Autosave. Silent: this fires while the user types, and a toast per
+		 * save would be noise. The server merges the patch over the stored draft.
+		 */
+		saveDraft: (draftId: string, body: BusinessDraftBody) =>
+			request<BusinessDraftResponse>(
+				apiRoutes.businessDraft.path.replace(
+					":draftId",
+					encodeURIComponent(draftId),
+				),
+				{
+					method: apiRoutes.businessDraft.method,
+					body: JSON.stringify(body satisfies BusinessDraftBody),
+					silent: true,
+				},
+			),
+		notifications: (params?: { limit?: number }) =>
+			request<{ notifications: BusinessNotification[] }>(
+				apiRoutes.businessNotifications.path + query(params),
+			),
+		readNotification: (id: number) =>
+			request<OkResponse>(
+				apiRoutes.businessReadNotification.path.replace(":id", String(id)),
+				{ method: apiRoutes.businessReadNotification.method },
+			),
+		draft: (draftId: string) =>
+			request<BusinessDraftResponse>(
+				apiRoutes.businessDraftResume.path.replace(
+					":draftId",
+					encodeURIComponent(draftId),
+				),
+			),
+		/** Multipart: the shared request helper leaves the boundary to the browser. */
+		uploadDocument: (draftId: string, file: File, slot: string) => {
+			const body = new FormData();
+			body.set("file", file);
+			body.set("slot", slot);
+			return request<BusinessDocumentResponse>(
+				apiRoutes.businessUploadDocument.path.replace(
+					":draftId",
+					encodeURIComponent(draftId),
+				),
+				{ method: apiRoutes.businessUploadDocument.method, body },
+			);
+		},
+		deleteDocument: (draftId: string, docId: string) =>
+			request<{ ok: true }>(
+				apiRoutes.businessDeleteDocument.path
+					.replace(":draftId", encodeURIComponent(draftId))
+					.replace(":docId", encodeURIComponent(docId)),
+				{ method: apiRoutes.businessDeleteDocument.method },
+			),
+		submit: (body: BusinessSubmitBody) =>
+			request<BusinessSubmitResponse>(apiRoutes.businessSubmit.path, {
+				method: apiRoutes.businessSubmit.method,
+				body: JSON.stringify(body satisfies BusinessSubmitBody),
+			}),
+		projects: (params?: { limit?: number }) =>
+			request<BusinessProjectsResponse>(
+				apiRoutes.businessProjects.path + query(params),
+			),
+		risk: (id: number) =>
+			request<BusinessRiskResponse>(
+				apiRoutes.businessProjectRisk.path.replace(":id", String(id)),
+			),
+		documents: (id: number) =>
+			request<BusinessDocumentsResponse>(
+				apiRoutes.businessProjectDocuments.path.replace(":id", String(id)),
+			),
+		/** The download endpoint is a plain link, so only its path is needed. */
+		downloadPath: (id: number, docId: string) =>
+			apiRoutes.businessDownloadDocument.path
+				.replace(":id", String(id))
+				.replace(":docId", encodeURIComponent(docId)),
 	},
 	investor: {
 		market: () => request<BondMarketResponse>(apiRoutes.investorMarket.path),

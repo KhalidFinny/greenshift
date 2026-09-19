@@ -378,9 +378,13 @@ components that every page uses:
   string header), optional global search (`searchPlaceholder`), optional pagination (`pageSize`), row ids
   (`getRowId`), per-cell classes via column `meta`, and an empty state. No page hand-writes table rows anymore.
 - **Forms** (`packages/ui/src/components/form/form.tsx`) - a `createFormHook` bundle exposing `useAppForm`
-  plus `TextField`, `PasswordField`, and `SubmitButton`. Field components read the field from context, render
-  validation errors with `aria-invalid`/`role="alert"`, and the submit button reflects `canSubmit` /
-  `isSubmitting`. Login, register, and the admin step-up dialog are built on it.
+  plus the field components `TextField`, `NumberField` (optional `prefix`/`unit`), `SelectField`,
+  `TextareaField`, `CheckboxField`, and `PasswordField`, and the `SubmitButton`. Field components read the
+  field from context, own their label, message and aria wiring, and render validation errors with
+  `aria-invalid`/`role="alert"`; the submit button reflects `canSubmit` / `isSubmitting`. Login, register, the
+  admin step-up dialog and the business submission wizard are built on it. The wizard keeps its rule messages
+  in `packages/business/src/lib/validators.ts` and reaches them through
+  `packages/business/src/lib/wizard-rules.ts` only.
 
 Design-system rules (see `agent.md`) still apply: use the shared components as-is, keep text at the system
 sizes, use the design tokens, and never import one role package from another.

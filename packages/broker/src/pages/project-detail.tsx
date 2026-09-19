@@ -282,7 +282,6 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 
 	return (
 		<div className="space-y-6">
-			{/* Back button */}
 			<div className="flex items-center justify-between">
 				<Link to="/broker/projects">
 					<Button variant="ghost" size="sm" className="gap-2">
@@ -299,7 +298,6 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 				</Link>
 			</div>
 
-			{/* Header Banner */}
 			<Card className="border-0 bg-[#03442C] text-white">
 				<CardContent className="p-6 space-y-4">
 					<div className="flex flex-wrap items-center justify-between gap-3">
@@ -366,11 +364,8 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 				</CardContent>
 			</Card>
 
-			{/* Main Content Grid */}
 			<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-				{/* Left 2 Cols: Overview, Risk & Document Requests */}
 				<div className="space-y-6 lg:col-span-2">
-					{/* Project Overview */}
 					<Card>
 						<CardHeader>
 							<CardTitle className="text-lg">Underwriting Summary</CardTitle>
@@ -407,7 +402,6 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 						</CardContent>
 					</Card>
 
-					{/* Latest official monitoring report for this project */}
 					{latestReport && (
 						<Card>
 							<CardHeader className="flex flex-row items-center justify-between">
@@ -484,7 +478,6 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 						</Card>
 					)}
 
-					{/* Read-Only Project Risk Assessment */}
 					<Card>
 						<CardHeader className="flex flex-row items-center justify-between">
 							<CardTitle className="text-lg flex items-center gap-2">
@@ -496,7 +489,7 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 							</CardTitle>
 							<Badge
 								variant="outline"
-								className="border-amber-500 text-amber-700"
+								className="border-amber-700 text-amber-700"
 							>
 								Overall Risk: {project.riskAssessment.overallRiskLevel}
 							</Badge>
@@ -546,7 +539,6 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 						</CardContent>
 					</Card>
 
-					{/* Documents GreenShift already holds for this project */}
 					<Card>
 						<CardHeader>
 							<CardTitle className="text-lg flex items-center gap-2">
@@ -594,7 +586,6 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 						</CardContent>
 					</Card>
 
-					{/* Document Requests Workspace for this project */}
 					<Card>
 						<CardHeader className="flex flex-row items-center justify-between">
 							<CardTitle className="text-lg flex items-center gap-2">
@@ -645,7 +636,6 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 												</p>
 											</div>
 
-											{/* Submitted File Details */}
 											{doc.submittedFileName && (
 												<div className="rounded-lg bg-emerald-50 p-3 flex items-center justify-between">
 													<span className="flex items-center gap-1.5 font-semibold text-emerald-900">
@@ -682,7 +672,7 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 																			"Document does not cover the requested period.",
 																		)
 																	}
-																	className="text-red-600 border-red-200 hover:bg-red-50 text-sm"
+																	className="text-red-700 border-red-200 hover:bg-red-50 text-sm"
 																>
 																	Reject
 																</Button>
@@ -699,7 +689,6 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 					</Card>
 				</div>
 
-				{/* Right 1 Col: Lifecycle & Bond Tracker */}
 				<div className="space-y-6">
 					<Card>
 						<CardHeader>

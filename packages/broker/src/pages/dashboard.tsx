@@ -46,7 +46,6 @@ export function BrokerDashboard() {
 
 	return (
 		<div className="space-y-6">
-			{/* Unverified Warning Alert */}
 			{!isVerified && (
 				<div className="flex items-start justify-between rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900">
 					<div className="flex items-start gap-3">
@@ -74,9 +73,7 @@ export function BrokerDashboard() {
 				</div>
 			)}
 
-			{/* KPI Workload Stat Cards */}
 			<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-				{/* 1. Assigned Projects */}
 				<Card>
 					<CardContent className="flex items-center justify-between p-6">
 						<div>
@@ -96,7 +93,6 @@ export function BrokerDashboard() {
 					</CardContent>
 				</Card>
 
-				{/* 2. Document Request */}
 				<Card>
 					<CardContent className="flex items-center justify-between p-6">
 						<div>
@@ -116,7 +112,6 @@ export function BrokerDashboard() {
 					</CardContent>
 				</Card>
 
-				{/* 3. Review Documents */}
 				<Card>
 					<CardContent className="flex items-center justify-between p-6">
 						<div>
@@ -137,9 +132,7 @@ export function BrokerDashboard() {
 				</Card>
 			</div>
 
-			{/* Main Grid: Projects & Documents Pending Review */}
 			<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-				{/* Left 2 Cols: Assigned Projects Workload */}
 				<Card className="lg:col-span-2">
 					<CardHeader className="flex flex-row items-center justify-between">
 						<CardTitle className="text-lg">
@@ -147,7 +140,7 @@ export function BrokerDashboard() {
 						</CardTitle>
 						<Link
 							to="/broker/projects"
-							className="text-sm text-emerald-700 hover:underline"
+							className="flex max-sm:min-h-11 items-center text-sm text-emerald-700 hover:underline"
 						>
 							View All Projects
 						</Link>
@@ -172,7 +165,7 @@ export function BrokerDashboard() {
 										</Badge>
 										<Badge
 											variant="outline"
-											className="border-emerald-500 text-emerald-700"
+											className="border-emerald-700 text-emerald-700"
 										>
 											GHG LVV Verified
 										</Badge>
@@ -219,7 +212,6 @@ export function BrokerDashboard() {
 					</CardContent>
 				</Card>
 
-				{/* Right 1 Col: Documents Pending Review */}
 				<Card>
 					<CardHeader>
 						<CardTitle className="text-lg">Documents Awaiting Review</CardTitle>
@@ -270,7 +262,6 @@ export function BrokerDashboard() {
 					</CardContent>
 				</Card>
 
-				{/* Right 1 Col: Notification feed */}
 				<Card className="lg:col-span-3">
 					<CardHeader>
 						<CardTitle className="text-lg">

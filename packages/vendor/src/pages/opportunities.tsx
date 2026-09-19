@@ -75,7 +75,6 @@ export function VendorOpportunitiesPage() {
 
 	return (
 		<div className="space-y-6">
-			{/* Method filters + Search on one line */}
 			<div className="flex flex-wrap items-center gap-3">
 				<div className="flex flex-wrap items-center gap-2">
 					{methodPills.map((pill) => {
@@ -132,7 +131,7 @@ export function VendorOpportunitiesPage() {
 			)}
 
 			<Tabs defaultValue="available">
-				<TabsList className="grid w-full grid-cols-3">
+				<TabsList className="flex w-full overflow-x-auto *:shrink-0 *:whitespace-nowrap sm:grid sm:grid-cols-3">
 					<TabsTrigger value="available">
 						Available Tenders ({availableProjects.length})
 					</TabsTrigger>
@@ -142,7 +141,6 @@ export function VendorOpportunitiesPage() {
 					<TabsTrigger value="saved">Saved ({saved.length})</TabsTrigger>
 				</TabsList>
 
-				{/* 1. Available Tenders Tab */}
 				<TabsContent value="available" className="mt-6 space-y-4">
 					<div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 px-4 py-2.5 text-sm text-muted-foreground">
 						<span>
@@ -177,7 +175,6 @@ export function VendorOpportunitiesPage() {
 					)}
 				</TabsContent>
 
-				{/* 2. Recommended Tab */}
 				<TabsContent value="recommended" className="mt-6 space-y-4">
 					{!isLoading && recommended.length === 0 ? (
 						<EmptyState
@@ -198,7 +195,6 @@ export function VendorOpportunitiesPage() {
 					)}
 				</TabsContent>
 
-				{/* 3. Saved Tab */}
 				<TabsContent value="saved" className="mt-6 space-y-4">
 					{!isLoading && saved.length === 0 ? (
 						<EmptyState

@@ -1,4 +1,10 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@greenshift/ui";
+import {
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+	ShimmerBlock,
+} from "@greenshift/ui";
 
 interface TenderTechnicalProposalCardProps {
 	/** The submitted technical specification, or null when the API has none. */
@@ -18,9 +24,9 @@ export function TenderTechnicalProposalCard({
 			<CardContent className="text-sm">
 				{loading ? (
 					<div className="space-y-2">
-						<div className="h-4 w-full animate-none rounded bg-foreground/10" />
-						<div className="h-4 w-4/5 animate-none rounded bg-foreground/10" />
-						<div className="h-4 w-2/3 animate-none rounded bg-foreground/10" />
+						<ShimmerBlock className="h-4 w-full rounded" />
+						<ShimmerBlock className="h-4 w-4/5 rounded" />
+						<ShimmerBlock className="h-4 w-2/3 rounded" />
 					</div>
 				) : technicalSpec ? (
 					<p className="whitespace-pre-line leading-relaxed text-muted-foreground">

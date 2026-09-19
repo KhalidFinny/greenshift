@@ -96,13 +96,12 @@ export function BrokerSettingsPage() {
 			</div>
 
 			<Tabs defaultValue="verification" className="w-full">
-				<TabsList className="grid w-full grid-cols-3 max-w-md">
+				<TabsList className="flex w-full overflow-x-auto *:shrink-0 *:whitespace-nowrap sm:grid sm:grid-cols-3 max-w-md">
 					<TabsTrigger value="verification">License Verification</TabsTrigger>
 					<TabsTrigger value="profile">Brokerage Profile</TabsTrigger>
 					<TabsTrigger value="compliance">Role Boundaries</TabsTrigger>
 				</TabsList>
 
-				{/* Tab 1: Automatic Verification Simulation */}
 				<TabsContent value="verification" className="mt-4 space-y-6">
 					<Card>
 						<CardHeader className="border-b border-border bg-muted/30">
@@ -154,6 +153,7 @@ export function BrokerSettingsPage() {
 									<p className="text-sm leading-relaxed">
 										{verificationDetails.legalEntityName} has been verified by{" "}
 										{verificationDetails.licenseAuthority} under License Number:{" "}
+										{/* Monospace so a hand-transcribed licence number keeps 0/O and 1/l apart. */}
 										<span className="font-mono font-semibold">
 											{verificationDetails.financialLicenseNumber}
 										</span>
@@ -253,7 +253,6 @@ export function BrokerSettingsPage() {
 					</Card>
 				</TabsContent>
 
-				{/* Tab 2: Profile Settings */}
 				<TabsContent value="profile" className="mt-4 space-y-6">
 					<Card>
 						<CardHeader>
@@ -323,7 +322,6 @@ export function BrokerSettingsPage() {
 					</Card>
 				</TabsContent>
 
-				{/* Tab 3: Role Boundaries & Compliance */}
 				<TabsContent value="compliance" className="mt-4 space-y-6">
 					<Card className="border-l-4 border-l-[#03442C]">
 						<CardHeader>

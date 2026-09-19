@@ -62,7 +62,6 @@ export function ActiveProjectCard({
 			</CardHeader>
 
 			<CardContent className="space-y-6 p-6 text-sm">
-				{/* Progress Bar */}
 				<div className="space-y-1.5">
 					<div className="flex justify-between font-semibold text-foreground">
 						<span>Overall Execution Progress</span>
@@ -76,7 +75,6 @@ export function ActiveProjectCard({
 					</div>
 				</div>
 
-				{/* Milestones Horizontal Progress Overview */}
 				<div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-5">
 					{project.milestones.map((ms) => {
 						const isDone =
@@ -117,7 +115,6 @@ export function ActiveProjectCard({
 					})}
 				</div>
 
-				{/* Impact Metrics Summary */}
 				<div className="grid grid-cols-2 gap-4 rounded-xl bg-muted p-4 sm:grid-cols-4">
 					<div>
 						<p className="text-muted-foreground">Contracted Value</p>

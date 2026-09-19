@@ -177,10 +177,14 @@ bunx wrangler d1 execute greenshift-db --remote --command "SELECT email, role FR
 
 Passwords are hashed at generation time, so the accounts created remotely are the same logins
 (`business1`…`business5`, `investor1`…`investor5`, `vendor1`…`vendor5`, `broker1`…`broker5`,
-`admin1`…`admin5`, password `12345678`) - change or remove them before the deployment is shared publicly. The
-deployed database holds accounts only. `scripts/accounts.sql` is the idempotent account-only file;
+`admin1`…`admin5`, password `12345678`) - change or remove them before the deployment is shared publicly.
+`scripts/accounts.sql` is the idempotent account-only file.
+
 `scripts/seed.sql` carries the demo fixtures (projects, tenders, bonds, forecasts) and begins with a
-destructive reset, so it must never be pointed at a deployed database.
+destructive reset, so it must never be pointed at a database holding real accounts or projects. It **was**
+applied once to the deployed database, at a point when that database contained nothing but demo accounts and
+no projects at all, so the deployment now carries the full fixture set rather than accounts only. Once real
+data exists there, this is no longer a safe operation.
 
 ## Quality checks
 

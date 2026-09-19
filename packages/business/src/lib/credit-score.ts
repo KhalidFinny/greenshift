@@ -1,8 +1,7 @@
-/* ADR-004.4: Simulasi Credit Scoring turunan (bukan statis).
- * Score 0-100 dari debt-service proxy (penghematan tahunan / (CAPEX / tenor),
- * capped 0-100) plus kontribusi kelengkapan dokumen. Input kosong -> null,
- * tidak pernah skor palsu.
- *
+/* ADR-004.4: the credit score is derived, not stored.
+ * Score 0-100 from a debt-service proxy (annual saving / (CAPEX / tenor),
+ * capped at 0-100) plus the document-completeness contribution. Empty input ->
+ * null, never an invented score.
  * Rating bands (ADR-004.4): >= 85 AAA, 75-84 AA, 65-74 A, 55-64 BBB+,
  * 45-54 BBB, 35-44 BB, < 35 B.
  */

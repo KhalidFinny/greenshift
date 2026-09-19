@@ -76,7 +76,6 @@ export function SubmitProposalDialog({
 				</DialogHeader>
 
 				<div className="px-6 pt-5 pb-6">
-					{/* Project info */}
 					<div className="mb-5 rounded-lg bg-muted p-4">
 						<p className="text-sm font-semibold text-foreground">
 							{project.title}
@@ -94,7 +93,6 @@ export function SubmitProposalDialog({
 						className="space-y-4"
 						noValidate
 					>
-						{/* Bid Price */}
 						<form.AppField
 							name="amount"
 							validators={{
@@ -134,7 +132,6 @@ export function SubmitProposalDialog({
 							}}
 						</form.AppField>
 
-						{/* Operational Cost */}
 						<form.AppField name="operationalCost">
 							{(field) => (
 								<div className="space-y-1.5">
@@ -158,7 +155,6 @@ export function SubmitProposalDialog({
 							)}
 						</form.AppField>
 
-						{/* Warranty */}
 						<form.AppField name="warrantyPeriod">
 							{(field) => (
 								<div className="space-y-1.5">
@@ -183,7 +179,6 @@ export function SubmitProposalDialog({
 							)}
 						</form.AppField>
 
-						{/* PDF Upload */}
 						<div className="space-y-1.5">
 							<Label className="text-sm">Proposal Document</Label>
 							<label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-muted/50 px-4 py-5 text-sm text-muted-foreground transition-colors hover:border-[#00712D]/40 hover:bg-muted">
@@ -193,7 +188,6 @@ export function SubmitProposalDialog({
 							</label>
 						</div>
 
-						{/* Actions */}
 						<div className="flex gap-3 pt-2">
 							<Button
 								type="button"

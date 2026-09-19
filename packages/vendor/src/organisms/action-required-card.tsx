@@ -175,7 +175,6 @@ export function ActionRequiredCard({
 				<CardTitle className="text-lg">Action Required</CardTitle>
 			</CardHeader>
 			<CardContent>
-				{/* Filter tabs */}
 				<div className="mb-4 flex gap-2 border-b border-border pb-3">
 					{loading
 						? FILTERS.map((level) => (
@@ -207,7 +206,6 @@ export function ActionRequiredCard({
 							))}
 				</div>
 
-				{/* Inbox list */}
 				{!loading && paginatedItems.length === 0 ? (
 					<EmptyState
 						icon={<FontAwesomeIcon icon={faClock} />}
@@ -278,7 +276,6 @@ export function ActionRequiredCard({
 					</div>
 				)}
 
-				{/* Pagination */}
 				<div className="mt-4 flex items-center justify-between border-t border-border pt-4">
 					<div className="flex items-center gap-2">
 						<span className="text-sm text-muted-foreground">Show</span>

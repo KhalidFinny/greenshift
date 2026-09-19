@@ -28,7 +28,7 @@ export function BidLeaderboard({
 		return (
 			<div className="space-y-3">
 				<div className="flex items-center gap-2">
-					<FontAwesomeIcon icon={faTrophy} className="text-amber-500" />
+					<FontAwesomeIcon icon={faTrophy} className="text-amber-700" />
 					<h3 className="text-lg font-semibold text-foreground">
 						Live Rankings
 					</h3>
@@ -45,7 +45,7 @@ export function BidLeaderboard({
 	return (
 		<div className="space-y-3">
 			<div className="flex items-center gap-2">
-				<FontAwesomeIcon icon={faTrophy} className="text-amber-500" />
+				<FontAwesomeIcon icon={faTrophy} className="text-amber-700" />
 				<h3 className="text-lg font-semibold text-foreground">Live Rankings</h3>
 			</div>
 

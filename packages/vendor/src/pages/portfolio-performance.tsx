@@ -20,7 +20,6 @@ export function VendorPortfolioPerformancePage() {
 
 	return (
 		<div className="space-y-6">
-			{/* Performance Section */}
 			<section className="space-y-6">
 				<PerformanceHeroCard performanceMetrics={performanceMetrics} />
 				<PerformanceTrendCard
@@ -29,7 +28,6 @@ export function VendorPortfolioPerformancePage() {
 				<PerformanceMetricsGrid metrics={performanceMetrics} />
 			</section>
 
-			{/* Portfolio / Track Record Section */}
 			<section className="space-y-6">
 				<div className="flex items-center justify-between">
 					<div>

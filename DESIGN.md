@@ -136,6 +136,15 @@ hold going forward.
 - **No decorative arrows.** An arrow glyph appears only where it carries a
   direction cue, never as default button ornament.
 - **shadcn primitives only**, from `@greenshift/ui`. No bespoke one-off controls.
+- **Two icon languages, split by layer.** Surface code draws FontAwesome icons;
+  the shadcn primitives in `@greenshift/ui` keep the Lucide glyphs they ship
+  with (chevron, check, close, sort). The reason: those glyphs are internal to a
+  control the product adopted from shadcn, and rewriting them would put the
+  primitives off the upstream they are tracked against. No meaning is carried
+  twice: anything on the page is FontAwesome, a control's own affordance stays
+  Lucide.
+
+  *Recorded during the audit-003 fix pass (F-30). The owner can move or drop it.*
 - **One match signal per card.** No duplicate badges competing to say the same thing.
 - **Data comes from the API or it does not appear.** No fabricated rows, feeds,
   names, or numbers.

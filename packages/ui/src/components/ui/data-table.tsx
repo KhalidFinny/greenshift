@@ -15,6 +15,13 @@ import { cn } from "#/lib/utils";
 import { Button } from "./button";
 import { Input } from "./input";
 import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "./select";
+import {
 	Table,
 	TableBody,
 	TableCell,
@@ -34,6 +41,11 @@ export interface DataTableProps<TData, TValue = unknown> {
 	initialSorting?: SortingState;
 	/** When set, enables the pagination footer with this page size. */
 	pageSize?: number;
+	/**
+	 * Page sizes offered in the footer, `"all"` being "show everything". Only
+	 * read when `pageSize` is set; without it the footer keeps its single size.
+	 */
+	pageSizeOptions?: Array<number | "all">;
 	/** When set, renders a search input bound to the global filter. */
 	searchPlaceholder?: string;
 	emptyMessage?: string;
@@ -62,6 +74,7 @@ export function DataTable<TData, TValue = unknown>({
 	className,
 	initialSorting,
 	pageSize,
+	pageSizeOptions,
 	searchPlaceholder,
 	emptyMessage = "No results.",
 	onRowClick,
@@ -159,7 +172,10 @@ export function DataTable<TData, TValue = unknown>({
 						<TableRow>
 							<TableCell
 								colSpan={columns.length}
-								className="h-24 text-center text-muted-foreground"
+								// The message wraps rather than widening the table past
+								// its container, so a long, filter-aware message cannot
+								// reintroduce a sideways drag on a phone.
+								className="h-24 text-center whitespace-normal text-muted-foreground"
 							>
 								{emptyMessage}
 							</TableCell>
@@ -187,12 +203,45 @@ export function DataTable<TData, TValue = unknown>({
 				</TableBody>
 			</Table>
 
-			{pageSize ? (
+			{/* An empty table has no pages, so the counter would read
+			    "Page 1 of 0" under a message that already says the list is empty. */}
+			{pageSize && table.getPageCount() > 0 ? (
 				<div className="flex items-center justify-between gap-4">
-					<p className="text-base text-muted-foreground">
-						Page {table.getState().pagination.pageIndex + 1} of{" "}
-						{table.getPageCount()}
-					</p>
+					<div className="flex items-center gap-3">
+						{pageSizeOptions ? (
+							<div className="flex items-center gap-2">
+								<span className="text-sm text-muted-foreground">Show</span>
+								<Select
+									value={
+										table.getState().pagination.pageSize >= data.length
+											? "all"
+											: String(table.getState().pagination.pageSize)
+									}
+									onValueChange={(value) => {
+										table.setPageSize(
+											value === "all" ? data.length || 1 : Number(value),
+										);
+										table.setPageIndex(0);
+									}}
+								>
+									<SelectTrigger className="h-8 w-[80px] text-sm">
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										{pageSizeOptions.map((size) => (
+											<SelectItem key={size} value={String(size)}>
+												{size === "all" ? "All" : size}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
+						) : null}
+						<p className="text-base text-muted-foreground">
+							Page {table.getState().pagination.pageIndex + 1} of{" "}
+							{table.getPageCount()}
+						</p>
+					</div>
 					<div className="flex items-center gap-2">
 						<Button
 							variant="outline"

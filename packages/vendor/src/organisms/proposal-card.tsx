@@ -4,6 +4,7 @@ import {
 	CardContent,
 	CardHeader,
 	CardTitle,
+	ShimmerBlock,
 } from "@greenshift/ui";
 import { formatRupiah, formatShortDate } from "../lib/format";
 import { PROPOSAL_STATUS_LABEL, PROPOSAL_STATUS_TONE } from "../lib/labels";
@@ -54,7 +55,7 @@ export function ProposalCard({ proposal, loading = false }: ProposalCardProps) {
 			{/* Only figures the API actually reports. Nothing estimated. */}
 			<CardContent className="flex flex-wrap items-center gap-x-8 gap-y-2 text-sm">
 				{loading ? (
-					<div className="h-4 w-64 animate-none rounded bg-foreground/10" />
+					<ShimmerBlock className="h-4 w-64 rounded" />
 				) : (
 					<>
 						<span className="text-muted-foreground">
