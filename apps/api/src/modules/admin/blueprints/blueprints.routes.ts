@@ -4,7 +4,7 @@ import { createDb } from "../../../db";
 import type { ApiEnv } from "../../../env";
 import { requireRecentStepUp } from "../../../lib/authz";
 import { iso, parseLimit } from "../../../lib/format";
-import { requireJson } from "../../../lib/http";
+import { apiError, apiNotFound, apiSuccess } from "../../../lib/response";
 import { factory } from "../admin.shared";
 import { listBlueprints } from "./blueprints.repository";
 import {
@@ -21,10 +21,7 @@ blueprintRoutes.get(
 		const db = createDb(c.env.DB);
 		const status = c.req.query("status");
 		if (status && !(blueprintStatuses as readonly string[]).includes(status)) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid status" } },
-				400,
-			);
+			return apiError(c, "INVALID_STATUS");
 		}
 		const limit = parseLimit(c.req.query("limit"));
 
@@ -47,9 +44,6 @@ blueprintRoutes.patch(
 	"/blueprints/:id",
 	requireRecentStepUp,
 	...factory.createHandlers(async (c) => {
-		const mediaTypeError = requireJson(c);
-		if (mediaTypeError) return mediaTypeError;
-
 		const id = Number(c.req.param("id"));
 		const body = (await c.req
 			.json()
@@ -61,10 +55,7 @@ blueprintRoutes.patch(
 			typeof status !== "string" ||
 			!(blueprintStatuses as readonly string[]).includes(status)
 		) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid input" } },
-				400,
-			);
+			return apiError(c, "VALIDATION");
 		}
 
 		const result = await updateBlueprint(createDb(c.env.DB), {
@@ -75,32 +66,13 @@ blueprintRoutes.patch(
 		});
 		if (!result.ok) {
 			if (result.reason === "not_found") {
-				return c.json(
-					{ error: { code: "NOT_FOUND", message: "Blueprint not found" } },
-					404,
-				);
+				return apiNotFound(c, "Blueprint");
 			}
 			if (result.reason === "invalid_transition") {
-				return c.json(
-					{
-						error: {
-							code: "VALIDATION",
-							message: "Invalid status transition",
-						},
-					},
-					422,
-				);
+				return apiError(c, "INVALID_TRANSITION");
 			}
-			return c.json(
-				{
-					error: {
-						code: "VALIDATION",
-						message: "Blueprint is not yet complete for publication",
-					},
-				},
-				422,
-			);
+			return apiError(c, "BLUEPRINT_INCOMPLETE");
 		}
-		return c.json({ ok: true });
+		return apiSuccess(c, { ok: true }, "Blueprint status updated");
 	}),
 );

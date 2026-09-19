@@ -186,7 +186,7 @@ export function toMonthlyReport(
 		plannedProgressPercent: report.plannedProgressPercent,
 		actualProgressPercent: report.actualProgressPercent,
 		completedMilestonesCount: report.completedMilestonesCount,
-		currentMilestoneTitle: report.currentMilestoneTitle ?? "—",
+		currentMilestoneTitle: report.currentMilestoneTitle ?? "-",
 		plannedBudgetAmount: report.plannedBudgetAmount,
 		actualSpendingAmount: report.actualSpendingAmount,
 		expectedEnergySavingsKwh: report.expectedEnergySavingsKwh,

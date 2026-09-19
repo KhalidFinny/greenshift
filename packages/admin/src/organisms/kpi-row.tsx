@@ -18,7 +18,12 @@ interface KpiRowProps {
 	totalProjects: number;
 	projectValue: number;
 	totalBonds: number;
+	/** Tonnes of CO2e measured by the MRV reports on file. */
 	co2Reduction: number;
+	/** Tonnes of CO2e the submitted projects target in total. */
+	co2Target: number;
+	/** Data still in flight: same four cards, shimmering values. */
+	loading?: boolean;
 }
 
 export function KpiRow({
@@ -28,7 +33,12 @@ export function KpiRow({
 	projectValue,
 	totalBonds,
 	co2Reduction,
+	co2Target,
+	loading = false,
 }: KpiRowProps) {
+	const co2Share =
+		co2Target > 0 ? Math.round((co2Reduction / co2Target) * 100) : 0;
+	// Labels and icons are static, so they stay real text while loading.
 	const cards = [
 		{
 			label: "Total Organizations",
@@ -46,7 +56,7 @@ export function KpiRow({
 			label: "CO₂ Reduction",
 			value: `${co2Reduction} tons`,
 			icon: faSeedling,
-			sub: "target 100 tons/year",
+			sub: `${co2Share}% of the ${co2Target} tons projects target`,
 		},
 		{
 			label: "Project Value",
@@ -65,6 +75,7 @@ export function KpiRow({
 					value={card.value}
 					sub={card.sub}
 					icon={card.icon}
+					loading={loading}
 				/>
 			))}
 		</div>

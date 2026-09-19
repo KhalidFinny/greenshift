@@ -1,31 +1,29 @@
 import { api } from "@greenshift/core";
-import { Button, ContentSkeleton } from "@greenshift/ui";
+import { Button, EmptyState } from "@greenshift/ui";
 import { useQuery } from "@tanstack/react-query";
-import {
-	ACTIVITY_DATA,
-	BLUEPRINT_META,
-	DEMO_BLUEPRINTS,
-	DEMO_PROJECTS,
-	DEMO_STATS,
-	DEMO_USERS,
-	PENDING_ACTIONS,
-	SYSTEM_COMPONENTS,
-	SYSTEM_SUCCESS_RATE,
-	SYSTEM_UPTIME,
-} from "../lib/demo-data";
 import type { ExportSection } from "../lib/export";
-import { formatDateTime } from "../lib/format";
-import { BottomRow } from "../organisms/bottom-row";
+import { formatDateTime, formatMonth } from "../lib/format";
+import { BLUEPRINT_META } from "../lib/labels";
 import { ChartsRow } from "../organisms/charts-row";
 import { ExportMenu } from "../organisms/export-menu";
 import { KanbanRow } from "../organisms/kanban-row";
 import { KpiRow } from "../organisms/kpi-row";
+import { PendingActionsCard } from "../organisms/pending-actions";
+import { PlatformStatusCard } from "../organisms/platform-status";
 import { AccountsTable, BlueprintsTable } from "../organisms/tables";
 
 export function AdminDashboard() {
-	const stats = useQuery({
+	const statsQuery = useQuery({
 		queryKey: ["admin", "stats"],
 		queryFn: () => api.admin.stats(),
+	});
+	const analyticsQuery = useQuery({
+		queryKey: ["admin", "analytics"],
+		queryFn: () => api.admin.analytics(),
+	});
+	const anomaliesQuery = useQuery({
+		queryKey: ["admin", "anomalies"],
+		queryFn: () => api.admin.anomalies(),
 	});
 	const usersQuery = useQuery({
 		queryKey: ["admin", "users", "latest"],
@@ -39,57 +37,74 @@ export function AdminDashboard() {
 		queryKey: ["admin", "projects", "kanban"],
 		queryFn: () => api.admin.projects({ limit: 50 }),
 	});
+	// The probe is optional: without it the status card reports itself as unknown
+	// rather than taking the whole console down.
+	const healthQuery = useQuery({
+		queryKey: ["admin", "health"],
+		queryFn: () => api.system.health(),
+		retry: false,
+	});
 
 	if (
-		stats.isPending ||
-		usersQuery.isPending ||
-		blueprintsQuery.isPending ||
-		projectsQuery.isPending
-	) {
-		return <ContentSkeleton />;
-	}
-
-	if (
-		stats.isError ||
+		statsQuery.isError ||
+		analyticsQuery.isError ||
+		anomaliesQuery.isError ||
 		usersQuery.isError ||
 		blueprintsQuery.isError ||
 		projectsQuery.isError
 	) {
 		return (
-			<div className="space-y-4">
-				<p className="text-muted-foreground">Failed to load dashboard.</p>
-				<Button
-					variant="outline"
-					onClick={() => {
-						stats.refetch();
-						usersQuery.refetch();
-						blueprintsQuery.refetch();
-					}}
-				>
-					Try again
-				</Button>
-			</div>
+			<EmptyState
+				tone="error"
+				title="Dashboard data did not load"
+				description="The console could not reach the admin endpoints behind platform stats, analytics, anomalies, accounts, or blueprints."
+				action={
+					<Button
+						variant="outline"
+						onClick={() => {
+							void Promise.all([
+								statsQuery.refetch(),
+								analyticsQuery.refetch(),
+								anomaliesQuery.refetch(),
+								usersQuery.refetch(),
+								blueprintsQuery.refetch(),
+								projectsQuery.refetch(),
+							]);
+						}}
+					>
+						Try again
+					</Button>
+				}
+			/>
 		);
 	}
 
-	const raw = stats.data;
-	const hasData = Object.values(raw.users).reduce((a, b) => a + b, 0) > 0;
-	const data = hasData ? raw : DEMO_STATS;
-	const users =
-		usersQuery.data.users.length > 0 ? usersQuery.data.users : DEMO_USERS;
-	const blueprints =
-		blueprintsQuery.data.blueprints.length > 0
-			? blueprintsQuery.data.blueprints
-			: DEMO_BLUEPRINTS;
-	const projects =
-		projectsQuery.data.projects.length > 0
-			? projectsQuery.data.projects
-			: DEMO_PROJECTS;
+	// Cached data survives a refetch, so the page keeps its real frames and each
+	// card shimmers its own values instead of the whole console blanking out.
+	const loading =
+		statsQuery.isPending ||
+		analyticsQuery.isPending ||
+		anomaliesQuery.isPending ||
+		usersQuery.isPending ||
+		blueprintsQuery.isPending ||
+		projectsQuery.isPending;
 
-	const activeProjects =
-		(data.projects.funding ?? 0) + (data.projects.monitoring ?? 0);
-	const totalProjects = Object.values(data.projects).reduce((a, b) => a + b, 0);
-	const co2Reduction = 49.77;
+	const stats = statsQuery.data;
+	const analytics = analyticsQuery.data;
+	const users = usersQuery.data?.users ?? [];
+	const blueprints = blueprintsQuery.data?.blueprints ?? [];
+	const projects = projectsQuery.data?.projects ?? [];
+
+	const activeProjects = stats
+		? (stats.projects.funding ?? 0) + (stats.projects.monitoring ?? 0)
+		: 0;
+	const totalProjects = stats
+		? Object.values(stats.projects).reduce((a, b) => a + b, 0)
+		: 0;
+	const activityData = (analytics?.monthly ?? []).map((point) => ({
+		label: formatMonth(point.month),
+		value: point.projects,
+	}));
 
 	const sections: ExportSection[] = [
 		{
@@ -110,7 +125,7 @@ export function AdminDashboard() {
 					user.email,
 					user.role,
 					user.companyName ?? "-",
-					user.vendorProfile ? "✓" : "-",
+					user.vendorProfile ? "Yes" : "No",
 					user.verifiedAt !== null ? "Verified" : "Not verified",
 					formatDateTime(user.createdAt),
 				]),
@@ -131,43 +146,53 @@ export function AdminDashboard() {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex flex-wrap items-end justify-between gap-4">
-				<div>
-					<h1 className="text-2xl font-semibold">Dashboard</h1>
-					<p className="mt-1 text-base text-muted-foreground">
-						Green financing platform overview.
-					</p>
-				</div>
-				<ExportMenu
-					filename="dashboard"
-					title="Dashboard"
-					sections={sections}
-				/>
+			<div className="flex flex-wrap items-center justify-end gap-4">
+				{loading ? null : (
+					<ExportMenu
+						filename="dashboard"
+						title="Dashboard"
+						sections={sections}
+					/>
+				)}
 			</div>
 
 			<KpiRow
-				companies={data.companies}
+				loading={loading}
+				companies={stats?.companies ?? 0}
 				activeProjects={activeProjects}
 				totalProjects={totalProjects}
-				projectValue={data.investments.sum}
-				totalBonds={data.investments.total}
-				co2Reduction={co2Reduction}
+				projectValue={stats?.investments.sum ?? 0}
+				totalBonds={stats?.investments.total ?? 0}
+				co2Reduction={analytics?.totals.carbonReduction ?? 0}
+				co2Target={analytics?.totals.carbonReductionTarget ?? 0}
 			/>
 
-			<ChartsRow activityData={ACTIVITY_DATA} carbonReduction={co2Reduction} />
-
-			<KanbanRow projects={projects} />
-
-			<BottomRow
-				pendingActions={PENDING_ACTIONS}
-				successRate={SYSTEM_SUCCESS_RATE}
-				uptime={SYSTEM_UPTIME}
-				components={SYSTEM_COMPONENTS}
+			<ChartsRow
+				loading={loading}
+				activityData={activityData}
+				carbonReduction={analytics?.totals.carbonReduction ?? 0}
+				carbonTarget={analytics?.totals.carbonReductionTarget ?? 0}
 			/>
+
+			<KanbanRow loading={loading} projects={projects} />
 
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-				<AccountsTable users={users} />
-				<BlueprintsTable blueprints={blueprints} />
+				<PendingActionsCard
+					loading={anomaliesQuery.isPending}
+					actions={anomaliesQuery.data?.flags ?? []}
+				/>
+				<PlatformStatusCard
+					loading={healthQuery.isPending}
+					health={healthQuery.data}
+				/>
+			</div>
+
+			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+				<AccountsTable loading={usersQuery.isPending} users={users} />
+				<BlueprintsTable
+					loading={blueprintsQuery.isPending}
+					blueprints={blueprints}
+				/>
 			</div>
 		</div>
 	);

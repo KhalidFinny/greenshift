@@ -5,7 +5,7 @@ import { projectStatuses } from "../../../db/schema";
 import type { ApiEnv } from "../../../env";
 import { requireRecentStepUp } from "../../../lib/authz";
 import { parseLimit } from "../../../lib/format";
-import { requireJson } from "../../../lib/http";
+import { apiError, apiNotFound, apiSuccess } from "../../../lib/response";
 import { factory } from "../admin.shared";
 import { listProjects } from "./projects.repository";
 import { changeProjectStatus } from "./projects.service";
@@ -18,10 +18,7 @@ projectRoutes.get(
 		const db = createDb(c.env.DB);
 		const status = c.req.query("status");
 		if (status && !(projectStatuses as readonly string[]).includes(status)) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid status" } },
-				400,
-			);
+			return apiError(c, "INVALID_STATUS");
 		}
 		const limit = parseLimit(c.req.query("limit"));
 
@@ -47,9 +44,6 @@ projectRoutes.patch(
 	"/projects/:id/status",
 	requireRecentStepUp,
 	...factory.createHandlers(async (c) => {
-		const mediaTypeError = requireJson(c);
-		if (mediaTypeError) return mediaTypeError;
-
 		const id = Number(c.req.param("id"));
 		const body = (await c.req
 			.json()
@@ -61,10 +55,7 @@ projectRoutes.patch(
 			typeof status !== "string" ||
 			!(projectStatuses as readonly string[]).includes(status)
 		) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid input" } },
-				400,
-			);
+			return apiError(c, "VALIDATION");
 		}
 
 		const result = await changeProjectStatus(createDb(c.env.DB), {
@@ -73,11 +64,8 @@ projectRoutes.patch(
 			actorId: c.get("user").id,
 		});
 		if (!result.ok) {
-			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Project not found" } },
-				404,
-			);
+			return apiNotFound(c, "Project");
 		}
-		return c.json({ ok: true });
+		return apiSuccess(c, { ok: true }, "Project status updated");
 	}),
 );

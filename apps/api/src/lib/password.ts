@@ -1,8 +1,8 @@
-// OWASP Password Storage Cheat Sheet: >= 600k for PBKDF2-HMAC-SHA256.
-const ITERATIONS = 600_000;
-// Upper bound read from stored hashes; anything above is rejected to avoid
-// a poisoned hash string forcing excessive CPU on verify.
-const MAX_ITERATIONS = 1_000_000;
+// workerd rejects PBKDF2 iteration counts above 100,000 ("iteration counts above
+// 100000 are not supported"), so this ceiling is the strongest PBKDF2-HMAC-SHA256
+// setting that can run in production - well below the 600k the OWASP Password
+// Storage Cheat Sheet asks for, which the runtime cannot derive at all.
+const ITERATIONS = 100_000;
 const STORED_HASH_RE = /^pbkdf2\$(\d+)\$([0-9a-f]{32})\$([0-9a-f]{64})$/;
 
 function toHex(bytes: Uint8Array): string {
@@ -29,6 +29,10 @@ function parseStoredHash(stored: string) {
 	if (!match) return null;
 	const iterations = Number(match[1]);
 	if (!Number.isInteger(iterations) || iterations <= 0) return null;
+	// A stored count above the platform ceiling cannot be derived at all on
+	// workerd, so the hash is unusable rather than merely expensive: report it as
+	// invalid instead of letting WebCrypto throw on every login attempt.
+	if (iterations > ITERATIONS) return null;
 	return {
 		iterations,
 		saltHex: match[2],
@@ -65,7 +69,6 @@ export async function verifyPassword(
 	const parsed = parseStoredHash(stored);
 	if (!parsed) return false;
 
-	const effectiveIterations = Math.min(parsed.iterations, MAX_ITERATIONS);
 	const salt = fromHex(parsed.saltHex);
 	const key = await crypto.subtle.importKey(
 		"raw",
@@ -79,7 +82,7 @@ export async function verifyPassword(
 			name: "PBKDF2",
 			hash: "SHA-256",
 			salt,
-			iterations: effectiveIterations,
+			iterations: parsed.iterations,
 		},
 		key,
 		256,

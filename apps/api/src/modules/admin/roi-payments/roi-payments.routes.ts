@@ -4,6 +4,7 @@ import { createDb } from "../../../db";
 import type { ApiEnv } from "../../../env";
 import { requireRecentStepUp } from "../../../lib/authz";
 import { iso, parseLimit } from "../../../lib/format";
+import { apiError, apiNotFound, apiSuccess } from "../../../lib/response";
 import { factory } from "../admin.shared";
 import { listRoiPayments } from "./roi-payments.repository";
 import { payRoiPayment } from "./roi-payments.service";
@@ -19,10 +20,7 @@ roiPaymentRoutes.get(
 		const limit = parseLimit(c.req.query("limit"));
 
 		if (status && !validStatuses.includes(status)) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid status" } },
-				400,
-			);
+			return apiError(c, "INVALID_STATUS");
 		}
 
 		const rows = await listRoiPayments(db, status, limit);
@@ -52,10 +50,7 @@ roiPaymentRoutes.post(
 	...factory.createHandlers(async (c) => {
 		const id = Number(c.req.param("id"));
 		if (!Number.isInteger(id) || id <= 0) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid ID" } },
-				400,
-			);
+			return apiError(c, "INVALID_ID");
 		}
 
 		const result = await payRoiPayment(createDb(c.env.DB), {
@@ -64,22 +59,15 @@ roiPaymentRoutes.post(
 		});
 		if (!result.ok) {
 			if (result.reason === "not_found") {
-				return c.json(
-					{ error: { code: "NOT_FOUND", message: "Payment not found" } },
-					404,
-				);
+				return apiNotFound(c, "Payment");
 			}
-			return c.json(
-				{
-					error: {
-						code: "ALREADY_PAID",
-						message: "Payment already processed",
-					},
-				},
-				409,
-			);
+			return apiError(c, "ALREADY_PAID");
 		}
 
-		return c.json({ ok: true, escrowTxId: result.escrowTxId });
+		return apiSuccess(
+			c,
+			{ ok: true, escrowTxId: result.escrowTxId },
+			"ROI payment disbursed via escrow",
+		);
 	}),
 );

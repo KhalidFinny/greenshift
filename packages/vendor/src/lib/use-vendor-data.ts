@@ -229,6 +229,21 @@ export function useVendorData() {
 		},
 	});
 
+	const { mutate: submitProposal } = useMutation({
+		mutationFn: (body: {
+			tenderId: number;
+			amount: number;
+			technicalSpec: string;
+			operationalCost: number;
+			projectedRoi: number;
+			warrantyPeriod: number;
+		}) => api.vendor.submitProposal(body),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["vendor", "proposals"] });
+			queryClient.invalidateQueries({ queryKey: ["vendor", "leaderboard"] });
+		},
+	});
+
 	const { mutate: createPortfolioItem } = useMutation({
 		mutationFn: (item: VendorPortfolioItem) =>
 			api.vendor.addPortfolioItem({
@@ -238,11 +253,11 @@ export function useVendorData() {
 				location: item.location,
 				description: item.description,
 				projectValue: item.projectValue,
-				durationMonths: item.durationMonths,
+				durationMonths: item.durationMonths ?? undefined,
 				servicesProvided: item.servicesProvided,
-				energySavingPercent: item.energySavingPercent,
-				carbonReductionTons: item.carbonReductionTons,
-				completionYear: item.completionYear,
+				energySavingPercent: item.energySavingPercent ?? undefined,
+				carbonReductionTons: item.carbonReductionTons ?? undefined,
+				completionYear: item.completionYear ?? undefined,
 				status: item.status,
 				documentName: item.documentName,
 			}),
@@ -374,6 +389,7 @@ export function useVendorData() {
 		projects,
 		leaderboard: leaderboard.entries,
 		leaderboardMeta: {
+			tenderId: leaderboard.tenderId,
 			myRank: leaderboard.myRank,
 			myAmount: leaderboard.myAmount,
 			projectTitle: leaderboard.projectTitle,
@@ -387,6 +403,7 @@ export function useVendorData() {
 		notifications,
 		toggleSaveProject,
 		placeOpenBid,
+		submitProposal,
 		submitNegotiationResponse,
 		submitMilestoneEvidence,
 		addPortfolioItem,

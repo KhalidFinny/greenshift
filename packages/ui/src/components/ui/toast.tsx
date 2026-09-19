@@ -228,7 +228,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 			{children}
 			<div
 				aria-live="polite"
-				className="pointer-events-none fixed inset-x-0 top-0 z-[100] flex flex-col items-center gap-2 px-4 pt-4"
+				className="pointer-events-none fixed right-0 top-0 z-[100] flex flex-col items-end gap-2 px-4 pt-4"
 			>
 				{items.map((item) => (
 					<ToastCard

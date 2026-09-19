@@ -1,40 +1,4 @@
-import { hashPassword } from "../apps/api/src/lib/password";
-
-const users = [
-	{
-		username: "business1",
-		name: "PT Green Nusantara",
-		role: "business",
-		companyName: "PT Green Nusantara",
-	},
-	{
-		username: "vendor1",
-		name: "EcoTech Solutions",
-		role: "vendor",
-		companyName: "EcoTech Solutions",
-	},
-	{
-		username: "broker1",
-		name: "Capital Green Securities",
-		role: "broker",
-		companyName: "Capital Green Securities",
-	},
-	{
-		username: "vendor2",
-		name: "Eco Power Indonesia",
-		role: "vendor",
-		companyName: "PT Eco Power Indonesia",
-	},
-	{
-		username: "vendor3",
-		name: "Bio Thermal Energy",
-		role: "vendor",
-		companyName: "PT Bio Thermal Energy",
-	},
-	{ username: "admin", name: "Administrator", role: "admin", companyName: null },
-] as const;
-
-const PASSWORD = "12345678";
+import { buildAccountStatements } from "./accounts";
 
 const nowTs = (offsetDays = 0) =>
 	offsetDays === 0
@@ -63,24 +27,55 @@ export interface SeedGroups {
 	broker: string[];
 }
 
+/**
+ * Reset preamble for the full set. The fixtures below insert fixed accounts and
+ * unique keys, so without this the file only applies to a clean database. The
+ * order is children before parents, matching the foreign keys, so it satisfies
+ * them at every step.
+ *
+ * The `broker` group deliberately carries no reset: it is applied on top of an
+ * existing database by scripts/setup-broker.ts.
+ */
+const RESET_TABLES = [
+	"audit_logs",
+	"blueprints",
+	"emission_reports",
+	"energy_forecasts",
+	"notifications",
+	"project_documents",
+	"proposal_revisions",
+	"risk_assessments",
+	"roi_payments",
+	"vendor_match_scores",
+	"milestone_evidence",
+	"negotiations",
+	"project_milestones",
+	"vendor_portfolio_items",
+	"broker_profiles",
+	"document_requests",
+	"investments",
+	"proposals",
+	"tenders",
+	"vendor_profiles",
+	"broker_assignments",
+	"projects",
+	"users",
+];
+
 /** Builds the seed statements. `bun scripts/seed.ts` prints the full set. */
 export async function buildSeed(): Promise<SeedGroups> {
 	const brokerLines: string[] = [];
-	const lines = await Promise.all(
-		users.map(async (user) => {
-			const hash = await hashPassword(PASSWORD);
-			const values = [
-				`'${user.username}@greenshift.dev'`,
-				`'${user.role}'`,
-				`'${user.name}'`,
-				`'${hash}'`,
-				user.companyName ? `'${user.companyName}'` : "NULL",
-				"(strftime('%s','now')*1000)",
-				"(strftime('%s','now')*1000)",
-			].join(", ");
-			return `INSERT INTO users (email, role, name, hashed_password, company_name, created_at, updated_at) VALUES (${values});`;
-		}),
-	);
+	const lines = [
+		// The reset below is destructive by design: everything the fixtures own is
+		// deleted before it is re-inserted. That is what makes the file re-runnable
+		// locally, and it is also why it must never be pointed at a database that
+		// holds real accounts or projects.
+		"-- GreenShift demo fixtures. Resets the tables it owns, then re-inserts",
+		"-- them, so the file is safe to re-run against a local database. It",
+		"-- destroys the rows it manages: never load it onto a live database.",
+		...RESET_TABLES.map((table) => `DELETE FROM ${table};`),
+		...(await buildAccountStatements()),
+	];
 
 	// Vendor-domain fixtures so the vendor API is exercisable end-to-end:
 	// P1 has an open tender without a bid (demo POST /proposals + duplicate 409);
@@ -135,7 +130,7 @@ export async function buildSeed(): Promise<SeedGroups> {
 	WHERE project_id = ${projectId("Biomass Boiler")};`,
 	);
 
-	const verifiedBy = "(SELECT id FROM users WHERE email = 'admin@greenshift.dev')";
+	const verifiedBy = "(SELECT id FROM users WHERE email = 'admin1@greenshift.dev')";
 
 	// Public bond dashboard fixtures so the dashboard is exercisable without
 	// an account: two projects already past procurement (funding + published
@@ -343,7 +338,697 @@ export async function buildSeed(): Promise<SeedGroups> {
 
 	// Keep the broker group in the full output as well, in order.
 	lines.push(...brokerLines);
+
+	// Then bring every other list up to the floor of five rows.
+	lines.push(...buildVolumeFixtures());
+
+	// Audit trail. The admin Audit Log page reads this table, so the demo carries
+	// the decisions behind the fixtures above rather than an empty page. Actions
+	// and actors are the ones the modules themselves write, and every entry
+	// lands after the row it references.
+	const actor = (email: string) =>
+		`(SELECT id FROM users WHERE email = '${email}')`;
+	const ADMIN = actor("admin1@greenshift.dev");
+	const VENDOR1 = actor("vendor1@greenshift.dev");
+
+	lines.push(
+		`INSERT INTO audit_logs (project_id, user_id, action, entity_type, entity_id, metadata, created_at)
+	VALUES (${projectId("Textile Factory Retrofit")}, ${BUSINESS}, 'project.status_changed', 'project', ${projectId("Textile Factory Retrofit")}, '{"from":"draft","to":"tendering"}', ${nowTs(-45)});`,
+		`INSERT INTO audit_logs (project_id, user_id, action, entity_type, entity_id, metadata, created_at)
+	VALUES (${projectId("Factory Chiller Retrofit")}, ${ADMIN}, 'blueprint.status_changed', 'blueprint', (SELECT id FROM blueprints WHERE project_id = ${projectId("Factory Chiller Retrofit")}), '{"to":"published"}', ${nowTs(-112)});`,
+		`INSERT INTO audit_logs (project_id, user_id, action, entity_type, entity_id, metadata, created_at)
+	VALUES (${projectId("Factory Chiller Retrofit")}, ${ADMIN}, 'user.verified', 'user', ${BUSINESS}, '{"role":"business"}', ${nowTs(-40)});`,
+		`INSERT INTO audit_logs (project_id, user_id, action, entity_type, entity_id, metadata, created_at)
+	VALUES (${projectId("Solar Rooftop 500 kWp")}, ${VENDOR1}, 'vendor.verified', 'vendor_profile', ${VENDOR}, '{"companyName":"EcoTech Solutions"}', ${nowTs(-30)});`,
+		`INSERT INTO audit_logs (project_id, user_id, action, entity_type, entity_id, metadata, created_at)
+	VALUES (${projectId("Solar Rooftop 500 kWp")}, ${VENDOR1}, 'vendor.profile_updated', 'vendor_profile', ${VENDOR}, '{"companyName":"EcoTech Solutions"}', ${nowTs(-30)});`,
+		`INSERT INTO audit_logs (project_id, user_id, action, entity_type, entity_id, metadata, created_at)
+	VALUES (${projectId("Solar Rooftop 500 kWp")}, ${VENDOR1}, 'proposal.submitted', 'proposal', (SELECT id FROM proposals WHERE tender_id = ${tenderId("Solar Rooftop 500 kWp")}), '{"amount":850000000}', ${nowTs(-5)});`,
+		`INSERT INTO audit_logs (project_id, user_id, action, entity_type, entity_id, metadata, created_at)
+	VALUES (${projectId("Factory Chiller Retrofit")}, ${BUSINESS}, 'proposal.submitted', 'proposal', (SELECT id FROM proposals WHERE tender_id = ${tenderId("Factory Chiller Retrofit")}), '{"amount":480000000}', ${nowTs(-66)});`,
+		`INSERT INTO audit_logs (project_id, user_id, action, entity_type, entity_id, metadata, created_at)
+	VALUES (${projectId("Industrial Waste Heat Recovery")}, ${ADMIN}, 'project.status_changed', 'project', ${projectId("Industrial Waste Heat Recovery")}, '{"from":"tendering","to":"funding"}', ${nowTs(-20)});`,
+		`INSERT INTO audit_logs (project_id, user_id, action, entity_type, entity_id, metadata, created_at)
+	VALUES (${projectId("Biomass Boiler")}, ${ADMIN}, 'blueprint.status_changed', 'blueprint', (SELECT id FROM blueprints WHERE project_id = ${projectId("Biomass Boiler")}), '{"to":"validated"}', ${nowTs(-22)});`,
+		`INSERT INTO audit_logs (project_id, user_id, action, entity_type, entity_id, metadata, created_at)
+	VALUES (${projectId("Factory Chiller Retrofit")}, ${BROKER}, 'broker.assignment_accepted', 'broker_assignment', ${brokerAssignmentId("Factory Chiller Retrofit")}, NULL, ${nowTs(-38)});`,
+		`INSERT INTO audit_logs (project_id, user_id, action, entity_type, entity_id, metadata, created_at)
+	VALUES (${projectId("Factory Chiller Retrofit")}, ${BROKER}, 'broker.document_requested', 'document_request', (SELECT id FROM document_requests WHERE document_type_name = 'Audited Financial Statements'), '{"documentTypeName":"Audited Financial Statements"}', ${nowTs(-24)});`,
+		`INSERT INTO audit_logs (project_id, user_id, action, entity_type, entity_id, metadata, created_at)
+	VALUES (${projectId("Cold Storage Efficiency Retrofit")}, ${BROKER}, 'broker.assignment_declined', 'broker_assignment', ${brokerAssignmentId("Cold Storage Efficiency Retrofit")}, '{"reason":"Underwriting requirements not met at this tenor."}', ${nowTs(-24)});`,
+		`INSERT INTO audit_logs (project_id, user_id, action, entity_type, entity_id, metadata, created_at)
+	VALUES (${projectId("Biomass Boiler")}, ${BROKER}, 'broker.bond_status_updated', 'broker_assignment', ${brokerAssignmentId("Biomass Boiler")}, '{"from":"IN_PROGRESS","to":"ISSUED"}', ${nowTs(-34)});`,
+		`INSERT INTO audit_logs (project_id, user_id, action, entity_type, entity_id, metadata, created_at)
+	VALUES (${projectId("Biomass Boiler")}, ${BROKER}, 'milestone.evidence.uploaded', 'milestone_evidence', (SELECT id FROM milestone_evidence WHERE file_name = 'Factory_Acceptance_Test_Report.pdf'), '{"milestoneId":2,"fileName":"Factory_Acceptance_Test_Report.pdf"}', ${nowTs(-3)});`,
+		`INSERT INTO audit_logs (project_id, user_id, action, entity_type, entity_id, metadata, created_at)
+	VALUES (${projectId("Biomass Boiler")}, ${ADMIN}, 'project.status_changed', 'project', ${projectId("Biomass Boiler")}, '{"from":"funding","to":"monitoring"}', ${nowTs(-3)});`,
+	);
+
 	return { full: lines, broker: brokerLines };
+}
+
+/** Every list a signed-in role can open carries at least this many rows. */
+const ROW_FLOOR = 5;
+
+const MEASURES = [
+	"Boiler Retrofit",
+	"Solar Rooftop PV",
+	"Chiller Replacement",
+	"LED Relamping",
+	"Compressed Air Upgrade",
+	"Waste Heat Recovery",
+	"Motor Efficiency",
+	"Biomass Conversion",
+];
+const CITIES = [
+	"Cilacap",
+	"Bekasi",
+	"Karawang",
+	"Sidoarjo",
+	"Gresik",
+	"Malang",
+	"Pasuruan",
+	"Surabaya",
+	"Semarang",
+	"Tangerang",
+];
+const SECTORS = [
+	"textile",
+	"manufacturing",
+	"food & beverage",
+	"chemical",
+	"paper",
+	"cement",
+	"base metals",
+	"cold chain & logistics",
+];
+const BUSINESS_EMAILS = [
+	"business1",
+	"business2",
+	"business3",
+	"business4",
+	"business5",
+];
+const VENDOR_EMAILS = ["vendor1", "vendor2", "vendor3", "vendor4", "vendor5"];
+const BROKER_EMAILS = ["broker1", "broker2", "broker3", "broker4", "broker5"];
+const INVESTOR_EMAILS = [
+	"investor1",
+	"investor2",
+	"investor3",
+	"investor4",
+	"investor5",
+];
+const VENDOR_COMPANIES = [
+	"EcoTech Solutions",
+	"PT Eco Power Indonesia",
+	"PT Bio Thermal Energy",
+	"PT Solar Cipta Energi",
+	"PT Efisiensi Mesin Nusantara",
+];
+
+/**
+ * Indices whose measures give the five discovery tenders one distinct vendor
+ * speciality each (boiler, solar, chiller, motor, biomass), so every vendor has
+ * a top-ranked opportunity on its own Discover page.
+ */
+const DISCOVERY_INDICES = [0, 1, 2, 6, 7] as const;
+
+const userByEmail = (email: string) =>
+	`(SELECT id FROM users WHERE email = '${email}@greenshift.dev')`;
+
+/**
+ * Title of the nth generated project. The title repeats once n%8 and n%10
+ * repeat together, i.e. every 40 values, so callers must keep their indices
+ * inside one 40-wide band: 0-4 for the discovery tenders and 10-34 for the
+ * broker stage. The uniqueness guard below enforces that.
+ */
+const generatedTitle = (n: number) =>
+	`${MEASURES[n % MEASURES.length]}, ${CITIES[n % CITIES.length]} Plant`;
+
+/** The fixture lookups find a project, a tender and a vendor by name, so a
+ * repeated title would silently point two statements at the same row. */
+const usedTitles = new Set<string>();
+
+function claimTitle(n: number): string {
+	const title = generatedTitle(n);
+	if (usedTitles.has(title)) {
+		throw new Error(`duplicate generated project title: ${title}`);
+	}
+	usedTitles.add(title);
+	return title;
+}
+
+/** A project carries exactly one broker assignment, so this lookup is unique. */
+const assignmentIdFor = (title: string) =>
+	`(SELECT id FROM broker_assignments WHERE project_id = ${projectId(title)})`;
+
+/**
+ * Volume fixtures. The statements in `buildSeed` above tell the curated demo
+ * story; this block fills the remaining lists a signed-in role can open: vendor
+ * discovery, deals, negotiations, portfolio and notification feed; broker
+ * assignments, document requests and reports; admin users, vendors and audit
+ * log; and the public bond catalog, so none of them renders an empty state.
+ *
+ * Everything here is generated from the small tables above rather than hand
+ * written, because the only requirement is that each list reaches ROW_FLOOR.
+ */
+function buildVolumeFixtures(): string[] {
+	const out: string[] = [];
+
+	// ── vendor profiles beyond the story fixtures ─────────────
+	for (const v of [
+		{
+			email: "vendor4",
+			company: "PT Solar Cipta Energi",
+			description:
+				"Solar PV engineering, procurement and construction for rooftop and ground-mount systems, including net-metering permits.",
+			certifications: '["SNI ISO 9001","K3 Certificate","IUPTLU Solar"]',
+			portfolio:
+				'["Rooftop solar 500 kWp PT Tekstil Jaya (2025)","Ground-mount 1 MWp PT Sawit Lestari (2024)"]',
+			rating: 4.3,
+			total: 7,
+		},
+		{
+			email: "vendor5",
+			company: "PT Efisiensi Mesin Nusantara",
+			description:
+				"Industrial motor and drive efficiency specialist: energy audits, IE3 retrofits and variable speed drive integration.",
+			certifications: '["SNI ISO 50001","K3 Certificate"]',
+			portfolio:
+				'["IE3 motor retrofit PT Kertas Nusantara (2025)","VSD integration PT Baja Prima (2024)"]',
+			rating: 4.1,
+			total: 5,
+		},
+	]) {
+		out.push(
+			`INSERT INTO vendor_profiles (user_id, company_name, description, certifications, portfolio, rating, total_projects, verified_at, created_at)
+	SELECT id, '${v.company}', '${v.description}', '${v.certifications}', '${v.portfolio}', ${v.rating}, ${v.total}, ${nowTs(-150)}, ${nowTs(-150)} FROM users WHERE email = '${v.email}@greenshift.dev';`,
+		);
+	}
+
+	// ── broker profiles beyond broker1 ───────────────────────
+	for (const b of [
+		{
+			email: "broker2",
+			company: "Nusantara Sekuritas Hijau",
+			rep: "Rina Kusuma, CSA",
+			domain: "nusantarasekuritas.co.id",
+			nib: "9120803410292",
+			license: "KEP-46/D.04/2023",
+		},
+		{
+			email: "broker3",
+			company: "Mitra Obligasi Indonesia",
+			rep: "Hendra Gunawan, CSA",
+			domain: "mitraobligasi.co.id",
+			nib: "9120803410293",
+			license: "KEP-47/D.04/2023",
+		},
+		{
+			email: "broker4",
+			company: "Pacific Sustainable Capital",
+			rep: "Maria Tanuwijaya, CSA",
+			domain: "pacificsustainable.co.id",
+			nib: "9120803410294",
+			license: "KEP-48/D.04/2023",
+		},
+		{
+			email: "broker5",
+			company: "Graha Green Underwriters",
+			rep: "Yusuf Maulana, CSA",
+			domain: "grahagreen.co.id",
+			nib: "9120803410295",
+			license: "KEP-49/D.04/2023",
+		},
+	]) {
+		out.push(
+			`INSERT INTO broker_profiles (user_id, company_name, description, representative, contact_email, contact_phone, website, address, nib, financial_license_number, license_authority, submitted_at, verified_at, created_at, updated_at)
+	SELECT id, '${b.company}', 'Green bond underwriter and financial intermediary for verified industrial decarbonisation projects.', '${b.rep}', 'contact@${b.domain}', '+62 21 5000 1200', 'https://${b.domain}', 'Jakarta, Indonesia', '${b.nib}', '${b.license}', 'Financial Services Authority (OJK)', ${nowTs(-60)}, ${nowTs(-59)}, ${nowTs(-60)}, ${nowTs(-60)} FROM users WHERE email = '${b.email}@greenshift.dev';`,
+		);
+	}
+
+	// ── vendor discovery: open tenders with a live negotiation ─
+	// Five open tenders carry vendor1 bids in negotiation, so Discover and the
+	// negotiation inbox are populated without disturbing the bid-free tender the
+	// story fixtures keep for the submit-and-conflict demo.
+	for (const n of DISCOVERY_INDICES) {
+		const title = claimTitle(n);
+		const budget = 400000000 + n * 150000000;
+		const bid = Math.round(budget * 0.88);
+
+		out.push(
+			`INSERT INTO projects (company_id, title, description, status, budget, location, industry_sector, target_emission_reduction, estimated_energy_saving, risk_score, created_at, updated_at)
+	VALUES (${userByEmail(BUSINESS_EMAILS[n % BUSINESS_EMAILS.length])}, '${title}', '${MEASURES[n % MEASURES.length]} at the ${CITIES[n % CITIES.length]} plant, covering design, equipment supply, installation and commissioning.', 'tendering', ${budget}, '${CITIES[n % CITIES.length]}', '${SECTORS[n % SECTORS.length]}', ${120 + n * 25}, ${200000 + n * 40000}, ${20 + (n % 5) * 4}, ${nowTs(-22 - n)}, ${nowTs(-22 - n)});`,
+			`INSERT INTO tenders (project_id, method, status, budget_min, budget_max, deadline_at, created_at, updated_at)
+	VALUES (${projectId(title)}, 'open', 'open', ${Math.round(budget * 0.7)}, ${budget}, ${nowTs(9 + n)}, ${nowTs(-22 - n)}, ${nowTs(-22 - n)});`,
+			`INSERT INTO proposals (tender_id, vendor_id, amount, technical_spec, operational_cost, projected_roi, warranty_period, status, revision_count, submitted_at, created_at, updated_at)
+	VALUES (${tenderId(title)}, ${vendorProfileId("EcoTech Solutions")}, ${bid}, 'Detailed engineering, equipment supply, installation and commissioning with performance verification against the agreed baseline.', ${Math.round(budget * 0.06)}, ${13 + (n % 4)}, ${24 + (n % 3) * 12}, 'submitted', 1, ${nowTs(-9 - n)}, ${nowTs(-9 - n)}, ${nowTs(-9 - n)});`,
+			`INSERT INTO proposal_revisions (proposal_id, revision_number, note, amount, previous_amount, created_by, created_at)
+	VALUES ((SELECT id FROM proposals WHERE tender_id = ${tenderId(title)}), 1, 'Please confirm the equipment list and the delivery schedule against the tender scope.', ${bid}, NULL, 'company', ${nowTs(-6 - n)});`,
+			`INSERT INTO negotiations (proposal_id, iteration_number, status, requested_price_reduction, requested_warranty_years, requested_timeline_months, requested_fields, company_note, created_at, updated_at)
+	VALUES ((SELECT id FROM proposals WHERE tender_id = ${tenderId(title)}), 1, 'PENDING_VENDOR_RESPONSE', ${Math.round(budget * 0.03)}, 36, 6, '["Total Project Price","Unit & Service Warranty Period","Implementation Timeline"]', 'The board requires a longer warranty and a tighter implementation timeline for this package. Please revise the offer.', ${nowTs(-6 - n)}, ${nowTs(-6 - n)});`,
+		);
+	}
+
+	// ── broker stage: five assignments for each broker ────────
+	// Each generated project carries the full chain the broker and admin
+	// surfaces read: a validated or published blueprint, an awarded tender, an
+	// accepted proposal, a risk assessment, an assignment, monthly MRV reports,
+	// delivery milestones and a document request.
+	const STAGE_PROJECTS = ROW_FLOOR * ROW_FLOOR;
+	for (let j = 0; j < STAGE_PROJECTS; j++) {
+		const n = 10 + j;
+		const title = claimTitle(n);
+		const city = CITIES[n % CITIES.length];
+		const sector = SECTORS[n % SECTORS.length];
+		const budget = 600000000 + (j % 7) * 250000000;
+		const company = userByEmail(
+			BUSINESS_EMAILS[j % BUSINESS_EMAILS.length] as string,
+		);
+		const vendor = vendorProfileId(
+			VENDOR_COMPANIES[j % VENDOR_COMPANIES.length] as string,
+		);
+		const broker = userByEmail(
+			BROKER_EMAILS[Math.floor(j / ROW_FLOOR)] as string,
+		);
+		const cost = Math.round(budget * 0.85);
+		// The first ten carry a published blueprint, which is what the public
+		// catalog reads as "verified"; the rest stay in progress.
+		const published = j < 10;
+		const irr = 12 + (j % 6);
+
+		out.push(
+			`INSERT INTO projects (company_id, title, description, status, budget, location, industry_sector, target_emission_reduction, estimated_energy_saving, risk_score, created_at, updated_at)
+	VALUES (${company}, '${title}', '${MEASURES[n % MEASURES.length]} at the ${city} plant, delivered as a performance-verified retrofit with metered reporting.', 'monitoring', ${budget}, '${city}', '${sector}', ${150 + (j % 8) * 40}, ${240000 + (j % 9) * 55000}, ${18 + (j % 6) * 4}, ${nowTs(-70 - (j % 20))}, ${nowTs(-5 - (j % 4))});`,
+			`INSERT INTO blueprints (project_id, status, document, validated_at, published_at, created_at, updated_at)
+	VALUES (${projectId(title)}, '${published ? "published" : "validated"}', '{"financialProjections":{"npv":${budget / 12},"irr":${irr},"paybackPeriod":4}}', ${nowTs(-40)}, ${published ? nowTs(-36) : "NULL"}, ${nowTs(-42)}, ${nowTs(-36)});`,
+			`INSERT INTO tenders (project_id, method, status, budget_min, budget_max, deadline_at, created_at, updated_at)
+	VALUES (${projectId(title)}, 'closed', 'closed', ${Math.round(budget * 0.75)}, ${budget}, ${nowTs(-32)}, ${nowTs(-48)}, ${nowTs(-32)});`,
+			`INSERT INTO proposals (tender_id, vendor_id, amount, technical_spec, operational_cost, projected_roi, warranty_period, status, revision_count, submitted_at, reviewed_at, created_at, updated_at)
+	VALUES (${tenderId(title)}, ${vendor}, ${cost}, 'Turnkey delivery: detailed engineering, equipment supply, installation, commissioning and performance verification.', ${Math.round(budget * 0.05)}, ${irr}, 36, 'accepted', 0, ${nowTs(-30)}, ${nowTs(-24)}, ${nowTs(-30)}, ${nowTs(-24)});`,
+			`UPDATE tenders SET status = 'awarded', awarded_proposal_id = (SELECT id FROM proposals WHERE tender_id = tenders.id) WHERE project_id = ${projectId(title)};`,
+			`INSERT INTO risk_assessments (project_id, financial_score, technical_score, implementation_score, environmental_score, overall_score, recommendations, notes, assessed_by, assessed_at)
+	VALUES (${projectId(title)}, ${20 + (j % 5) * 4}, ${24 + (j % 4) * 3}, ${30 + (j % 6) * 4}, ${18 + (j % 5) * 3}, ${24 + (j % 5) * 3}, '["Confirm the shutdown window before installation","Agree the metering boundary before commissioning"]', 'Financial, technical, implementation and environmental scores follow the platform model; the baseline is metered and verified.', 'system', ${nowTs(-26)});`,
+			`INSERT INTO broker_assignments (project_id, broker_id, company_id, status, assigned_at, responded_at, bond_status, bond_serial_number, bond_amount, tenor_months, coupon_rate_percent, issuance_date, maturity_date, created_at, updated_at)
+	VALUES (${projectId(title)}, ${broker}, ${company}, 'MONITORING', ${nowTs(-22)}, ${nowTs(-20)}, 'ISSUED', 'GS-BND-2026-1${String(j).padStart(2, "0")}', ${cost}, 36, ${7.5 + (j % 4) * 0.5}, ${nowTs(-18)}, ${nowTs(-18 + 1095)}, ${nowTs(-22)}, ${nowTs(-18)});`,
+			`INSERT INTO document_requests (assignment_id, project_id, broker_id, company_id, category, document_type_name, required_period, reason, deadline_date, status, submitted_file_name, submitted_file_url, submitted_at, created_at, updated_at)
+	VALUES (${assignmentIdFor(title)}, ${projectId(title)}, ${broker}, ${company}, '${["Financial", "Technical", "Legal", "Project"][j % 4]}', '${["Audited Financial Statements", "Operation & Maintenance Plan", "Company Deed & Business License (NIB)", "Project Budget Breakdown per Work Package"][j % 4]}', '2026', 'Required for the information memorandum and the ongoing monitoring obligation.', ${nowTs(-10)}, 'APPROVED', 'Monitoring_Pack_${String(j + 1).padStart(2, "0")}.pdf', '/documents/monitoring-pack-${String(j + 1).padStart(2, "0")}.pdf', ${nowTs(-14)}, ${nowTs(-20)}, ${nowTs(-14)});`,
+		);
+
+		// Two reporting periods per project: the broker monthly-report list and
+		// the admin anomaly surface both read emission_reports.
+		for (const period of [1, 2]) {
+			const anomaly = j % 9 === 0 && period === 2;
+			out.push(
+				`INSERT INTO emission_reports (project_id, period_start, period_end, actual_consumption, baseline_consumption, emission_reduction, anomaly_flagged, anomaly_score, anomaly_note, report_data, verified_by, verified_at, created_at)
+	VALUES (${projectId(title)}, ${nowTs(-60 + period * 30)}, ${nowTs(-30 + period * 30)}, ${Math.round(400000 - (j % 7) * 15000 + period * 6000)}, 420000, ${(4 + (j % 6) * 0.9).toFixed(2)}, ${anomaly ? 1 : 0}, ${anomaly ? 0.74 : "NULL"}, ${anomaly ? "'Consumption rose against the previous period while savings stayed below the blueprint expectation.'" : "NULL"}, '{"plannedBudgetAmount":${budget},"actualSpendingAmount":${cost},"overallStatus":"${anomaly ? "AT_RISK" : "ON_TRACK"}","detectedRisksOrAnomalies":[],"overallConclusion":"Metered reduction is tracked against the validated baseline."}', ${userByEmail("admin1")}, ${nowTs(-30 + period * 30)}, ${nowTs(-30 + period * 30)});`,
+			);
+		}
+
+		// Delivery milestones, so every vendor has assigned work to report on.
+		for (let step = 1; step <= 3; step++) {
+			const done = step < 3;
+			out.push(
+				`INSERT INTO project_milestones (project_id, step_number, title, description, start_date, due_date, completion_percent, status, vendor_notes, company_review_notes, created_at, updated_at)
+	VALUES (${projectId(title)}, ${step}, '${["Site Survey & Engineering Design", "Procurement & Factory Acceptance Test", "Installation & Commissioning"][step - 1]}', 'Delivered against the approved engineering package with evidence for each stage.', ${nowTs(-18 + step * 8)}, ${nowTs(-10 + step * 8)}, ${done ? 100 : 45}, '${done ? "APPROVED" : "IN_PROGRESS"}', ${done ? "'Stage completed and evidence uploaded for review.'" : "'Works are under way on site.'"}, ${done ? "'Reviewed and approved.'" : "NULL"}, ${nowTs(-18 + step * 8)}, ${nowTs(-9 + step * 8)});`,
+			);
+		}
+
+		// One evidence file and one OCR-extracted document for the first few
+		// projects, which is what the project drill-downs display.
+		if (j < ROW_FLOOR) {
+			out.push(
+				`INSERT INTO milestone_evidence (milestone_id, kind, file_name, file_url, notes, uploaded_at)
+	VALUES ((SELECT id FROM project_milestones WHERE project_id = ${projectId(title)} AND step_number = 1), 'document', 'Engineering_Package_${String(j + 1).padStart(2, "0")}.pdf', '/documents/engineering-package-${String(j + 1).padStart(2, "0")}.pdf', 'Stamped drawings issued for construction.', ${nowTs(-10 + j)});`,
+				`INSERT INTO project_documents (project_id, type, file_name, file_url, ocr_status, extracted_data, uploaded_at)
+	VALUES (${projectId(title)}, 'utility_bill', 'PLN_Utility_Bill_Monitoring_${String(j + 1).padStart(2, "0")}.pdf', '/documents/pln-utility-bill-monitoring-${String(j + 1).padStart(2, "0")}.pdf', 'done', '{"totalKwh":420000,"billingPeriod":"2026-Q1","facilityName":"${city} plant"}', ${nowTs(-40)});`,
+			);
+		}
+	}
+
+	// ── notification feeds: vendor and broker are the roles with a bell ─
+	for (let v = 0; v < VENDOR_EMAILS.length; v++) {
+		for (let k = 0; k < ROW_FLOOR; k++) {
+			out.push(
+				`INSERT INTO notifications (user_id, type, title, body, read, link, created_at)
+	VALUES (${userByEmail(VENDOR_EMAILS[v] as string)}, '${["deadline", "negotiation", "status_change", "tender"][k % 4]}', '${["Tender deadline approaching", "Revision requested on a live bid", "Delivery milestone awaiting review", "New tender published in your sector"][k % 4]}', 'Open the item to see the detail and the action expected from you.', ${k > 2 ? 1 : 0}, '/vendor/deals', ${nowTs(-1 - k - v)});`,
+			);
+		}
+	}
+	for (let b = 0; b < BROKER_EMAILS.length; b++) {
+		for (let k = 0; k < ROW_FLOOR; k++) {
+			out.push(
+				`INSERT INTO notifications (user_id, type, title, body, read, link, created_at)
+	VALUES (${userByEmail(BROKER_EMAILS[b] as string)}, '${["assignment", "documents", "reporting", "bond"][k % 4]}', '${["New project assigned", "Document received for review", "Monthly report available", "Bond issuance recorded"][k % 4]}', 'Review it before the next investor update.', ${k > 2 ? 1 : 0}, '/broker/projects', ${nowTs(-1 - k - b)});`,
+			);
+		}
+	}
+
+	// ── vendor portfolio entries ──────────────────────────────
+	// vendor1 already has three from the story fixtures; the rest start empty.
+	const PORTFOLIO_EXISTING: Record<string, number> = {
+		"EcoTech Solutions": 3,
+	};
+	for (let v = 0; v < VENDOR_EMAILS.length; v++) {
+		const company = VENDOR_COMPANIES[v] as string;
+		const existing = PORTFOLIO_EXISTING[company] ?? 0;
+		for (let k = existing; k < ROW_FLOOR; k++) {
+			const value = 780000000 + k * 240000000;
+			const year = 2021 + (k % 5);
+			out.push(
+				`INSERT INTO vendor_portfolio_items (vendor_id, project_name, client_name, project_type, location, description, project_value, duration_months, services_provided, energy_saving_percent, carbon_reduction_tons, completion_year, status, document_name, created_at, updated_at)
+	VALUES (${vendorProfileId(company)}, '${MEASURES[k % MEASURES.length]}, ${CITIES[k % CITIES.length]}', '${["PT Tekstil Jaya", "PT Baja Prima", "PT Kertas Nusantara", "PT Sawit Lestari", "PT Sentra Graha Medika"][k % 5]}', '${SECTORS[k % SECTORS.length]}', '${CITIES[k % CITIES.length]}', 'Delivered as a turnkey efficiency package with metered savings verification and operator training.', ${value}, ${3 + (k % 6)}, 'Energy audit, detailed engineering, supply, installation, commissioning, operator training', ${(12 + (k % 8) * 1.7).toFixed(1)}, ${90 + (k % 7) * 45}, ${year}, '${k % 2 === 0 ? "VERIFIED" : "COMPLETED"}', 'Completion_Report_${year}.pdf', ${nowTs(-400 + k * 20)}, ${nowTs(-400 + k * 20)});`,
+			);
+		}
+	}
+
+	// ── funding: active investments behind the public catalog ─
+	// The catalog derives funding progress from active investments, so these
+	// rows are what turn a bare budget figure into a funding percentage.
+	for (let n = 0; n < 10; n++) {
+		// These are the first ten broker-stage projects, all of which carry a
+		// published blueprint; the title is already claimed above.
+		const title = generatedTitle(10 + n);
+		const investment = userByEmail(
+			INVESTOR_EMAILS[n % INVESTOR_EMAILS.length] as string,
+		);
+		const amount = 120000000 + n * 45000000;
+		out.push(
+			`INSERT INTO investments (project_id, investor_id, amount, roi_paid, status, bond_serial_number, invested_at, created_at)
+	VALUES (${projectId(title)}, ${investment}, ${amount}, ${Math.round(amount * 0.08)}, '${n % 5 === 4 ? "completed" : "active"}', 'GS-BND-2026-1${String(n).padStart(2, "0")}', ${nowTs(-16 + n)}, ${nowTs(-16 + n)});`,
+		);
+	}
+
+	// ── ROI schedules for the admin payout queue ──────────────
+	for (let n = 0; n < ROW_FLOOR; n++) {
+		const investmentId = `(SELECT id FROM investments WHERE bond_serial_number = 'GS-BND-2026-1${String(n).padStart(2, "0")}')`;
+		for (let period = 1; period <= ROW_FLOOR; period++) {
+			const paid = period < 3;
+			out.push(
+				`INSERT INTO roi_payments (investment_id, amount, period, status, escrow_tx_id, paid_at, created_at)
+	VALUES (${investmentId}, 4250000, 'Period ${period}', '${paid ? "paid" : "scheduled"}', ${paid ? `'ESC-2026-${String(n * 10 + period).padStart(4, "0")}'` : "NULL"}, ${paid ? nowTs(-40 + period * 7) : "NULL"}, ${nowTs(-60)});`,
+			);
+		}
+	}
+
+	// ── scope of work for every project ───────────────────────
+	// The vendor project detail renders the description, the technical
+	// requirements and the deliverables. The description comes from the project
+	// row; these two come from the measure actually being installed, so each
+	// project reads as its own scope instead of shared copy.
+	const SCOPE_BY_MEASURE: Record<
+		string,
+		{ requirements: string[]; deliverables: string[] }
+	> = {
+		"Boiler Retrofit": {
+			requirements: [
+				"Burner retrofit and flue-gas heat recovery sized to the existing steam boiler",
+				"Steam piping modification within the boiler house battery limit",
+				"Combustion tuning with emissions measurement to the applicable standard",
+			],
+			deliverables: [
+				"Retrofit burner package with combustion controls",
+				"Heat recovery unit with insulated ducting",
+				"Combustion commissioning report including emissions results",
+			],
+		},
+		"Solar Rooftop PV": {
+			requirements: [
+				"Rooftop structural assessment and load certification before installation",
+				"Modules, string inverters and DC protection to the applicable SNI standard",
+				"Net-metering application handled through the utility",
+			],
+			deliverables: [
+				"Complete PV array with mounting structure and cabling",
+				"Inverter station with a monitoring gateway",
+				"Commissioning report and the net-metering approval",
+			],
+		},
+		"Chiller Replacement": {
+			requirements: [
+				"Cooling load audit to size the replacement chiller",
+				"Variable primary flow with plant-level optimisation control",
+				"Refrigerant handling by a licensed technician",
+			],
+			deliverables: [
+				"High-efficiency chiller charged and tested",
+				"Plant controller with kW/ton optimisation",
+				"Performance test report at design load",
+			],
+		},
+		"LED Relamping": {
+			requirements: [
+				"Illuminance survey to the applicable workplace lighting standard",
+				"High-bay LED luminaires with occupancy and daylight control",
+				"Works scheduled outside production hours",
+			],
+			deliverables: [
+				"Luminaire schedule with photometric verification",
+				"Occupancy and daylight control system",
+				"Illuminance verification report",
+			],
+		},
+		"Compressed Air Upgrade": {
+			requirements: [
+				"Plant-wide leak survey and repair before equipment replacement",
+				"Variable speed drive compressor with dryer and receiver sizing",
+				"Automatic pressure and sequencing control",
+			],
+			deliverables: [
+				"VSD compressor package with dryer and receiver",
+				"Pressure control and sequencing system",
+				"Leak repair register with a before and after audit",
+			],
+		},
+		"Waste Heat Recovery": {
+			requirements: [
+				"Stack measurement to establish the recoverable heat baseline",
+				"Heat exchanger and steam drum integration with automatic bypass",
+				"Insulation and condensate management across the new circuit",
+			],
+			deliverables: [
+				"Heat exchanger and steam drum package",
+				"Automatic bypass control with safety interlocks",
+				"Recovered-heat measurement report",
+			],
+		},
+		"Motor Efficiency": {
+			requirements: [
+				"Nameplate survey of every motor in scope",
+				"IE3 premium efficiency motors with variable speed drives",
+				"Replacement sequenced per production line",
+			],
+			deliverables: [
+				"Motor and drive schedule with a spares list",
+				"Installed drives with parameter documentation",
+				"Efficiency verification against the audit estimate",
+			],
+		},
+		"Biomass Conversion": {
+			requirements: [
+				"Fuel supply study and feedstock specification",
+				"Biomass boiler with automatic feeding and emission control",
+				"Emission measurement to the permitted limits",
+			],
+			deliverables: [
+				"Biomass boiler with feeding and ash handling",
+				"Emission control equipment with stack measurement",
+				"72-hour performance test and the handover manual",
+			],
+		},
+	};
+
+	// Every project, not just the open opportunities: the scope card renders on
+	// any project detail the vendor can open.
+	const scoped: Array<[string, string]> = [
+		...DISCOVERY_INDICES.map(
+			(n) =>
+				[generatedTitle(n), MEASURES[n % MEASURES.length]] as [string, string],
+		),
+		["Textile Factory Retrofit", "Boiler Retrofit"],
+		["Solar Rooftop 500 kWp", "Solar Rooftop PV"],
+		["Compressed Air Optimization", "Compressed Air Upgrade"],
+		["Factory LED Lighting", "LED Relamping"],
+		["Biomass Boiler", "Biomass Conversion"],
+		["Factory Chiller Retrofit", "Chiller Replacement"],
+		["Electric Motor Efficiency", "Motor Efficiency"],
+		["Industrial Waste Heat Recovery", "Waste Heat Recovery"],
+		["Cold Storage Efficiency Retrofit", "Chiller Replacement"],
+		...Array.from(
+			{ length: STAGE_PROJECTS },
+			(_, j) =>
+				[generatedTitle(10 + j), MEASURES[(10 + j) % MEASURES.length]] as [
+					string,
+					string,
+				],
+		),
+	];
+	for (const [title, measure] of scoped) {
+		const scope = SCOPE_BY_MEASURE[measure];
+		if (!scope) throw new Error(`no scope authored for measure: ${measure}`);
+		out.push(
+			`UPDATE projects SET technical_requirements = '${JSON.stringify(scope.requirements)}', deliverables = '${JSON.stringify(scope.deliverables)}' WHERE id = ${projectId(title)};`,
+		);
+	}
+
+	// ── vendor matching scores for the open opportunities ─────
+	// The matching model scores five weighted criteria per project and vendor.
+	// The values are computed from the vendor attributes and the project risk
+	// score that are already in the database, so the ranking is reproducible
+	// rather than arbitrary. Scores are 0-100 and `projectRisk` is inverted so
+	// a higher number always means a better outcome.
+	const clamp = (value: number) =>
+		Math.max(0, Math.min(100, Math.round(value)));
+
+	// What each vendor actually specialises in. Without this the biggest vendor
+	// wins every project and the ranking carries no information; with it, fit
+	// depends on the project, which is what makes the recommended list useful.
+	const VENDOR_SPECIALTIES: Record<string, string[]> = {
+		"EcoTech Solutions": ["Boiler Retrofit", "Compressed Air Upgrade"],
+		"PT Eco Power Indonesia": ["Chiller Replacement"],
+		"PT Bio Thermal Energy": ["Biomass Conversion", "Waste Heat Recovery"],
+		"PT Solar Cipta Energi": ["Solar Rooftop PV", "LED Relamping"],
+		"PT Efisiensi Mesin Nusantara": ["Motor Efficiency"],
+	};
+
+	// Every tender the vendor can see is scored, so no opportunity card renders
+	// unscored. The story fixtures carry their own risk score and budget, so
+	// those are passed in rather than recomputed.
+	const matchTargets: Array<{
+		title: string;
+		measure: string;
+		risk: number;
+		budget: number;
+		seed: number;
+	}> = [
+		...DISCOVERY_INDICES.map((n) => ({
+			title: generatedTitle(n),
+			measure: MEASURES[n % MEASURES.length] as string,
+			risk: 20 + (n % 5) * 4,
+			budget: 400000000 + n * 150000000,
+			seed: n,
+		})),
+		{
+			title: "Textile Factory Retrofit",
+			measure: "Boiler Retrofit",
+			risk: 28,
+			budget: 500000000,
+			seed: 5,
+		},
+		{
+			title: "Solar Rooftop 500 kWp",
+			measure: "Solar Rooftop PV",
+			risk: 35,
+			budget: 1000000000,
+			seed: 6,
+		},
+		{
+			title: "Compressed Air Optimization",
+			measure: "Compressed Air Upgrade",
+			risk: 22,
+			budget: 100000000,
+			seed: 7,
+		},
+		{
+			title: "Factory LED Lighting",
+			measure: "LED Relamping",
+			risk: 18,
+			budget: 1500000000,
+			seed: 8,
+		},
+		{
+			title: "Biomass Boiler",
+			measure: "Biomass Conversion",
+			risk: 41,
+			budget: 2500000000,
+			seed: 9,
+		},
+	];
+
+	for (const { title, measure, risk, budget, seed } of matchTargets) {
+		const scored = VENDOR_EMAILS.map((email, v) => {
+			const company = VENDOR_COMPANIES[v] as string;
+			const rating = [4.6, 4.4, 4.7, 4.3, 4.1][v] as number;
+			const completed = [12, 9, 14, 7, 5][v] as number;
+			// A vendor whose speciality covers the installed technology fits the
+			// scope better and has more comparable projects behind it.
+			const specialist =
+				VENDOR_SPECIALTIES[company]?.includes(measure) === true;
+			const technicalFit = clamp(
+				45 + completed * 1.6 + (seed % 3) + (specialist ? 30 : 0),
+			);
+			const relevantExperience = clamp(
+				40 + completed * 1.8 - (seed % 4) + (specialist ? 28 : 0),
+			);
+			const historicalPerformance = clamp(rating * 20);
+			const priceValue = clamp(
+				72 + rating * 3 - (budget / 1000000000) * 6 - (v % 3),
+			);
+			const projectRisk = clamp(96 - risk + rating * 2);
+			const totalScore = clamp(
+				technicalFit * 0.25 +
+					relevantExperience * 0.2 +
+					historicalPerformance * 0.2 +
+					priceValue * 0.2 +
+					projectRisk * 0.15,
+			);
+			return {
+				email,
+				company,
+				technicalFit,
+				relevantExperience,
+				historicalPerformance,
+				priceValue,
+				projectRisk,
+				totalScore,
+			};
+		});
+
+		// Rank within the project: best weighted total first.
+		const ranked = [...scored].sort((a, b) => b.totalScore - a.totalScore);
+
+		for (const row of scored) {
+			const rank = ranked.findIndex((r) => r.email === row.email) + 1;
+			out.push(
+				`INSERT INTO vendor_match_scores (project_id, vendor_id, technical_fit, relevant_experience, historical_performance, price_value, project_risk, total_score, rank, created_at)
+	VALUES (${projectId(title)}, ${vendorProfileId(row.company)}, ${row.technicalFit}, ${row.relevantExperience}, ${row.historicalPerformance}, ${row.priceValue}, ${row.projectRisk}, ${row.totalScore}, ${rank}, ${nowTs(-4)});`,
+			);
+		}
+	}
+
+	// ── predictive-analytics periods ──────────────────────────
+	// One forecast per project per month ahead, with the held-out accuracy
+	// metrics the model was scored on. Forward looking: a forecast describes the
+	// periods that have not happened yet, which is what the vendor sees alongside
+	// the reported actuals.
+	//
+	// Covers every project in delivery, including the story fixtures, so the
+	// vendor's active-project view always has a forecast rather than an empty card.
+	const forecastTargets: Array<{ title: string; seed: number }> = [
+		...Array.from({ length: STAGE_PROJECTS }, (_, j) => ({
+			title: generatedTitle(10 + j),
+			seed: j,
+		})),
+		{ title: "Biomass Boiler", seed: 30 },
+		{ title: "Factory Chiller Retrofit", seed: 31 },
+		{ title: "Electric Motor Efficiency", seed: 32 },
+		{ title: "Industrial Waste Heat Recovery", seed: 33 },
+		{ title: "Cold Storage Efficiency Retrofit", seed: 34 },
+	];
+
+	for (const { title, seed } of forecastTargets) {
+		const baseline = 420000 - (seed % 7) * 15000;
+		for (let period = 0; period < ROW_FLOOR; period++) {
+			const consumption = baseline - (seed % 5) * 8000 - period * 2500;
+			const savings = Math.round((baseline - consumption) * 0.82);
+			out.push(
+				`INSERT INTO energy_forecasts (project_id, period_start, period_end, forecasted_consumption, forecasted_savings, model_name, shap_values, metrics, created_at)
+	VALUES (${projectId(title)}, ${nowTs(period * 30)}, ${nowTs((period + 1) * 30)}, ${consumption}, ${savings}, 'random_forest', '{"baseline_consumption":${(0.34 + (seed % 3) * 0.02).toFixed(2)},"production_load":${(0.27 + (seed % 4) * 0.01).toFixed(2)},"ambient_temperature":0.14,"equipment_age":0.12,"operating_hours":0.09}', '{"mae":${(1180 + (seed % 6) * 45).toFixed(1)},"rmse":${(1620 + (seed % 5) * 60).toFixed(1)},"r2":${(0.9 - (seed % 4) * 0.007).toFixed(3)},"cvRmse":${(8.4 + (seed % 5) * 0.3).toFixed(2)}}', ${nowTs(-2)});`,
+			);
+		}
+	}
+
+	return out;
 }
 
 if (import.meta.main) {

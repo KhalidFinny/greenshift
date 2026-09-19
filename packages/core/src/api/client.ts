@@ -1,4 +1,5 @@
 import type {
+	AdminAnalytics,
 	AdminAnomalyResponse,
 	AdminBlueprint,
 	AdminBroker,
@@ -24,6 +25,7 @@ import type {
 	BrokerProfileBody,
 	BrokerProjectStatusBody,
 	CsrfResponse,
+	HealthResponse,
 	LoginBody,
 	OkResponse,
 	ProposalDetail,
@@ -107,6 +109,26 @@ export const api = {
 				silent,
 			}),
 	},
+	account: {
+		uploadAvatar: (file: File) => {
+			const body = new FormData();
+			body.set("avatar", file);
+			return request<{ avatarKey: string }>(
+				apiRoutes.accountAvatarUpload.path,
+				{ method: apiRoutes.accountAvatarUpload.method, body },
+			);
+		},
+		removeAvatar: () =>
+			request<{ avatarKey: null }>(apiRoutes.accountAvatarDelete.path, {
+				method: apiRoutes.accountAvatarDelete.method,
+			}),
+		/**
+		 * The picture URL, keyed on the stored object so a replacement shows up
+		 * immediately instead of being served from cache.
+		 */
+		avatarPath: (key: string) =>
+			`${apiRoutes.accountAvatar.path}?v=${encodeURIComponent(key)}`,
+	},
 	investor: {
 		market: () => request<BondMarketResponse>(apiRoutes.investorMarket.path),
 	},
@@ -168,6 +190,7 @@ export const api = {
 				apiRoutes.adminAuditLogs.path + query(params),
 			),
 		stats: () => request<AdminStats>(apiRoutes.adminStats.path),
+		analytics: () => request<AdminAnalytics>(apiRoutes.adminAnalytics.path),
 		anomalies: () =>
 			request<AdminAnomalyResponse>(apiRoutes.adminAnomalies.path),
 		vendors: (params?: { limit?: number }) =>
@@ -387,6 +410,10 @@ export const api = {
 				apiRoutes.brokerReadNotification.path.replace(":id", String(id)),
 				{ method: apiRoutes.brokerReadNotification.method },
 			),
+	},
+	/** Read-only platform probes (`GET /api/health`), used by the admin console. */
+	system: {
+		health: () => request<HealthResponse>(apiRoutes.health.path),
 	},
 };
 

@@ -1,11 +1,11 @@
 import {
 	faBell,
+	faBellSlash,
 	faBriefcase,
 	faChartLine,
 	faChartPie,
 	faChevronDown,
 	faChevronUp,
-	faCircleUser,
 	faClipboardList,
 	faFileLines,
 	faGauge,
@@ -20,10 +20,12 @@ import {
 	faTruck,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { api } from "@greenshift/core";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-
-import { Avatar, AvatarFallback } from "../components/ui/avatar";
+import { AccountAvatar } from "../components/account-avatar";
+import { ShimmerBlock } from "../components/loaders/skeleton-loader";
 import { cn } from "../lib/utils";
 import { useRoleShell } from "./use-role-shell";
 
@@ -31,6 +33,31 @@ interface RoleShellProps {
 	children: ReactNode;
 	title: string;
 	navItems: Array<{ to: string; label: string }>;
+}
+
+/** Roles with a real notification feed. The others get no bell at all, since a
+ * control with nothing behind it is worse than no control. */
+const ROLES_WITH_FEED: Record<string, true> = {
+	vendor: true,
+	broker: true,
+};
+
+interface ShellNotification {
+	id: number;
+	title: string;
+	body: string | null;
+	link: string | null;
+	read: boolean;
+	createdAt: string;
+}
+
+function relativeTime(iso: string): string {
+	const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+	if (minutes < 1) return "just now";
+	if (minutes < 60) return `${minutes}m ago`;
+	const hours = Math.round(minutes / 60);
+	if (hours < 24) return `${hours}h ago`;
+	return `${Math.round(hours / 24)}d ago`;
 }
 
 function getSidebarIcon(item: { to: string; label: string }) {
@@ -111,7 +138,6 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 	const {
 		user,
 		name,
-		initials,
 		homeHref,
 		activePath,
 		accountRef,
@@ -121,15 +147,64 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 		notifMenuOpen,
 		toggleNotifMenu,
 		closeNotifMenu,
-		openProfile,
+		closeAccountMenu,
 		handleLogout,
 	} = useRoleShell();
 	const activeNavLabel =
 		navItems.find((item) => item.to === activePath)?.label ?? title;
 
+	const role = user?.role ?? "";
+	const hasFeed = ROLES_WITH_FEED[role] === true;
+
+	const notificationsQuery = useQuery({
+		queryKey: ["shell-notifications", role],
+		enabled: hasFeed,
+		staleTime: 60 * 1000,
+		queryFn: async (): Promise<ShellNotification[]> => {
+			if (role === "vendor") {
+				const { notifications } = await api.vendor.notifications({ limit: 5 });
+				return notifications.map((n) => ({
+					id: n.id,
+					title: n.title,
+					body: n.body,
+					link: n.link,
+					read: n.read,
+					createdAt: n.createdAt,
+				}));
+			}
+			if (role === "broker") {
+				const { notifications } = await api.broker.notifications({ limit: 5 });
+				return notifications.map((n) => ({
+					id: n.id,
+					title: n.title,
+					body: n.message,
+					link: n.linkUrl,
+					read: n.isRead,
+					createdAt: n.createdAt,
+				}));
+			}
+			return [];
+		},
+	});
+
+	const notifications = notificationsQuery.data ?? [];
+	const unreadCount = notifications.filter((n) => !n.read).length;
+
+	// Settings replaces the old standalone profile page, and only exists for the
+	// roles that actually have one.
+	const settingsPath =
+		role === "vendor"
+			? "/vendor/settings"
+			: role === "broker"
+				? "/broker/settings"
+				: null;
+
 	return (
 		<div className="flex h-screen overflow-hidden">
-			<aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col overflow-hidden border-r border-border bg-white text-sidebar-foreground">
+			<aside
+				data-shell-sidebar
+				className="sticky top-0 flex h-screen w-64 shrink-0 flex-col overflow-hidden border-r border-border bg-white text-sidebar-foreground"
+			>
 				<div
 					aria-hidden="true"
 					className="absolute inset-0 bg-[url('/skysidebar.webp')] bg-[length:150%] bg-bottom bg-no-repeat opacity-20 grayscale"
@@ -176,114 +251,136 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 			</aside>
 
 			<main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-				<header className="sticky top-0 z-10 flex items-center justify-between bg-background px-6 py-4">
+				<header
+					data-shell-header
+					className="sticky top-0 z-10 flex items-center justify-between bg-background px-6 py-4"
+				>
 					<div className="text-2xl font-semibold text-foreground">
 						{activeNavLabel}
 					</div>
 
 					<div className="flex items-center gap-3">
-						{/* Bell Icon Notification Dropdown Section */}
-						<div ref={notifRef} className="relative">
-							<button
-								type="button"
-								onClick={toggleNotifMenu}
-								aria-label="Notifikasi"
-								className="relative flex size-10 items-center justify-center rounded-lg text-sidebar-foreground/70 transition-colors hover:bg-foreground/5 hover:text-foreground"
-							>
-								<FontAwesomeIcon icon={faBell} className="size-5" />
-								<span className="absolute right-2 top-2 flex size-2 rounded-full bg-emerald-600 ring-2 ring-white" />
-							</button>
-
-							{notifMenuOpen && (
-								<div
-									role="menu"
-									className="absolute right-0 top-full mt-2 w-80 overflow-hidden rounded-xl border border-border bg-white shadow-xl z-50"
+						{/* Notifications. Only roles with a real feed get the bell; for the
+						    rest it would be a control with nothing behind it. */}
+						{hasFeed ? (
+							<div ref={notifRef} className="relative">
+								<button
+									type="button"
+									onClick={toggleNotifMenu}
+									aria-label={
+										unreadCount > 0
+											? `Notifications, ${unreadCount} unread`
+											: "Notifications"
+									}
+									className="relative flex size-10 items-center justify-center rounded-lg text-sidebar-foreground/70 transition-colors hover:bg-foreground/5 hover:text-foreground"
 								>
-									<div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-3">
-										<div className="flex items-center gap-2">
-											<FontAwesomeIcon
-												icon={faBell}
-												className="size-4 text-emerald-600"
-											/>
-											<span className="text-sm font-semibold text-foreground">
-												Pusat Notifikasi
-											</span>
-										</div>
-										<span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
-											2 Baru
+									<FontAwesomeIcon icon={faBell} className="size-5" />
+									{unreadCount > 0 ? (
+										<span className="absolute right-1 top-1 flex size-5 items-center justify-center rounded-full bg-emerald-700 text-sm font-semibold text-white ring-2 ring-white">
+											{unreadCount > 9 ? "9+" : unreadCount}
 										</span>
-									</div>
+									) : null}
+								</button>
 
-									<div className="max-h-72 overflow-y-auto divide-y divide-border text-xs">
-										<Link
-											to={
-												user
-													? (`/${user.role}/notifications` as any)
-													: "/vendor/notifications"
-											}
-											onClick={closeNotifMenu}
-											className="block p-3 transition-colors hover:bg-muted/50 no-underline"
-										>
-											<div className="flex items-start gap-2.5">
-												<span className="mt-1 size-2 rounded-full bg-blue-500 shrink-0" />
-												<div>
-													<p className="font-semibold text-foreground">
-														Permintaan Negosiasi Baru
-													</p>
-													<p className="mt-0.5 text-muted-foreground line-clamp-2">
-														PT Sentra Graha Medika mengajukan revisi harga &
-														garansi.
-													</p>
-													<span className="mt-1 block text-[10px] text-muted-foreground">
-														10 menit yang lalu
-													</span>
-												</div>
+								{notifMenuOpen ? (
+									<div
+										role="menu"
+										className="absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-xl border border-border bg-white shadow-xl"
+									>
+										<div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-3">
+											<span className="text-sm font-semibold text-foreground">
+												Notifications
+											</span>
+											{unreadCount > 0 ? (
+												<span className="rounded-md bg-emerald-700 px-2 py-0.5 text-sm font-semibold text-white">
+													{unreadCount} unread
+												</span>
+											) : null}
+										</div>
+
+										{notificationsQuery.isPending ? (
+											<div className="space-y-3 p-3">
+												{Array.from({ length: 3 }).map((_, i) => (
+													<ShimmerBlock key={i} className="h-14 w-full" />
+												))}
 											</div>
-										</Link>
-
-										<Link
-											to={
-												user
-													? (`/${user.role}/notifications` as any)
-													: "/vendor/notifications"
-											}
-											onClick={closeNotifMenu}
-											className="block p-3 transition-colors hover:bg-muted/50 no-underline"
-										>
-											<div className="flex items-start gap-2.5">
-												<span className="mt-1 size-2 rounded-full bg-emerald-500 shrink-0" />
-												<div>
-													<p className="font-semibold text-foreground">
-														Perubahan Peringkat Lelang
-													</p>
-													<p className="mt-0.5 text-muted-foreground line-clamp-2">
-														Tawaran Anda pada Solar PV Pabrik Tekstil berada di
-														posisi 2.
-													</p>
-													<span className="mt-1 block text-[10px] text-muted-foreground">
-														2 jam yang lalu
-													</span>
+										) : notifications.length === 0 ? (
+											<div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
+												<div className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
+													<FontAwesomeIcon
+														icon={faBellSlash}
+														className="size-4"
+													/>
 												</div>
+												<p className="text-sm font-semibold text-foreground">
+													Nothing needs you
+												</p>
+												<p className="text-sm text-muted-foreground">
+													Ranking changes and client requests land here.
+												</p>
 											</div>
-										</Link>
-									</div>
+										) : (
+											<div className="max-h-72 divide-y divide-border overflow-y-auto">
+												{notifications.map((item) => {
+													const row = (
+														<div className="flex items-start gap-2.5">
+															<span
+																aria-hidden="true"
+																className={cn(
+																	"mt-1 size-2 shrink-0 rounded-full",
+																	item.read ? "bg-border" : "bg-emerald-700",
+																)}
+															/>
+															<div className="min-w-0">
+																<p className="text-sm font-semibold text-foreground">
+																	{item.title}
+																</p>
+																{item.body ? (
+																	<p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
+																		{item.body}
+																	</p>
+																) : null}
+																<span className="mt-1 block text-sm text-muted-foreground">
+																	{relativeTime(item.createdAt)}
+																</span>
+															</div>
+														</div>
+													);
+													const rowClass =
+														"block p-3 no-underline transition-colors hover:bg-muted/50";
+													return item.link ? (
+														<a
+															key={item.id}
+															href={item.link}
+															onClick={closeNotifMenu}
+															className={rowClass}
+														>
+															{row}
+														</a>
+													) : (
+														<div key={item.id} className="p-3">
+															{row}
+														</div>
+													);
+												})}
+											</div>
+										)}
 
-									<div className="border-t border-border bg-muted/20 p-2.5 text-center">
-										<Link
-											to={
-												user
-													? (`/${user.role}/notifications` as any)
-													: "/vendor/notifications"
-											}
-											onClick={closeNotifMenu}
-											className="block rounded-lg py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 transition-colors no-underline"
-										>
-											Lihat Semua Notifikasi →
-										</Link>
+										{role === "vendor" ? (
+											<div className="border-t border-border bg-muted/20 p-2.5 text-center">
+												<Link
+													to="/vendor/notifications"
+													onClick={closeNotifMenu}
+													className="block rounded-lg py-1.5 text-sm font-semibold text-emerald-700 no-underline transition-colors hover:bg-emerald-50"
+												>
+													View all notifications
+												</Link>
+											</div>
+										) : null}
 									</div>
-								</div>
-							)}
-						</div>
+								) : null}
+							</div>
+						) : null}
 
 						{/* User Profile Avatar Dropdown */}
 						<div ref={accountRef} className="relative">
@@ -294,11 +391,11 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 								aria-expanded={accountMenuOpen}
 								className="flex items-center gap-3 rounded-lg p-1.5 text-left transition-colors hover:bg-foreground/5"
 							>
-								<Avatar>
-									<AvatarFallback className="bg-foreground/10 font-semibold text-foreground">
-										{initials}
-									</AvatarFallback>
-								</Avatar>
+								<AccountAvatar
+									name={name}
+									avatarKey={user?.avatarKey ?? null}
+									fallbackClassName="bg-foreground/10 font-semibold text-foreground"
+								/>
 								<span className="hidden min-w-0 md:block">
 									<span className="block truncate text-sm font-semibold text-foreground">
 										{name || "User"}
@@ -321,18 +418,20 @@ export function RoleShell({ children, title, navItems }: RoleShellProps) {
 										</p>
 										<p className="truncate text-sm text-primary">{title}</p>
 									</div>
-									<button
-										type="button"
-										role="menuitem"
-										onClick={openProfile}
-										className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
-									>
-										<FontAwesomeIcon
-											icon={faCircleUser}
-											className="size-4 shrink-0"
-										/>
-										Profile
-									</button>
+									{settingsPath ? (
+										<Link
+											to={settingsPath}
+											role="menuitem"
+											onClick={closeAccountMenu}
+											className="flex w-full items-center gap-3 border-t border-border px-4 py-2.5 text-sm font-medium text-foreground no-underline transition-colors hover:bg-foreground/5"
+										>
+											<FontAwesomeIcon
+												icon={faGear}
+												className="size-4 shrink-0"
+											/>
+											Settings
+										</Link>
+									) : null}
 									<button
 										type="button"
 										role="menuitem"

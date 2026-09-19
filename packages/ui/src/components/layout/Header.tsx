@@ -14,7 +14,7 @@ const navLinks = [
 
 // Compact brand-green bar that fades in once the hero has been scrolled past.
 const compactBar =
-	"fixed left-1/2 top-3 z-50 -translate-x-1/2 rounded-xl bg-[#03442C] shadow-lg transition-all duration-500";
+	"fixed left-1/2 top-3 z-50 -translate-x-1/2 -translate-y-2 w-[90%] rounded-xl bg-[#03442C] shadow-lg transition-all duration-500 opacity-60 hover:opacity-100 hover:translate-y-0 scale-[0.97] hover:scale-100";
 
 /**
  * Scroll to a landing section while it is being mounted (cross-page entry):
@@ -72,9 +72,7 @@ function LandingHeader() {
 				}}
 				className={cn(
 					compactBar,
-					scrolled
-						? "w-[92%] opacity-100 sm:w-[68%]"
-						: "pointer-events-none w-full opacity-0",
+					scrolled ? "opacity-60" : "pointer-events-none opacity-0",
 				)}
 			>
 				<HeaderNav onDark />
@@ -86,32 +84,55 @@ function LandingHeader() {
 function HeaderNav({ onDark }: { onDark: boolean }) {
 	const isHome = useIsHome();
 	const navigate = useNavigate();
+	const [activeSection, setActiveSection] = useState("#hero");
+
+	// Track scroll position to highlight active section
+	useEffect(() => {
+		if (!isHome) return;
+
+		const onScroll = () => {
+			const sections = navLinks.map((l) => l.href.replace("#", ""));
+			let current = "#hero";
+			for (const id of sections) {
+				const el = document.getElementById(id);
+				if (el) {
+					const rect = el.getBoundingClientRect();
+					if (rect.top <= 120) current = `#${id}`;
+				}
+			}
+			setActiveSection(current);
+		};
+
+		onScroll();
+		window.addEventListener("scroll", onScroll, { passive: true });
+		return () => window.removeEventListener("scroll", onScroll);
+	}, [isHome]);
 
 	return (
 		<nav
-			className="page-wrap flex items-center justify-between py-4"
+			className="page-wrap flex items-center justify-between py-2"
 			aria-label="Main navigation"
 		>
-			<Link to="/" className="no-underline">
+			<Link to="/" className="no-underline shrink-0">
 				<img
 					src={onDark ? "/logo-white.webp" : "/logo-long.svg"}
 					alt="GreenShift"
-					className="h-12"
+					className="h-8"
 				/>
 			</Link>
 
-			<ul className="flex items-center gap-10 m-0 list-none">
+			<ul className="flex items-center gap-1 m-0 list-none">
 				{navLinks.map((link) => {
-					const isActive = link.href === "#hero" && isHome;
+					const isActive = isHome && activeSection === link.href;
 					const className = cn(
-						"relative py-1 text-base font-medium no-underline transition-colors duration-200",
+						"px-3 py-1.5 rounded-lg text-sm font-medium no-underline transition-all duration-200",
 						onDark
 							? isActive
-								? "text-white"
-								: "text-white/85 hover:text-white"
+								? "bg-white/20 text-white"
+								: "text-white/70 hover:text-white hover:bg-white/10"
 							: isActive
-								? "text-foreground"
-								: "text-muted-foreground hover:text-foreground",
+								? "bg-[#00712D]/10 text-[#00712D]"
+								: "text-[#5A6B66] hover:text-[#1C1C1C] hover:bg-[#00712D]/5",
 					);
 					// On the landing page these are in-page anchors; from any
 					// other page they navigate back to the matching section so
@@ -127,15 +148,6 @@ function HeaderNav({ onDark }: { onDark: boolean }) {
 								className={className}
 							>
 								{link.label}
-								{isActive && (
-									<span
-										className={cn(
-											"absolute -bottom-1 left-0 h-[2px] w-full rounded-full transition-all duration-300",
-											onDark ? "bg-white" : "bg-primary",
-										)}
-										aria-hidden="true"
-									/>
-								)}
 							</a>
 						</li>
 					) : (
@@ -158,10 +170,10 @@ function HeaderNav({ onDark }: { onDark: boolean }) {
 					<Link
 						to="/bonds"
 						className={cn(
-							"relative py-1 text-base font-medium no-underline transition-colors duration-200",
+							"px-3 py-1.5 rounded-lg text-sm font-medium no-underline transition-all duration-200",
 							onDark
-								? "text-white/85 hover:text-white"
-								: "text-muted-foreground hover:text-foreground",
+								? "text-white/70 hover:text-white hover:bg-white/10"
+								: "text-[#5A6B66] hover:text-[#1C1C1C] hover:bg-[#03442C]/5",
 						)}
 					>
 						Bonds
@@ -169,12 +181,12 @@ function HeaderNav({ onDark }: { onDark: boolean }) {
 				</li>
 			</ul>
 
-			<div className="flex items-center gap-3">
+			<div className="flex items-center gap-2.5">
 				<Link
 					to="/login"
 					className={cn(
 						buttonVariants(),
-						"h-[42px] cursor-pointer rounded-[10px] px-6 text-base normal-case tracking-normal",
+						"h-8 cursor-pointer rounded-lg px-4 text-sm normal-case tracking-normal",
 						onDark
 							? "bg-white text-black hover:bg-white/90"
 							: "border border-border bg-white text-black hover:bg-foreground/5",
@@ -186,7 +198,7 @@ function HeaderNav({ onDark }: { onDark: boolean }) {
 					to="/register"
 					className={cn(
 						buttonVariants({ variant: "outline" }),
-						"h-[42px] cursor-pointer rounded-[10px] px-6 text-base normal-case tracking-normal",
+						"h-8 cursor-pointer rounded-lg px-4 text-sm normal-case tracking-normal",
 						onDark
 							? "border-white/60 text-white hover:bg-white hover:text-black"
 							: "text-foreground hover:bg-white hover:text-black",

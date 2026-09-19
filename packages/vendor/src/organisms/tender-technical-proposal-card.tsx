@@ -1,52 +1,36 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@greenshift/ui";
-import type { StructuredProposal } from "../lib/types";
 
 interface TenderTechnicalProposalCardProps {
-	proposal: StructuredProposal;
+	/** The submitted technical specification, or null when the API has none. */
+	technicalSpec: string | null;
+	loading?: boolean;
 }
 
 export function TenderTechnicalProposalCard({
-	proposal,
+	technicalSpec,
+	loading = false,
 }: TenderTechnicalProposalCardProps) {
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle className="text-lg">
-					Technical Proposal Specifications
-				</CardTitle>
+				<CardTitle className="text-lg">Technical Approach</CardTitle>
 			</CardHeader>
-			<CardContent className="space-y-4 text-sm">
-				<div>
-					<h4 className="font-semibold text-foreground">Technical Solution:</h4>
-					<p className="mt-1 text-muted-foreground">
-						{proposal.technicalSolution}
+			<CardContent className="text-sm">
+				{loading ? (
+					<div className="space-y-2">
+						<div className="h-4 w-full animate-none rounded bg-foreground/10" />
+						<div className="h-4 w-4/5 animate-none rounded bg-foreground/10" />
+						<div className="h-4 w-2/3 animate-none rounded bg-foreground/10" />
+					</div>
+				) : technicalSpec ? (
+					<p className="whitespace-pre-line leading-relaxed text-muted-foreground">
+						{technicalSpec}
 					</p>
-				</div>
-
-				<div>
-					<h4 className="font-semibold text-foreground">
-						Equipment Specifications:
-					</h4>
-					<p className="mt-1 text-muted-foreground">
-						{proposal.equipmentSpecs}
+				) : (
+					<p className="text-muted-foreground">
+						No technical specification was submitted with this proposal.
 					</p>
-				</div>
-
-				<div>
-					<h4 className="font-semibold text-foreground">
-						Scope of Work Included:
-					</h4>
-					<p className="mt-1 text-muted-foreground">{proposal.includedScope}</p>
-				</div>
-
-				<div>
-					<h4 className="font-semibold text-foreground">
-						Warranty & Service Coverage:
-					</h4>
-					<p className="mt-1 text-muted-foreground">
-						{proposal.warrantyCoverage}
-					</p>
-				</div>
+				)}
 			</CardContent>
 		</Card>
 	);

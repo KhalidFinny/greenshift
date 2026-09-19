@@ -35,10 +35,10 @@ export function VerificationStatusCard({
 	verification,
 	onUpload,
 }: VerificationStatusCardProps) {
-	const [nib, setNib] = useState(verification.nib ?? "9120405821034");
-	const [npwp, setNpwp] = useState(verification.npwp ?? "01.345.678.9-012.000");
-	const [legalDoc, setLegalDoc] = useState("SIUP_Nusantara.pdf");
-	const [escoCert, setEscoCert] = useState("ESCO_Class_A.pdf");
+	const [nib, setNib] = useState(verification.nib ?? "");
+	const [npwp, setNpwp] = useState(verification.npwp ?? "");
+	const [legalDoc, setLegalDoc] = useState("");
+	const [escoCert, setEscoCert] = useState("");
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -53,60 +53,59 @@ export function VerificationStatusCard({
 						<span className="flex items-center gap-2">
 							<FontAwesomeIcon
 								icon={faShieldAlt}
-								className="text-emerald-600"
+								className="text-emerald-700"
 							/>
-							Status Verifikasi Dokumen Otomatis
+							Automatic Document Verification Status
 						</span>
 						{verification.status === "VERIFIED" && (
-							<Badge className="gap-1 bg-emerald-600 font-bold text-white">
-								<FontAwesomeIcon icon={faCheckCircle} /> Terverifikasi Otomatis
+							<Badge className="gap-1 bg-emerald-700 font-bold text-white">
+								<FontAwesomeIcon icon={faCheckCircle} /> Verified Automatically
 							</Badge>
 						)}
 						{verification.status === "VERIFYING" && (
 							<Badge className="gap-1 bg-blue-600 font-bold text-white">
 								<FontAwesomeIcon icon={faSpinner} className="animate-spin" />{" "}
-								Memeriksa Dokumen...
+								Checking Documents...
 							</Badge>
 						)}
 						{verification.status === "NOT_VERIFIED" && (
-							<Badge className="bg-amber-600 font-bold text-white">
-								Belum Terverifikasi
+							<Badge className="bg-amber-700 font-bold text-white">
+								Not Verified
 							</Badge>
 						)}
 						{verification.status === "REJECTED" && (
 							<Badge className="bg-red-600 font-bold text-white">
-								Ditolak - Perlu Perbaikan
+								Rejected - Revision Required
 							</Badge>
 						)}
 					</CardTitle>
 				</CardHeader>
-				<CardContent className="space-y-4 text-xs">
+				<CardContent className="space-y-4 text-sm">
 					<p className="text-muted-foreground">
-						Verifikasi Vendor GreenShift berjalan secara otomatis menggunakan
-						sistem ekstraksi dokumen cerdas. Tidak memerlukan persetujuan manual
-						Admin.
+						GreenShift verifies vendors automatically with document extraction.
+						No manual admin approval is required.
 					</p>
 
 					{verification.status === "VERIFIED" && (
-						<div className="space-y-2 rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200">
+						<div className="space-y-2 rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-emerald-950">
 							<div className="flex items-center gap-2 text-sm font-bold">
 								<FontAwesomeIcon
 									icon={faUserCheck}
-									className="text-emerald-600"
+									className="text-emerald-700"
 								/>
-								Perusahaan Anda Telah Terverifikasi Penuh
+								Your Company Is Fully Verified
 							</div>
 							<p>
-								Seluruh dokumen legalitas NIB, NPWP, dan Sertifikat ESCO telah
-								divalidasi secara sukses pada{" "}
+								All legal documents (NIB, NPWP, and ESCO certificate) were
+								validated successfully on{" "}
 								<span className="font-semibold">
 									{formatDate(verification.verifiedAt)}
 								</span>
 								.
 							</p>
-							<p className="pt-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
-								✓ Berhak mengikuti Lelang Terbuka, Lelang Tertutup, Penunjukan
-								Langsung, dan Pengajuan Proposal.
+							<p className="pt-1 text-sm font-medium text-emerald-700">
+								You are eligible for Open Bidding, Closed Bidding, Direct
+								Selection, and proposal submission.
 							</p>
 						</div>
 					)}
@@ -116,31 +115,31 @@ export function VerificationStatusCard({
 						className="space-y-4 border-t border-border pt-4"
 					>
 						<h4 className="text-sm font-bold text-foreground">
-							Dokumen Verifikasi Legalitas & Industri
+							Legal & Industry Verification Documents
 						</h4>
 
 						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 							<div className="space-y-1.5">
-								<Label htmlFor="v-nib" className="text-xs font-semibold">
-									Nomor Induk Berusaha (NIB):
+								<Label htmlFor="v-nib" className="text-sm font-semibold">
+									Business Identification Number (NIB):
 								</Label>
 								<Input
 									id="v-nib"
 									value={nib}
 									onChange={(e) => setNib(e.target.value)}
-									placeholder="Masukkan 13 digit NIB..."
+									placeholder="Enter the 13-digit NIB..."
 									required
 								/>
 							</div>
 							<div className="space-y-1.5">
-								<Label htmlFor="v-npwp" className="text-xs font-semibold">
-									Nomor Pokok Wajib Pajak (NPWP):
+								<Label htmlFor="v-npwp" className="text-sm font-semibold">
+									Tax Identification Number (NPWP):
 								</Label>
 								<Input
 									id="v-npwp"
 									value={npwp}
 									onChange={(e) => setNpwp(e.target.value)}
-									placeholder="Masukkan NPWP Perusahaan..."
+									placeholder="Enter the company NPWP..."
 									required
 								/>
 							</div>
@@ -148,19 +147,19 @@ export function VerificationStatusCard({
 
 						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 							<div className="space-y-1.5">
-								<Label htmlFor="v-legaldoc" className="text-xs font-semibold">
-									Dokumen Legalitas Utama (PDF/SIUP):
+								<Label htmlFor="v-legaldoc" className="text-sm font-semibold">
+									Primary Legal Document (PDF/SIUP):
 								</Label>
 								<Input
 									id="v-legaldoc"
 									value={legalDoc}
 									onChange={(e) => setLegalDoc(e.target.value)}
-									placeholder="SIUP_Nusantara.pdf"
+									placeholder="SIUP_YourCompany.pdf"
 								/>
 							</div>
 							<div className="space-y-1.5">
-								<Label htmlFor="v-esco" className="text-xs font-semibold">
-									Sertifikat ESCO / Lisensi Industri:
+								<Label htmlFor="v-esco" className="text-sm font-semibold">
+									ESCO Certificate / Industry License:
 								</Label>
 								<Input
 									id="v-esco"
@@ -174,10 +173,10 @@ export function VerificationStatusCard({
 						<div className="flex justify-end pt-2">
 							<Button
 								type="submit"
-								className="gap-2 bg-[#03442C] text-white hover:bg-[#03442C]/90"
+								className="gap-2 bg-[#00712D] text-white hover:bg-[#00712D]/90"
 							>
 								<FontAwesomeIcon icon={faUpload} />
-								Jalankan Verifikasi Otomatis
+								Run Automatic Verification
 							</Button>
 						</div>
 					</form>
@@ -187,34 +186,32 @@ export function VerificationStatusCard({
 			<Card>
 				<CardHeader>
 					<CardTitle className="flex items-center gap-2 text-base">
-						<FontAwesomeIcon icon={faLock} className="text-amber-600" />
-						Aturan Batasan Hak Akses Vendor (Vendor Boundaries)
+						<FontAwesomeIcon icon={faLock} className="text-amber-700" />
+						Vendor Access Boundaries
 					</CardTitle>
 				</CardHeader>
-				<CardContent className="space-y-2 text-xs text-muted-foreground">
+				<CardContent className="space-y-2 text-sm text-muted-foreground">
 					<p>
-						Sesuai spesifikasi VENDORROLE.md, akun Vendor mematuhi batasan peran
-						berikut:
+						Per the VENDORROLE.md specification, vendor accounts follow these
+						role boundaries:
 					</p>
 					<ul className="list-disc space-y-1 pl-5">
 						<li>
-							Vendor <strong className="text-foreground">tidak dapat</strong>{" "}
-							mengedit data proyek milik Klien atau Penilaian Risiko Proyek.
+							Vendors <strong className="text-foreground">cannot</strong> edit
+							client project data or the project risk assessment.
 						</li>
 						<li>
-							Vendor <strong className="text-foreground">tidak dapat</strong>{" "}
-							mengakses keuangan investor atau informasi penawaran pesaing yang
-							bersifat privat.
+							Vendors <strong className="text-foreground">cannot</strong> access
+							investor financials or private competitor bid information.
 						</li>
 						<li>
-							Vendor <strong className="text-foreground">tidak dapat</strong>{" "}
-							mengedit skor kecocokan matchmaking atau skor kinerja yang
-							dihasilkan sistem secara otomatis.
+							Vendors <strong className="text-foreground">cannot</strong> edit
+							matchmaking fit scores or performance scores generated by the
+							system.
 						</li>
 						<li>
-							Vendor <strong className="text-foreground">tidak dapat</strong>{" "}
-							mengosongkan atau menyetujui milestone diri sendiri (persetujuan
-							dari Klien).
+							Vendors <strong className="text-foreground">cannot</strong> clear
+							or approve their own milestones; client approval is required.
 						</li>
 					</ul>
 				</CardContent>

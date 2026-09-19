@@ -1,8 +1,9 @@
 import type { AuthUser } from "@greenshift/core";
 import { roleHome, useAuth } from "@greenshift/core";
-import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { useRouterState } from "@tanstack/react-router";
 import type { RefObject } from "react";
 import { useEffect, useRef, useState } from "react";
+import { initialsOf } from "../components/account-avatar";
 
 export interface RoleShellData {
 	user: AuthUser | null;
@@ -18,22 +19,11 @@ export interface RoleShellData {
 	notifMenuOpen: boolean;
 	toggleNotifMenu: () => void;
 	closeNotifMenu: () => void;
-	openProfile: () => void;
 	handleLogout: () => Promise<void>;
-}
-
-function initialsOf(name: string): string {
-	return name
-		.split(" ")
-		.filter(Boolean)
-		.slice(0, 2)
-		.map((word) => word.charAt(0).toUpperCase())
-		.join("");
 }
 
 export function useRoleShell(): RoleShellData {
 	const { user, logout } = useAuth();
-	const navigate = useNavigate();
 	const activePath = useRouterState({
 		select: (state) => state.location.pathname,
 	});
@@ -95,10 +85,6 @@ export function useRoleShell(): RoleShellData {
 			setAccountMenuOpen(false);
 		},
 		closeNotifMenu,
-		openProfile: () => {
-			closeAccountMenu();
-			navigate({ to: "/profile" });
-		},
 		handleLogout: async () => {
 			closeAccountMenu();
 			await logout();

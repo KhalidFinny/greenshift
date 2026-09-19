@@ -1,4 +1,5 @@
 import type { Env } from "../env";
+import { ApiFailure } from "./response";
 
 const RATE_PREFIX = "greenshift:rl:";
 
@@ -37,4 +38,20 @@ export function clientIp(request: Request): string {
 	// bounded "unknown" bucket instead of minting unbounded keys.
 	const ip = request.headers.get("cf-connecting-ip");
 	return ip && /^[\d.a-fA-F:]+$/.test(ip) ? ip : "unknown";
+}
+
+/**
+ * Counts one request against the bucket and fails the request once it is over
+ * the limit, carrying the retry delay for the `Retry-After` header.
+ */
+export async function enforceRateLimit(
+	env: Env,
+	key: string,
+	limit: number,
+	windowSeconds: number,
+): Promise<void> {
+	const result = await checkRateLimit(env, key, limit, windowSeconds);
+	if (!result.ok) {
+		throw new ApiFailure("RATE_LIMITED", undefined, result.retryAfter);
+	}
 }

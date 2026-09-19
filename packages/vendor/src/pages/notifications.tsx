@@ -1,6 +1,49 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@greenshift/ui";
+import { faBell } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+	EmptyState,
+	Tabs,
+	TabsContent,
+	TabsList,
+	TabsTrigger,
+} from "@greenshift/ui";
+import type { VendorNotification } from "../lib/types";
 import { useVendorData } from "../lib/use-vendor-data";
 import { NotificationItemCard } from "../organisms/notification-item-card";
+
+function NotificationList({
+	notifications,
+	emptyTitle,
+	emptyDescription,
+	onMarkRead,
+}: {
+	notifications: VendorNotification[];
+	emptyTitle: string;
+	emptyDescription: string;
+	onMarkRead?: (id: string) => void;
+}) {
+	if (notifications.length === 0) {
+		return (
+			<EmptyState
+				icon={<FontAwesomeIcon icon={faBell} />}
+				title={emptyTitle}
+				description={emptyDescription}
+			/>
+		);
+	}
+
+	return (
+		<div className="space-y-3">
+			{notifications.map((n) => (
+				<NotificationItemCard
+					key={n.id}
+					notification={n}
+					onMarkRead={onMarkRead}
+				/>
+			))}
+		</div>
+	);
+}
 
 export function VendorNotificationsPage() {
 	const { notifications, markNotificationRead } = useVendorData();
@@ -28,71 +71,61 @@ export function VendorNotificationsPage() {
 				</TabsList>
 
 				<TabsContent value="all" className="mt-6">
-					<div className="space-y-3">
-						{notifications.map((n) => (
-							<NotificationItemCard
-								key={n.id}
-								notification={n}
-								onMarkRead={markNotificationRead}
-							/>
-						))}
-					</div>
+					<NotificationList
+						notifications={notifications}
+						emptyTitle="No notifications yet"
+						emptyDescription="Tender standings, negotiation requests, and verification updates are delivered here as they happen."
+						onMarkRead={markNotificationRead}
+					/>
 				</TabsContent>
 
 				<TabsContent value="unread" className="mt-6">
-					<div className="space-y-3">
-						{notifications
-							.filter((n) => !n.isRead)
-							.map((n) => (
-								<NotificationItemCard
-									key={n.id}
-									notification={n}
-									onMarkRead={markNotificationRead}
-								/>
-							))}
-					</div>
+					<NotificationList
+						notifications={notifications.filter((n) => !n.isRead)}
+						emptyTitle="You are all caught up"
+						emptyDescription="No unread notifications. Everything you have read stays in the All tab."
+						onMarkRead={markNotificationRead}
+					/>
 				</TabsContent>
 
 				<TabsContent value="tenders" className="mt-6">
-					<div className="space-y-3">
-						{notifications
-							.filter((n) => n.category === "Tenders")
-							.map((n) => (
-								<NotificationItemCard key={n.id} notification={n} />
-							))}
-					</div>
+					<NotificationList
+						notifications={notifications.filter(
+							(n) => n.category === "Tenders",
+						)}
+						emptyTitle="No tender notifications"
+						emptyDescription="Ranking changes and deadline reminders for tenders you have joined appear here."
+					/>
 				</TabsContent>
 
 				<TabsContent value="projects" className="mt-6">
-					<div className="space-y-3">
-						{notifications
-							.filter((n) => n.category === "Projects")
-							.map((n) => (
-								<NotificationItemCard key={n.id} notification={n} />
-							))}
-					</div>
+					<NotificationList
+						notifications={notifications.filter(
+							(n) => n.category === "Projects",
+						)}
+						emptyTitle="No opportunity notifications"
+						emptyDescription="Updates on open opportunities that match your profile appear here."
+					/>
 				</TabsContent>
 
 				<TabsContent value="negotiation" className="mt-6">
-					<div className="space-y-3">
-						{notifications
-							.filter((n) => n.category === "Negotiation")
-							.map((n) => (
-								<NotificationItemCard key={n.id} notification={n} />
-							))}
-					</div>
+					<NotificationList
+						notifications={notifications.filter(
+							(n) => n.category === "Negotiation",
+						)}
+						emptyTitle="No negotiation notifications"
+						emptyDescription="Client revision requests and negotiation updates appear here."
+					/>
 				</TabsContent>
 
 				<TabsContent value="system" className="mt-6">
-					<div className="space-y-3">
-						{notifications
-							.filter(
-								(n) => n.category === "System" || n.category === "Verification",
-							)
-							.map((n) => (
-								<NotificationItemCard key={n.id} notification={n} />
-							))}
-					</div>
+					<NotificationList
+						notifications={notifications.filter(
+							(n) => n.category === "System" || n.category === "Verification",
+						)}
+						emptyTitle="No system notifications"
+						emptyDescription="Account, verification, and platform messages appear here."
+					/>
 				</TabsContent>
 			</Tabs>
 		</div>

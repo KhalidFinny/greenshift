@@ -14,7 +14,7 @@ export default function CtaSection() {
 							<h2 className="mt-4 text-[clamp(2rem,4vw,3rem)] font-bold leading-tight text-white">
 								Ready to start your energy transition?
 							</h2>
-							<p className="mt-6 max-w-xl text-lg leading-relaxed text-white/85">
+							<p className="mt-6 max-w-xl text-lg leading-relaxed text-white">
 								Register for free and submit your first energy efficiency
 								project today.
 							</p>
@@ -30,7 +30,7 @@ export default function CtaSection() {
 							>
 								Get Started Free
 							</Link>
-							<p className="text-base text-white/85">
+							<p className="text-base text-white">
 								Need help?{" "}
 								<a
 									href="mailto:contact@greenshift.com"

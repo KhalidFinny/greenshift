@@ -13,6 +13,7 @@ import {
 	CardContent,
 	CardHeader,
 	CardTitle,
+	EmptyState,
 	Input,
 } from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
@@ -70,6 +71,17 @@ export function BrokerMonthlyReportsPage() {
 			</div>
 
 			<div className="space-y-6">
+				{filteredReports.length === 0 && (
+					<EmptyState
+						icon={<FontAwesomeIcon icon={faFileAlt} />}
+						title="No monitoring reports"
+						description={
+							searchQuery
+								? `No report matches "${searchQuery}". Clear the search to see every report.`
+								: "GreenShift publishes a report after each verified monitoring period. Reports for your assigned projects appear here once the first period closes."
+						}
+					/>
+				)}
 				{filteredReports.map((report) => (
 					<Card key={report.id} className="overflow-hidden">
 						<CardHeader className="flex flex-row items-center justify-between border-b border-border bg-muted/30 pb-4">
@@ -81,9 +93,9 @@ export function BrokerMonthlyReportsPage() {
 									<Badge
 										className={
 											report.overallStatus === "ON_TRACK"
-												? "bg-emerald-600 text-white font-bold"
+												? "bg-emerald-700 text-white font-bold"
 												: report.overallStatus === "ATTENTION_REQUIRED"
-													? "bg-amber-600 text-white font-bold"
+													? "bg-amber-700 text-white font-bold"
 													: "bg-red-600 text-white font-bold"
 										}
 									>
@@ -93,7 +105,7 @@ export function BrokerMonthlyReportsPage() {
 								<CardTitle className="mt-2 text-lg">
 									{report.projectTitle}
 								</CardTitle>
-								<p className="text-xs text-muted-foreground mt-0.5">
+								<p className="text-sm text-muted-foreground mt-0.5">
 									Client: {report.companyName} • Contractor / Vendor:{" "}
 									{report.vendorName}
 								</p>
@@ -107,7 +119,7 @@ export function BrokerMonthlyReportsPage() {
 									<Button
 										variant="outline"
 										size="sm"
-										className="gap-1.5 text-xs"
+										className="gap-1.5 text-sm"
 									>
 										<FontAwesomeIcon icon={faFileAlt} />
 										View Full Report
@@ -115,7 +127,7 @@ export function BrokerMonthlyReportsPage() {
 								</Link>
 								<Button
 									size="sm"
-									className="bg-[#03442C] text-white hover:bg-[#03442C]/90 gap-1.5 text-xs"
+									className="bg-[#03442C] text-white hover:bg-[#03442C]/90 gap-1.5 text-sm"
 									onClick={() =>
 										report.pdfExportUrl &&
 										window.location.assign(report.pdfExportUrl)
@@ -127,7 +139,7 @@ export function BrokerMonthlyReportsPage() {
 							</div>
 						</CardHeader>
 
-						<CardContent className="p-6 space-y-6 text-xs">
+						<CardContent className="p-6 space-y-6 text-sm">
 							{/* Summary Cards */}
 							<div className="grid grid-cols-2 gap-4 rounded-xl bg-muted p-4 sm:grid-cols-4">
 								<div>
@@ -145,7 +157,7 @@ export function BrokerMonthlyReportsPage() {
 								</div>
 								<div>
 									<p className="text-muted-foreground">Actual Energy Savings</p>
-									<p className="font-bold text-emerald-600 dark:text-emerald-400 text-sm mt-0.5">
+									<p className="font-bold text-emerald-700 text-sm mt-0.5">
 										{report.actualEnergySavingsKwh.toLocaleString("en-US")} kWh
 									</p>
 								</div>
@@ -153,7 +165,7 @@ export function BrokerMonthlyReportsPage() {
 									<p className="text-muted-foreground">
 										Carbon Emission Reduction
 									</p>
-									<p className="font-bold text-emerald-600 dark:text-emerald-400 text-sm mt-0.5">
+									<p className="font-bold text-emerald-700 text-sm mt-0.5">
 										{report.actualCarbonReductionTons} tCO₂e
 									</p>
 								</div>
@@ -171,11 +183,11 @@ export function BrokerMonthlyReportsPage() {
 								</div>
 
 								{report.detectedRisksOrAnomalies.length > 0 && (
-									<div className="rounded-lg bg-emerald-50 p-3 text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-200 border border-emerald-200">
+									<div className="rounded-lg bg-emerald-50 p-3 text-emerald-950 border border-emerald-200">
 										<p className="font-semibold flex items-center gap-1.5">
 											<FontAwesomeIcon
 												icon={faCheckCircle}
-												className="text-emerald-600"
+												className="text-emerald-700"
 											/>
 											Additional Monitoring Notes:
 										</p>

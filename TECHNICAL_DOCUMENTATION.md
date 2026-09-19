@@ -45,7 +45,7 @@ scripts/          Demo-user seeder (db:setup) and seed-fixture generator
 | `business` | `/business` | `packages/business` | Placeholder shell; no API surface yet. |
 | `vendor` | `/vendor` | `packages/vendor` | `/api/vendor/*` (profile, opportunities, proposals, negotiations, notifications, leaderboard, portfolio, milestones, MRV reports). |
 | `broker` | `/broker` | `packages/broker` | `/api/broker/*` (assigned projects, document requests, monthly reports with PDF export, notifications, profile). |
-| `admin` | `/admin` | `packages/admin` | `/api/admin/*` plus static demo constants for the chart/console tiles. |
+| `admin` | `/admin` | `packages/admin` | `/api/admin/*` plus `GET /api/health` for the binding-status card. Every figure the console renders comes from the API. |
 | `investor` | `/bonds` | `packages/investor` | `GET /api/investor/market` (D1 only; the catalog renders an empty state when nothing is published). |
 
 `roleHome` and `roleNav` in `packages/core/src/auth/index.ts` are the single source of truth for a role's home
@@ -98,9 +98,11 @@ pass-through layers. Route handlers never query Drizzle directly, and repositori
 
 ## 4. Authentication and authorization
 
-- **Login** (`POST /api/auth/login`): D1 user lookup, PBKDF2 verification (600k iterations, with
+- **Login** (`POST /api/auth/login`): D1 user lookup, PBKDF2 verification (100k iterations, with
   rehash-on-login when the stored iteration count is lower), then a 32-byte opaque token stored in KV under
-  `greenshift:session:<token>`.
+  `greenshift:session:<token>`. 100k is the ceiling workerd accepts for PBKDF2 ("iteration counts above 100000
+  are not supported"), so it is below the 600k the OWASP Password Storage Cheat Sheet asks for; a hash stored
+  above that ceiling is treated as invalid rather than throwing.
 - **Cookie**: `__Host-greenshift_session`, `HttpOnly`, `Secure`, `SameSite=Lax`, with a cookie max-age that
   matches the absolute session cap.
 - **Session policy**: KV TTL plus an idle timeout (default 15 minutes, `SESSION_IDLE_MINUTES` override) and
@@ -232,6 +234,7 @@ usual PDF libraries.
 | POST | `/api/admin/roi-payments/:id/payout` | Mark a scheduled payment paid (sandbox escrow). |
 | GET | `/api/admin/audit-logs` | Audit trail. |
 | GET | `/api/admin/stats` | Dashboard aggregates. |
+| GET | `/api/admin/analytics` | Trailing 12 months of accounts, organizations, projects, investments, ROI paid and MRV carbon reduction, plus platform totals and the summed project carbon target. |
 | GET | `/api/admin/anomalies` | Read-only red-flag rule engine. |
 | GET | `/api/admin/vendors` | Vendor profiles. |
 | PATCH | `/api/admin/vendors/:id/verify` | Verify or unverify a vendor profile. |
@@ -242,9 +245,8 @@ Request and response types live in `apps/api/src/contracts.ts` and are re-export
 `@greenshift/api`, so client and server share one typed contract. `apiRoutes` in the same file is the single
 list of method/path pairs the frontend client calls.
 
-Not every view is API-backed yet: the admin dashboard reads `/api/admin/*` but still renders its chart and
-console tiles from static constants (`packages/admin/src/lib/demo-data.ts`), and the business dashboard is a
-placeholder shell. The bond catalog, the vendor dashboard and the broker dashboard read from the API — the
+Not every view is API-backed yet: the admin console reads `/api/admin/*` and `GET /api/health` for every figure
+it renders, and the business dashboard is a placeholder shell. The bond catalog, the vendor dashboard and the broker dashboard read from the API — the
 vendor and broker UIs keep only client-side UI state locally, their verification-document forms have no
 backend file field yet, and the vendor performance tiles are derived from awarded projects, milestones, MRV
 reports and the platform rating (fields the API does not store, such as client endorsements, stay at 0 rather

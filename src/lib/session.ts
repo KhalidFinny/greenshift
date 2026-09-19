@@ -1,4 +1,5 @@
 import { createDb, users } from "@greenshift/api";
+import { authUserFrom } from "@greenshift/api/lib/authz";
 import {
 	getSessionUser,
 	readCookie,
@@ -25,6 +26,6 @@ export const getSessionFn = createServerFn({ method: "GET" }).handler(
 			.limit(1);
 		if (!user) return null;
 
-		return { id: user.id, email: user.email, name: user.name, role: user.role };
+		return authUserFrom(user);
 	},
 );

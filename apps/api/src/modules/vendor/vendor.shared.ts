@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 import type {
 	ProposalDetail,
 	ProposalRevisionEntry,
+	VendorEnergyForecast,
 	VendorMilestone,
 	VendorMilestoneEvidence,
 	VendorMonthlyReport,
@@ -11,6 +12,7 @@ import type { GreenShiftDb } from "../../db";
 import {
 	auditLogs,
 	type emissionReports,
+	type energyForecasts,
 	type milestoneEvidence,
 	type projectMilestones,
 	projects,
@@ -158,6 +160,19 @@ export function milestoneEntry(
 		vendorNotes: row.vendorNotes,
 		companyReviewNotes: row.companyReviewNotes,
 		evidence: evidence.map(evidenceEntry),
+	};
+}
+
+export function forecastEntry(
+	row: typeof energyForecasts.$inferSelect,
+): VendorEnergyForecast {
+	return {
+		periodStart: iso(row.periodStart),
+		periodEnd: iso(row.periodEnd),
+		forecastedConsumption: row.forecastedConsumption,
+		forecastedSavings: row.forecastedSavings,
+		modelName: row.modelName,
+		metrics: row.metrics ?? null,
 	};
 }
 

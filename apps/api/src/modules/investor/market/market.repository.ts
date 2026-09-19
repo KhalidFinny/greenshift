@@ -1,6 +1,12 @@
-import { desc, eq, ne, sql } from "drizzle-orm";
+import { desc, eq, isNotNull, ne, sql } from "drizzle-orm";
 import type { GreenShiftDb } from "../../../db";
-import { blueprints, investments, projects, users } from "../../../db/schema";
+import {
+	blueprints,
+	brokerAssignments,
+	investments,
+	projects,
+	users,
+} from "../../../db/schema";
 
 export async function listProjectRows(db: GreenShiftDb) {
 	return db
@@ -31,4 +37,18 @@ export async function listFundedByProject(db: GreenShiftDb) {
 		})
 		.from(investments)
 		.groupBy(investments.projectId);
+}
+
+/**
+ * Bond codes that have actually been issued, keyed by project. A bond with no
+ * assignment or no serial has not been issued yet, so it carries no code.
+ */
+export async function listIssuedBondCodes(db: GreenShiftDb) {
+	return db
+		.select({
+			projectId: brokerAssignments.projectId,
+			serial: brokerAssignments.bondSerialNumber,
+		})
+		.from(brokerAssignments)
+		.where(isNotNull(brokerAssignments.bondSerialNumber));
 }

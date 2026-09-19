@@ -2,6 +2,7 @@ import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import type { GreenShiftDb } from "../../../db";
 import {
 	emissionReports,
+	energyForecasts,
 	milestoneEvidence,
 	projectMilestones,
 	projects,
@@ -89,6 +90,21 @@ export async function listEmissionReports(
 		.from(emissionReports)
 		.where(inArray(emissionReports.projectId, projectIds))
 		.orderBy(desc(emissionReports.periodStart));
+}
+
+/**
+ * Predictive-analytics periods for the projects, newest first. Read-only: the
+ * forecast is produced by the model, never by the vendor or the company.
+ */
+export async function listEnergyForecasts(
+	db: GreenShiftDb,
+	projectIds: number[],
+): Promise<Array<typeof energyForecasts.$inferSelect>> {
+	return db
+		.select()
+		.from(energyForecasts)
+		.where(inArray(energyForecasts.projectId, projectIds))
+		.orderBy(desc(energyForecasts.periodStart));
 }
 
 export async function listProposalRevisions(

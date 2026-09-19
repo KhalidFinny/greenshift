@@ -1,6 +1,6 @@
-import { faPencil, faX } from "@fortawesome/free-solid-svg-icons";
+import { faAward, faPencil, faX } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "@greenshift/ui";
+import { Button, EmptyState } from "@greenshift/ui";
 import { useState } from "react";
 import { useVendorData } from "../lib/use-vendor-data";
 import { AddPortfolioDialog } from "../organisms/add-portfolio-dialog";
@@ -51,15 +51,23 @@ export function VendorPortfolioPerformancePage() {
 					</div>
 				</div>
 
-				<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-					{portfolio.map((item) => (
-						<PortfolioItemCard
-							key={item.id}
-							item={item}
-							onDelete={isEditMode ? deletePortfolioItem : undefined}
-						/>
-					))}
-				</div>
+				{portfolio.length === 0 ? (
+					<EmptyState
+						icon={<FontAwesomeIcon icon={faAward} />}
+						title="No portfolio records yet"
+						description="Completed projects and the track records you author appear here as evidence of delivered work. Add a record to show clients what you have built."
+					/>
+				) : (
+					<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+						{portfolio.map((item) => (
+							<PortfolioItemCard
+								key={item.id}
+								item={item}
+								onDelete={isEditMode ? deletePortfolioItem : undefined}
+							/>
+						))}
+					</div>
+				)}
 			</section>
 		</div>
 	);

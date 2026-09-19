@@ -26,7 +26,7 @@ export function ExportMenu({ filename, title, sections }: ExportMenuProps) {
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button variant="outline" className="!h-9 px-4 text-base">
+				<Button variant="outline" className="">
 					<FontAwesomeIcon icon={faFileExport} className="size-4" />
 					Export
 				</Button>

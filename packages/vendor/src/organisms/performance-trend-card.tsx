@@ -1,4 +1,12 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@greenshift/ui";
+import { faChartLine } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+	EmptyState,
+} from "@greenshift/ui";
 
 interface PerformanceTrendCardProps {
 	historicalTrend?: { period: string; score: number }[];
@@ -96,7 +104,7 @@ function TrendLineChart({
 								x={padding.left - 10}
 								y={y + 4}
 								textAnchor="end"
-								className="fill-muted-foreground text-xs font-mono font-medium"
+								className="fill-muted-foreground text-sm font-mono font-medium"
 							>
 								{tick}
 							</text>
@@ -162,7 +170,7 @@ function TrendLineChart({
 								x={cx}
 								y={padding.top + chartHeight + 22}
 								textAnchor="middle"
-								className="fill-muted-foreground text-xs font-medium transition-colors group-hover/point:fill-emerald-600 group-hover/point:font-bold dark:group-hover/point:fill-emerald-400"
+								className="fill-muted-foreground text-sm font-medium transition-colors group-hover/point:fill-emerald-600 group-hover/point:font-bold"
 							>
 								{d.period}
 							</text>
@@ -172,7 +180,7 @@ function TrendLineChart({
 								x={cx}
 								y={cy - 12}
 								textAnchor="middle"
-								className="fill-foreground text-xs font-bold transition-all group-hover/point:fill-emerald-600 dark:group-hover/point:fill-emerald-400"
+								className="fill-foreground text-sm font-bold transition-all group-hover/point:fill-emerald-600"
 							>
 								{d.score}
 							</text>
@@ -209,9 +217,11 @@ export function PerformanceTrendCard({
 				{trendData.length > 1 ? (
 					<TrendLineChart data={trendData} />
 				) : (
-					<p className="py-12 text-center text-sm text-muted-foreground">
-						No verified performance history yet.
-					</p>
+					<EmptyState
+						icon={<FontAwesomeIcon icon={faChartLine} />}
+						title="No verified performance history yet"
+						description="A score is recorded each period after a client signs off a milestone, so the trend starts building once your first project is under execution."
+					/>
 				)}
 			</CardContent>
 		</Card>

@@ -1,3 +1,4 @@
+export * from "./components/account-avatar";
 export * from "./components/charts/bar";
 export * from "./components/charts/bar-chart";
 export * from "./components/charts/bar-x-axis";

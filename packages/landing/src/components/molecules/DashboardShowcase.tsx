@@ -1,9 +1,9 @@
-import GlassCard from "../atoms/GlassCard";
+import Panel from "../atoms/Panel";
 
 export default function DashboardShowcase() {
 	return (
 		<figure className="relative w-[80%] max-w-[1000px] m-0 lg:w-[calc(var(--u)*1000)] lg:max-w-none">
-			<GlassCard>
+			<Panel>
 				<div className="relative">
 					<img
 						src="/dashboard.webp"
@@ -12,7 +12,7 @@ export default function DashboardShowcase() {
 						className="w-full"
 					/>
 				</div>
-			</GlassCard>
+			</Panel>
 			<figcaption className="sr-only">
 				GreenShift project monitoring dashboard with real-time data
 				visualization

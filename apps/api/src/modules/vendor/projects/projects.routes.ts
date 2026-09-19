@@ -3,6 +3,7 @@ import { createFactory } from "hono/factory";
 import { createDb } from "../../../db";
 import type { ApiEnv } from "../../../env";
 import { parseLimit } from "../../../lib/format";
+import { apiError, apiNotFound } from "../../../lib/response";
 import { getMarketProject, listMarketProjects } from "./projects.service";
 
 const factory = createFactory<ApiEnv>();
@@ -18,10 +19,7 @@ projectsRoutes.get(
 			tenderStatus &&
 			!["open", "evaluation", "closed", "awarded"].includes(tenderStatus)
 		) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid tender status" } },
-				400,
-			);
+			return apiError(c, "VALIDATION", "Invalid tender status");
 		}
 		const limit = parseLimit(c.req.query("limit"));
 
@@ -40,19 +38,13 @@ projectsRoutes.get(
 	...factory.createHandlers(async (c) => {
 		const id = Number(c.req.param("id"));
 		if (!Number.isInteger(id) || id <= 0) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid ID" } },
-				400,
-			);
+			return apiError(c, "INVALID_ID");
 		}
 
 		const db = createDb(c.env.DB);
 		const project = await getMarketProject(db, c.get("user").id, id);
 		if (!project) {
-			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Project not found" } },
-				404,
-			);
+			return apiNotFound(c, "Project");
 		}
 		return c.json({ project });
 	}),

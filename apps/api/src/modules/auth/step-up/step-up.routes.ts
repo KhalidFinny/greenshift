@@ -4,8 +4,8 @@ import type { StepUpBody, StepUpResponse } from "../../../contracts";
 import type { ApiEnv } from "../../../env";
 import { requireSession } from "../../../lib/authz";
 import { requireCsrf } from "../../../lib/csrf";
-import { rateLimited, requireJson } from "../../../lib/http";
-import { checkRateLimit, clientIp } from "../../../lib/rate-limit";
+import { clientIp, enforceRateLimit } from "../../../lib/rate-limit";
+import { apiError } from "../../../lib/response";
 import { MAX_PASSWORD } from "../auth.shared";
 import { stepUpUser } from "./step-up.service";
 
@@ -18,30 +18,16 @@ stepUpRoutes.post(
 	requireSession,
 	requireCsrf,
 	...factory.createHandlers(async (c) => {
-		const mediaTypeError = requireJson(c);
-		if (mediaTypeError) return mediaTypeError;
-
 		const body = (await c.req
 			.json()
 			.catch(() => null)) as Partial<StepUpBody> | null;
 		const password = typeof body?.password === "string" ? body.password : "";
 		if (!password || password.length > MAX_PASSWORD) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid password" } },
-				400,
-			);
+			return apiError(c, "VALIDATION", "Invalid password");
 		}
 
-		const ip = clientIp(c.req.raw);
-		const ipCheck = await checkRateLimit(c.env, `stepup:ip:${ip}`, 10, 600);
-		if (!ipCheck.ok) return rateLimited(c, ipCheck.retryAfter);
-		const userCheck = await checkRateLimit(
-			c.env,
-			`stepup:user:${c.get("user").id}`,
-			5,
-			600,
-		);
-		if (!userCheck.ok) return rateLimited(c, userCheck.retryAfter);
+		await enforceRateLimit(c.env, `stepup:ip:${clientIp(c.req.raw)}`, 10, 600);
+		await enforceRateLimit(c.env, `stepup:user:${c.get("user").id}`, 5, 600);
 
 		const result = await stepUpUser(c.env, {
 			userId: c.get("user").id,
@@ -49,20 +35,13 @@ stepUpRoutes.post(
 			password,
 		});
 		if (result.status === "invalid-session") {
-			return c.json(
-				{ error: { code: "UNAUTHORIZED", message: "Invalid session" } },
-				401,
-			);
+			return apiError(c, "UNAUTHORIZED");
 		}
 		if (result.status === "incorrect-password") {
-			return c.json(
-				{
-					error: {
-						code: "INVALID_CREDENTIALS",
-						message: "Incorrect confirmation password",
-					},
-				},
-				401,
+			return apiError(
+				c,
+				"INVALID_CREDENTIALS",
+				"Incorrect confirmation password",
 			);
 		}
 

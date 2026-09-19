@@ -11,21 +11,24 @@ import {
 	Bar,
 	BarChart,
 	BarXAxis,
+	Button,
 	Card,
 	CardContent,
 	CardHeader,
 	CardTitle,
 	ChartTooltip,
-	ContentSkeleton,
 	DataTable,
 	EmptyState,
 	Grid,
+	ShimmerBlock,
 } from "@greenshift/ui";
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { ExportSection } from "../lib/export";
+import { formatMonth } from "../lib/format";
 import { ExportMenu } from "../organisms/export-menu";
 import { MetricCard } from "../organisms/metric-card";
+import { TableSkeleton } from "../organisms/table-skeleton";
 
 const idr = new Intl.NumberFormat("en-US", {
 	style: "currency",
@@ -33,40 +36,18 @@ const idr = new Intl.NumberFormat("en-US", {
 	maximumFractionDigits: 0,
 });
 
-const GROWTH_DATA = [
-	{ label: "Jan", users: 4, organizations: 2 },
-	{ label: "Feb", users: 6, organizations: 3 },
-	{ label: "Mar", users: 7, organizations: 4 },
-	{ label: "Apr", users: 9, organizations: 5 },
-	{ label: "May", users: 12, organizations: 6 },
-	{ label: "Jun", users: 14, organizations: 7 },
-	{ label: "Jul", users: 18, organizations: 9 },
-	{ label: "Aug", users: 21, organizations: 11 },
-];
-
-const CARBON_TREND = [
-	{ label: "Jan", value: 8 },
-	{ label: "Feb", value: 12 },
-	{ label: "Mar", value: 16 },
-	{ label: "Apr", value: 21 },
-	{ label: "May", value: 28 },
-	{ label: "Jun", value: 34 },
-	{ label: "Jul", value: 41 },
-	{ label: "Aug", value: 49.77 },
-];
-
-const INVESTMENT_TREND = [
-	{ label: "Jan", value: 120_000_000 },
-	{ label: "Feb", value: 180_000_000 },
-	{ label: "Mar", value: 260_000_000 },
-	{ label: "Apr", value: 390_000_000 },
-	{ label: "May", value: 560_000_000 },
-	{ label: "Jun", value: 920_000_000 },
-	{ label: "Jul", value: 1_600_000_000 },
-	{ label: "Aug", value: 2_500_000_000 },
-];
-
 type FundingRow = AdminStats["funding"][number];
+
+/** Column labels for the loading frames, in table order. */
+const FUNDING_HEADERS = ["Bond", "Budget", "Raised", "Progress"];
+const PROJECT_HEADERS = [
+	"Project",
+	"Sector",
+	"Status",
+	"Budget",
+	"Risk",
+	"Blueprint",
+];
 
 const fundingColumns: ColumnDef<FundingRow>[] = [
 	{
@@ -189,81 +170,65 @@ export function AdminAnalytics() {
 		queryKey: ["admin", "stats"],
 		queryFn: () => api.admin.stats(),
 	});
+	const analyticsQuery = useQuery({
+		queryKey: ["admin", "analytics"],
+		queryFn: () => api.admin.analytics(),
+	});
 	const projectsQuery = useQuery({
 		queryKey: ["admin", "projects", "analytics"],
 		queryFn: () => api.admin.projects({ limit: 200 }),
 	});
 
-	if (statsQuery.isPending || projectsQuery.isPending) {
-		return <ContentSkeleton />;
-	}
-
-	if (statsQuery.isError || projectsQuery.isError) {
+	if (statsQuery.isError || analyticsQuery.isError || projectsQuery.isError) {
 		return (
-			<div className="space-y-4">
-				<EmptyState
-					title="Failed to load analytics"
-					description="Unable to retrieve platform performance data."
-				/>
-			</div>
+			<EmptyState
+				tone="error"
+				title="Analytics data did not load"
+				description="The console could not reach the stats, analytics, or project endpoints behind this page."
+				action={
+					<Button
+						variant="outline"
+						onClick={() => {
+							void Promise.all([
+								statsQuery.refetch(),
+								analyticsQuery.refetch(),
+								projectsQuery.refetch(),
+							]);
+						}}
+					>
+						Try again
+					</Button>
+				}
+			/>
 		);
 	}
 
-	const stats = statsQuery.data;
-	const projects = projectsQuery.data.projects;
+	// Each query keeps its cached data across a refetch, so the page renders its
+	// real cards and each one shimmers only its own values.
+	const loading =
+		statsQuery.isPending || analyticsQuery.isPending || projectsQuery.isPending;
 
-	const totalUsers = Object.values(stats.users).reduce((a, b) => a + b, 0);
-	const activeProjects =
-		(stats.projects.funding ?? 0) + (stats.projects.monitoring ?? 0);
+	const stats = statsQuery.data;
+	const analytics = analyticsQuery.data;
+	const projects = projectsQuery.data?.projects ?? [];
+
+	const totalUsers = stats
+		? Object.values(stats.users).reduce((a, b) => a + b, 0)
+		: 0;
+	const activeProjects = stats
+		? (stats.projects.funding ?? 0) + (stats.projects.monitoring ?? 0)
+		: 0;
+	const totalProjects = stats
+		? Object.values(stats.projects).reduce((a, b) => a + b, 0)
+		: 0;
 	// Bond funding status: the same public bond data surfaced on the
 	// public dashboard, aggregated here for admin without any per-investor rows.
-	const topBonds: FundingRow[] =
-		stats.funding && stats.funding.length > 0
-			? [...stats.funding]
-					.sort((a, b) => (b.funded ?? 0) - (a.funded ?? 0))
-					.slice(0, 6)
-			: [
-					{
-						id: 1,
-						title: "Retrofit Chiller",
-						budget: 500_000_000,
-						funded: 250_000_000,
-						progress: 0.5,
-					},
-					{
-						id: 2,
-						title: "Rooftop Solar Panels",
-						budget: 800_000_000,
-						funded: 560_000_000,
-						progress: 0.7,
-					},
-				];
+	const funding: FundingRow[] = stats?.funding ?? [];
+	const topBonds: FundingRow[] = [...funding]
+		.sort((a, b) => (b.funded ?? 0) - (a.funded ?? 0))
+		.slice(0, 6);
 
-	const topProjects: AdminProject[] =
-		projects.length > 0
-			? projects.slice(0, 6)
-			: [
-					{
-						id: 1,
-						title: "Retrofit Chiller",
-						status: "funding",
-						companyName: "PT Green Nusantara",
-						industrySector: "Manufacturing",
-						budget: 500_000_000,
-						riskScore: 72,
-						blueprintStatus: "published",
-					},
-					{
-						id: 2,
-						title: "Rooftop Solar Panels",
-						status: "monitoring",
-						companyName: "PT Clean Carbon",
-						industrySector: "Logistics",
-						budget: 800_000_000,
-						riskScore: 55,
-						blueprintStatus: "published",
-					},
-				];
+	const topProjects: AdminProject[] = projects.slice(0, 6);
 
 	const topBondsSections: ExportSection[] = [
 		{
@@ -305,13 +270,13 @@ export function AdminAnalytics() {
 	const metricCards = [
 		{
 			label: "Total Investment",
-			value: idr.format(stats.investments.sum),
+			value: idr.format(stats?.investments.sum ?? 0),
 			icon: faCoins,
-			sub: `${stats.investments.total} bonds`,
+			sub: `${stats?.investments.total ?? 0} bonds`,
 		},
 		{
 			label: "ROI Paid",
-			value: idr.format(stats.investments.roiPaid),
+			value: idr.format(stats?.investments.roiPaid ?? 0),
 			icon: faChartLine,
 			sub: "return distribution",
 		},
@@ -319,38 +284,47 @@ export function AdminAnalytics() {
 			label: "Active Projects",
 			value: String(activeProjects),
 			icon: faArrowTrendUp,
-			sub: `${Object.values(stats.projects).reduce((a, b) => a + b, 0)} total projects`,
+			sub: `${totalProjects} total projects`,
 		},
 		{
 			label: "Users",
 			value: String(totalUsers),
 			icon: faLeaf,
-			sub: `${stats.companies} organizations`,
+			sub: `${stats?.companies ?? 0} organizations`,
 		},
 	];
-	const latestGrowth = GROWTH_DATA[GROWTH_DATA.length - 1];
-	const latestCarbon = CARBON_TREND[CARBON_TREND.length - 1];
-	const latestInvestment = INVESTMENT_TREND[INVESTMENT_TREND.length - 1];
+	// Every series comes from the analytics endpoint: the 12 trailing months,
+	// zero-filled, so the charts share one x-axis.
+	const growthData = (analytics?.monthly ?? []).map((point) => ({
+		label: formatMonth(point.month),
+		users: point.users,
+		organizations: point.organizations,
+	}));
+	const carbonData = (analytics?.monthly ?? []).map((point) => ({
+		label: formatMonth(point.month),
+		value: point.carbonReduction,
+	}));
+	const investmentData = (analytics?.monthly ?? []).map((point) => ({
+		label: formatMonth(point.month),
+		value: point.investments,
+	}));
+	const latest = analytics?.monthly.at(-1);
 
 	return (
 		<div className="space-y-6">
-			<div className="flex flex-wrap items-end justify-between gap-4">
-				<div>
-					<h1 className="text-2xl font-semibold">Analytics</h1>
-					<p className="mt-1 text-base text-muted-foreground">
-						Platform performance and trends.
-					</p>
-				</div>
-				<ExportMenu
-					filename="analytics"
-					title="Analytics"
-					sections={[...topBondsSections, ...topProjectsSections]}
-				/>
+			<div className="flex flex-wrap items-center justify-end gap-4">
+				{loading ? null : (
+					<ExportMenu
+						filename="analytics"
+						title="Analytics"
+						sections={[...topBondsSections, ...topProjectsSections]}
+					/>
+				)}
 			</div>
 
 			<div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
 				{metricCards.map((card) => (
-					<MetricCard key={card.label} {...card} />
+					<MetricCard key={card.label} {...card} loading={loading} />
 				))}
 			</div>
 
@@ -358,63 +332,87 @@ export function AdminAnalytics() {
 				<Card>
 					<CardHeader className="flex-row items-center justify-between space-y-0 px-6 pb-0 pt-4">
 						<CardTitle className="text-lg">Platform Growth</CardTitle>
-						<p className="text-lg font-semibold leading-none tabular-nums">
-							{latestGrowth.users + latestGrowth.organizations}
-						</p>
+						{loading ? (
+							<ShimmerBlock className="h-6 w-20" />
+						) : (
+							<p className="text-lg font-semibold leading-none tabular-nums">
+								{(latest?.users ?? 0) + (latest?.organizations ?? 0)}
+							</p>
+						)}
 					</CardHeader>
 					<CardContent className="pt-4">
-						<BarChart data={GROWTH_DATA} xDataKey="label" aspectRatio="21 / 9">
-							<Grid horizontal />
-							<Bar dataKey="users" fill="var(--chart-1)" lineCap="round" />
-							<Bar
-								dataKey="organizations"
-								fill="var(--chart-3)"
-								lineCap="round"
-							/>
-							<BarXAxis />
-							<ChartTooltip />
-						</BarChart>
+						{loading ? (
+							<ShimmerBlock className="aspect-[21/9] w-full" />
+						) : (
+							<BarChart data={growthData} xDataKey="label" aspectRatio="21 / 9">
+								<Grid horizontal />
+								<Bar dataKey="users" fill="var(--chart-1)" lineCap="round" />
+								<Bar
+									dataKey="organizations"
+									fill="var(--chart-3)"
+									lineCap="round"
+								/>
+								<BarXAxis />
+								<ChartTooltip />
+							</BarChart>
+						)}
 					</CardContent>
 				</Card>
 
 				<Card>
 					<CardHeader className="flex-row items-center justify-between space-y-0 px-6 pb-0 pt-4">
 						<CardTitle className="text-lg">Carbon Impact</CardTitle>
-						<p className="text-lg font-semibold leading-none tabular-nums">
-							{latestCarbon.value.toFixed(2)}{" "}
-							<span className="text-base font-normal text-muted-foreground">
-								tCO₂e
-							</span>
-						</p>
+						{loading ? (
+							<ShimmerBlock className="h-6 w-24" />
+						) : (
+							<p className="text-lg font-semibold leading-none tabular-nums">
+								{(latest?.carbonReduction ?? 0).toFixed(2)}{" "}
+								<span className="text-base font-normal text-muted-foreground">
+									tCO₂e
+								</span>
+							</p>
+						)}
 					</CardHeader>
 					<CardContent className="pt-4">
-						<BarChart data={CARBON_TREND} xDataKey="label" aspectRatio="21 / 9">
-							<Grid horizontal />
-							<Bar dataKey="value" fill="var(--chart-1)" lineCap="round" />
-							<BarXAxis />
-							<ChartTooltip />
-						</BarChart>
+						{loading ? (
+							<ShimmerBlock className="aspect-[21/9] w-full" />
+						) : (
+							<BarChart data={carbonData} xDataKey="label" aspectRatio="21 / 9">
+								<Grid horizontal />
+								<Bar dataKey="value" fill="var(--chart-1)" lineCap="round" />
+								<BarXAxis />
+								<ChartTooltip />
+							</BarChart>
+						)}
 					</CardContent>
 				</Card>
 
 				<Card>
 					<CardHeader className="flex-row items-center justify-between space-y-0 px-6 pb-0 pt-4">
 						<CardTitle className="text-lg">Investment Trends</CardTitle>
-						<p className="text-lg font-semibold leading-none tabular-nums">
-							{idr.format(latestInvestment.value)}
-						</p>
+						{loading ? (
+							<ShimmerBlock className="h-6 w-28" />
+						) : (
+							<p className="text-lg font-semibold leading-none tabular-nums">
+								{idr.format(latest?.investments ?? 0)}
+							</p>
+						)}
 					</CardHeader>
 					<CardContent className="pt-4">
-						<BarChart
-							data={INVESTMENT_TREND}
-							xDataKey="label"
-							aspectRatio="21 / 9"
-						>
-							<Grid horizontal />
-							<Bar dataKey="value" fill="var(--chart-3)" lineCap="round" />
-							<BarXAxis />
-							<ChartTooltip />
-						</BarChart>
+						{loading ? (
+							<ShimmerBlock className="aspect-[21/9] w-full" />
+						) : (
+							<BarChart
+								data={investmentData}
+								xDataKey="label"
+								aspectRatio="21 / 9"
+							>
+								<Grid horizontal />
+								<Bar dataKey="value" fill="var(--chart-3)" lineCap="round" />
+								<BarXAxis />
+								<ChartTooltip />
+							</BarChart>
+						)}
 					</CardContent>
 				</Card>
 			</div>
@@ -425,12 +423,21 @@ export function AdminAnalytics() {
 						<CardTitle className="text-xl">Bond Funding Status</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<DataTable
-							columns={fundingColumns}
-							data={topBonds}
-							getRowId={(row) => String(row.id)}
-							ariaLabel="Bond funding status"
-						/>
+						{loading ? (
+							<TableSkeleton headers={FUNDING_HEADERS} rows={6} />
+						) : topBonds.length === 0 ? (
+							<EmptyState
+								title="No bond funding to report"
+								description="No bond has been issued against a submitted project yet, so there is no funding progress to chart."
+							/>
+						) : (
+							<DataTable
+								columns={fundingColumns}
+								data={topBonds}
+								getRowId={(row) => String(row.id)}
+								ariaLabel="Bond funding status"
+							/>
+						)}
 					</CardContent>
 				</Card>
 
@@ -439,12 +446,21 @@ export function AdminAnalytics() {
 						<CardTitle className="text-xl">Project Intelligence</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<DataTable
-							columns={projectColumns}
-							data={topProjects}
-							getRowId={(row) => String(row.id)}
-							ariaLabel="Project intelligence"
-						/>
+						{loading ? (
+							<TableSkeleton headers={PROJECT_HEADERS} rows={6} />
+						) : topProjects.length === 0 ? (
+							<EmptyState
+								title="No projects submitted"
+								description="No company has submitted a project for assessment yet, so there is no risk or blueprint data to rank."
+							/>
+						) : (
+							<DataTable
+								columns={projectColumns}
+								data={topProjects}
+								getRowId={(row) => String(row.id)}
+								ariaLabel="Project intelligence"
+							/>
+						)}
 					</CardContent>
 				</Card>
 			</div>

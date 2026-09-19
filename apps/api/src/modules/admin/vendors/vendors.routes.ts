@@ -4,7 +4,7 @@ import { createDb } from "../../../db";
 import type { ApiEnv } from "../../../env";
 import { requireRecentStepUp } from "../../../lib/authz";
 import { iso, parseLimit } from "../../../lib/format";
-import { requireJson } from "../../../lib/http";
+import { apiError, apiNotFound, apiSuccess } from "../../../lib/response";
 import { factory } from "../admin.shared";
 import { listVendors } from "./vendors.repository";
 import { verifyVendor } from "./vendors.service";
@@ -41,9 +41,6 @@ vendorRoutes.patch(
 	"/vendors/:id/verify",
 	requireRecentStepUp,
 	...factory.createHandlers(async (c) => {
-		const mediaTypeError = requireJson(c);
-		if (mediaTypeError) return mediaTypeError;
-
 		const id = Number(c.req.param("id"));
 		const body = (await c.req
 			.json()
@@ -53,10 +50,7 @@ vendorRoutes.patch(
 			id <= 0 ||
 			typeof body?.verified !== "boolean"
 		) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid input" } },
-				400,
-			);
+			return apiError(c, "VALIDATION");
 		}
 
 		const result = await verifyVendor(createDb(c.env.DB), {
@@ -65,11 +59,8 @@ vendorRoutes.patch(
 			actorId: c.get("user").id,
 		});
 		if (!result.ok) {
-			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Vendor not found" } },
-				404,
-			);
+			return apiNotFound(c, "Vendor");
 		}
-		return c.json({ ok: true });
+		return apiSuccess(c, { ok: true }, "Vendor verification updated");
 	}),
 );

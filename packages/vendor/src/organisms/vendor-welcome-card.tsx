@@ -49,7 +49,7 @@ export function VendorWelcomeCard({
 
 				<div className="grid grid-cols-2 gap-4 rounded-lg bg-white/10 p-4 sm:grid-cols-4">
 					<div>
-						<p className="text-xs text-emerald-200">Verification Status</p>
+						<p className="text-sm text-emerald-200">Verification Status</p>
 						<div className="mt-1 flex items-center gap-1.5 font-semibold text-white">
 							<FontAwesomeIcon
 								icon={isVerified ? faCheckCircle : faInfoCircle}
@@ -59,19 +59,19 @@ export function VendorWelcomeCard({
 						</div>
 					</div>
 					<div>
-						<p className="text-xs text-emerald-200">Technical Score</p>
+						<p className="text-sm text-emerald-200">Technical Score</p>
 						<p className="mt-1 font-semibold text-white">
 							{performanceMetrics.technicalPerformanceScore}/100
 						</p>
 					</div>
 					<div>
-						<p className="text-xs text-emerald-200">On-Time Rate</p>
+						<p className="text-sm text-emerald-200">On-Time Rate</p>
 						<p className="mt-1 font-semibold text-white">
 							{performanceMetrics.onTimeCompletionPercent}%
 						</p>
 					</div>
 					<div>
-						<p className="text-xs text-emerald-200">Completed Projects</p>
+						<p className="text-sm text-emerald-200">Completed Projects</p>
 						<p className="mt-1 font-semibold text-white">
 							{completedProjectsCount} Projects
 						</p>

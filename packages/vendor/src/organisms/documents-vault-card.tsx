@@ -1,4 +1,4 @@
-import { faFilePdf } from "@fortawesome/free-solid-svg-icons";
+import { faFilePdf, faFolderOpen } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
 	Button,
@@ -6,6 +6,7 @@ import {
 	CardContent,
 	CardHeader,
 	CardTitle,
+	EmptyState,
 } from "@greenshift/ui";
 
 export function DocumentsVaultCard({
@@ -16,15 +17,15 @@ export function DocumentsVaultCard({
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle className="text-lg">
-					Penyimpanan Dokumen Perusahaan
-				</CardTitle>
+				<CardTitle className="text-lg">Company Document Vault</CardTitle>
 			</CardHeader>
-			<CardContent className="space-y-3 text-xs">
+			<CardContent className="space-y-3 text-sm">
 				{documents.length === 0 && (
-					<p className="text-muted-foreground">
-						Belum ada dokumen perusahaan yang diunggah.
-					</p>
+					<EmptyState
+						icon={<FontAwesomeIcon icon={faFolderOpen} />}
+						title="No company documents stored"
+						description="Legal and industry documents tied to your vendor profile are listed here for download once they are on file."
+					/>
 				)}
 				{documents.map((doc) => (
 					<div
@@ -39,7 +40,7 @@ export function DocumentsVaultCard({
 							{doc}
 						</span>
 						<Button size="sm" variant="outline">
-							Unduh
+							Download
 						</Button>
 					</div>
 				))}

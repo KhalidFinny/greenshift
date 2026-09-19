@@ -13,7 +13,6 @@ import {
 	CardContent,
 	CardHeader,
 	CardTitle,
-	ContentSkeleton,
 	DataTable,
 	EmptyState,
 	Select,
@@ -36,88 +35,17 @@ import {
 import { ExportMenu } from "../organisms/export-menu";
 import { MetricCard } from "../organisms/metric-card";
 import { ProjectDetailDialog } from "../organisms/project-detail-dialog";
+import { TableSkeleton } from "../organisms/table-skeleton";
 
-const DEMO_PROJECTS: AdminProject[] = [
-	{
-		id: 1,
-		title: "Textile Factory Chiller Retrofit",
-		status: "funding",
-		companyName: "PT Green Nusantara",
-		industrySector: "Manufacturing",
-		budget: 500_000_000,
-		riskScore: 72,
-		blueprintStatus: "published",
-	},
-	{
-		id: 2,
-		title: "High-Efficiency Motor",
-		status: "funding",
-		companyName: "PT Clean Carbon",
-		industrySector: "Heavy Industry",
-		budget: 350_000_000,
-		riskScore: 68,
-		blueprintStatus: "validated",
-	},
-	{
-		id: 3,
-		title: "LED Lighting System",
-		status: "monitoring",
-		companyName: "PT Green Nusantara",
-		industrySector: "Building",
-		budget: 150_000_000,
-		riskScore: 85,
-		blueprintStatus: "published",
-	},
-	{
-		id: 4,
-		title: "Warehouse Rooftop Solar Panels",
-		status: "draft",
-		companyName: "PT Clean Carbon",
-		industrySector: "Logistics",
-		budget: 800_000_000,
-		riskScore: 55,
-		blueprintStatus: null,
-	},
-	{
-		id: 5,
-		title: "VFD Compressor",
-		status: "assessment",
-		companyName: "PT Green Nusantara",
-		industrySector: "Manufacturing",
-		budget: 200_000_000,
-		riskScore: 62,
-		blueprintStatus: null,
-	},
-	{
-		id: 6,
-		title: "Heat Recovery System",
-		status: "completed",
-		companyName: "PT Clean Carbon",
-		industrySector: "Heavy Industry",
-		budget: 450_000_000,
-		riskScore: 78,
-		blueprintStatus: "published",
-	},
-	{
-		id: 7,
-		title: "Variable Speed Drive",
-		status: "completed",
-		companyName: "PT Green Nusantara",
-		industrySector: "Manufacturing",
-		budget: 280_000_000,
-		riskScore: 71,
-		blueprintStatus: "published",
-	},
-	{
-		id: 8,
-		title: "Industrial Pipe Insulation",
-		status: "completed",
-		companyName: "PT Clean Carbon",
-		industrySector: "Heavy Industry",
-		budget: 120_000_000,
-		riskScore: 88,
-		blueprintStatus: "published",
-	},
+/** Column labels for the loading frame, in table order. */
+const PROJECT_HEADERS = [
+	"Project",
+	"Sector",
+	"Status",
+	"Budget",
+	"Risk",
+	"Blueprint",
+	"Actions",
 ];
 
 const idr = new Intl.NumberFormat("en-US", {
@@ -247,33 +175,39 @@ export function AdminProjects() {
 		queryClient.invalidateQueries({ queryKey: ["admin", "audit-logs"] });
 	};
 
-	if (projectsQuery.isPending || statsQuery.isPending) {
-		return <ContentSkeleton />;
-	}
-
 	if (projectsQuery.isError || statsQuery.isError) {
 		return (
-			<div className="space-y-4">
-				<EmptyState
-					title="Failed to load projects"
-					description="Unable to retrieve project lifecycle data."
-				/>
-			</div>
+			<EmptyState
+				tone="error"
+				title="Projects did not load"
+				description="The admin project and stats endpoints did not answer, so the project lifecycle could not be read."
+				action={
+					<Button
+						variant="outline"
+						onClick={() => {
+							void Promise.all([projectsQuery.refetch(), statsQuery.refetch()]);
+						}}
+					>
+						Try again
+					</Button>
+				}
+			/>
 		);
 	}
 
+	// Cached project rows survive a refetch, so the page keeps its real frames
+	// and each part shimmers only its own values.
+	const loading = projectsQuery.isPending || statsQuery.isPending;
+
 	const stats = statsQuery.data;
-	const projects =
-		projectsQuery.data.projects.length > 0
-			? projectsQuery.data.projects
-			: DEMO_PROJECTS;
-	const activeProjects =
-		(stats.projects.funding ?? 0) + (stats.projects.monitoring ?? 0);
-	const totalProjects = Object.values(stats.projects).reduce(
-		(a, b) => a + b,
-		0,
-	);
-	const completedProjects = stats.projects.completed ?? 0;
+	const projects = projectsQuery.data?.projects ?? [];
+	const activeProjects = stats
+		? (stats.projects.funding ?? 0) + (stats.projects.monitoring ?? 0)
+		: 0;
+	const totalProjects = stats
+		? Object.values(stats.projects).reduce((a, b) => a + b, 0)
+		: 0;
+	const completedProjects = stats?.projects.completed ?? 0;
 	const avgRisk =
 		projects.length > 0
 			? Math.round(
@@ -313,18 +247,14 @@ export function AdminProjects() {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex flex-wrap items-end justify-between gap-4">
-				<div>
-					<h1 className="text-2xl font-semibold">Projects</h1>
-					<p className="mt-1 text-base text-muted-foreground">
-						Project lifecycle management.
-					</p>
-				</div>
-				<ExportMenu
-					filename="projects"
-					title="Projects"
-					sections={projectExportSections}
-				/>
+			<div className="flex flex-wrap items-center justify-end gap-4">
+				{loading ? null : (
+					<ExportMenu
+						filename="projects"
+						title="Projects"
+						sections={projectExportSections}
+					/>
+				)}
 			</div>
 
 			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -360,6 +290,7 @@ export function AdminProjects() {
 						value={card.value}
 						sub={card.sub}
 						icon={card.icon}
+						loading={loading}
 					/>
 				))}
 			</div>
@@ -384,10 +315,24 @@ export function AdminProjects() {
 					</div>
 				</CardHeader>
 				<CardContent>
-					{projects.length === 0 ? (
-						<p className="text-base text-muted-foreground">
-							No projects match this filter.
-						</p>
+					{loading ? (
+						<TableSkeleton headers={PROJECT_HEADERS} search rows={5} />
+					) : projects.length === 0 ? (
+						<EmptyState
+							title="No projects in this stage"
+							description={
+								status === "all"
+									? "No company has submitted a project to the platform yet."
+									: `No project currently sits in the ${PROJECT_STATUS_LABELS[status] ?? status} stage. Clear the filter to see the whole pipeline.`
+							}
+							action={
+								status === "all" ? undefined : (
+									<Button variant="outline" onClick={() => setStatus("all")}>
+										Show all statuses
+									</Button>
+								)
+							}
+						/>
 					) : (
 						<DataTable
 							columns={columns}

@@ -1,17 +1,15 @@
 import type { AuditLogEntry } from "@greenshift/api/contracts";
 import { api } from "@greenshift/core";
-import {
-	Button,
-	Card,
-	ContentSkeleton,
-	DataTable,
-	EmptyState,
-} from "@greenshift/ui";
+import { Button, Card, DataTable, EmptyState } from "@greenshift/ui";
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useState } from "react";
 import { formatDateTime } from "../lib/format";
 import { ExportMenu } from "../organisms/export-menu";
+import { TableSkeleton } from "../organisms/table-skeleton";
+
+/** Column labels for the loading frame, in table order. */
+const LOG_HEADERS = ["Time", "Action", "User", "Entity", "Detail"];
 
 const logColumns: ColumnDef<AuditLogEntry>[] = [
 	{
@@ -25,7 +23,7 @@ const logColumns: ColumnDef<AuditLogEntry>[] = [
 		accessorFn: (log) => log.action,
 		header: "Action",
 		cell: ({ row }) => (
-			<span className="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-xs font-medium">
+			<span className="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-sm font-medium">
 				{row.original.action}
 			</span>
 		),
@@ -72,7 +70,7 @@ const logColumns: ColumnDef<AuditLogEntry>[] = [
 					<summary className="cursor-pointer font-medium text-primary">
 						View details
 					</summary>
-					<pre className="mt-2 max-w-md overflow-x-auto rounded-sm bg-muted p-3 text-xs text-muted-foreground">
+					<pre className="mt-2 max-w-md overflow-x-auto rounded-sm bg-muted p-3 text-sm text-muted-foreground">
 						{json}
 					</pre>
 				</details>
@@ -89,80 +87,72 @@ export function AdminAuditLogs() {
 		queryFn: () => api.admin.auditLogs({ limit }),
 	});
 
-	if (logsQuery.isPending) {
-		return <ContentSkeleton />;
-	}
-
-	if (logsQuery.isError) {
-		return (
-			<div className="space-y-4">
-				<EmptyState
-					title="Failed to load audit log"
-					description="Unable to retrieve the activity trail."
-				/>
-				<div>
-					<Button
-						variant="outline"
-						className="cursor-pointer"
-						onClick={() => logsQuery.refetch()}
-					>
-						Try again
-					</Button>
-				</div>
-			</div>
-		);
-	}
-
-	const logs = logsQuery.data.logs;
+	const loading = logsQuery.isPending;
+	const logs = logsQuery.data?.logs ?? [];
 
 	return (
 		<div className="space-y-6">
-			<div className="flex flex-wrap items-end justify-between gap-4">
-				<div>
-					<h1 className="text-2xl font-semibold">Audit Log</h1>
-					<p className="mt-1 text-base text-muted-foreground">
-						Activity trail of all data passing through the platform.
-					</p>
-				</div>
-				<div className="flex flex-wrap items-center gap-2">
-					<Button
-						variant="outline"
-						className="cursor-pointer"
-						onClick={() => setLimit((current) => current + 100)}
-					>
-						Load more ({logs.length} loaded)
-					</Button>
-					<Button
-						variant="outline"
-						className="cursor-pointer"
-						onClick={() => logsQuery.refetch()}
-					>
-						Refresh
-					</Button>
-					<ExportMenu
-						filename="audit-log"
-						title="Audit Log"
-						sections={[
-							{
-								title: "Audit Log",
-								headers: ["Time", "Action", "User", "Entity", "Detail"],
-								rows: logs.map((log) => [
-									formatDateTime(log.createdAt),
-									log.action,
-									log.userEmail ?? "-",
-									log.entityType ? `${log.entityType} #${log.entityId}` : "-",
-									log.metadata == null ? "-" : JSON.stringify(log.metadata),
-								]),
-							},
-						]}
-					/>
-				</div>
+			<div className="flex flex-wrap items-center justify-end gap-4">
+				{loading ? null : (
+					<div className="flex flex-wrap items-center gap-2">
+						<Button
+							variant="outline"
+							className="cursor-pointer"
+							onClick={() => setLimit((current) => current + 100)}
+						>
+							Load more ({logs.length} loaded)
+						</Button>
+						<Button
+							variant="outline"
+							className="cursor-pointer"
+							onClick={() => logsQuery.refetch()}
+						>
+							Refresh
+						</Button>
+						<ExportMenu
+							filename="audit-log"
+							title="Audit Log"
+							sections={[
+								{
+									title: "Audit Log",
+									headers: ["Time", "Action", "User", "Entity", "Detail"],
+									rows: logs.map((log) => [
+										formatDateTime(log.createdAt),
+										log.action,
+										log.userEmail ?? "-",
+										log.entityType ? `${log.entityType} #${log.entityId}` : "-",
+										log.metadata == null ? "-" : JSON.stringify(log.metadata),
+									]),
+								},
+							]}
+						/>
+					</div>
+				)}
 			</div>
 
-			{logs.length === 0 ? (
+			{logsQuery.isError ? (
 				<EmptyState
-					title="No activity yet"
-					description="The audit trail is empty so far."
+					tone="error"
+					title="Audit trail did not load"
+					description="GET /api/admin/audit-logs did not answer, so no activity entries could be retrieved."
+					action={
+						<Button
+							variant="outline"
+							className="cursor-pointer"
+							onClick={() => logsQuery.refetch()}
+						>
+							Try again
+						</Button>
+					}
+				/>
+			) : loading ? (
+				<Card className="overflow-hidden">
+					<TableSkeleton headers={LOG_HEADERS} search rows={10} />
+				</Card>
+			) : logs.length === 0 ? (
+				<EmptyState
+					title="No recorded activity"
+					description="Nothing has been written to the audit trail yet. Entries appear as soon as an admin changes a project status, a blueprint, or a vendor verification."
 				/>
 			) : (
 				<Card className="overflow-hidden">

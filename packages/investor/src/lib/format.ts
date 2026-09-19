@@ -26,7 +26,7 @@ export function formatNumber(value: number | null | undefined): string {
 	return number.format(value);
 }
 
-/** Emission values in tonnes of CO₂e, e.g. "49,8 tCO₂e". */
+/** Emission values in tonnes of CO₂e, e.g. "49.8 tCO₂e". */
 export function formatTonnes(value: number | null | undefined): string {
 	if (typeof value !== "number" || !Number.isFinite(value)) return "-";
 	return `${new Intl.NumberFormat("en-US", {

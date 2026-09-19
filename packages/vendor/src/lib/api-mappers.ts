@@ -1,10 +1,12 @@
 import type {
+	VendorEnergyForecast as ApiEnergyForecast,
 	VendorLeaderboardResponse as ApiLeaderboard,
 	VendorMilestone as ApiMilestone,
 	VendorMonthlyReport as ApiMonthlyReport,
 	VendorNegotiation as ApiNegotiation,
 	VendorNotification as ApiNotification,
 	VendorPortfolioItem as ApiPortfolioItem,
+	ProposalDetail,
 	ProposalSummary,
 	VendorMyProject,
 	VendorProfile,
@@ -13,6 +15,7 @@ import type {
 import type {
 	ActiveVendorProject,
 	CompanyVerificationDetails,
+	EnergyForecast,
 	MonthlyEnergyReport,
 	NegotiationRequest,
 	OpenBidLeaderboardEntry,
@@ -56,26 +59,24 @@ export function mapProjectToCardData(
 		location: project.location ?? "Unknown",
 		estimatedValue: project.tender?.budgetMax ?? project.budget ?? 0,
 		clientBudget: project.tender?.budgetMax ?? project.budget ?? 0,
-		carbonReductionTargetTons: 0, // Not available in API
+		carbonReductionTargetTons: project.carbonReductionTargetTons ?? null,
 		procurementMethod: method,
 		tenderDeadlineAt: project.tender?.deadlineAt ?? new Date().toISOString(),
-		description: "", // Would need project detail endpoint
-		riskScore: project.riskScore ?? 75,
-		technicalRequirements: [], // Would need project detail endpoint
-		deliverables: [], // Would need project detail endpoint
-		matchmaking: {
-			technicalFit: 85,
-			technicalFitExplanation: "Based on your company profile",
-			relevantExperience: 80,
-			relevantExperienceExplanation: "Based on historical projects",
-			historicalPerformance: 85,
-			historicalPerformanceExplanation: "Based on completion rate",
-			priceAndValue: 82,
-			priceAndValueExplanation: "Based on budget alignment",
-			projectRisk: 80,
-			projectRiskExplanation: "Moderate risk assessment",
-			overallMatch: 82,
-		},
+		description: project.description ?? "",
+		riskScore: project.riskScore ?? null,
+		technicalRequirements: project.technicalRequirements,
+		deliverables: project.deliverables,
+		matchmaking: project.matchScore
+			? {
+					technicalFit: project.matchScore.technicalFit,
+					relevantExperience: project.matchScore.relevantExperience,
+					historicalPerformance: project.matchScore.historicalPerformance,
+					priceAndValue: project.matchScore.priceValue,
+					projectRisk: project.matchScore.projectRisk,
+					overallMatch: project.matchScore.totalScore,
+					rank: project.matchScore.rank,
+				}
+			: null,
 		isSaved: false,
 	};
 }
@@ -93,6 +94,7 @@ export function mapToActiveProject(
 	const proposal = myProject.proposal;
 	const milestones = (myProject.milestones ?? []).map(mapMilestone);
 	const monthlyReports = (myProject.monthlyReports ?? []).map(mapMonthlyReport);
+	const forecasts = (myProject.forecasts ?? []).map(mapEnergyForecast);
 
 	const progress =
 		milestones.length > 0
@@ -125,10 +127,12 @@ export function mapToActiveProject(
 		agreedBudget: proposal.amount,
 		overallProgressPercent: progress,
 		currentMilestoneTitle: current?.title ?? "Not started",
+		// No scheduled milestone and no submission time means the date is genuinely
+		// unknown. Returning today's date here would invent a commitment.
 		deadlineDate:
 			milestones[milestones.length - 1]?.dueDate ??
 			proposal.submittedAt ??
-			new Date().toISOString(),
+			null,
 		status:
 			progress >= 100
 				? "COMPLETED"
@@ -137,6 +141,7 @@ export function mapToActiveProject(
 					: "IN_PROGRESS",
 		milestones,
 		monthlyReports,
+		forecasts,
 		// The blueprint target is not part of this contract yet, so the
 		// expected savings stay at 0 until the project exposes them.
 		expectedEnergySavingsPercent: 0,
@@ -147,6 +152,10 @@ export function mapToActiveProject(
 }
 
 // ── Portfolio Item (from AGREED projects) ────────────────
+/**
+ * An awarded project as a track-record entry. Every figure comes from the award
+ * record or the project itself; nothing is filled in to look complete.
+ */
 export function mapToPortfolioItem(
 	myProject: VendorMyProject,
 ): VendorPortfolioItem | null {
@@ -155,28 +164,36 @@ export function mapToPortfolioItem(
 	}
 
 	const project = myProject.project;
-	const proposal = myProject.proposal;
-	const submittedDate = new Date(proposal.submittedAt ?? Date.now());
 
 	return {
 		id: String(project.id),
 		projectName: project.title,
-		clientName: project.companyName ?? "Unknown Client",
-		projectType: "Energy Efficiency",
-		location: project.location ?? "Unknown",
-		description: `Completed project for ${project.companyName}`,
-		projectValue: proposal.amount,
-		durationMonths: 6,
-		servicesProvided: "EPC Turnkey",
-		energySavingPercent: 22,
-		carbonReductionTons: 450,
-		completionYear: submittedDate.getFullYear(),
-		status: "VERIFIED",
+		clientName: project.companyName ?? "",
+		projectType: project.industrySector ?? "",
+		location: project.location ?? "",
+		description: "",
+		projectValue: myProject.proposal.amount,
+		// The award record carries no duration, services list, or completion year.
+		durationMonths: null,
+		servicesProvided: "",
+		// The project reports kWh/yr saved, not a percentage.
+		energySavingKwh: project.estimatedEnergySaving ?? null,
+		energySavingPercent: null,
+		carbonReductionTons: project.targetEmissionReduction ?? null,
+		completionYear: null,
+		// "VERIFIED" belongs to records that passed verification; an awarded
+		// project is delivered work, which is a different claim.
+		status: "COMPLETED",
 		documentName: undefined,
 	};
 }
 
 // ── Structured Proposal ──────────────────────────────────
+/**
+ * List-row shape. Carries only what the proposals list endpoint actually
+ * returns; the technical and cost figures live on the detail endpoint and are
+ * left null here rather than filled with plausible-looking constants.
+ */
 export function mapToStructuredProposal(
 	proposal: ProposalSummary,
 ): StructuredProposal {
@@ -184,34 +201,42 @@ export function mapToStructuredProposal(
 		id: String(proposal.id),
 		tenderId: String(proposal.tenderId ?? 0),
 		projectId: String(proposal.projectId ?? 0),
-		projectTitle: proposal.projectTitle ?? "Unknown Project",
-		companyName: proposal.vendorCompanyName ?? "Unknown",
+		projectTitle: proposal.projectTitle ?? "",
+		// The summary carries the vendor's own company, not the client's, so the
+		// client is left empty until the detail is fetched.
+		companyName: "",
 		procurementMethod: "OPEN_BIDDING",
 		status: mapProposalStatus(proposal.status),
-		executiveSummary: "",
-		technicalSolution: "",
-		equipmentSpecs: "",
-		includedScope: "",
-		excludedScope: "",
-		estimatedStartDate: proposal.submittedAt ?? new Date().toISOString(),
-		estimatedDurationMonths: 6,
-		costBreakdown: {
-			equipmentCost: proposal.amount * 0.65,
-			installationCost: proposal.amount * 0.15,
-			laborCost: proposal.amount * 0.1,
-			operationalCost: proposal.amount * 0.05,
-			otherCost: proposal.amount * 0.05,
-			totalPrice: proposal.amount,
-		},
-		expectedImpact: {
-			energySavingsPercent: 22,
-			carbonReductionTons: 450,
-			projectedRoiPercent: 18,
-		},
-		warrantyYears: 5,
-		warrantyCoverage: "Full system warranty",
+		technicalSpec: null,
+		projectedRoi: null,
+		warrantyPeriod: null,
+		costBreakdown: { totalPrice: proposal.amount, operationalCost: null },
+		expectedImpact: { projectedRoiPercent: null },
 		submittedAt: proposal.submittedAt ?? undefined,
 		revisionCount: proposal.revisionCount,
+	};
+}
+
+/** Full record from `GET /api/vendor/proposals/:id`, straight from the API. */
+export function mapProposalDetail(detail: ProposalDetail): StructuredProposal {
+	return {
+		id: String(detail.id),
+		tenderId: String(detail.tenderId ?? 0),
+		projectId: String(detail.projectId ?? 0),
+		projectTitle: detail.projectTitle ?? detail.project?.title ?? "",
+		companyName: detail.project?.companyName ?? "",
+		procurementMethod: "OPEN_BIDDING",
+		status: mapProposalStatus(detail.status),
+		technicalSpec: detail.technicalSpec,
+		projectedRoi: detail.projectedRoi,
+		warrantyPeriod: detail.warrantyPeriod,
+		costBreakdown: {
+			totalPrice: detail.amount,
+			operationalCost: detail.operationalCost,
+		},
+		expectedImpact: { projectedRoiPercent: detail.projectedRoi },
+		submittedAt: detail.submittedAt ?? undefined,
+		revisionCount: detail.revisionCount,
 	};
 }
 
@@ -417,11 +442,12 @@ export function mapPortfolioItem(row: ApiPortfolioItem): VendorPortfolioItem {
 		location: row.location ?? "Unknown",
 		description: row.description ?? "",
 		projectValue: row.projectValue,
-		durationMonths: row.durationMonths ?? 0,
+		durationMonths: row.durationMonths ?? null,
 		servicesProvided: row.servicesProvided ?? "",
-		energySavingPercent: row.energySavingPercent ?? 0,
-		carbonReductionTons: row.carbonReductionTons ?? 0,
-		completionYear: row.completionYear ?? new Date().getFullYear(),
+		energySavingKwh: null,
+		energySavingPercent: row.energySavingPercent ?? null,
+		carbonReductionTons: row.carbonReductionTons ?? null,
+		completionYear: row.completionYear ?? null,
 		status: row.status === "VERIFIED" ? "VERIFIED" : "COMPLETED",
 		documentName: row.documentName ?? undefined,
 	};
@@ -461,5 +487,17 @@ export function mapMonthlyReport(row: ApiMonthlyReport): MonthlyEnergyReport {
 		baselineConsumptionKwh: row.baselineConsumption ?? 0,
 		evidenceDocs: row.evidenceDocs,
 		submittedAt: row.submittedAt,
+	};
+}
+
+/** Predictive periods the model projected for a project, newest first. */
+export function mapEnergyForecast(row: ApiEnergyForecast): EnergyForecast {
+	return {
+		id: `${row.periodStart ?? "unknown"}-${row.periodEnd ?? "unknown"}`,
+		period: (row.periodStart ?? "").slice(0, 7),
+		forecastedConsumptionKwh: row.forecastedConsumption ?? 0,
+		forecastedSavingsKwh: row.forecastedSavings ?? 0,
+		modelName: row.modelName ?? "unknown",
+		metrics: row.metrics ?? null,
 	};
 }

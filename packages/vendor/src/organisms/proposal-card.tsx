@@ -5,70 +5,74 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@greenshift/ui";
-import { formatRupiah } from "../lib/format";
+import { formatRupiah, formatShortDate } from "../lib/format";
 import { PROPOSAL_STATUS_LABEL, PROPOSAL_STATUS_TONE } from "../lib/labels";
 import type { StructuredProposal } from "../lib/types";
 
 interface ProposalCardProps {
 	proposal: StructuredProposal;
+	loading?: boolean;
 }
 
+/**
+ * Proposal status badges on the light card surface. The 600 shades that carried
+ * white text here were below AA, so the tones use the 700 shades.
+ */
 const TONE_CLASS: Record<string, string> = {
-	default: "bg-blue-600 text-white",
-	secondary: "bg-slate-500 text-white",
-	destructive: "bg-red-600 text-white",
+	default: "bg-blue-700 text-white",
+	secondary: "bg-slate-600 text-white",
+	destructive: "bg-red-700 text-white",
 	outline: "border border-border text-foreground",
 };
 
-export function ProposalCard({ proposal }: ProposalCardProps) {
+export function ProposalCard({ proposal, loading = false }: ProposalCardProps) {
 	const tone = PROPOSAL_STATUS_TONE[proposal.status];
 	const label = PROPOSAL_STATUS_LABEL[proposal.status];
 
 	return (
 		<Card>
-			<CardHeader className="flex flex-row items-center justify-between pb-2">
-				<div>
+			<CardHeader className="flex flex-row items-start justify-between gap-4">
+				<div className="min-w-0">
 					<Badge className={TONE_CLASS[tone]}>{label}</Badge>
 					<CardTitle className="mt-2 text-lg">
-						{proposal.projectTitle}
+						{proposal.projectTitle || "Untitled tender"}
 					</CardTitle>
-					<p className="mt-0.5 text-xs text-muted-foreground">
-						Client: {proposal.companyName}
-					</p>
+					{proposal.companyName ? (
+						<p className="mt-0.5 text-sm text-muted-foreground">
+							{proposal.companyName}
+						</p>
+					) : null}
 				</div>
-				<div className="text-right">
-					<p className="text-xs text-muted-foreground">Total Proposed Value</p>
-					<p className="text-lg font-bold text-[#03442C] dark:text-emerald-400">
+				<div className="shrink-0 text-right">
+					<p className="text-sm text-muted-foreground">Proposed value</p>
+					<p className="text-lg font-bold text-[#00712D] tabular-nums">
 						{formatRupiah(proposal.costBreakdown.totalPrice)}
 					</p>
 				</div>
 			</CardHeader>
-			<CardContent className="space-y-4 text-xs">
-				<div className="space-y-2 rounded-lg border border-border p-3">
-					<p className="font-semibold text-foreground">Executive Summary:</p>
-					<p className="text-muted-foreground">{proposal.executiveSummary}</p>
-				</div>
 
-				<div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-					<div className="rounded-lg bg-muted p-2.5">
-						<p className="text-muted-foreground">Energy Savings</p>
-						<p className="mt-0.5 font-semibold text-foreground">
-							{proposal.expectedImpact.energySavingsPercent}% / yr
-						</p>
-					</div>
-					<div className="rounded-lg bg-muted p-2.5">
-						<p className="text-muted-foreground">Carbon Reduction</p>
-						<p className="mt-0.5 font-semibold text-emerald-600 dark:text-emerald-400">
-							{proposal.expectedImpact.carbonReductionTons} tCO₂e/yr
-						</p>
-					</div>
-					<div className="rounded-lg bg-muted p-2.5">
-						<p className="text-muted-foreground">Unit & Service Warranty</p>
-						<p className="mt-0.5 font-semibold text-foreground">
-							{proposal.warrantyYears} Years
-						</p>
-					</div>
-				</div>
+			{/* Only figures the API actually reports. Nothing estimated. */}
+			<CardContent className="flex flex-wrap items-center gap-x-8 gap-y-2 text-sm">
+				{loading ? (
+					<div className="h-4 w-64 animate-none rounded bg-foreground/10" />
+				) : (
+					<>
+						<span className="text-muted-foreground">
+							Submitted{" "}
+							<span className="font-medium text-foreground">
+								{proposal.submittedAt
+									? formatShortDate(proposal.submittedAt)
+									: "not recorded"}
+							</span>
+						</span>
+						<span className="text-muted-foreground">
+							Revisions{" "}
+							<span className="font-medium text-foreground tabular-nums">
+								{proposal.revisionCount}
+							</span>
+						</span>
+					</>
+				)}
 			</CardContent>
 		</Card>
 	);

@@ -3,8 +3,8 @@ import { createFactory } from "hono/factory";
 import type { VendorProfileBody } from "../../../contracts";
 import { createDb } from "../../../db";
 import type { ApiEnv } from "../../../env";
-import { requireJson } from "../../../lib/http";
 import { mutationRateLimit } from "../../../lib/mutation-limit";
+import { apiError, apiSuccess } from "../../../lib/response";
 import { getVendorProfile, saveVendorProfile } from "./profile.service";
 
 const factory = createFactory<ApiEnv>();
@@ -27,15 +27,7 @@ profileRoutes.get(
 
 		const profile = await getVendorProfile(db, c.get("user").id);
 		if (!profile) {
-			return c.json(
-				{
-					error: {
-						code: "NOT_FOUND",
-						message: "Vendor profile has not been created",
-					},
-				},
-				404,
-			);
+			return apiError(c, "NOT_FOUND", "Vendor profile has not been created");
 		}
 		return c.json({ profile });
 	}),
@@ -43,13 +35,8 @@ profileRoutes.get(
 
 profileRoutes.put(
 	"/profile",
+	mutationRateLimit("vendor", "profile"),
 	...factory.createHandlers(async (c) => {
-		const mediaTypeError = requireJson(c);
-		if (mediaTypeError) return mediaTypeError;
-
-		const rateError = await mutationRateLimit("vendor", "profile")(c);
-		if (rateError) return rateError;
-
 		const body = (await c.req
 			.json()
 			.catch(() => null)) as Partial<VendorProfileBody> | null;
@@ -75,10 +62,7 @@ profileRoutes.put(
 			(certifications !== undefined && !isStringArray(certifications)) ||
 			(portfolio !== undefined && !isStringArray(portfolio))
 		) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid input" } },
-				400,
-			);
+			return apiError(c, "VALIDATION");
 		}
 
 		const db = createDb(c.env.DB);
@@ -92,17 +76,11 @@ profileRoutes.put(
 
 		const result = await saveVendorProfile(db, userId, values);
 		if (result.status === "upsert_failed") {
-			return c.json(
-				{ error: { code: "INTERNAL", message: "Failed to save profile" } },
-				500,
-			);
+			return apiError(c, "INTERNAL", "Failed to save profile");
 		}
 		if (result.status === "load_failed") {
-			return c.json(
-				{ error: { code: "INTERNAL", message: "Failed to load profile" } },
-				500,
-			);
+			return apiError(c, "INTERNAL", "Failed to load profile");
 		}
-		return c.json({ profile: result.profile });
+		return apiSuccess(c, { profile: result.profile }, "Vendor profile saved");
 	}),
 );

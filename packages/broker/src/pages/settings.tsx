@@ -115,25 +115,25 @@ export function BrokerSettingsPage() {
 										/>
 										Brokerage License Verification Status
 									</CardTitle>
-									<CardDescription className="mt-1 text-xs">
+									<CardDescription className="mt-1 text-sm">
 										Brokerage institutions must verify official financial
 										licensing before facilitating green bond underwriting.
 									</CardDescription>
 								</div>
 								<div>
 									{verificationDetails.status === "VERIFIED" && (
-										<Badge className="bg-emerald-600 text-white font-bold gap-1 px-3 py-1 text-xs">
+										<Badge className="bg-emerald-700 text-white font-bold gap-1 px-3 py-1 text-sm">
 											<FontAwesomeIcon icon={faCheckCircle} /> OFFICIALLY
 											VERIFIED
 										</Badge>
 									)}
 									{verificationDetails.status === "VERIFYING" && (
-										<Badge className="bg-amber-500 text-white font-bold gap-1 px-3 py-1 text-xs">
+										<Badge className="bg-amber-700 text-white font-bold gap-1 px-3 py-1 text-sm">
 											<FontAwesomeIcon icon={faClock} /> VERIFYING
 										</Badge>
 									)}
 									{verificationDetails.status === "NOT_VERIFIED" && (
-										<Badge className="bg-slate-500 text-white font-bold gap-1 px-3 py-1 text-xs">
+										<Badge className="bg-slate-500 text-white font-bold gap-1 px-3 py-1 text-sm">
 											NOT VERIFIED
 										</Badge>
 									)}
@@ -143,15 +143,15 @@ export function BrokerSettingsPage() {
 
 						<CardContent className="p-6 space-y-6">
 							{verificationDetails.status === "VERIFIED" ? (
-								<div className="rounded-xl bg-emerald-50 text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-200 border border-emerald-200 p-4 space-y-3">
+								<div className="rounded-xl bg-emerald-50 text-emerald-950 border border-emerald-200 p-4 space-y-3">
 									<div className="flex items-center gap-2 font-bold text-sm">
 										<FontAwesomeIcon
 											icon={faCheckCircle}
-											className="text-emerald-600 text-lg"
+											className="text-emerald-700 text-lg"
 										/>
 										Institution Verification Successful & Active
 									</div>
-									<p className="text-xs leading-relaxed">
+									<p className="text-sm leading-relaxed">
 										{verificationDetails.legalEntityName} has been verified by{" "}
 										{verificationDetails.licenseAuthority} under License Number:{" "}
 										<span className="font-mono font-semibold">
@@ -159,9 +159,9 @@ export function BrokerSettingsPage() {
 										</span>
 										.
 									</p>
-									<div className="grid grid-cols-2 gap-4 text-xs pt-2 border-t border-emerald-200/50">
+									<div className="grid grid-cols-2 gap-4 text-sm pt-2 border-t border-emerald-200/50">
 										<div>
-											<span className="text-emerald-800 dark:text-emerald-300">
+											<span className="text-emerald-800">
 												Company Business ID (NIB):
 											</span>{" "}
 											<span className="font-semibold">
@@ -169,9 +169,7 @@ export function BrokerSettingsPage() {
 											</span>
 										</div>
 										<div>
-											<span className="text-emerald-800 dark:text-emerald-300">
-												Verified Date:
-											</span>{" "}
+											<span className="text-emerald-800">Verified Date:</span>{" "}
 											<span className="font-semibold">
 												{verificationDetails.verifiedAt}
 											</span>
@@ -180,14 +178,14 @@ export function BrokerSettingsPage() {
 								</div>
 							) : (
 								<form onSubmit={handleStartVerification} className="space-y-4">
-									<p className="text-xs text-muted-foreground">
+									<p className="text-sm text-muted-foreground">
 										File your securities brokerage licence data. The platform
 										verifies it before you can receive project assignments.
 									</p>
 
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 										<div className="space-y-2">
-											<Label className="text-xs">Legal Entity Name</Label>
+											<Label className="text-sm">Legal Entity Name</Label>
 											<Input
 												value={legalEntityName}
 												onChange={(e) => setLegalEntityName(e.target.value)}
@@ -196,7 +194,7 @@ export function BrokerSettingsPage() {
 										</div>
 
 										<div className="space-y-2">
-											<Label className="text-xs">
+											<Label className="text-sm">
 												Business Identification Number (NIB)
 											</Label>
 											<Input
@@ -207,7 +205,7 @@ export function BrokerSettingsPage() {
 										</div>
 
 										<div className="space-y-2">
-											<Label className="text-xs">
+											<Label className="text-sm">
 												Securities Broker-Dealer License Number
 											</Label>
 											<Input
@@ -218,7 +216,7 @@ export function BrokerSettingsPage() {
 										</div>
 
 										<div className="space-y-2">
-											<Label className="text-xs">
+											<Label className="text-sm">
 												Regulatory Supervisory Authority
 											</Label>
 											<Input
@@ -234,7 +232,7 @@ export function BrokerSettingsPage() {
 											onClick={handleStartVerification}
 											type="submit"
 											disabled={isVerifying}
-											className="bg-[#03442C] text-white hover:bg-[#03442C]/90 gap-2 text-xs"
+											className="bg-[#03442C] text-white hover:bg-[#03442C]/90 gap-2 text-sm"
 										>
 											{isVerifying ? (
 												<>
@@ -263,7 +261,7 @@ export function BrokerSettingsPage() {
 								<FontAwesomeIcon icon={faBuilding} className="text-[#03442C]" />
 								Firm Profile & Broker Representative
 							</CardTitle>
-							<CardDescription className="text-xs">
+							<CardDescription className="text-sm">
 								Official contact details of the broker representative displayed
 								to client companies.
 							</CardDescription>
@@ -272,7 +270,7 @@ export function BrokerSettingsPage() {
 							<form onSubmit={handleSaveProfile} className="space-y-4">
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 									<div className="space-y-2">
-										<Label className="text-xs">
+										<Label className="text-sm">
 											Official Broker Representative Name
 										</Label>
 										<Input
@@ -282,7 +280,7 @@ export function BrokerSettingsPage() {
 									</div>
 
 									<div className="space-y-2">
-										<Label className="text-xs">Official Corporate Email</Label>
+										<Label className="text-sm">Official Corporate Email</Label>
 										<Input
 											type="email"
 											value={email}
@@ -291,7 +289,7 @@ export function BrokerSettingsPage() {
 									</div>
 
 									<div className="space-y-2">
-										<Label className="text-xs">
+										<Label className="text-sm">
 											Office Phone / Mobile Number
 										</Label>
 										<Input
@@ -301,7 +299,7 @@ export function BrokerSettingsPage() {
 									</div>
 
 									<div className="space-y-2">
-										<Label className="text-xs">
+										<Label className="text-sm">
 											Headquarters Office Address
 										</Label>
 										<Input
@@ -314,7 +312,7 @@ export function BrokerSettingsPage() {
 								<div className="flex justify-end pt-2">
 									<Button
 										type="submit"
-										className="bg-[#03442C] text-white hover:bg-[#03442C]/90 gap-2 text-xs"
+										className="bg-[#03442C] text-white hover:bg-[#03442C]/90 gap-2 text-sm"
 									>
 										<FontAwesomeIcon icon={faSave} />
 										Save Profile Changes
@@ -336,12 +334,12 @@ export function BrokerSettingsPage() {
 								/>
 								Broker Role Boundaries & Compliance
 							</CardTitle>
-							<CardDescription className="text-xs">
+							<CardDescription className="text-sm">
 								Architectural policies and compliance guidelines for green
 								brokers on GreenShift.
 							</CardDescription>
 						</CardHeader>
-						<CardContent className="p-6 space-y-4 text-xs">
+						<CardContent className="p-6 space-y-4 text-sm">
 							<div className="space-y-3">
 								<div className="flex items-start gap-3 p-3 rounded-lg bg-muted">
 									<FontAwesomeIcon

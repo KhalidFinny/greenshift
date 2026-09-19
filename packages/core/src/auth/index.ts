@@ -27,7 +27,6 @@ export const roleNav: Record<UserRole, NavItem[]> = {
 		{ to: "/vendor/opportunities", label: "Discover" },
 		{ to: "/vendor/deals", label: "Active Deals" },
 		{ to: "/vendor/portfolio", label: "Portfolio" },
-		{ to: "/vendor/settings", label: "Settings" },
 	],
 	broker: [
 		{ to: "/broker", label: "Dashboard" },
@@ -40,8 +39,8 @@ export const roleNav: Record<UserRole, NavItem[]> = {
 		{ to: "/admin/analytics", label: "Analytics" },
 		{ to: "/admin/projects", label: "Projects" },
 		{ to: "/admin/vendors", label: "Vendors" },
-		{ to: "/admin/system", label: "System" },
-		{ to: "/admin/audit-logs", label: "Audit" },
+		{ to: "/admin/users", label: "Users" },
+		{ to: "/admin/audit-logs", label: "Audit Log" },
 	],
 };
 

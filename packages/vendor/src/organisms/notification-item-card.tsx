@@ -20,13 +20,13 @@ function getNotificationIcon(category: VendorNotification["category"]) {
 		case "Negotiation":
 			return <FontAwesomeIcon icon={faHandshake} className="text-blue-600" />;
 		case "Tenders":
-			return <FontAwesomeIcon icon={faGavel} className="text-emerald-600" />;
+			return <FontAwesomeIcon icon={faGavel} className="text-emerald-700" />;
 		case "Projects":
 			return (
 				<FontAwesomeIcon icon={faFileSignature} className="text-purple-600" />
 			);
 		case "Verification":
-			return <FontAwesomeIcon icon={faShieldAlt} className="text-amber-600" />;
+			return <FontAwesomeIcon icon={faShieldAlt} className="text-amber-700" />;
 		default:
 			return (
 				<FontAwesomeIcon
@@ -45,21 +45,21 @@ export function NotificationItemCard({
 		<Card
 			className={`transition-all ${
 				!notification.isRead
-					? "border-emerald-500 bg-emerald-50/30 font-medium dark:bg-emerald-950/20"
+					? "border-emerald-500 bg-emerald-50/30 font-medium"
 					: ""
 			}`}
 		>
-			<CardContent className="flex items-start justify-between gap-4 p-4 text-xs">
+			<CardContent className="flex items-start justify-between gap-4 p-4 text-sm">
 				<div className="flex items-start gap-3">
 					<div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-base">
 						{getNotificationIcon(notification.category)}
 					</div>
 					<div className="space-y-1">
 						<div className="flex items-center gap-2">
-							<Badge variant="outline" className="text-[10px]">
+							<Badge variant="outline" className="text-sm">
 								{notification.category}
 							</Badge>
-							<span className="text-[11px] text-muted-foreground">
+							<span className="text-sm text-muted-foreground">
 								{notification.timestamp}
 							</span>
 						</div>
@@ -76,14 +76,14 @@ export function NotificationItemCard({
 							size="sm"
 							variant="ghost"
 							onClick={() => onMarkRead(notification.id)}
-							className="text-xs text-emerald-600 hover:text-emerald-700"
+							className="text-sm text-emerald-700 hover:text-emerald-800"
 						>
 							Mark as Read
 						</Button>
 					)}
 					<Link to={notification.linkUrl}>
-						<Button size="sm" variant="outline" className="text-xs">
-							Open Page →
+						<Button size="sm" variant="outline" className="text-sm">
+							Open Page
 						</Button>
 					</Link>
 				</div>

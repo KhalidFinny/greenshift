@@ -3,6 +3,7 @@ import type { AdminInvestment } from "../../../contracts";
 import { createDb } from "../../../db";
 import type { ApiEnv } from "../../../env";
 import { iso, parseLimit } from "../../../lib/format";
+import { apiError } from "../../../lib/response";
 import { factory } from "../admin.shared";
 import { listInvestments } from "./investments.repository";
 
@@ -17,10 +18,7 @@ investmentRoutes.get(
 		const limit = parseLimit(c.req.query("limit"));
 
 		if (status && !validStatuses.includes(status)) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid status" } },
-				400,
-			);
+			return apiError(c, "INVALID_STATUS");
 		}
 
 		const rows = await listInvestments(db, status, limit);

@@ -5,6 +5,6 @@ export const chartCenterContainerClassName =
 export const chartCenterValueClassName =
 	"font-bold tabular-nums leading-none text-[clamp(0.75rem,22cqw,1.875rem)]";
 
-/** Supporting label: ~9% of center width, clamped between 10px and text-xs. */
+/** Supporting label: ~9% of center width, clamped between 10px and text-sm. */
 export const chartCenterLabelClassName =
 	"max-w-full truncate leading-tight text-[clamp(0.625rem,9cqw,0.75rem)]";

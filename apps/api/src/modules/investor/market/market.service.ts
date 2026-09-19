@@ -7,6 +7,7 @@ import type { GreenShiftDb } from "../../../db";
 import type { blueprints } from "../../../db/schema";
 import {
 	listFundedByProject,
+	listIssuedBondCodes,
 	listProjectRows,
 	listPublishedBlueprints,
 } from "./market.repository";
@@ -42,6 +43,13 @@ export async function listBondListings(
 		fundedRows.map((row) => [row.projectId, row.funded]),
 	);
 
+	const issuedCodes = await listIssuedBondCodes(db);
+	const codeByProject = new Map(
+		issuedCodes
+			.filter((row) => row.serial !== null)
+			.map((row) => [row.projectId, row.serial as string]),
+	);
+
 	const bonds: BondListing[] = projectRows.map(({ project, companyName }) => {
 		const blueprint = blueprintByProject.get(project.id);
 		const funded = fundedByProject.get(project.id) ?? 0;
@@ -50,7 +58,8 @@ export async function listBondListings(
 		return {
 			id: project.id,
 			title: project.title,
-			bondCode: null,
+			// Only an issued bond carries a code investors can search for.
+			bondCode: codeByProject.get(project.id) ?? null,
 			companyName,
 			industrySector: project.industrySector,
 			location: project.location,

@@ -1,5 +1,4 @@
 import {
-	faArrowRight,
 	faFileSignature,
 	faLeaf,
 	faTasks,
@@ -22,35 +21,23 @@ export function QuickActionsCard() {
 			</CardHeader>
 			<CardContent className="space-y-3">
 				<Link to="/vendor/opportunities" className="block">
-					<Button variant="outline" className="w-full justify-between">
-						<span className="flex items-center gap-2">
-							<FontAwesomeIcon icon={faLeaf} className="text-emerald-600" />
-							Explore Opportunities
-						</span>
-						<FontAwesomeIcon icon={faArrowRight} className="text-xs" />
+					<Button variant="outline" className="w-full justify-start gap-2">
+						<FontAwesomeIcon icon={faLeaf} className="text-emerald-700" />
+						Explore Opportunities
 					</Button>
 				</Link>
 
 				<Link to="/vendor/deals" className="block">
-					<Button variant="outline" className="w-full justify-between">
-						<span className="flex items-center gap-2">
-							<FontAwesomeIcon
-								icon={faFileSignature}
-								className="text-blue-600"
-							/>
-							Review Proposals & Deals
-						</span>
-						<FontAwesomeIcon icon={faArrowRight} className="text-xs" />
+					<Button variant="outline" className="w-full justify-start gap-2">
+						<FontAwesomeIcon icon={faFileSignature} className="text-blue-600" />
+						Review Proposals & Deals
 					</Button>
 				</Link>
 
 				<Link to="/vendor/deals" className="block">
-					<Button variant="outline" className="w-full justify-between">
-						<span className="flex items-center gap-2">
-							<FontAwesomeIcon icon={faTasks} className="text-amber-600" />
-							Update Active Milestones
-						</span>
-						<FontAwesomeIcon icon={faArrowRight} className="text-xs" />
+					<Button variant="outline" className="w-full justify-start gap-2">
+						<FontAwesomeIcon icon={faTasks} className="text-amber-700" />
+						Update Active Milestones
 					</Button>
 				</Link>
 			</CardContent>

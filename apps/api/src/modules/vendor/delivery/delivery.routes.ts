@@ -3,8 +3,8 @@ import { createFactory } from "hono/factory";
 import { createDb } from "../../../db";
 import { evidenceKinds } from "../../../db/schema";
 import type { ApiEnv } from "../../../env";
-import { requireJson } from "../../../lib/http";
 import { mutationRateLimit } from "../../../lib/mutation-limit";
+import { apiError, apiNotFound, apiSuccess } from "../../../lib/response";
 import { addMilestoneEvidence } from "./delivery.service";
 
 const factory = createFactory<ApiEnv>();
@@ -24,19 +24,11 @@ interface EvidenceBody {
 
 deliveryRoutes.post(
 	"/milestones/:id/evidence",
+	mutationRateLimit("vendor", "milestone"),
 	...factory.createHandlers(async (c) => {
-		const mediaTypeError = requireJson(c);
-		if (mediaTypeError) return mediaTypeError;
-
-		const rateError = await mutationRateLimit("vendor", "milestone")(c);
-		if (rateError) return rateError;
-
 		const id = Number(c.req.param("id"));
 		if (!Number.isInteger(id) || id <= 0) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid ID" } },
-				400,
-			);
+			return apiError(c, "INVALID_ID");
 		}
 
 		const body = (await c.req.json().catch(() => null)) as EvidenceBody | null;
@@ -50,10 +42,7 @@ deliveryRoutes.post(
 			(body?.notes !== undefined &&
 				(typeof body.notes !== "string" || body.notes.length > MAX_TEXT_LENGTH))
 		) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid evidence input" } },
-				400,
-			);
+			return apiError(c, "VALIDATION", "Invalid evidence input");
 		}
 
 		const db = createDb(c.env.DB);
@@ -65,30 +54,18 @@ deliveryRoutes.post(
 		});
 
 		if (result.status === "not_found") {
-			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Milestone not found" } },
-				404,
-			);
+			return apiNotFound(c, "Milestone");
 		}
 		if (result.status === "forbidden") {
-			return c.json(
-				{
-					error: {
-						code: "FORBIDDEN",
-						message: "No awarded proposal on this project",
-					},
-				},
-				403,
-			);
+			return apiError(c, "FORBIDDEN", "No awarded proposal on this project");
 		}
 		if (result.status === "insert_failed") {
-			return c.json(
-				{ error: { code: "INTERNAL", message: "Failed to add evidence" } },
-				500,
-			);
+			return apiError(c, "INTERNAL", "Failed to add evidence");
 		}
-		return c.json(
+		return apiSuccess(
+			c,
 			{ evidence: result.evidence, milestone: result.milestone },
+			"Changes saved successfully",
 			201,
 		);
 	}),

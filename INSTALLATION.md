@@ -61,7 +61,7 @@ server has started at least once.
 | `business1` | `business1@greenshift.dev` | business |
 | `vendor1` | `vendor1@greenshift.dev` | vendor |
 | `broker1` | `broker1@greenshift.dev` | broker |
-| `admin` | `admin@greenshift.dev` | admin |
+| `admin1` | `admin1@greenshift.dev` | admin |
 | `investor1` | `investor1@greenshift.dev` | investor |
 
 The public surfaces (`/`, `/bonds`) need no account; an investor account lands on the bond catalog.
@@ -95,10 +95,15 @@ bun run db:setup
 # Regenerate the seed fixtures from scripts/seed.ts
 bun scripts/seed.ts > scripts/seed.sql
 
-# Load the seed data into a FRESH database (users, projects, tenders, proposals,
-# blueprints, MRV reports, broker assignments with document requests and reports).
-# This file inserts fixed accounts and is not idempotent: on a database that
-# already has them, use `bun run db:setup` + `bun run db:setup:broker` instead.
+# Print only the account rows as idempotent SQL (safe to re-run, unlike the full
+# fixture file above); this is what creates the logins on the deployed database.
+bun run db:accounts > scripts/accounts.sql
+
+# Load the demo fixtures (users, projects, tenders, proposals, blueprints, MRV
+# reports, forecasts, broker assignments with document requests and reports).
+# The file resets every table it owns before inserting, so it is safe to re-run
+# against a local database. That reset is destructive by design: point it at a
+# local database only, never at one that holds real accounts or projects.
 bunx wrangler d1 execute greenshift-db --local --file=scripts/seed.sql
 
 # After a schema change: generate a new migration
@@ -108,9 +113,9 @@ bun run db:generate
 ### Adding the broker fixtures to an existing database
 
 Migration `0003` adds the broker tables and is applied by Wrangler when the dev server starts, so an
-existing database needs no reset. The fixture *rows* are a separate step, because `scripts/seed.sql` inserts
-fixed `@greenshift.dev` accounts and therefore conflicts when it is loaded into a database that already has
-them:
+existing database needs no reset. The fixture *rows* are a separate step. Unlike the full seed, the broker
+group inserts without resetting, so it applies on top of a database that already holds the earlier
+fixtures:
 
 ```bash
 bun run db:setup          # create any missing demo accounts (idempotent, skips existing rows)
@@ -120,14 +125,16 @@ bun run db:setup:broker   # apply only the broker fixtures (idempotent, one tran
 `bun run db:setup:broker` needs migration `0003` applied and the earlier fixture projects present; it reports
 what to do when either is missing, and it never modifies existing rows.
 
-### Starting over
+### Resetting locally
 
-To rebuild the local database from scratch - which is the only way to re-run the full seed file - delete
-`.wrangler/state/v3/d1/miniflare-D1DatabaseObject/`, restart the dev server (Wrangler re-applies the
-migrations), then run `bun run db:setup` and load `scripts/seed.sql`.
+`bun scripts/seed.ts > scripts/seed.sql` followed by `wrangler d1 execute ... --file=scripts/seed.sql` is all
+that is needed: the file deletes the fixture rows (children before parents, so the foreign keys hold) and
+re-inserts them. To rebuild the database completely, delete
+`.wrangler/state/v3/d1/miniflare-D1DatabaseObject/` and restart the dev server, which re-applies the
+migrations.
 
-**This drops every local row, not just the schema**: accounts, sessions, projects, milestones, MRV reports and
-anything else you created locally. It is a fallback, not the normal path after a schema change.
+**The full seed drops every local row it manages**: accounts, sessions, projects, milestones, MRV reports and
+anything else you created locally. It is a local-development file, not a deployment step.
 
 ## Build and deploy
 
@@ -147,29 +154,33 @@ bunx wrangler kv namespace create KV
 bunx wrangler r2 bucket create greenshift-assets
 ```
 
-Deploying publishes the app on `<worker-name>.<your-subdomain>.workers.dev`; the subdomain is created on the
-first deploy of the account.
+Deploying publishes the app on the custom domain declared in the `routes` block of `wrangler.jsonc`
+(`greenshift.fiinnyy.my.id`): Wrangler creates the DNS record and the certificate itself, so the zone must
+live in the same account. Remove that block to fall back to `<worker-name>.<your-subdomain>.workers.dev`.
 
 ### Deploying the database
 
-Migrations and fixtures are separate steps, and the deployed database starts empty:
+Migrations and accounts are separate steps, and the deployed database starts empty:
 
 ```bash
 # 1. Apply migrations to the deployed database before releasing
 bunx wrangler d1 migrations apply greenshift-db --remote
 
-# 2. Load the demo accounts and fixtures into the deployed database (once, into an
-#    empty database - the file is not idempotent)
-bun scripts/seed.ts > scripts/seed.sql
-bunx wrangler d1 execute greenshift-db --remote --file=scripts/seed.sql
+# 2. Create the logins. The statements are idempotent, so this is safe to re-run
+#    and never touches an account that already exists.
+bun run db:accounts > scripts/accounts.sql
+bunx wrangler d1 execute greenshift-db --remote --file=scripts/accounts.sql
 
 # Inspect what the deployed database holds
 bunx wrangler d1 execute greenshift-db --remote --command "SELECT email, role FROM users"
 ```
 
-Passwords are hashed at generation time, so the accounts seeded remotely are the same demo logins
-(`business1` / `vendor1` / `broker1` / `admin`, password `12345678`) - change or remove them before the
-deployment is shared publicly.
+Passwords are hashed at generation time, so the accounts created remotely are the same logins
+(`business1`…`business5`, `investor1`…`investor5`, `vendor1`…`vendor5`, `broker1`…`broker5`,
+`admin1`…`admin5`, password `12345678`) - change or remove them before the deployment is shared publicly. The
+deployed database holds accounts only. `scripts/accounts.sql` is the idempotent account-only file;
+`scripts/seed.sql` carries the demo fixtures (projects, tenders, bonds, forecasts) and begins with a
+destructive reset, so it must never be pointed at a deployed database.
 
 ## Quality checks
 

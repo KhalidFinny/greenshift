@@ -34,7 +34,7 @@ database:
 | `business1` | business |
 | `vendor1` | vendor |
 | `broker1` | broker |
-| `admin` | admin |
+| `admin1` | admin |
 | `investor1` | investor |
 
 Full instructions (role-scoped dev servers, database workflow, deployment, troubleshooting) are in

@@ -10,39 +10,39 @@ const pct = new Intl.NumberFormat("en-US", {
 });
 
 export function formatRupiah(value: number | null | undefined): string {
-	if (typeof value !== "number" || !Number.isFinite(value)) return "—";
+	if (typeof value !== "number" || !Number.isFinite(value)) return "-";
 	return idr.format(value);
 }
 
 export function formatCompactRupiah(value: number | null | undefined): string {
-	if (typeof value !== "number" || !Number.isFinite(value)) return "—";
+	if (typeof value !== "number" || !Number.isFinite(value)) return "-";
 	if (value >= 1_000_000_000) {
-		const valInM = value / 1_000_000_000;
-		return `Rp ${Number.isInteger(valInM) ? valInM : valInM.toFixed(1)}M`;
+		const valInBillions = value / 1_000_000_000;
+		return `Rp ${Number.isInteger(valInBillions) ? valInBillions : valInBillions.toFixed(1)}B`;
 	}
 	if (value >= 1_000_000) {
-		const valInJt = value / 1_000_000;
-		return `Rp ${Number.isInteger(valInJt) ? valInJt : valInJt.toFixed(1)} Jt`;
+		const valInMillions = value / 1_000_000;
+		return `Rp ${Number.isInteger(valInMillions) ? valInMillions : valInMillions.toFixed(1)}M`;
 	}
 	return formatRupiah(value);
 }
 
 export function formatPercent(value: number | null | undefined): string {
-	if (typeof value !== "number" || !Number.isFinite(value)) return "—";
+	if (typeof value !== "number" || !Number.isFinite(value)) return "-";
 	return pct.format(value / 100);
 }
 
 export function formatMonths(months: number | null | undefined): string {
-	if (typeof months !== "number" || !Number.isFinite(months)) return "—";
+	if (typeof months !== "number" || !Number.isFinite(months)) return "-";
 	return `${months} months`;
 }
 
 export function formatDate(iso: string | null | undefined): string {
-	if (!iso) return "—";
+	if (!iso) return "-";
 	return new Date(iso).toLocaleDateString("en-US", { dateStyle: "long" });
 }
 
 export function formatShortDate(iso: string | null | undefined): string {
-	if (!iso) return "—";
+	if (!iso) return "-";
 	return new Date(iso).toLocaleDateString("en-US", { dateStyle: "medium" });
 }

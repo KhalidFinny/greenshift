@@ -4,8 +4,8 @@ import type { ProposalDraftBody } from "../../../contracts";
 import { createDb } from "../../../db";
 import type { ApiEnv } from "../../../env";
 import { invalidNumber, parseLimit } from "../../../lib/format";
-import { requireJson } from "../../../lib/http";
 import { mutationRateLimit } from "../../../lib/mutation-limit";
+import { apiError, apiNotFound, apiSuccess } from "../../../lib/response";
 import { MAX_SPEC_LENGTH, MAX_WARRANTY_MONTHS } from "../vendor.shared";
 import {
 	getVendorProposal,
@@ -34,19 +34,13 @@ proposalsRoutes.get(
 	...factory.createHandlers(async (c) => {
 		const id = Number(c.req.param("id"));
 		if (!Number.isInteger(id) || id <= 0) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid ID" } },
-				400,
-			);
+			return apiError(c, "INVALID_ID");
 		}
 
 		const db = createDb(c.env.DB);
 		const proposal = await getVendorProposal(db, c.get("user").id, id);
 		if (!proposal) {
-			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Proposal not found" } },
-				404,
-			);
+			return apiNotFound(c, "Proposal");
 		}
 		return c.json({ proposal });
 	}),
@@ -54,13 +48,8 @@ proposalsRoutes.get(
 
 proposalsRoutes.post(
 	"/proposals",
+	mutationRateLimit("vendor", "proposal"),
 	...factory.createHandlers(async (c) => {
-		const mediaTypeError = requireJson(c);
-		if (mediaTypeError) return mediaTypeError;
-
-		const rateError = await mutationRateLimit("vendor", "proposal")(c);
-		if (rateError) return rateError;
-
 		const body = (await c.req
 			.json()
 			.catch(() => null)) as Partial<ProposalDraftBody> | null;
@@ -89,12 +78,7 @@ proposalsRoutes.post(
 				max: MAX_WARRANTY_MONTHS,
 			})
 		) {
-			return c.json(
-				{
-					error: { code: "VALIDATION", message: "Invalid proposal input" },
-				},
-				400,
-			);
+			return apiError(c, "VALIDATION", "Invalid proposal input");
 		}
 
 		const db = createDb(c.env.DB);
@@ -109,76 +93,36 @@ proposalsRoutes.post(
 
 		switch (result.status) {
 			case "no_profile":
-				return c.json(
-					{
-						error: {
-							code: "VALIDATION",
-							message:
-								"Complete your vendor profile before submitting a proposal",
-						},
-					},
-					400,
+				return apiError(
+					c,
+					"VALIDATION",
+					"Complete your vendor profile before submitting a proposal",
 				);
 			case "unverified":
-				return c.json(
-					{
-						error: {
-							code: "FORBIDDEN",
-							message: "Vendor profile has not been verified by an admin",
-						},
-					},
-					403,
+				return apiError(
+					c,
+					"VERIFICATION_REQUIRED",
+					"Vendor profile has not been verified by an admin",
 				);
 			case "tender_not_found":
-				return c.json(
-					{ error: { code: "NOT_FOUND", message: "Tender not found" } },
-					404,
-				);
+				return apiNotFound(c, "Tender");
 			case "tender_closed":
-				return c.json(
-					{
-						error: { code: "TENDER_CLOSED", message: "Tender already closed" },
-					},
-					409,
-				);
+				return apiError(c, "TENDER_CLOSED");
 			case "deadline_passed":
-				return c.json(
-					{
-						error: {
-							code: "TENDER_DEADLINE",
-							message: "Tender deadline has passed",
-						},
-					},
-					409,
-				);
+				return apiError(c, "TENDER_DEADLINE");
 			case "duplicate":
-				return c.json(
-					{
-						error: {
-							code: "DUPLICATE_PROPOSAL",
-							message: "You have already submitted a proposal for this tender",
-						},
-					},
-					409,
-				);
+				return apiError(c, "DUPLICATE_PROPOSAL");
 			case "conflict":
-				return c.json(
-					{
-						error: {
-							code: "PROPOSAL_CONFLICT",
-							message:
-								"Proposal could not be submitted: the tender is closed or a proposal already exists",
-						},
-					},
-					409,
-				);
+				return apiError(c, "PROPOSAL_CONFLICT");
 			case "load_failed":
-				return c.json(
-					{ error: { code: "INTERNAL", message: "Failed to load proposal" } },
-					500,
-				);
+				return apiError(c, "INTERNAL", "Failed to load proposal");
 			default:
-				return c.json({ proposal: result.proposal }, 201);
+				return apiSuccess(
+					c,
+					{ proposal: result.proposal },
+					"Proposal submitted successfully",
+					201,
+				);
 		}
 	}),
 );
@@ -188,32 +132,21 @@ proposalsRoutes.delete(
 	...factory.createHandlers(async (c) => {
 		const id = Number(c.req.param("id"));
 		if (!Number.isInteger(id) || id <= 0) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid ID" } },
-				400,
-			);
+			return apiError(c, "INVALID_ID");
 		}
 
 		const db = createDb(c.env.DB);
 		const result = await withdrawVendorProposal(db, c.get("user").id, id);
 		if (result.status === "not_found") {
-			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Proposal not found" } },
-				404,
-			);
+			return apiNotFound(c, "Proposal");
 		}
 		if (result.status === "locked") {
-			return c.json(
-				{
-					error: {
-						code: "PROPOSAL_LOCKED",
-						message:
-							"Only proposals that have not yet been processed can be withdrawn",
-					},
-				},
-				409,
+			return apiError(
+				c,
+				"PROPOSAL_LOCKED",
+				"Only proposals that have not yet been processed can be withdrawn",
 			);
 		}
-		return c.json({ ok: true });
+		return apiSuccess(c, { ok: true }, "Proposal withdrawn");
 	}),
 );

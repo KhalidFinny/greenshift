@@ -10,7 +10,6 @@ import { api } from "@greenshift/core";
 import {
 	Badge,
 	Button,
-	ContentSkeleton,
 	DataTable,
 	Dialog,
 	DialogClose,
@@ -19,11 +18,13 @@ import {
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
+	EmptyState,
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
+	ShimmerBlock,
 } from "@greenshift/ui";
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -38,6 +39,10 @@ import {
 } from "../lib/project-status";
 import { useStepUpAction } from "../lib/use-step-up-action";
 import { StepUpDialog } from "./step-up-dialog";
+import { TableSkeleton } from "./table-skeleton";
+
+/** Column labels for the audit-trail loading frame, in table order. */
+const AUDIT_HEADERS = ["Time", "Action", "User"];
 
 const idr = new Intl.NumberFormat("en-US", {
 	style: "currency",
@@ -77,7 +82,7 @@ const auditLogColumns: ColumnDef<AuditLogEntry>[] = [
 		accessorFn: (log) => log.action,
 		header: "Action",
 		cell: ({ row }) => (
-			<span className="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-xs font-medium">
+			<span className="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-sm font-medium">
 				{row.original.action}
 			</span>
 		),
@@ -222,132 +227,142 @@ export function ProjectDetailDialog({
 					</div>
 				</DialogHeader>
 
+				{/* The project itself is already in hand, so its facts and lifecycle
+				    render real. Only the blueprint and audit-trail sections depend on
+				    their own queries, and each shimmers inside its own frame. */}
 				<div className="flex-1 divide-y divide-border overflow-y-auto px-6">
 					{actionError && (
 						<p className="py-5 text-base text-destructive">{actionError}</p>
 					)}
 
-					{blueprintsQuery.isPending || auditQuery.isPending ? (
-						<div className="py-5">
-							<ContentSkeleton />
+					<dl className="grid grid-cols-2 gap-x-8 gap-y-5 py-5 sm:grid-cols-3">
+						{infoItems.map((item) => (
+							<div key={item.label}>
+								<dt className="text-base text-muted-foreground">
+									{item.label}
+								</dt>
+								<dd className="mt-1 text-base font-semibold tabular-nums">
+									{item.value}
+								</dd>
+							</div>
+						))}
+					</dl>
+
+					<section className="space-y-3 py-5">
+						<SectionHeading icon={faArrowsRotate}>
+							Project Lifecycle
+						</SectionHeading>
+						<div className="flex flex-wrap items-center gap-3">
+							<Select
+								value={nextStatus}
+								onValueChange={(value) => setNextStatus(value)}
+							>
+								<SelectTrigger className="w-[220px]">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									{PROJECT_STATUS_OPTIONS.map((option) => (
+										<SelectItem key={option} value={option}>
+											{PROJECT_STATUS_LABELS[option]}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+							<Button
+								onClick={() => runStatusAction(nextStatus)}
+								disabled={
+									projectStatus.isPending || nextStatus === project.status
+								}
+							>
+								Apply Status
+							</Button>
 						</div>
-					) : (
-						<>
-							<dl className="grid grid-cols-2 gap-x-8 gap-y-5 py-5 sm:grid-cols-3">
-								{infoItems.map((item) => (
-									<div key={item.label}>
-										<dt className="text-base text-muted-foreground">
-											{item.label}
-										</dt>
-										<dd className="mt-1 text-base font-semibold tabular-nums">
-											{item.value}
-										</dd>
-									</div>
-								))}
-							</dl>
+					</section>
 
-							<section className="space-y-3 py-5">
-								<SectionHeading icon={faArrowsRotate}>
-									Project Lifecycle
-								</SectionHeading>
-								<div className="flex flex-wrap items-center gap-3">
-									<Select
-										value={nextStatus}
-										onValueChange={(value) => setNextStatus(value)}
-									>
-										<SelectTrigger className="w-[220px]">
-											<SelectValue />
-										</SelectTrigger>
-										<SelectContent>
-											{PROJECT_STATUS_OPTIONS.map((option) => (
-												<SelectItem key={option} value={option}>
-													{PROJECT_STATUS_LABELS[option]}
-												</SelectItem>
+					<section className="space-y-3 py-5">
+						<div className="flex items-center justify-between gap-3">
+							<SectionHeading icon={faFileLines}>
+								Green Project Blueprint
+							</SectionHeading>
+							{blueprintsQuery.isPending ? (
+								<ShimmerBlock className="h-8 w-24 shrink-0 rounded-md" />
+							) : bp ? (
+								<Badge
+									variant={BLUEPRINT_STATUS_BADGE[bp.status] ?? "outline"}
+									className="shrink-0 !h-8 px-3 text-base"
+								>
+									{BLUEPRINT_STATUS_LABELS[bp.status] ?? bp.status}
+								</Badge>
+							) : null}
+						</div>
+						{blueprintsQuery.isPending ? (
+							<div className="space-y-3">
+								<ShimmerBlock className="h-5 w-64" />
+								<ShimmerBlock className="h-24 w-full" />
+								<div className="flex flex-wrap gap-2">
+									<ShimmerBlock className="h-9 w-32" />
+									<ShimmerBlock className="h-9 w-32" />
+								</div>
+							</div>
+						) : !bp ? (
+							<EmptyState
+								title="No blueprint submitted"
+								description="This project has no Green Project Blueprint on file yet, so there is nothing to audit or publish."
+							/>
+						) : (
+							<div className="space-y-3">
+								{bp.auditNote ? (
+									<p className="text-base">
+										<span className="font-medium">Audit note:</span>{" "}
+										{bp.auditNote}
+									</p>
+								) : null}
+								{blueprintActions.length > 0 ? (
+									<>
+										{bp.status === "audit" ? (
+											<textarea
+												value={auditNote}
+												onChange={(e) => setAuditNote(e.target.value)}
+												placeholder="Audit note (optional)"
+												className="min-h-24 w-full rounded-sm border border-border bg-background p-3 text-base focus-visible:outline-2 focus-visible:outline-primary"
+											/>
+										) : null}
+										<div className="flex flex-wrap gap-2">
+											{blueprintActions.map((action) => (
+												<Button
+													key={action.next}
+													variant={action.variant}
+													onClick={() => runBlueprintAction(action.next)}
+													disabled={blueprintStatus.isPending}
+												>
+													{action.label}
+												</Button>
 											))}
-										</SelectContent>
-									</Select>
-									<Button
-										onClick={() => runStatusAction(nextStatus)}
-										disabled={
-											projectStatus.isPending || nextStatus === project.status
-										}
-									>
-										Apply Status
-									</Button>
-								</div>
-							</section>
+										</div>
+									</>
+								) : null}
+							</div>
+						)}
+					</section>
 
-							<section className="space-y-3 py-5">
-								<div className="flex items-center justify-between gap-3">
-									<SectionHeading icon={faFileLines}>
-										Green Project Blueprint
-									</SectionHeading>
-									{bp ? (
-										<Badge
-											variant={BLUEPRINT_STATUS_BADGE[bp.status] ?? "outline"}
-											className="shrink-0 !h-8 px-3 text-base"
-										>
-											{BLUEPRINT_STATUS_LABELS[bp.status] ?? bp.status}
-										</Badge>
-									) : null}
-								</div>
-								{!bp ? (
-									<p className="text-base text-muted-foreground">
-										No blueprint for this project yet.
-									</p>
-								) : (
-									<div className="space-y-3">
-										{bp.auditNote ? (
-											<p className="text-base">
-												<span className="font-medium">Audit note:</span>{" "}
-												{bp.auditNote}
-											</p>
-										) : null}
-										{blueprintActions.length > 0 ? (
-											<>
-												{bp.status === "audit" ? (
-													<textarea
-														value={auditNote}
-														onChange={(e) => setAuditNote(e.target.value)}
-														placeholder="Audit note (optional)"
-														className="min-h-24 w-full rounded-sm border border-border bg-background p-3 text-base focus-visible:outline-2 focus-visible:outline-primary"
-													/>
-												) : null}
-												<div className="flex flex-wrap gap-2">
-													{blueprintActions.map((action) => (
-														<Button
-															key={action.next}
-															variant={action.variant}
-															onClick={() => runBlueprintAction(action.next)}
-															disabled={blueprintStatus.isPending}
-														>
-															{action.label}
-														</Button>
-													))}
-												</div>
-											</>
-										) : null}
-									</div>
-								)}
-							</section>
-
-							<section className="space-y-3 py-5">
-								<SectionHeading icon={faHistory}>Audit Trail</SectionHeading>
-								{projectLogs.length === 0 ? (
-									<p className="text-base text-muted-foreground">
-										No recorded activity yet.
-									</p>
-								) : (
-									<DataTable
-										columns={auditLogColumns}
-										data={projectLogs}
-										getRowId={(log) => String(log.id)}
-										ariaLabel="Audit trail"
-									/>
-								)}
-							</section>
-						</>
-					)}
+					<section className="space-y-3 py-5">
+						<SectionHeading icon={faHistory}>Audit Trail</SectionHeading>
+						{auditQuery.isPending ? (
+							<TableSkeleton headers={AUDIT_HEADERS} rows={3} />
+						) : projectLogs.length === 0 ? (
+							<EmptyState
+								title="No logged activity"
+								description="No status change or blueprint action has been recorded against this project yet."
+							/>
+						) : (
+							<DataTable
+								columns={auditLogColumns}
+								data={projectLogs}
+								getRowId={(log) => String(log.id)}
+								ariaLabel="Audit trail"
+							/>
+						)}
+					</section>
 				</div>
 
 				<DialogFooter className="shrink-0 border-t border-border px-6 py-4">

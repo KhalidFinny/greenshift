@@ -1,9 +1,12 @@
+import { faCertificate } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
 	Badge,
 	Card,
 	CardContent,
 	CardHeader,
 	CardTitle,
+	EmptyState,
 } from "@greenshift/ui";
 
 export function CertificationsCard({
@@ -17,14 +20,16 @@ export function CertificationsCard({
 		<Card>
 			<CardHeader>
 				<CardTitle className="text-lg">
-					Sertifikasi Industri (ESCO & ISO)
+					Industry Certifications (ESCO & ISO)
 				</CardTitle>
 			</CardHeader>
-			<CardContent className="space-y-3 text-xs">
+			<CardContent className="space-y-3 text-sm">
 				{certifications.length === 0 && (
-					<p className="text-muted-foreground">
-						Belum ada sertifikasi yang tercatat pada profil perusahaan.
-					</p>
+					<EmptyState
+						icon={<FontAwesomeIcon icon={faCertificate} />}
+						title="No certifications on file"
+						description="ESCO registration and ISO certificates appear here once they are part of your company profile. Add them with your verification documents."
+					/>
 				)}
 				{certifications.map((cert) => (
 					<div
@@ -35,7 +40,7 @@ export function CertificationsCard({
 							<h4 className="text-sm font-bold">{cert}</h4>
 						</div>
 						{verified && (
-							<Badge className="bg-emerald-600 text-white">Terverifikasi</Badge>
+							<Badge className="bg-emerald-700 text-white">Verified</Badge>
 						)}
 					</div>
 				))}

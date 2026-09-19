@@ -1,6 +1,10 @@
 import { cn } from "../../lib/utils";
 
-function ShimmerBlock({ className }: { className?: string }) {
+/**
+ * One shimmering placeholder block. Exported so route-level skeletons can be
+ * composed to mirror their real page layout instead of a generic stack.
+ */
+export function ShimmerBlock({ className }: { className?: string }) {
 	return (
 		<div
 			className={cn(

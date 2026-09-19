@@ -14,37 +14,6 @@ const SAFE_METHODS: Record<string, true> = {
 	OPTIONS: true,
 };
 
-/**
- * Success message per mutation route. Reads stay silent: their loading and
- * error states live in the page (skeletons / empty states).
- */
-function successMessageFor(path: string, method: string): string | null {
-	if (path === "/api/auth/step-up") return null; // dialog provides feedback
-	if (path.endsWith("/api/auth/login")) return "Signed in successfully";
-	if (path.endsWith("/api/auth/register"))
-		return "Account created successfully";
-	if (path.endsWith("/api/auth/logout")) return "Signed out successfully";
-	if (/\/api\/admin\/users\/\d+\/verify$/.test(path))
-		return "User verification updated";
-	if (/\/api\/admin\/vendors\/\d+\/verify$/.test(path))
-		return "Vendor verification updated";
-	if (/\/api\/admin\/projects\/\d+\/status$/.test(path))
-		return "Project status updated";
-	if (/\/api\/admin\/blueprints\/\d+$/.test(path))
-		return "Blueprint status updated";
-	if (/\/api\/admin\/roi-payments\/\d+\/payout$/.test(path))
-		return "ROI payment disbursed via escrow";
-	if (path === "/api/vendor/profile" && method === "PUT")
-		return "Vendor profile saved";
-	if (path === "/api/vendor/proposals" && method === "POST")
-		return "Proposal submitted successfully";
-	if (/\/api\/vendor\/proposals\/\d+$/.test(path)) {
-		if (method === "PATCH") return "Proposal updated";
-		if (method === "DELETE") return "Proposal withdrawn";
-	}
-	return "Changes saved successfully";
-}
-
 function errorMessageFor(status: number, body: ErrorBody): string {
 	return body?.error?.message ?? `Request failed (${status})`;
 }
@@ -101,7 +70,11 @@ export async function request<T>(
 	try {
 		const method = (init?.method ?? "GET").toUpperCase();
 		const headers = new Headers(init?.headers);
-		if (!headers.has("Content-Type") && !SAFE_METHODS[method]) {
+		// FormData must keep the browser-generated multipart boundary, so the
+		// JSON default is skipped for it.
+		const isFormData =
+			typeof FormData !== "undefined" && init?.body instanceof FormData;
+		if (!isFormData && !headers.has("Content-Type") && !SAFE_METHODS[method]) {
 			headers.set("Content-Type", "application/json");
 		}
 		if (shouldAttachCsrf(path, method) && !headers.has("x-csrf-token")) {
@@ -125,11 +98,13 @@ export async function request<T>(
 			}
 			throw new ApiError(res.status, message);
 		}
-		if (shouldToast(method, init)) {
-			const message = successMessageFor(path, method);
-			if (message) publishToast({ tone: "success", message });
+		// Mutations carry the toast copy in the body; reads stay silent because
+		// their loading and error states live in the page.
+		const body = (await res.json()) as T & { message?: string };
+		if (shouldToast(method, init) && body.message) {
+			publishToast({ tone: "success", message: body.message });
 		}
-		return res.json() as Promise<T>;
+		return body;
 	} catch (err) {
 		if (err instanceof Error && err.name === "AbortError") {
 			const method = (init?.method ?? "GET").toUpperCase();

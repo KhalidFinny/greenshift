@@ -1,6 +1,7 @@
 import type { Context, Next } from "hono";
 import { createMiddleware } from "hono/factory";
 import type { ApiEnv } from "../env";
+import { ApiFailure } from "./response";
 
 const SAFE_METHODS: Record<string, true> = {
 	GET: true,
@@ -37,41 +38,17 @@ export const requireCsrf = createMiddleware<ApiEnv>(
 
 		const site = (c.req.header("sec-fetch-site") ?? "").toLowerCase();
 		if (site && site !== "same-origin") {
-			return c.json(
-				{
-					error: {
-						code: "FORBIDDEN",
-						message: "Cross-origin request rejected",
-					},
-				},
-				403,
-			);
+			throw new ApiFailure("CSRF_REJECTED", "Cross-origin request rejected");
 		}
 
 		if (!sameOrigin(c)) {
-			return c.json(
-				{
-					error: {
-						code: "FORBIDDEN",
-						message: "Invalid origin",
-					},
-				},
-				403,
-			);
+			throw new ApiFailure("CSRF_REJECTED", "Invalid origin");
 		}
 
 		const token = c.req.header(CSRF_HEADER);
 		const session = c.get("session");
 		if (!session || !token || token !== session.csrfToken) {
-			return c.json(
-				{
-					error: {
-						code: "FORBIDDEN",
-						message: "Invalid CSRF token",
-					},
-				},
-				403,
-			);
+			throw new ApiFailure("CSRF_REJECTED");
 		}
 
 		await next();

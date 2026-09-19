@@ -4,6 +4,7 @@ import type { BrokerMonthlyReport } from "../../../contracts";
 import { createDb } from "../../../db";
 import type { ApiEnv } from "../../../env";
 import { renderTextPdf } from "../../../lib/pdf";
+import { apiError, apiNotFound } from "../../../lib/response";
 import { loadReports } from "./reports.repository";
 
 const factory = createFactory<ApiEnv>();
@@ -96,18 +97,12 @@ reportRoutes.get(
 	...factory.createHandlers(async (c) => {
 		const id = Number(c.req.param("id"));
 		if (!Number.isInteger(id) || id <= 0) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid ID" } },
-				400,
-			);
+			return apiError(c, "INVALID_ID");
 		}
 		const db = createDb(c.env.DB);
 		const [report] = await loadReports(db, c.get("user").id, id);
 		if (!report) {
-			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Report not found" } },
-				404,
-			);
+			return apiNotFound(c, "Report");
 		}
 		return c.json({ report });
 	}),
@@ -118,18 +113,12 @@ reportRoutes.get(
 	...factory.createHandlers(async (c) => {
 		const id = Number(c.req.param("id"));
 		if (!Number.isInteger(id) || id <= 0) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid ID" } },
-				400,
-			);
+			return apiError(c, "INVALID_ID");
 		}
 		const db = createDb(c.env.DB);
 		const [report] = await loadReports(db, c.get("user").id, id);
 		if (!report) {
-			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Report not found" } },
-				404,
-			);
+			return apiNotFound(c, "Report");
 		}
 
 		const pdf = reportLines(report);

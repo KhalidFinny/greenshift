@@ -14,8 +14,8 @@ import {
 	MAX_TEXT,
 	parseLimit,
 } from "../../../lib/format";
-import { requireJson } from "../../../lib/http";
 import { mutationRateLimit } from "../../../lib/mutation-limit";
+import { apiError, apiNotFound, apiSuccess } from "../../../lib/response";
 import {
 	type DocumentRequestRow,
 	listDocumentRequests,
@@ -86,13 +86,8 @@ documentRoutes.get(
 
 documentRoutes.post(
 	"/document-requests",
+	requestLimit,
 	...factory.createHandlers(async (c) => {
-		const mediaTypeError = requireJson(c);
-		if (mediaTypeError) return mediaTypeError;
-
-		const rateError = await requestLimit(c);
-		if (rateError) return rateError;
-
 		const body = (await c.req
 			.json()
 			.catch(() => null)) as Partial<BrokerDocumentRequestBody> | null;
@@ -124,10 +119,7 @@ documentRoutes.post(
 			invalidOptionalText(requiredPeriod, MAX_PERIOD) ||
 			invalidOptionalText(additionalNotes, MAX_TEXT)
 		) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid input" } },
-				400,
-			);
+			return apiError(c, "VALIDATION");
 		}
 
 		const db = createDb(c.env.DB);
@@ -143,19 +135,14 @@ documentRoutes.post(
 			additionalNotes: additionalNotes ?? null,
 		});
 		if (result.outcome === "not_found") {
-			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Assignment not found" } },
-				404,
-			);
+			return apiNotFound(c, "Assignment");
 		}
 		if (result.outcome === "conflict") {
-			return c.json(
-				{ error: { code: "CONFLICT", message: result.message } },
-				409,
-			);
+			return apiError(c, "CONFLICT", result.message);
 		}
 
-		return c.json(
+		return apiSuccess(
+			c,
 			{
 				request: toDocumentRequest(
 					result.request,
@@ -163,6 +150,7 @@ documentRoutes.post(
 					result.project?.companyName ?? "Company",
 				),
 			},
+			"Changes saved successfully",
 			201,
 		);
 	}),
@@ -170,13 +158,8 @@ documentRoutes.post(
 
 documentRoutes.patch(
 	"/document-requests/:id",
+	reviewLimit,
 	...factory.createHandlers(async (c) => {
-		const mediaTypeError = requireJson(c);
-		if (mediaTypeError) return mediaTypeError;
-
-		const rateError = await reviewLimit(c);
-		if (rateError) return rateError;
-
 		const id = Number(c.req.param("id"));
 		const body = (await c.req
 			.json()
@@ -190,10 +173,7 @@ documentRoutes.patch(
 				action !== "REJECT") ||
 			invalidOptionalText(body?.reason, MAX_TEXT)
 		) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid input" } },
-				400,
-			);
+			return apiError(c, "VALIDATION");
 		}
 
 		const db = createDb(c.env.DB);
@@ -204,32 +184,27 @@ documentRoutes.patch(
 			reason: body?.reason,
 		});
 		if (result.outcome === "not_found") {
-			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Document request not found" } },
-				404,
-			);
+			return apiNotFound(c, "Document request");
 		}
 		if (result.outcome === "conflict") {
-			return c.json(
-				{ error: { code: "CONFLICT", message: result.message } },
-				409,
-			);
+			return apiError(c, "CONFLICT", result.message);
 		}
 		if (result.outcome === "invalid") {
-			return c.json(
-				{ error: { code: "VALIDATION", message: result.message } },
-				400,
-			);
+			return apiError(c, "VALIDATION", result.message);
 		}
 
 		const context = await loadDocumentContext(db, [result.request]);
 		const entry = context.get(result.request.id);
-		return c.json({
-			request: toDocumentRequest(
-				result.request,
-				entry?.projectTitle ?? "Project",
-				entry?.companyName ?? "Company",
-			),
-		});
+		return apiSuccess(
+			c,
+			{
+				request: toDocumentRequest(
+					result.request,
+					entry?.projectTitle ?? "Project",
+					entry?.companyName ?? "Company",
+				),
+			},
+			"Changes saved successfully",
+		);
 	}),
 );

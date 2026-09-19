@@ -4,8 +4,8 @@ import type { VendorNegotiationResponseBody } from "../../../contracts";
 import { createDb } from "../../../db";
 import type { ApiEnv } from "../../../env";
 import { invalidNumber } from "../../../lib/format";
-import { requireJson } from "../../../lib/http";
 import { mutationRateLimit } from "../../../lib/mutation-limit";
+import { apiError, apiNotFound, apiSuccess } from "../../../lib/response";
 import {
 	listVendorNegotiations,
 	respondToVendorNegotiation,
@@ -29,19 +29,11 @@ negotiationRoutes.get(
 
 negotiationRoutes.post(
 	"/negotiations/:id/response",
+	mutationRateLimit("vendor", "negotiation"),
 	...factory.createHandlers(async (c) => {
-		const mediaTypeError = requireJson(c);
-		if (mediaTypeError) return mediaTypeError;
-
-		const rateError = await mutationRateLimit("vendor", "negotiation")(c);
-		if (rateError) return rateError;
-
 		const id = Number(c.req.param("id"));
 		if (!Number.isInteger(id) || id <= 0) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid ID" } },
-				400,
-			);
+			return apiError(c, "INVALID_ID");
 		}
 
 		const body = (await c.req
@@ -67,12 +59,7 @@ negotiationRoutes.post(
 			(note !== undefined &&
 				(typeof note !== "string" || note.length > MAX_NOTE_LENGTH))
 		) {
-			return c.json(
-				{
-					error: { code: "VALIDATION", message: "Invalid negotiation input" },
-				},
-				400,
-			);
+			return apiError(c, "VALIDATION", "Invalid negotiation input");
 		}
 
 		const db = createDb(c.env.DB);
@@ -84,28 +71,22 @@ negotiationRoutes.post(
 		});
 
 		if (result.status === "not_found") {
-			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Negotiation not found" } },
-				404,
-			);
+			return apiNotFound(c, "Negotiation");
 		}
 		if (result.status === "invalid_state") {
-			return c.json(
-				{
-					error: {
-						code: "INVALID_STATE",
-						message: "This negotiation has already been answered",
-					},
-				},
-				409,
+			return apiError(
+				c,
+				"INVALID_STATE",
+				"This negotiation has already been answered",
 			);
 		}
 		if (result.status === "load_failed") {
-			return c.json(
-				{ error: { code: "INTERNAL", message: "Failed to load negotiation" } },
-				500,
-			);
+			return apiError(c, "INTERNAL", "Failed to load negotiation");
 		}
-		return c.json({ negotiation: result.negotiation });
+		return apiSuccess(
+			c,
+			{ negotiation: result.negotiation },
+			"Changes saved successfully",
+		);
 	}),
 );

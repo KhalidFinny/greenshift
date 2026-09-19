@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type { ApiEnv } from "../../env";
 import { requireRole, requireSession } from "../../lib/authz";
 import { requireCsrf } from "../../lib/csrf";
+import { requireJsonBody } from "../../lib/http";
 import { requireVerifiedBroker } from "./broker.shared";
 import { documentRoutes } from "./documents/documents.routes";
 import { notificationRoutes } from "./notifications/notifications.routes";
@@ -13,7 +14,13 @@ export const brokerRoutes = new Hono<ApiEnv>();
 
 // Every broker endpoint requires a broker session. CSRF is enforced only for
 // unsafe methods inside the middleware.
-brokerRoutes.use("*", requireSession, requireRole("broker"), requireCsrf);
+brokerRoutes.use(
+	"*",
+	requireSession,
+	requireRole("broker"),
+	requireCsrf,
+	requireJsonBody,
+);
 
 // Settings and notifications stay reachable while verification is pending.
 brokerRoutes.route("/", profileRoutes);

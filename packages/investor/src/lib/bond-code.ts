@@ -3,10 +3,10 @@ import { formatIdr } from "./format";
 /**
  * Broker-facing bond code.
  *
- * The real code is issued by the broker/KSEI, so once the API exposes
- * `bondCode` we use it verbatim. Until then we derive a deterministic
- * placeholder from the project so the demo has something stable to copy and
- * search: never random, or the investor could not find the same bond twice.
+ * An issued bond carries the code its broker registered, and the API returns it
+ * verbatim. A bond that has not been issued yet has no code, so we fall back to
+ * a deterministic value derived from the project: never random, or the investor
+ * could not find the same bond twice.
  */
 export function bondCodeFor(project: {
 	id: number;

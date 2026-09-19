@@ -38,7 +38,7 @@ export function calculateTotalPortfolioImpact(
 	return portfolio.reduce(
 		(acc, item) => ({
 			totalValue: acc.totalValue + item.projectValue,
-			totalCarbonTons: acc.totalCarbonTons + item.carbonReductionTons,
+			totalCarbonTons: acc.totalCarbonTons + (item.carbonReductionTons ?? 0),
 		}),
 		{ totalValue: 0, totalCarbonTons: 0 },
 	);

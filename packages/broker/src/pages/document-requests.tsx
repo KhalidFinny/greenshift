@@ -17,6 +17,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
+	EmptyState,
 	Input,
 	Label,
 	Tabs,
@@ -54,7 +55,7 @@ function RejectDocumentModal({
 				<Button
 					size="sm"
 					variant="outline"
-					className="text-red-600 border-red-200 hover:bg-red-50 text-xs"
+					className="text-red-600 border-red-200 hover:bg-red-50 text-sm"
 				>
 					Reject & Request Revision
 				</Button>
@@ -67,7 +68,7 @@ function RejectDocumentModal({
 					</DialogTitle>
 				</DialogHeader>
 
-				<form onSubmit={handleSubmit} className="space-y-4 pt-2 text-xs">
+				<form onSubmit={handleSubmit} className="space-y-4 pt-2 text-sm">
 					<div className="rounded-lg bg-muted p-3">
 						<p className="font-semibold text-foreground">
 							{request.documentTypeName}
@@ -78,13 +79,13 @@ function RejectDocumentModal({
 					</div>
 
 					<div className="space-y-1.5">
-						<Label htmlFor="rej-reason" className="text-xs font-semibold">
+						<Label htmlFor="rej-reason" className="text-sm font-semibold">
 							Document Rejection Reason (Required):
 						</Label>
 						<textarea
 							id="rej-reason"
 							rows={4}
-							className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+							className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
 							value={reason}
 							onChange={(e) => setReason(e.target.value)}
 							placeholder="e.g. Uploaded financial statement does not cover full year 2025..."
@@ -168,38 +169,46 @@ function GlobalCreateDocumentRequestModal({
 			<DialogContent className="max-w-lg">
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2">
-						<FontAwesomeIcon icon={faFileAlt} className="text-emerald-600" />
+						<FontAwesomeIcon icon={faFileAlt} className="text-emerald-700" />
 						Request Document from Client
 					</DialogTitle>
 				</DialogHeader>
 
-				<form onSubmit={handleSubmit} className="space-y-4 pt-2 text-xs">
-					<div className="space-y-1.5">
-						<Label htmlFor="g-proj" className="text-xs font-semibold">
-							Select Assigned Project:
-						</Label>
-						<select
-							id="g-proj"
-							className="w-full rounded-md border border-input bg-background p-2 text-xs"
-							value={selectedProjectId}
-							onChange={(e) => setSelectedProjectId(e.target.value)}
-						>
-							{projects.map((p) => (
-								<option key={p.id} value={p.id}>
-									{p.title} ({p.companyName})
-								</option>
-							))}
-						</select>
-					</div>
+				<form onSubmit={handleSubmit} className="space-y-4 pt-2 text-sm">
+					{projects.length === 0 ? (
+						<EmptyState
+							icon={<FontAwesomeIcon icon={faFileAlt} />}
+							title="No assigned projects"
+							description="Document requests are raised against a project assigned to your brokerage. Nothing is assigned yet, so there is no client company to request from."
+						/>
+					) : (
+						<div className="space-y-1.5">
+							<Label htmlFor="g-proj" className="text-sm font-semibold">
+								Select Assigned Project:
+							</Label>
+							<select
+								id="g-proj"
+								className="w-full rounded-md border border-input bg-background p-2 text-sm"
+								value={selectedProjectId}
+								onChange={(e) => setSelectedProjectId(e.target.value)}
+							>
+								{projects.map((p) => (
+									<option key={p.id} value={p.id}>
+										{p.title} ({p.companyName})
+									</option>
+								))}
+							</select>
+						</div>
+					)}
 
 					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 						<div className="space-y-1.5">
-							<Label htmlFor="g-cat" className="text-xs font-semibold">
+							<Label htmlFor="g-cat" className="text-sm font-semibold">
 								Document Category:
 							</Label>
 							<select
 								id="g-cat"
-								className="w-full rounded-md border border-input bg-background p-2 text-xs"
+								className="w-full rounded-md border border-input bg-background p-2 text-sm"
 								value={category}
 								onChange={(e) =>
 									setCategory(e.target.value as DocumentCategory)
@@ -213,7 +222,7 @@ function GlobalCreateDocumentRequestModal({
 							</select>
 						</div>
 						<div className="space-y-1.5">
-							<Label htmlFor="g-type" className="text-xs font-semibold">
+							<Label htmlFor="g-type" className="text-sm font-semibold">
 								Document Type Name:
 							</Label>
 							<Input
@@ -228,7 +237,7 @@ function GlobalCreateDocumentRequestModal({
 
 					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 						<div className="space-y-1.5">
-							<Label htmlFor="g-period" className="text-xs font-semibold">
+							<Label htmlFor="g-period" className="text-sm font-semibold">
 								Document Period (Optional):
 							</Label>
 							<Input
@@ -239,7 +248,7 @@ function GlobalCreateDocumentRequestModal({
 							/>
 						</div>
 						<div className="space-y-1.5">
-							<Label htmlFor="g-deadline" className="text-xs font-semibold">
+							<Label htmlFor="g-deadline" className="text-sm font-semibold">
 								Submission Deadline:
 							</Label>
 							<Input
@@ -253,13 +262,13 @@ function GlobalCreateDocumentRequestModal({
 					</div>
 
 					<div className="space-y-1.5">
-						<Label htmlFor="g-reason" className="text-xs font-semibold">
+						<Label htmlFor="g-reason" className="text-sm font-semibold">
 							Reason for Request (Bond Purpose):
 						</Label>
 						<textarea
 							id="g-reason"
 							rows={3}
-							className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+							className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
 							value={reason}
 							onChange={(e) => setReason(e.target.value)}
 							placeholder="Explain financial or legal justification for this document..."
@@ -366,9 +375,20 @@ export function BrokerDocumentRequestsPage() {
 				</TabsList>
 
 				<TabsContent value="all" className="mt-6 space-y-4">
+					{filteredRequests.length === 0 && (
+						<EmptyState
+							icon={<FontAwesomeIcon icon={faFileAlt} />}
+							title="No document requests"
+							description={
+								searchQuery
+									? `No request matches "${searchQuery}". Clear the search to see every request.`
+									: "You have not asked a client company for documents yet. Use Create Document Request to collect the files underwriting needs."
+							}
+						/>
+					)}
 					{filteredRequests.map((doc) => (
 						<Card key={doc.id}>
-							<CardContent className="p-5 space-y-3 text-xs">
+							<CardContent className="p-5 space-y-3 text-sm">
 								<div className="flex flex-wrap items-center justify-between gap-2">
 									<div className="flex items-center gap-2">
 										<Badge className="bg-blue-600 text-white font-semibold">
@@ -377,18 +397,18 @@ export function BrokerDocumentRequestsPage() {
 										<Badge
 											className={
 												doc.status === "APPROVED"
-													? "bg-emerald-600 text-white"
+													? "bg-emerald-700 text-white"
 													: doc.status === "REJECTED"
 														? "bg-red-600 text-white"
 														: doc.status === "SUBMITTED"
-															? "bg-amber-600 text-white"
+															? "bg-amber-700 text-white"
 															: "bg-muted text-muted-foreground"
 											}
 										>
 											Status: {doc.status}
 										</Badge>
 									</div>
-									<span className="text-muted-foreground text-[11px]">
+									<span className="text-muted-foreground text-sm">
 										Deadline: {doc.deadlineDate}
 									</span>
 								</div>
@@ -407,11 +427,11 @@ export function BrokerDocumentRequestsPage() {
 
 								{/* Submitted file review section */}
 								{doc.submittedFileName && (
-									<div className="rounded-lg bg-emerald-50 p-3 dark:bg-emerald-950/40 flex flex-wrap items-center justify-between gap-3 border border-emerald-200 dark:border-emerald-800">
-										<span className="flex items-center gap-2 font-semibold text-emerald-950 dark:text-emerald-200">
+									<div className="rounded-lg bg-emerald-50 p-3 flex flex-wrap items-center justify-between gap-3 border border-emerald-200">
+										<span className="flex items-center gap-2 font-semibold text-emerald-950">
 											<FontAwesomeIcon
 												icon={faFileAlt}
-												className="text-emerald-600 text-sm"
+												className="text-emerald-700 text-sm"
 											/>
 											File Uploaded: {doc.submittedFileName} ({doc.submittedAt})
 										</span>
@@ -422,7 +442,7 @@ export function BrokerDocumentRequestsPage() {
 													size="sm"
 													variant="outline"
 													onClick={() => startReview(doc.id)}
-													className="text-xs gap-1.5"
+													className="text-sm gap-1.5"
 												>
 													<FontAwesomeIcon icon={faFileAlt} />
 													Start Review
@@ -439,7 +459,7 @@ export function BrokerDocumentRequestsPage() {
 												<Button
 													size="sm"
 													onClick={() => approveDocument(doc.id)}
-													className="bg-emerald-600 text-white hover:bg-emerald-700 text-xs gap-1.5"
+													className="bg-emerald-700 text-white hover:bg-emerald-700 text-sm gap-1.5"
 												>
 													<FontAwesomeIcon icon={faCheckCircle} />
 													Approve Document
@@ -450,7 +470,7 @@ export function BrokerDocumentRequestsPage() {
 								)}
 
 								{doc.rejectionReason && (
-									<div className="rounded-lg bg-red-50 p-3 text-red-950 dark:bg-red-950/40 dark:text-red-200 border border-red-200">
+									<div className="rounded-lg bg-red-50 p-3 text-red-950 border border-red-200">
 										<p className="font-bold">Broker Rejection Reason:</p>
 										<p className="mt-0.5">{doc.rejectionReason}</p>
 									</div>
@@ -461,22 +481,32 @@ export function BrokerDocumentRequestsPage() {
 				</TabsContent>
 
 				<TabsContent value="pending" className="mt-6 space-y-4">
+					{filteredRequests.filter(
+						(d) => d.status === "SUBMITTED" || d.status === "UNDER_REVIEW",
+					).length === 0 && (
+						<EmptyState
+							icon={<FontAwesomeIcon icon={faFileAlt} />}
+							title="No documents awaiting review"
+							description="Nothing has been uploaded for you to review. A request moves here once the client company submits the file."
+						/>
+					)}
 					{filteredRequests
 						.filter(
 							(d) => d.status === "SUBMITTED" || d.status === "UNDER_REVIEW",
 						)
 						.map((doc) => (
 							<Card key={doc.id}>
-								<CardContent className="p-5 space-y-3 text-xs">
+								<CardContent className="p-5 space-y-3 text-sm">
 									<h4 className="font-bold text-sm">{doc.documentTypeName}</h4>
 									<div className="flex items-center justify-between pt-2 border-t border-border">
-										<span className="font-semibold text-emerald-700 dark:text-emerald-300">
-											📄 {doc.submittedFileName}
+										<span className="flex items-center gap-1.5 font-semibold text-emerald-700">
+											<FontAwesomeIcon icon={faFileAlt} />
+											{doc.submittedFileName}
 										</span>
 										<Button
 											size="sm"
 											onClick={() => approveDocument(doc.id)}
-											className="bg-emerald-600 text-white hover:bg-emerald-700 text-xs"
+											className="bg-emerald-700 text-white hover:bg-emerald-700 text-sm"
 										>
 											Approve Document
 										</Button>
@@ -487,12 +517,20 @@ export function BrokerDocumentRequestsPage() {
 				</TabsContent>
 
 				<TabsContent value="approved" className="mt-6 space-y-4">
+					{filteredRequests.filter((d) => d.status === "APPROVED").length ===
+						0 && (
+						<EmptyState
+							icon={<FontAwesomeIcon icon={faCheckCircle} />}
+							title="No approved documents"
+							description="Documents you approve are archived here with the client and project they belong to."
+						/>
+					)}
 					{filteredRequests
 						.filter((d) => d.status === "APPROVED")
 						.map((doc) => (
 							<Card key={doc.id}>
-								<CardContent className="p-5 text-xs space-y-1">
-									<Badge className="bg-emerald-600 text-white mb-1">
+								<CardContent className="p-5 text-sm space-y-1">
+									<Badge className="bg-emerald-700 text-white mb-1">
 										Approved
 									</Badge>
 									<h4 className="font-bold text-sm">{doc.documentTypeName}</h4>
@@ -505,11 +543,19 @@ export function BrokerDocumentRequestsPage() {
 				</TabsContent>
 
 				<TabsContent value="requested" className="mt-6 space-y-4">
+					{filteredRequests.filter((d) => d.status === "REQUESTED").length ===
+						0 && (
+						<EmptyState
+							icon={<FontAwesomeIcon icon={faFileAlt} />}
+							title="No requests awaiting a client"
+							description="Requests you have sent that the client has not answered yet are listed here with their submission deadline."
+						/>
+					)}
 					{filteredRequests
 						.filter((d) => d.status === "REQUESTED")
 						.map((doc) => (
 							<Card key={doc.id}>
-								<CardContent className="p-5 text-xs space-y-1">
+								<CardContent className="p-5 text-sm space-y-1">
 									<Badge variant="outline">Awaiting Client</Badge>
 									<h4 className="font-bold text-sm">{doc.documentTypeName}</h4>
 									<p className="text-muted-foreground">

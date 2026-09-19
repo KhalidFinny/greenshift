@@ -17,6 +17,7 @@ import {
 	CardHeader,
 	CardTitle,
 	cn,
+	ShimmerBlock,
 } from "@greenshift/ui";
 import { formatIdr, formatTonnes, titleCase } from "../lib/format";
 import { riskMeta } from "../lib/labels";
@@ -155,7 +156,7 @@ export function BondCard({ listing }: BondCardProps) {
 						/>
 						<Metric
 							label="Tenor"
-							value={typeof payback === "number" ? `${payback} thn` : "-"}
+							value={typeof payback === "number" ? `${payback} yrs` : "-"}
 						/>
 						<Metric label="Risk" value={risk.label} />
 					</div>
@@ -202,6 +203,62 @@ export function BondCard({ listing }: BondCardProps) {
 						</p>
 					</div>
 				)}
+			</CardFooter>
+		</Card>
+	);
+}
+
+/**
+ * Loading frame for `BondCard`: the same card, header, metric grid, progress
+ * band, and footer, with shimmering leaves. It lives beside the card it stands
+ * in for so the two cannot drift apart.
+ */
+export function BondCardSkeleton() {
+	return (
+		<Card className="flex flex-col">
+			<CardHeader className="space-y-4">
+				<div className="flex items-start justify-between gap-4">
+					<div className="flex items-center gap-3">
+						<ShimmerBlock className="size-11 rounded-full" />
+						<ShimmerBlock className="h-6 w-20 rounded-full" />
+					</div>
+					<ShimmerBlock className="h-6 w-24 rounded-full" />
+				</div>
+				<div className="space-y-2">
+					<ShimmerBlock className="h-7 w-3/4" />
+					<ShimmerBlock className="h-5 w-40" />
+				</div>
+			</CardHeader>
+
+			<CardContent className="flex-1 space-y-4">
+				<div className="overflow-hidden rounded-lg border border-border/70">
+					<div className="grid grid-cols-3 divide-x divide-border/70">
+						{Array.from({ length: 3 }, (_, index) => (
+							<div key={index} className="space-y-2 p-3">
+								<ShimmerBlock className="h-4 w-16" />
+								<ShimmerBlock className="h-6 w-full" />
+							</div>
+						))}
+					</div>
+					<div className="flex items-center justify-between gap-4 border-t border-border/70 p-3">
+						<ShimmerBlock className="h-4 w-28" />
+						<ShimmerBlock className="h-6 w-24" />
+					</div>
+				</div>
+
+				<div className="space-y-2">
+					<div className="flex items-center justify-between gap-4">
+						<ShimmerBlock className="h-4 w-32" />
+						<ShimmerBlock className="h-4 w-10" />
+					</div>
+					<ShimmerBlock className="h-2 w-full rounded-full" />
+					<ShimmerBlock className="h-4 w-56" />
+				</div>
+			</CardContent>
+
+			<CardFooter className="flex-col items-stretch gap-3">
+				<ShimmerBlock className="h-4 w-48" />
+				<ShimmerBlock className="h-11 w-full" />
 			</CardFooter>
 		</Card>
 	);

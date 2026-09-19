@@ -43,13 +43,13 @@ export function CompanyProfileForm({
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle className="text-lg">Informasi Profil Perusahaan</CardTitle>
+				<CardTitle className="text-lg">Company Profile Information</CardTitle>
 			</CardHeader>
-			<CardContent className="text-xs">
+			<CardContent className="text-sm">
 				<form onSubmit={handleSubmit} className="space-y-4">
 					<div className="space-y-1.5">
-						<Label htmlFor="cp-name" className="text-xs font-semibold">
-							Nama Perusahaan:
+						<Label htmlFor="cp-name" className="text-sm font-semibold">
+							Company Name:
 						</Label>
 						<Input
 							id="cp-name"
@@ -60,20 +60,20 @@ export function CompanyProfileForm({
 					</div>
 
 					<div className="space-y-1.5">
-						<Label htmlFor="cp-desc" className="text-xs font-semibold">
-							Deskripsi Profil Perusahaan:
+						<Label htmlFor="cp-desc" className="text-sm font-semibold">
+							Company Profile Description:
 						</Label>
 						<textarea
 							id="cp-desc"
 							rows={4}
-							className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+							className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
 							value={description}
 							onChange={(e) => setDescription(e.target.value)}
 						/>
 					</div>
 
 					<Button type="submit" size="sm" className="gap-2">
-						Simpan Profil
+						Save Profile
 					</Button>
 				</form>
 			</CardContent>

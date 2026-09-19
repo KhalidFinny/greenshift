@@ -3,6 +3,7 @@ import { createFactory } from "hono/factory";
 import type { ApiEnv } from "../../../env";
 import { requireSession } from "../../../lib/authz";
 import { requireCsrf } from "../../../lib/csrf";
+import { apiSuccess } from "../../../lib/response";
 import {
 	clearSessionCookie,
 	destroySession,
@@ -24,6 +25,6 @@ logoutRoutes.post(
 			readCookie(c.req.header("cookie"), SESSION_COOKIE),
 		);
 		c.header("Set-Cookie", clearSessionCookie());
-		return c.json({ ok: true });
+		return apiSuccess(c, { ok: true }, "Signed out successfully");
 	}),
 );

@@ -4,8 +4,8 @@ import type { VendorPortfolioBody } from "../../../contracts";
 import { createDb } from "../../../db";
 import type { ApiEnv } from "../../../env";
 import { invalidNumber } from "../../../lib/format";
-import { requireJson } from "../../../lib/http";
 import { mutationRateLimit } from "../../../lib/mutation-limit";
+import { apiError, apiNotFound, apiSuccess } from "../../../lib/response";
 import {
 	addVendorPortfolioItem,
 	listVendorPortfolio,
@@ -30,13 +30,8 @@ portfolioRoutes.get(
 
 portfolioRoutes.post(
 	"/portfolio",
+	mutationRateLimit("vendor", "portfolio"),
 	...factory.createHandlers(async (c) => {
-		const mediaTypeError = requireJson(c);
-		if (mediaTypeError) return mediaTypeError;
-
-		const rateError = await mutationRateLimit("vendor", "portfolio")(c);
-		if (rateError) return rateError;
-
 		const body = (await c.req
 			.json()
 			.catch(() => null)) as VendorPortfolioBody | null;
@@ -71,12 +66,7 @@ portfolioRoutes.post(
 				(typeof body.servicesProvided !== "string" ||
 					body.servicesProvided.length > MAX_TEXT_LENGTH))
 		) {
-			return c.json(
-				{
-					error: { code: "VALIDATION", message: "Invalid portfolio item" },
-				},
-				400,
-			);
+			return apiError(c, "VALIDATION", "Invalid portfolio item");
 		}
 
 		const db = createDb(c.env.DB);
@@ -87,24 +77,21 @@ portfolioRoutes.post(
 			details: body,
 		});
 		if (result.status === "no_profile") {
-			return c.json(
-				{
-					error: {
-						code: "VALIDATION",
-						message:
-							"Complete your vendor profile before adding portfolio items",
-					},
-				},
-				400,
+			return apiError(
+				c,
+				"VALIDATION",
+				"Complete your vendor profile before adding portfolio items",
 			);
 		}
 		if (result.status === "insert_failed") {
-			return c.json(
-				{ error: { code: "INTERNAL", message: "Failed to add item" } },
-				500,
-			);
+			return apiError(c, "INTERNAL", "Failed to add item");
 		}
-		return c.json({ item: result.item }, 201);
+		return apiSuccess(
+			c,
+			{ item: result.item },
+			"Changes saved successfully",
+			201,
+		);
 	}),
 );
 
@@ -113,20 +100,14 @@ portfolioRoutes.delete(
 	...factory.createHandlers(async (c) => {
 		const id = Number(c.req.param("id"));
 		if (!Number.isInteger(id) || id <= 0) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid ID" } },
-				400,
-			);
+			return apiError(c, "INVALID_ID");
 		}
 
 		const db = createDb(c.env.DB);
 		const result = await removeVendorPortfolioItem(db, c.get("user").id, id);
 		if (result.status === "not_found") {
-			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Portfolio item not found" } },
-				404,
-			);
+			return apiNotFound(c, "Portfolio item");
 		}
-		return c.json({ ok: true });
+		return apiSuccess(c, { ok: true }, "Changes saved successfully");
 	}),
 );

@@ -17,6 +17,7 @@ import {
 	CardContent,
 	CardHeader,
 	CardTitle,
+	EmptyState,
 } from "@greenshift/ui";
 import { Link, useParams } from "@tanstack/react-router";
 
@@ -46,26 +47,20 @@ export function BrokerReportDetailPage() {
 						Back to Monthly Reports
 					</Button>
 				</Link>
-				<Card>
-					<CardContent className="p-8 text-center text-sm text-muted-foreground">
-						{isLoading
-							? "Loading the monitoring report..."
-							: "This report is not available for an assigned project."}
-					</CardContent>
-				</Card>
-			</div>
-		);
-	}
-
-	if (!report) {
-		return (
-			<div className="p-8 text-center">
-				<p className="text-muted-foreground">Report not found.</p>
-				<Link to="/broker/monthly-reports">
-					<Button className="mt-4 bg-[#03442C] text-white">
-						Back to Reports List
-					</Button>
-				</Link>
+				{isLoading ? (
+					<Card>
+						<CardContent className="p-8 text-center text-sm text-muted-foreground">
+							Loading the monitoring report...
+						</CardContent>
+					</Card>
+				) : (
+					<EmptyState
+						tone="error"
+						icon={<FontAwesomeIcon icon={faFileAlt} />}
+						title="Report not available"
+						description="No monitoring report with this id belongs to a project assigned to your brokerage. Reports appear here once GreenShift publishes a monitoring period for an assigned project."
+					/>
+				)}
 			</div>
 		);
 	}
@@ -77,7 +72,7 @@ export function BrokerReportDetailPage() {
 				<div>
 					<Link
 						to="/broker/monthly-reports"
-						className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-2"
+						className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-2"
 					>
 						<FontAwesomeIcon icon={faArrowLeft} />
 						Back to Monthly Reports
@@ -92,7 +87,7 @@ export function BrokerReportDetailPage() {
 				</div>
 				<div className="flex items-center gap-2">
 					<Button
-						className="bg-[#03442C] text-white hover:bg-[#03442C]/90 gap-1.5 text-xs"
+						className="bg-[#03442C] text-white hover:bg-[#03442C]/90 gap-1.5 text-sm"
 						onClick={() =>
 							report.pdfExportUrl && window.location.assign(report.pdfExportUrl)
 						}
@@ -114,16 +109,16 @@ export function BrokerReportDetailPage() {
 							<Badge
 								className={
 									report.overallStatus === "ON_TRACK"
-										? "bg-emerald-600 text-white font-bold"
+										? "bg-emerald-700 text-white font-bold"
 										: report.overallStatus === "ATTENTION_REQUIRED"
-											? "bg-amber-600 text-white font-bold"
+											? "bg-amber-700 text-white font-bold"
 											: "bg-red-600 text-white font-bold"
 								}
 							>
 								Monitoring Status: {report.overallStatus.replace(/_/g, " ")}
 							</Badge>
 						</div>
-						<p className="text-xs text-muted-foreground">
+						<p className="text-sm text-muted-foreground">
 							Reported Date:{" "}
 							{new Date(report.submittedAt).toLocaleDateString("en-US", {
 								dateStyle: "long",
@@ -134,7 +129,7 @@ export function BrokerReportDetailPage() {
 
 				<CardContent className="p-6 space-y-6">
 					{/* Stakeholders Info */}
-					<div className="grid grid-cols-1 md:grid-cols-3 gap-4 rounded-xl bg-muted/50 p-4 text-xs">
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-4 rounded-xl bg-muted/50 p-4 text-sm">
 						<div>
 							<p className="text-muted-foreground">Project Owner (Company)</p>
 							<p className="font-semibold text-foreground text-sm mt-0.5">
@@ -164,11 +159,11 @@ export function BrokerReportDetailPage() {
 						</h3>
 						<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
 							<div className="rounded-xl border border-border p-4 space-y-2 bg-card">
-								<div className="flex items-center justify-between text-muted-foreground text-xs">
+								<div className="flex items-center justify-between text-muted-foreground text-sm">
 									<span>Physical Progress</span>
 									<FontAwesomeIcon
 										icon={faProjectDiagram}
-										className="text-emerald-600"
+										className="text-emerald-700"
 									/>
 								</div>
 								<div className="text-xl font-bold text-foreground">
@@ -176,56 +171,56 @@ export function BrokerReportDetailPage() {
 								</div>
 								<div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
 									<div
-										className="bg-emerald-600 h-full rounded-full"
+										className="bg-emerald-700 h-full rounded-full"
 										style={{
 											width: `${Math.min(report.actualProgressPercent, 100)}%`,
 										}}
 									/>
 								</div>
-								<p className="text-[11px] text-muted-foreground">
+								<p className="text-sm text-muted-foreground">
 									Planned Target: {report.plannedProgressPercent}%
 								</p>
 							</div>
 
 							<div className="rounded-xl border border-border p-4 space-y-2 bg-card">
-								<div className="flex items-center justify-between text-muted-foreground text-xs">
+								<div className="flex items-center justify-between text-muted-foreground text-sm">
 									<span>Financial Expenditure</span>
 									<FontAwesomeIcon
 										icon={faMoneyBillWave}
-										className="text-emerald-600"
+										className="text-emerald-700"
 									/>
 								</div>
 								<div className="text-xl font-bold text-foreground">
 									{formatRupiah(report.actualSpendingAmount)}
 								</div>
-								<p className="text-[11px] text-muted-foreground">
+								<p className="text-sm text-muted-foreground">
 									Planned Budget: {formatRupiah(report.plannedBudgetAmount)}
 								</p>
 							</div>
 
 							<div className="rounded-xl border border-border p-4 space-y-2 bg-card">
-								<div className="flex items-center justify-between text-muted-foreground text-xs">
+								<div className="flex items-center justify-between text-muted-foreground text-sm">
 									<span>Energy Savings (kWh)</span>
-									<FontAwesomeIcon icon={faLeaf} className="text-emerald-600" />
+									<FontAwesomeIcon icon={faLeaf} className="text-emerald-700" />
 								</div>
-								<div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+								<div className="text-xl font-bold text-emerald-700">
 									{report.actualEnergySavingsKwh.toLocaleString("en-US")}
 								</div>
-								<p className="text-[11px] text-muted-foreground">
+								<p className="text-sm text-muted-foreground">
 									Target:{" "}
 									{report.expectedEnergySavingsKwh.toLocaleString("en-US")} kWh
 								</p>
 							</div>
 
 							<div className="rounded-xl border border-border p-4 space-y-2 bg-card">
-								<div className="flex items-center justify-between text-muted-foreground text-xs">
+								<div className="flex items-center justify-between text-muted-foreground text-sm">
 									<span>Emission Reduction (tCO₂e)</span>
-									<FontAwesomeIcon icon={faLeaf} className="text-emerald-600" />
+									<FontAwesomeIcon icon={faLeaf} className="text-emerald-700" />
 								</div>
-								<div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+								<div className="text-xl font-bold text-emerald-700">
 									{report.actualCarbonReductionTons}
 								</div>
-								<p className="text-[11px] text-muted-foreground">
+								<p className="text-sm text-muted-foreground">
 									Target: {report.expectedCarbonReductionTons} tCO₂e
 								</p>
 							</div>
@@ -241,7 +236,7 @@ export function BrokerReportDetailPage() {
 									Milestone Status & Field Execution
 								</CardTitle>
 							</CardHeader>
-							<CardContent className="space-y-4 text-xs">
+							<CardContent className="space-y-4 text-sm">
 								<div className="flex justify-between items-center py-2 border-b border-border">
 									<span className="text-muted-foreground">
 										Current Milestone:
@@ -262,7 +257,7 @@ export function BrokerReportDetailPage() {
 									<span className="text-muted-foreground">
 										Actual ROI Performance:
 									</span>
-									<span className="font-semibold text-emerald-600">
+									<span className="font-semibold text-emerald-700">
 										{report.actualRoiPerformancePercent}% (Projected Target:{" "}
 										{report.projectedRoiPercent}%)
 									</span>
@@ -280,21 +275,23 @@ export function BrokerReportDetailPage() {
 									Supervision & Risk Management Notes
 								</CardTitle>
 							</CardHeader>
-							<CardContent className="space-y-3 text-xs">
+							<CardContent className="space-y-3 text-sm">
 								{report.detectedRisksOrAnomalies.length === 0 ? (
-									<p className="text-muted-foreground">
-										No anomalies or significant risks detected for this period.
-									</p>
+									<EmptyState
+										icon={<FontAwesomeIcon icon={faCheckCircle} />}
+										title="No anomalies this period"
+										description="Field supervision and telemetry recorded no risks or anomalies for this monitoring period."
+									/>
 								) : (
 									<ul className="space-y-2">
 										{report.detectedRisksOrAnomalies.map((risk, idx) => (
 											<li
 												key={idx}
-												className="flex items-start gap-2 bg-emerald-50 text-emerald-950 p-2.5 rounded-lg border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-200"
+												className="flex items-start gap-2 bg-emerald-50 text-emerald-950 p-2.5 rounded-lg border border-emerald-200"
 											>
 												<FontAwesomeIcon
 													icon={faCheckCircle}
-													className="text-emerald-600 mt-0.5 shrink-0"
+													className="text-emerald-700 mt-0.5 shrink-0"
 												/>
 												<span>{risk}</span>
 											</li>
@@ -306,7 +303,7 @@ export function BrokerReportDetailPage() {
 					</div>
 
 					{/* Official Conclusion Box */}
-					<div className="rounded-xl border border-border p-4 bg-muted/30 space-y-2 text-xs">
+					<div className="rounded-xl border border-border p-4 bg-muted/30 space-y-2 text-sm">
 						<p className="font-semibold text-foreground text-sm flex items-center gap-2">
 							<FontAwesomeIcon icon={faFileAlt} className="text-[#03442C]" />
 							Official Monitoring Performance Verdict
@@ -314,7 +311,7 @@ export function BrokerReportDetailPage() {
 						<p className="text-muted-foreground leading-relaxed">
 							{report.overallConclusion}
 						</p>
-						<p className="text-[11px] text-muted-foreground italic pt-2 border-t border-border mt-3">
+						<p className="text-sm text-muted-foreground italic pt-2 border-t border-border mt-3">
 							Note: This report is transparently sourced from telemetry data and
 							on-site audits to serve as reporting material for external
 							investors holding Green Bonds.

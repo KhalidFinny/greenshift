@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type { ApiEnv } from "../../env";
 import { requireRole, requireSession } from "../../lib/authz";
 import { requireCsrf } from "../../lib/csrf";
+import { requireJsonBody } from "../../lib/http";
 import { deliveryRoutes } from "./delivery/delivery.routes";
 import { leaderboardRoutes } from "./leaderboard/leaderboard.routes";
 import { negotiationRoutes } from "./negotiations/negotiations.routes";
@@ -17,7 +18,13 @@ export const vendorRoutes = new Hono<ApiEnv>();
 
 // Every vendor endpoint requires a vendor session. CSRF is enforced only for
 // unsafe methods inside the middleware.
-vendorRoutes.use("*", requireSession, requireRole("vendor"), requireCsrf);
+vendorRoutes.use(
+	"*",
+	requireSession,
+	requireRole("vendor"),
+	requireCsrf,
+	requireJsonBody,
+);
 
 vendorRoutes.route("/", projectsRoutes);
 vendorRoutes.route("/", participationRoutes);

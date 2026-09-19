@@ -15,8 +15,8 @@ import {
 	isoDate,
 	MAX_TEXT,
 } from "../../../lib/format";
-import { requireJson } from "../../../lib/http";
 import { mutationRateLimit } from "../../../lib/mutation-limit";
+import { apiError, apiNotFound, apiSuccess } from "../../../lib/response";
 import { toRiskAssessment } from "../broker.shared";
 import {
 	getBrokerRepresentative,
@@ -109,13 +109,8 @@ projectRoutes.get(
 // ── assignment decision (§21) ─────────────────────────────
 projectRoutes.post(
 	"/projects/:id/response",
+	assignmentLimit,
 	...factory.createHandlers(async (c) => {
-		const mediaTypeError = requireJson(c);
-		if (mediaTypeError) return mediaTypeError;
-
-		const rateError = await assignmentLimit(c);
-		if (rateError) return rateError;
-
 		const projectId = Number(c.req.param("id"));
 		const body = (await c.req
 			.json()
@@ -130,10 +125,7 @@ projectRoutes.post(
 			invalidOptionalText(body?.reason, MAX_TEXT) ||
 			invalidOptionalText(body?.message, MAX_TEXT)
 		) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid input" } },
-				400,
-			);
+			return apiError(c, "VALIDATION");
 		}
 
 		const db = createDb(c.env.DB);
@@ -144,37 +136,23 @@ projectRoutes.post(
 			body: { ...body, action },
 		});
 		if (result.outcome === "not_found") {
-			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Assignment not found" } },
-				404,
-			);
+			return apiNotFound(c, "Assignment");
 		}
 		if (result.outcome === "conflict") {
-			return c.json(
-				{ error: { code: "CONFLICT", message: result.message } },
-				409,
-			);
+			return apiError(c, "CONFLICT", result.message);
 		}
 		if (result.outcome === "invalid") {
-			return c.json(
-				{ error: { code: "VALIDATION", message: result.message } },
-				400,
-			);
+			return apiError(c, "VALIDATION", result.message);
 		}
-		return c.json({ ok: true });
+		return apiSuccess(c, { ok: true }, "Changes saved successfully");
 	}),
 );
 
 // ── bond-preparation lifecycle (§20-§24) ──────────────────
 projectRoutes.patch(
 	"/projects/:id/status",
+	statusLimit,
 	...factory.createHandlers(async (c) => {
-		const mediaTypeError = requireJson(c);
-		if (mediaTypeError) return mediaTypeError;
-
-		const rateError = await statusLimit(c);
-		if (rateError) return rateError;
-
 		const projectId = Number(c.req.param("id"));
 		const body = (await c.req
 			.json()
@@ -184,10 +162,7 @@ projectRoutes.patch(
 			projectId <= 0 ||
 			typeof body?.status !== "string"
 		) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid input" } },
-				400,
-			);
+			return apiError(c, "VALIDATION");
 		}
 
 		const db = createDb(c.env.DB);
@@ -197,31 +172,20 @@ projectRoutes.patch(
 			status: body.status,
 		});
 		if (result.outcome === "not_found") {
-			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Assignment not found" } },
-				404,
-			);
+			return apiNotFound(c, "Assignment");
 		}
 		if (result.outcome === "conflict") {
-			return c.json(
-				{ error: { code: "CONFLICT", message: result.message } },
-				409,
-			);
+			return apiError(c, "CONFLICT", result.message);
 		}
-		return c.json({ ok: true });
+		return apiSuccess(c, { ok: true }, "Changes saved successfully");
 	}),
 );
 
 // ── external bond tracking (§25-§26) ──────────────────────
 projectRoutes.patch(
 	"/projects/:id/bond",
+	bondLimit,
 	...factory.createHandlers(async (c) => {
-		const mediaTypeError = requireJson(c);
-		if (mediaTypeError) return mediaTypeError;
-
-		const rateError = await bondLimit(c);
-		if (rateError) return rateError;
-
 		const projectId = Number(c.req.param("id"));
 		const body = (await c.req
 			.json()
@@ -247,10 +211,7 @@ projectRoutes.patch(
 			invalidNumberField ||
 			invalidDate
 		) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid input" } },
-				400,
-			);
+			return apiError(c, "VALIDATION");
 		}
 
 		const db = createDb(c.env.DB);
@@ -260,11 +221,8 @@ projectRoutes.patch(
 			body: { ...body, status },
 		});
 		if (result.outcome === "not_found") {
-			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Assignment not found" } },
-				404,
-			);
+			return apiNotFound(c, "Assignment");
 		}
-		return c.json({ ok: true });
+		return apiSuccess(c, { ok: true }, "Changes saved successfully");
 	}),
 );

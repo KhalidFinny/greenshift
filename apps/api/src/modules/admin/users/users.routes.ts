@@ -5,7 +5,7 @@ import { userRoles } from "../../../db/schema";
 import type { ApiEnv } from "../../../env";
 import { requireRecentStepUp } from "../../../lib/authz";
 import { iso, parseLimit } from "../../../lib/format";
-import { requireJson } from "../../../lib/http";
+import { apiError, apiNotFound, apiSuccess } from "../../../lib/response";
 import { factory } from "../admin.shared";
 import { listUsers } from "./users.repository";
 import { verifyUser } from "./users.service";
@@ -18,10 +18,7 @@ userRoutes.get(
 		const db = createDb(c.env.DB);
 		const role = c.req.query("role");
 		if (role && !(userRoles as readonly string[]).includes(role)) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid role" } },
-				400,
-			);
+			return apiError(c, "VALIDATION", "Invalid role");
 		}
 		const limit = parseLimit(c.req.query("limit"));
 
@@ -45,9 +42,6 @@ userRoutes.patch(
 	"/users/:id/verify",
 	requireRecentStepUp,
 	...factory.createHandlers(async (c) => {
-		const mediaTypeError = requireJson(c);
-		if (mediaTypeError) return mediaTypeError;
-
 		const id = Number(c.req.param("id"));
 		const body = (await c.req
 			.json()
@@ -57,10 +51,7 @@ userRoutes.patch(
 			id <= 0 ||
 			typeof body?.verified !== "boolean"
 		) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid input" } },
-				400,
-			);
+			return apiError(c, "VALIDATION");
 		}
 
 		const result = await verifyUser(createDb(c.env.DB), {
@@ -70,21 +61,10 @@ userRoutes.patch(
 		});
 		if (!result.ok) {
 			if (result.reason === "not_found") {
-				return c.json(
-					{ error: { code: "NOT_FOUND", message: "User not found" } },
-					404,
-				);
+				return apiNotFound(c, "User");
 			}
-			return c.json(
-				{
-					error: {
-						code: "FORBIDDEN",
-						message: "Admin account cannot be unverified",
-					},
-				},
-				403,
-			);
+			return apiError(c, "FORBIDDEN", "Admin account cannot be unverified");
 		}
-		return c.json({ ok: true });
+		return apiSuccess(c, { ok: true }, "User verification updated");
 	}),
 );

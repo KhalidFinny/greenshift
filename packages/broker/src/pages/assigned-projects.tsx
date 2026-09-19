@@ -21,6 +21,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
+	EmptyState,
 	Input,
 	Label,
 	Tabs,
@@ -66,7 +67,7 @@ function DeclineAssignmentModal({
 				<Button
 					size="sm"
 					variant="outline"
-					className="text-red-600 border-red-200 hover:bg-red-50 text-xs"
+					className="text-red-600 border-red-200 hover:bg-red-50 text-sm"
 				>
 					Decline Assignment
 				</Button>
@@ -79,7 +80,7 @@ function DeclineAssignmentModal({
 					</DialogTitle>
 				</DialogHeader>
 
-				<form onSubmit={handleSubmit} className="space-y-4 pt-2 text-xs">
+				<form onSubmit={handleSubmit} className="space-y-4 pt-2 text-sm">
 					<div className="rounded-lg bg-muted p-3">
 						<p className="font-semibold text-foreground">{project.title}</p>
 						<p className="text-muted-foreground mt-0.5">
@@ -88,13 +89,13 @@ function DeclineAssignmentModal({
 					</div>
 
 					<div className="space-y-1.5">
-						<Label htmlFor="decline-reason" className="text-xs font-semibold">
+						<Label htmlFor="decline-reason" className="text-sm font-semibold">
 							Reason for Declining Assignment (Required):
 						</Label>
 						<textarea
 							id="decline-reason"
 							rows={4}
-							className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+							className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
 							value={reason}
 							onChange={(e) => setReason(e.target.value)}
 							placeholder="Explain the financial or operational reason for declining..."
@@ -102,7 +103,7 @@ function DeclineAssignmentModal({
 						/>
 					</div>
 
-					<p className="text-[11px] text-muted-foreground italic">
+					<p className="text-sm text-muted-foreground italic">
 						* Declining an assignment does not cancel the project. The client
 						company will be notified to select another underwriting broker.
 					</p>
@@ -152,7 +153,7 @@ function RequestInformationModal({
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
-				<Button size="sm" variant="outline" className="text-xs gap-1.5">
+				<Button size="sm" variant="outline" className="text-sm gap-1.5">
 					<FontAwesomeIcon icon={faInfoCircle} />
 					Request Information
 				</Button>
@@ -160,12 +161,12 @@ function RequestInformationModal({
 			<DialogContent>
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2">
-						<FontAwesomeIcon icon={faInfoCircle} className="text-emerald-600" />
+						<FontAwesomeIcon icon={faInfoCircle} className="text-emerald-700" />
 						Request Information from the Company
 					</DialogTitle>
 				</DialogHeader>
 
-				<form onSubmit={handleSubmit} className="space-y-4 pt-2 text-xs">
+				<form onSubmit={handleSubmit} className="space-y-4 pt-2 text-sm">
 					<div className="rounded-lg bg-muted p-3">
 						<p className="font-semibold text-foreground">{project.title}</p>
 						<p className="text-muted-foreground mt-0.5">
@@ -174,13 +175,13 @@ function RequestInformationModal({
 					</div>
 
 					<div className="space-y-1.5">
-						<Label htmlFor="info-message" className="text-xs font-semibold">
+						<Label htmlFor="info-message" className="text-sm font-semibold">
 							Information required before deciding:
 						</Label>
 						<textarea
 							id="info-message"
 							rows={4}
-							className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+							className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
 							value={message}
 							onChange={(e) => setMessage(e.target.value)}
 							placeholder="Describe the information or documents you need..."
@@ -189,7 +190,7 @@ function RequestInformationModal({
 					</div>
 
 					{project.informationRequest && (
-						<p className="rounded-lg bg-muted p-3 text-[11px] text-muted-foreground">
+						<p className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">
 							Already requested: {project.informationRequest}
 						</p>
 					)}
@@ -248,8 +249,8 @@ function AssignedProjectCard({
 						variant="outline"
 						className={
 							project.lvvGrkStatus === "VERIFIED"
-								? "border-emerald-500 text-emerald-700 dark:text-emerald-300"
-								: "border-amber-500 text-amber-700 dark:text-amber-300"
+								? "border-emerald-500 text-emerald-700"
+								: "border-amber-500 text-amber-700"
 						}
 					>
 						{project.lvvGrkStatus === "VERIFIED"
@@ -257,7 +258,7 @@ function AssignedProjectCard({
 							: "LVV GRK Pending"}
 					</Badge>
 					{project.outstandingRequestsCount > 0 && (
-						<Badge className="bg-amber-600 text-white">
+						<Badge className="bg-amber-700 text-white">
 							{project.outstandingRequestsCount} open request
 							{project.outstandingRequestsCount === 1 ? "" : "s"}
 						</Badge>
@@ -266,17 +267,17 @@ function AssignedProjectCard({
 				<CardTitle className="text-base line-clamp-2">
 					{project.title}
 				</CardTitle>
-				<p className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
+				<p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
 					<FontAwesomeIcon icon={faBuilding} />
 					{project.companyName}
 				</p>
-				<p className="text-xs text-muted-foreground flex items-center gap-1.5">
+				<p className="text-sm text-muted-foreground flex items-center gap-1.5">
 					<FontAwesomeIcon icon={faTruck} />
 					{project.vendorName || "Vendor not recorded"}
 				</p>
 			</CardHeader>
 
-			<CardContent className="space-y-4 text-xs">
+			<CardContent className="space-y-4 text-sm">
 				<div className="grid grid-cols-2 gap-2 rounded-lg bg-muted p-2.5">
 					<div>
 						<p className="text-muted-foreground">Project Value</p>
@@ -286,7 +287,7 @@ function AssignedProjectCard({
 					</div>
 					<div>
 						<p className="text-muted-foreground">Bond Target</p>
-						<p className="font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5">
+						<p className="font-semibold text-emerald-700 mt-0.5">
 							{formatRupiah(project.bondInfo.totalAmount)}
 						</p>
 					</div>
@@ -348,7 +349,7 @@ function AssignedProjectCard({
 
 				{pending ? (
 					<div className="space-y-2 pt-2 border-t border-border">
-						<div className="rounded-lg bg-amber-50 p-2 text-[11px] text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+						<div className="rounded-lg bg-amber-50 p-2 text-sm text-amber-900">
 							New assignment pending confirmation.
 						</div>
 						<div className="flex flex-wrap items-center justify-between gap-2">
@@ -361,7 +362,7 @@ function AssignedProjectCard({
 								<Button
 									size="sm"
 									onClick={() => onAccept(project.id)}
-									className="bg-[#03442C] text-white hover:bg-[#03442C]/90 text-xs"
+									className="bg-[#03442C] text-white hover:bg-[#03442C]/90 text-sm"
 								>
 									Accept Assignment
 								</Button>
@@ -369,7 +370,7 @@ function AssignedProjectCard({
 						</div>
 					</div>
 				) : project.declineReason ? (
-					<div className="rounded-lg bg-red-50 p-2.5 text-[11px] text-red-900 dark:bg-red-950/40 dark:text-red-200 space-y-1 pt-2 border-t border-border">
+					<div className="rounded-lg bg-red-50 p-2.5 text-sm text-red-900 space-y-1 pt-2 border-t border-border">
 						<p className="font-bold">Assignment Declined by Broker:</p>
 						<p className="italic">"{project.declineReason}"</p>
 					</div>
@@ -407,19 +408,30 @@ export function BrokerAssignedProjectsPage() {
 			stages.includes(project.workflowStatus),
 		);
 
-	const renderGrid = (items: BrokerAssignedProject[]) => (
-		<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-			{items.map((project) => (
-				<AssignedProjectCard
-					key={project.id}
-					project={project}
-					onAccept={acceptAssignment}
-					onDecline={declineAssignment}
-					onRequestInformation={requestInformation}
-				/>
-			))}
-		</div>
-	);
+	const renderGrid = (items: BrokerAssignedProject[], viewLabel: string) =>
+		items.length === 0 ? (
+			<EmptyState
+				icon={<FontAwesomeIcon icon={faFileAlt} />}
+				title={`No projects ${viewLabel}`}
+				description={
+					searchQuery
+						? `No project matches "${searchQuery}" in this view. Clear the search to see every assignment.`
+						: "Client companies allocate verified green projects to your brokerage. An assignment appears here as soon as it is allocated."
+				}
+			/>
+		) : (
+			<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+				{items.map((project) => (
+					<AssignedProjectCard
+						key={project.id}
+						project={project}
+						onAccept={acceptAssignment}
+						onDecline={declineAssignment}
+						onRequestInformation={requestInformation}
+					/>
+				))}
+			</div>
+		);
 
 	const collection = inStage("ASSIGNED", "DECLINED", "DOCUMENT_COLLECTION");
 	const review = inStage("UNDER_REVIEW");
@@ -472,19 +484,19 @@ export function BrokerAssignedProjectsPage() {
 				</TabsList>
 
 				<TabsContent value="all" className="mt-6">
-					{renderGrid(filteredProjects)}
+					{renderGrid(filteredProjects, "assigned to you")}
 				</TabsContent>
 				<TabsContent value="collection" className="mt-6">
-					{renderGrid(collection)}
+					{renderGrid(collection, "in the assignment stage")}
 				</TabsContent>
 				<TabsContent value="under_review" className="mt-6">
-					{renderGrid(review)}
+					{renderGrid(review, "in the review stage")}
 				</TabsContent>
 				<TabsContent value="bond_issuance" className="mt-6">
-					{renderGrid(bond)}
+					{renderGrid(bond, "in bond issuance")}
 				</TabsContent>
 				<TabsContent value="monitoring" className="mt-6">
-					{renderGrid(monitoring)}
+					{renderGrid(monitoring, "under monitoring")}
 				</TabsContent>
 			</Tabs>
 		</div>

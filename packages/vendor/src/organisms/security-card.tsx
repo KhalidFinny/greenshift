@@ -15,19 +15,21 @@ export function SecurityCard() {
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle className="text-lg">Keamanan Akun & Sesi Login</CardTitle>
+				<CardTitle className="text-lg">
+					Account Security & Login Sessions
+				</CardTitle>
 			</CardHeader>
-			<CardContent className="space-y-4 text-xs">
+			<CardContent className="space-y-4 text-sm">
 				<p className="text-muted-foreground">
-					Perubahan kata sandi dari dashboard belum tersedia; gunakan alur
-					pemulihan akun sampai endpoint perubahan kata sandi ada.
+					Password changes from the dashboard are not available yet. Use the
+					account recovery flow until the password change endpoint ships.
 				</p>
 				<form
 					onSubmit={(e) => e.preventDefault()}
 					className="max-w-md space-y-2"
 				>
 					<Label htmlFor="sec-pass" className="font-semibold">
-						Kata Sandi Baru:
+						New Password:
 					</Label>
 					<Input
 						id="sec-pass"
@@ -41,9 +43,9 @@ export function SecurityCard() {
 						type="submit"
 						size="sm"
 						disabled
-						className="mt-2 bg-[#03442C] text-white hover:bg-[#03442C]/90"
+						className="mt-2 bg-[#00712D] text-white hover:bg-[#00712D]/90"
 					>
-						Ubah Kata Sandi
+						Change Password
 					</Button>
 				</form>
 			</CardContent>

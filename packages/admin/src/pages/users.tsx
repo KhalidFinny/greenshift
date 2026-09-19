@@ -4,7 +4,6 @@ import {
 	Badge,
 	Button,
 	Card,
-	ContentSkeleton,
 	DataTable,
 	EmptyState,
 	Select,
@@ -18,6 +17,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { useState } from "react";
 import { formatDateTime } from "../lib/format";
 import { ExportMenu } from "../organisms/export-menu";
+import { TableSkeleton } from "../organisms/table-skeleton";
 
 const ROLE_LABELS: Record<string, string> = {
 	business: "Business",
@@ -26,6 +26,9 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 const ROLE_OPTIONS = ["business", "vendor", "admin"] as const;
+
+/** Column labels for the loading frame, in table order. */
+const USER_HEADERS = ["User", "Role", "Company", "Verification", "Registered"];
 
 const userColumns: ColumnDef<AdminUser>[] = [
 	{
@@ -90,38 +93,12 @@ export function AdminUsers() {
 			api.admin.users(role === "all" ? { limit: 200 } : { role, limit: 200 }),
 	});
 
-	if (usersQuery.isPending) {
-		return <ContentSkeleton />;
-	}
-
-	if (usersQuery.isError) {
-		return (
-			<div className="space-y-4">
-				<EmptyState
-					title="Failed to load users"
-					description="Unable to retrieve account data."
-				/>
-				<div>
-					<Button variant="outline" onClick={() => usersQuery.refetch()}>
-						Try again
-					</Button>
-				</div>
-			</div>
-		);
-	}
-
-	const users = usersQuery.data.users;
+	const loading = usersQuery.isPending;
+	const users = usersQuery.data?.users ?? [];
 
 	return (
 		<div className="space-y-6">
-			<div className="flex flex-wrap items-end justify-between gap-4">
-				<div>
-					<h1 className="text-2xl font-semibold">Users</h1>
-					<p className="mt-1 text-base text-muted-foreground">
-						Account monitoring: role, verification status, and registration
-						time.
-					</p>
-				</div>
+			<div className="flex flex-wrap items-center justify-end gap-4">
 				<div className="flex items-center gap-2">
 					<Select value={role} onValueChange={(value) => setRole(value)}>
 						<SelectTrigger className="w-[180px]">
@@ -136,38 +113,66 @@ export function AdminUsers() {
 							))}
 						</SelectContent>
 					</Select>
-					<ExportMenu
-						filename="users"
-						title="Users"
-						sections={[
-							{
-								title: "Users",
-								headers: [
-									"Name",
-									"Email",
-									"Role",
-									"Company",
-									"Verification",
-									"Registered",
-								],
-								rows: users.map((user) => [
-									user.name,
-									user.email,
-									ROLE_LABELS[user.role] ?? user.role,
-									user.companyName ?? "-",
-									user.verifiedAt !== null ? "Verified" : "Not verified",
-									formatDateTime(user.createdAt),
-								]),
-							},
-						]}
-					/>
+					{loading ? null : (
+						<ExportMenu
+							filename="users"
+							title="Users"
+							sections={[
+								{
+									title: "Users",
+									headers: [
+										"Name",
+										"Email",
+										"Role",
+										"Company",
+										"Verification",
+										"Registered",
+									],
+									rows: users.map((user) => [
+										user.name,
+										user.email,
+										ROLE_LABELS[user.role] ?? user.role,
+										user.companyName ?? "-",
+										user.verifiedAt !== null ? "Verified" : "Not verified",
+										formatDateTime(user.createdAt),
+									]),
+								},
+							]}
+						/>
+					)}
 				</div>
 			</div>
 
-			{users.length === 0 ? (
+			{usersQuery.isError ? (
 				<EmptyState
-					title="No users"
-					description="No registered accounts match this filter."
+					tone="error"
+					title="Accounts did not load"
+					description="GET /api/admin/users did not answer, so no account rows could be retrieved."
+					action={
+						<Button variant="outline" onClick={() => usersQuery.refetch()}>
+							Try again
+						</Button>
+					}
+				/>
+			) : loading ? (
+				<Card className="overflow-hidden">
+					<TableSkeleton headers={USER_HEADERS} search rows={5} />
+				</Card>
+			) : users.length === 0 ? (
+				<EmptyState
+					title="No accounts for this role"
+					description={
+						role === "all"
+							? "No account has registered on the platform yet."
+							: `No ${ROLE_LABELS[role] ?? role} account is registered. Widen the filter to see every account.`
+					}
+					action={
+						role === "all" ? undefined : (
+							<Button variant="outline" onClick={() => setRole("all")}>
+								Show all roles
+							</Button>
+						)
+					}
 				/>
 			) : (
 				<Card>

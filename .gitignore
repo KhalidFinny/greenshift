@@ -33,6 +33,7 @@ Thumbs.db
 
 # Generated
 scripts/seed.sql
+scripts/accounts.sql
 
 # Agent context (local only)
 CLAUDE.md

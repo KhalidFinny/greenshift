@@ -11,6 +11,9 @@ import DashboardShowcase from "../molecules/DashboardShowcase";
 // against, and every content size below is a multiple of that canvas pixel
 // from `lg` up while positions stay in percentages. Sizes are the u = 1
 // values; the small-screen layout keeps the original responsive classes.
+// Canvas text is floored at 0.875rem: `--u` drops below 1px on any viewport
+// narrower than the 1920 canvas, which would otherwise render body copy
+// under the 14px floor.
 // Background images render immediately on load; only the title (first) and
 // the floating pills + dashboard (after) animate in.
 export default function HeroSection() {
@@ -49,10 +52,13 @@ export default function HeroSection() {
 					willChange: "transform",
 				}}
 			>
+				{/* Oversized and pulled above the container so the downward nudge
+				    cannot expose the section background at the top edge. */}
 				<img
 					src="/green-2.webp"
 					alt=""
-					className="h-[120%] w-[110%] object-cover"
+					className="absolute -top-[10%] left-0 h-[130%] w-[110%] object-cover"
+					style={{ transform: "translateY(calc(var(--u) * 56))" }}
 				/>
 			</div>
 
@@ -107,7 +113,7 @@ export default function HeroSection() {
 
 			<div
 				className={cn(
-					"pointer-events-none relative z-10 flex h-full flex-col items-center px-6 pt-24 text-center transition-all duration-700 motion-reduce:transition-none lg:px-[calc(var(--u)*24)] lg:pt-[max(96px,calc(var(--u)*96))]",
+					"pointer-events-none relative z-10 flex h-full flex-col items-center px-6 pt-32 text-center transition-all duration-700 motion-reduce:transition-none lg:px-[calc(var(--u)*24)] lg:pt-[max(150px,calc(var(--u)*150))]",
 					titleIn ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0",
 				)}
 			>
@@ -122,7 +128,7 @@ export default function HeroSection() {
 				</h1>
 
 				<p
-					className="mt-6 max-w-[1200px] font-medium text-lg leading-snug text-white/90 md:text-[24px] lg:mt-[calc(var(--u)*24)] lg:max-w-[calc(var(--u)*1200)] lg:text-[length:calc(var(--u)*24)]"
+					className="mt-7 max-w-[1200px] font-medium text-lg leading-snug text-white md:text-[24px] lg:mt-[calc(var(--u)*30)] lg:max-w-[calc(var(--u)*1200)] lg:text-[length:max(0.875rem,calc(var(--u)*24))]"
 					style={{
 						fontFamily: "'DM Sans Variable', sans-serif",
 						textShadow: "0 4px 40px rgba(0,0,0,0.8)",
@@ -139,14 +145,14 @@ export default function HeroSection() {
 				</p>
 
 				<nav
-					className="pointer-events-auto mt-10 flex flex-col items-center gap-4 sm:flex-row sm:gap-[46px] lg:mt-[calc(var(--u)*40)] lg:gap-[calc(var(--u)*46)]"
+					className="pointer-events-auto mt-12 flex flex-col items-center gap-5 sm:flex-row sm:gap-[46px] lg:mt-[calc(var(--u)*52)] lg:gap-[calc(var(--u)*46)]"
 					aria-label="Hero actions"
 				>
 					<Link
 						to="/register"
 						className={cn(
 							buttonVariants({ variant: "default" }),
-							"h-[42px] w-[180px] cursor-pointer rounded-[10px] bg-[#f7f7f9] text-base text-[#1a1a1a] normal-case tracking-normal hover:bg-white lg:h-[calc(var(--u)*42)] lg:w-[calc(var(--u)*180)] lg:rounded-[calc(var(--u)*10)] lg:text-[length:calc(var(--u)*16)]",
+							"h-[42px] w-[180px] cursor-pointer rounded-[10px] bg-[#f7f7f9] text-base text-[#1a1a1a] normal-case tracking-normal hover:bg-white lg:h-[calc(var(--u)*42)] lg:w-[calc(var(--u)*180)] lg:rounded-[calc(var(--u)*10)] lg:text-[length:max(0.875rem,calc(var(--u)*16))]",
 						)}
 					>
 						Get Started Free
@@ -155,7 +161,7 @@ export default function HeroSection() {
 						href="mailto:contact@greenshift.com?subject=Project%20%26%20Investment"
 						className={cn(
 							buttonVariants({ variant: "outline" }),
-							"h-[42px] w-[180px] cursor-pointer rounded-[10px] border-[3px] border-white bg-transparent text-base text-white normal-case tracking-normal hover:bg-white hover:text-[#1a1a1a] lg:h-[calc(var(--u)*42)] lg:w-[calc(var(--u)*180)] lg:rounded-[calc(var(--u)*10)] lg:border-[length:calc(var(--u)*3)] lg:text-[length:calc(var(--u)*16)]",
+							"h-[42px] w-[180px] cursor-pointer rounded-[10px] border-[3px] border-white bg-transparent text-base text-white normal-case tracking-normal hover:bg-white hover:text-[#1a1a1a] lg:h-[calc(var(--u)*42)] lg:w-[calc(var(--u)*180)] lg:rounded-[calc(var(--u)*10)] lg:border-[length:calc(var(--u)*3)] lg:text-[length:max(0.875rem,calc(var(--u)*16))]",
 						)}
 					>
 						Contact Us

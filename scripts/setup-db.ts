@@ -1,6 +1,11 @@
-import { hashPassword } from "../apps/api/src/lib/password";
-import { DEMO_ACCOUNTS, DEMO_PASSWORD, emailFor } from "./accounts";
+import {
+	accountStatement,
+	DEMO_ACCOUNTS,
+	DEMO_PASSWORD,
+	emailFor,
+} from "./accounts";
 import { openLocalD1, tableExists } from "./local-d1";
+import { hashPassword } from "../apps/api/src/lib/password";
 
 /**
  * Creates any missing demo accounts in the local D1 database.
@@ -29,17 +34,7 @@ export async function seedAccounts(
 			continue;
 		}
 		const hash = await hashPassword(DEMO_PASSWORD);
-		const now = Date.now();
-		db.run(
-			"INSERT INTO users (email, role, name, hashed_password, company_name, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-			email,
-			account.role,
-			account.name,
-			hash,
-			account.companyName,
-			now,
-			now,
-		);
+		db.run(accountStatement(account, hash));
 		created.push(email);
 	}
 	db.close();
@@ -64,6 +59,6 @@ if (import.meta.main) {
 			: `Created ${created.length} account(s); ${skipped.length} already existed.`,
 	);
 	console.log(
-		"Database ready. Login with business1 / investor1 / vendor1 / broker1 / admin (password 12345678).",
+		"Database ready. Login with business1 / investor1 / vendor1 / broker1 / admin1 (password 12345678).",
 	);
 }

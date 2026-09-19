@@ -1,4 +1,5 @@
 import {
+	faBell,
 	faClock,
 	faExclamationTriangle,
 	faFileAlt,
@@ -12,6 +13,7 @@ import {
 	CardContent,
 	CardHeader,
 	CardTitle,
+	EmptyState,
 } from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
 
@@ -46,11 +48,11 @@ export function BrokerDashboard() {
 		<div className="space-y-6">
 			{/* Unverified Warning Alert */}
 			{!isVerified && (
-				<div className="flex items-start justify-between rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900 dark:border-amber-700/50 dark:bg-amber-950/40 dark:text-amber-200">
+				<div className="flex items-start justify-between rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900">
 					<div className="flex items-start gap-3">
 						<FontAwesomeIcon
 							icon={faExclamationTriangle}
-							className="mt-0.5 text-xl text-amber-600 dark:text-amber-400"
+							className="mt-0.5 text-xl text-amber-700"
 						/>
 						<div>
 							<h3 className="font-semibold">Broker Verification Required</h3>
@@ -64,7 +66,7 @@ export function BrokerDashboard() {
 					<Link to="/broker/settings">
 						<Button
 							size="sm"
-							className="bg-amber-600 text-white hover:bg-amber-700"
+							className="bg-amber-700 text-white hover:bg-amber-700"
 						>
 							Complete Verification
 						</Button>
@@ -84,11 +86,11 @@ export function BrokerDashboard() {
 							<h3 className="mt-2 text-3xl font-bold">
 								{metrics.assignedProjectsCount}
 							</h3>
-							<p className="mt-1 text-xs text-muted-foreground">
+							<p className="mt-1 text-sm text-muted-foreground">
 								GHG LVV Verified Projects
 							</p>
 						</div>
-						<div className="flex size-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+						<div className="flex size-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
 							<FontAwesomeIcon icon={faLeaf} className="text-xl" />
 						</div>
 					</CardContent>
@@ -104,11 +106,11 @@ export function BrokerDashboard() {
 							<h3 className="mt-2 text-3xl font-bold">
 								{metrics.outstandingRequestsCount}
 							</h3>
-							<p className="mt-1 text-xs text-muted-foreground">
+							<p className="mt-1 text-sm text-muted-foreground">
 								Awaiting Client Response
 							</p>
 						</div>
-						<div className="flex size-12 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+						<div className="flex size-12 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
 							<FontAwesomeIcon icon={faClock} className="text-xl" />
 						</div>
 					</CardContent>
@@ -124,11 +126,11 @@ export function BrokerDashboard() {
 							<h3 className="mt-2 text-3xl font-bold">
 								{metrics.awaitingReviewCount}
 							</h3>
-							<p className="mt-1 text-xs text-muted-foreground">
+							<p className="mt-1 text-sm text-muted-foreground">
 								Uploaded by Client Companies
 							</p>
 						</div>
-						<div className="flex size-12 items-center justify-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+						<div className="flex size-12 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
 							<FontAwesomeIcon icon={faFileAlt} className="text-xl" />
 						</div>
 					</CardContent>
@@ -145,12 +147,19 @@ export function BrokerDashboard() {
 						</CardTitle>
 						<Link
 							to="/broker/projects"
-							className="text-sm text-emerald-600 hover:underline dark:text-emerald-400"
+							className="text-sm text-emerald-700 hover:underline"
 						>
-							View All Projects →
+							View All Projects
 						</Link>
 					</CardHeader>
 					<CardContent className="space-y-4">
+						{projects.length === 0 && (
+							<EmptyState
+								icon={<FontAwesomeIcon icon={faLeaf} />}
+								title="No assigned projects yet"
+								description="Client companies allocate verified green projects to your brokerage. Pending and accepted assignments appear here."
+							/>
+						)}
 						{projects.slice(0, 2).map((proj) => (
 							<div
 								key={proj.id}
@@ -163,27 +172,27 @@ export function BrokerDashboard() {
 										</Badge>
 										<Badge
 											variant="outline"
-											className="border-emerald-500 text-emerald-700 dark:text-emerald-300"
+											className="border-emerald-500 text-emerald-700"
 										>
 											GHG LVV Verified
 										</Badge>
 									</div>
-									<span className="text-xs text-muted-foreground">
+									<span className="text-sm text-muted-foreground">
 										Project Value: {formatRupiah(proj.projectValue)}
 									</span>
 								</div>
 
 								<div>
 									<h4 className="font-bold text-base">{proj.title}</h4>
-									<p className="text-xs text-muted-foreground mt-0.5">
+									<p className="text-sm text-muted-foreground mt-0.5">
 										Client: {proj.companyName} • Vendor: {proj.vendorName}
 									</p>
 								</div>
 
-								<div className="grid grid-cols-2 gap-3 rounded-lg bg-muted p-2.5 text-xs">
+								<div className="grid grid-cols-2 gap-3 rounded-lg bg-muted p-2.5 text-sm">
 									<div>
 										<p className="text-muted-foreground">Projected IRR</p>
-										<p className="font-bold text-emerald-600 dark:text-emerald-400">
+										<p className="font-bold text-emerald-700">
 											{proj.financialProjections.irrPercent}% / year
 										</p>
 									</div>
@@ -215,16 +224,18 @@ export function BrokerDashboard() {
 					<CardHeader>
 						<CardTitle className="text-lg">Documents Awaiting Review</CardTitle>
 					</CardHeader>
-					<CardContent className="space-y-4 text-xs">
+					<CardContent className="space-y-4 text-sm">
 						{pendingDocs.length === 0 ? (
-							<p className="text-muted-foreground text-center py-6">
-								No documents currently awaiting review.
-							</p>
+							<EmptyState
+								icon={<FontAwesomeIcon icon={faFileAlt} />}
+								title="No documents awaiting review"
+								description="Client companies have not uploaded anything for review yet. Requests you raise from Document Requests appear here once a client submits a file."
+							/>
 						) : (
 							pendingDocs.map((doc) => (
 								<div
 									key={doc.id}
-									className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-950/30 space-y-2"
+									className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 space-y-2"
 								>
 									<Badge className="bg-blue-600 text-white">
 										{doc.category} Document
@@ -235,14 +246,14 @@ export function BrokerDashboard() {
 									<p className="text-muted-foreground">
 										Client: {doc.companyName}
 									</p>
-									<div className="flex justify-between items-center pt-2 border-t border-blue-200 dark:border-blue-800">
-										<span className="text-[11px] font-medium text-blue-700 dark:text-blue-300">
+									<div className="flex justify-between items-center pt-2 border-t border-blue-200">
+										<span className="text-sm font-medium text-blue-700">
 											File: {doc.submittedFileName}
 										</span>
 										<Button
 											size="sm"
 											onClick={() => approveDocument(doc.id)}
-											className="bg-emerald-600 text-white hover:bg-emerald-700 text-xs"
+											className="bg-emerald-700 text-white hover:bg-emerald-700 text-sm"
 										>
 											Approve
 										</Button>
@@ -253,7 +264,7 @@ export function BrokerDashboard() {
 
 						<Link to="/broker/document-requests" className="block pt-2">
 							<Button variant="outline" size="sm" className="w-full">
-								Manage All Document Requests →
+								Manage All Document Requests
 							</Button>
 						</Link>
 					</CardContent>
@@ -265,17 +276,19 @@ export function BrokerDashboard() {
 						<CardTitle className="text-lg">
 							Notifications
 							{metrics.underMonitoringCount > 0 && (
-								<span className="ml-2 text-xs font-normal text-muted-foreground">
+								<span className="ml-2 text-sm font-normal text-muted-foreground">
 									{metrics.underMonitoringCount} project(s) under monitoring
 								</span>
 							)}
 						</CardTitle>
 					</CardHeader>
-					<CardContent className="space-y-3 text-xs">
+					<CardContent className="space-y-3 text-sm">
 						{notifications.length === 0 ? (
-							<p className="py-6 text-center text-muted-foreground">
-								No notifications yet.
-							</p>
+							<EmptyState
+								icon={<FontAwesomeIcon icon={faBell} />}
+								title="No notifications yet"
+								description="Assignment decisions, client uploads, and review outcomes on your projects will appear here as they happen."
+							/>
 						) : (
 							notifications.map((notification) => (
 								<div
@@ -283,11 +296,11 @@ export function BrokerDashboard() {
 									className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 ${
 										notification.isRead
 											? "border-border"
-											: "border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/30"
+											: "border-emerald-200 bg-emerald-50/50"
 									}`}
 								>
 									<div>
-										<Badge variant="outline" className="text-[11px]">
+										<Badge variant="outline" className="text-sm">
 											{notification.category}
 										</Badge>
 										<h4 className="mt-1 font-semibold text-sm">
@@ -296,13 +309,13 @@ export function BrokerDashboard() {
 										<p className="mt-0.5 text-muted-foreground">
 											{notification.message}
 										</p>
-										<p className="mt-1 text-[11px] text-muted-foreground">
+										<p className="mt-1 text-sm text-muted-foreground">
 											{notification.timestamp}
 										</p>
 									</div>
 									<div className="flex items-center gap-2">
 										<Link to={notification.linkUrl}>
-											<Button variant="outline" size="sm" className="text-xs">
+											<Button variant="outline" size="sm" className="text-sm">
 												Open
 											</Button>
 										</Link>
@@ -310,7 +323,7 @@ export function BrokerDashboard() {
 											<Button
 												size="sm"
 												variant="ghost"
-												className="text-xs"
+												className="text-sm"
 												onClick={() => markNotificationRead(notification.id)}
 											>
 												Mark read

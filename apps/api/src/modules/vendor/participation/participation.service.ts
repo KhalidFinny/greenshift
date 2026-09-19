@@ -6,6 +6,7 @@ import type {
 import type { GreenShiftDb } from "../../../db";
 import { iso } from "../../../lib/format";
 import {
+	forecastEntry,
 	milestoneEntry,
 	monthlyReportEntry,
 	revisionEntry,
@@ -70,6 +71,7 @@ export async function listMyProjects(
 		);
 
 		const reportRows = await repository.listEmissionReports(db, projectIds);
+		const forecastRows = await repository.listEnergyForecasts(db, projectIds);
 
 		for (const item of projects_) {
 			item.milestones = milestoneRows
@@ -85,6 +87,9 @@ export async function listMyProjects(
 			item.monthlyReports = reportRows
 				.filter((report) => report.projectId === item.project.id)
 				.map(monthlyReportEntry);
+			item.forecasts = forecastRows
+				.filter((forecast) => forecast.projectId === item.project.id)
+				.map(forecastEntry);
 		}
 	}
 
@@ -114,6 +119,9 @@ export async function getMyProject(
 	const evidenceRows = await repository.listMilestoneEvidence(db, milestoneIds);
 
 	const reportRows = await repository.listEmissionReports(db, [row.project.id]);
+	const forecastRows = await repository.listEnergyForecasts(db, [
+		row.project.id,
+	]);
 
 	return {
 		id: row.project.id,
@@ -147,6 +155,7 @@ export async function getMyProject(
 			),
 		),
 		monthlyReports: reportRows.map(monthlyReportEntry),
+		forecasts: forecastRows.map(forecastEntry),
 	};
 }
 

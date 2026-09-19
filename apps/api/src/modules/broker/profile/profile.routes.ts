@@ -15,8 +15,8 @@ import {
 	MAX_SHORT_TEXT,
 	MAX_TEXT,
 } from "../../../lib/format";
-import { requireJson } from "../../../lib/http";
 import { mutationRateLimit } from "../../../lib/mutation-limit";
+import { apiError, apiSuccess } from "../../../lib/response";
 import { createProfile, loadProfile } from "./profile.repository";
 import { saveBrokerProfile } from "./profile.service";
 
@@ -76,13 +76,8 @@ profileRoutes.get(
 // never verify itself.
 profileRoutes.put(
 	"/profile",
+	mutationLimit,
 	...factory.createHandlers(async (c) => {
-		const mediaTypeError = requireJson(c);
-		if (mediaTypeError) return mediaTypeError;
-
-		const rateError = await mutationLimit(c);
-		if (rateError) return rateError;
-
 		const body = (await c.req
 			.json()
 			.catch(() => null)) as Partial<BrokerProfileBody> | null;
@@ -110,10 +105,7 @@ profileRoutes.put(
 			companyName.length > MAX_NAME ||
 			invalidField
 		) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid input" } },
-				400,
-			);
+			return apiError(c, "VALIDATION");
 		}
 
 		const db = createDb(c.env.DB);
@@ -123,6 +115,10 @@ profileRoutes.put(
 			companyName,
 		});
 
-		return c.json({ profile: toBrokerProfile(saved) });
+		return apiSuccess(
+			c,
+			{ profile: toBrokerProfile(saved) },
+			"Changes saved successfully",
+		);
 	}),
 );

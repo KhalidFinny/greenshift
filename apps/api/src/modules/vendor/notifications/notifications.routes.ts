@@ -5,6 +5,7 @@ import { createDb } from "../../../db";
 import type { notifications } from "../../../db/schema";
 import type { ApiEnv } from "../../../env";
 import { parseLimit } from "../../../lib/format";
+import { apiError, apiNotFound, apiSuccess } from "../../../lib/response";
 import {
 	listNotifications,
 	markNotificationRead,
@@ -45,20 +46,14 @@ notificationRoutes.patch(
 	...factory.createHandlers(async (c) => {
 		const id = Number(c.req.param("id"));
 		if (!Number.isInteger(id) || id <= 0) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid ID" } },
-				400,
-			);
+			return apiError(c, "INVALID_ID");
 		}
 
 		const db = createDb(c.env.DB);
 		const updated = await markNotificationRead(db, id, c.get("user").id);
 		if (!updated) {
-			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Notification not found" } },
-				404,
-			);
+			return apiNotFound(c, "Notification");
 		}
-		return c.json({ ok: true });
+		return apiSuccess(c, { ok: true }, "Changes saved successfully");
 	}),
 );

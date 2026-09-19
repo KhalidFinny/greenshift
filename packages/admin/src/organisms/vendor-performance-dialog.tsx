@@ -9,6 +9,7 @@ import {
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
+	EmptyState,
 } from "@greenshift/ui";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useEffect, useState } from "react";
@@ -142,9 +143,12 @@ export function VendorPerformanceDialog({
 
 				<div className="flex-1 overflow-y-auto">
 					{sorted.length === 0 ? (
-						<p className="p-6 text-base text-muted-foreground">
-							No vendor data yet.
-						</p>
+						<div className="p-6">
+							<EmptyState
+								title="No vendor ratings yet"
+								description="No vendor has a recorded rating, so there is no performance ranking to show. Ratings appear once vendors complete their first project."
+							/>
+						</div>
 					) : (
 						<DataTable
 							columns={vendorColumns(onViewDetails)}

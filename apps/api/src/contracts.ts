@@ -1,5 +1,8 @@
 import type { AuthUser } from "@greenshift/core";
 
+/** Every error code the API can return, for client-side branching. */
+export type { ApiErrorCode } from "./lib/response";
+
 export const apiRoutes = {
 	login: { method: "POST", path: "/api/auth/login" },
 	register: { method: "POST", path: "/api/auth/register" },
@@ -7,6 +10,9 @@ export const apiRoutes = {
 	csrf: { method: "GET", path: "/api/auth/csrf" },
 	stepUp: { method: "POST", path: "/api/auth/step-up" },
 	logout: { method: "POST", path: "/api/auth/logout" },
+	accountAvatar: { method: "GET", path: "/api/account/avatar" },
+	accountAvatarUpload: { method: "PUT", path: "/api/account/avatar" },
+	accountAvatarDelete: { method: "DELETE", path: "/api/account/avatar" },
 	investorMarket: { method: "GET", path: "/api/investor/market" },
 	adminUsers: { method: "GET", path: "/api/admin/users" },
 	adminVerifyUser: {
@@ -31,6 +37,7 @@ export const apiRoutes = {
 	},
 	adminAuditLogs: { method: "GET", path: "/api/admin/audit-logs" },
 	adminStats: { method: "GET", path: "/api/admin/stats" },
+	adminAnalytics: { method: "GET", path: "/api/admin/analytics" },
 	adminAnomalies: { method: "GET", path: "/api/admin/anomalies" },
 	adminVendors: { method: "GET", path: "/api/admin/vendors" },
 	adminVerifyVendor: {
@@ -137,7 +144,15 @@ export const apiRoutes = {
 		method: "POST",
 		path: "/api/vendor/milestones/:id/evidence",
 	},
+	health: { method: "GET", path: "/api/health" },
 } as const;
+
+/** Read-only binding probes behind `GET /api/health`. */
+export interface HealthResponse {
+	status: "ok" | "degraded";
+	checks: Record<string, { status: "ok" | "error" }>;
+	timestamp: string;
+}
 
 export interface LoginBody {
 	email: string;
@@ -172,6 +187,15 @@ export interface StepUpResponse {
 export interface OkResponse {
 	ok: true;
 }
+
+/**
+ * Upload constraints for the account picture, shared with the client so both
+ * sides reject the same files.
+ */
+export const avatarLimits = {
+	maxBytes: 2 * 1024 * 1024,
+	mimeTypes: ["image/png", "image/jpeg", "image/webp"] as const,
+};
 
 export interface BlueprintSummary {
 	irr?: number;
@@ -332,7 +356,47 @@ export interface AdminAnomaly {
 }
 
 export interface AdminAnomalyResponse {
-	items: AdminAnomaly[];
+	flags: AdminAnomaly[];
+	counts: Record<AdminAnomaly["severity"] | "total", number>;
+}
+
+/**
+ * One month of the platform-wide series behind `GET /api/admin/analytics`.
+ *
+ * Every figure is an aggregate over rows the platform actually holds; a month
+ * with no activity is reported as zeroes rather than omitted, so the charts keep
+ * an even x-axis.
+ */
+export interface AdminAnalyticsPoint {
+	/** Calendar month in UTC, `YYYY-MM`. */
+	month: string;
+	/** Accounts registered in the month. */
+	users: number;
+	/** Of those, accounts that carry a company name. */
+	organizations: number;
+	/** Projects submitted in the month. */
+	projects: number;
+	/** Bond money taken in during the month. */
+	investments: number;
+	/** ROI paid out during the month. */
+	roiPaid: number;
+	/** Tonnes of CO2e measured by the MRV reports that closed in the month. */
+	carbonReduction: number;
+}
+
+export interface AdminAnalytics {
+	/** The trailing 12 months, oldest first. */
+	monthly: AdminAnalyticsPoint[];
+	totals: {
+		users: number;
+		organizations: number;
+		projects: number;
+		investments: number;
+		roiPaid: number;
+		carbonReduction: number;
+		/** Tonnes of CO2e the submitted projects target in total. */
+		carbonReductionTarget: number;
+	};
 }
 
 export interface AdminStats {
@@ -390,17 +454,40 @@ export interface VendorTenderSummary {
 	awardedProposalId?: number | null;
 }
 
+/**
+ * The five weighted criteria of the vendor matching model for one project, plus
+ * its weighted total and the vendor's rank against the other bidders. Scores are
+ * 0-100; `projectRisk` is scored so that a higher number means lower risk.
+ */
+export interface VendorMatchScore {
+	technicalFit: number;
+	relevantExperience: number;
+	historicalPerformance: number;
+	priceValue: number;
+	projectRisk: number;
+	totalScore: number;
+	/** Position among the vendors scored for this project, 1 = best. */
+	rank: number;
+}
+
 export interface VendorProjectListItem {
 	id: number;
 	title: string;
+	description: string | null;
 	companyName?: string | null;
 	status?: string;
 	industrySector: string | null;
 	location: string | null;
 	budget: number | null;
 	riskScore?: number | null;
+	/** Tonnes of CO2e the project targets, from the project parameters. */
+	carbonReductionTargetTons: number | null;
+	technicalRequirements: string[];
+	deliverables: string[];
 	tender: VendorTenderSummary | null;
 	myProposalId: number | null;
+	/** Null when the matching model has not scored this project for the caller. */
+	matchScore: VendorMatchScore | null;
 }
 
 export interface ProposalSummary {
@@ -498,6 +585,28 @@ export interface VendorMyProject {
 	tender: VendorTenderSummary | null;
 	milestones?: VendorMilestone[];
 	monthlyReports?: VendorMonthlyReport[];
+	forecasts?: VendorEnergyForecast[];
+}
+
+/**
+ * One predictive-analytics period for a project: what the model expects the
+ * site to consume and save, with the accuracy metrics it was scored on.
+ */
+export interface VendorEnergyForecast {
+	periodStart: string | null;
+	periodEnd: string | null;
+	/** kWh the model expects the site to consume over the period. */
+	forecastedConsumption: number | null;
+	/** kWh the model expects to be saved against the baseline. */
+	forecastedSavings: number | null;
+	modelName: string | null;
+	/** Held-out accuracy metrics; absent when the model was not scored. */
+	metrics: {
+		mae?: number;
+		rmse?: number;
+		r2?: number;
+		cvRmse?: number;
+	} | null;
 }
 
 export interface VendorMyProjectDetail extends VendorProjectDetail {
@@ -505,6 +614,7 @@ export interface VendorMyProjectDetail extends VendorProjectDetail {
 	revisions?: ProposalRevisionEntry[];
 	milestones?: VendorMilestone[];
 	monthlyReports?: VendorMonthlyReport[];
+	forecasts?: VendorEnergyForecast[];
 }
 
 export interface VendorNotification {

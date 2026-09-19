@@ -10,8 +10,21 @@ import {
 } from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
-import { BLUEPRINT_META } from "../lib/demo-data";
 import { formatDateTime } from "../lib/format";
+import { BLUEPRINT_META } from "../lib/labels";
+import { TableSkeleton } from "./table-skeleton";
+
+/** Column labels for the loading frame, in table order. */
+const ACCOUNT_HEADERS = [
+	"User",
+	"Role",
+	"Company",
+	"Vendor Profile",
+	"Verification",
+	"Registered",
+];
+
+const BLUEPRINT_HEADERS = ["Project", "Status", "Validation", "Note"];
 
 const accountColumns: ColumnDef<AdminUser>[] = [
 	{
@@ -40,24 +53,34 @@ const accountColumns: ColumnDef<AdminUser>[] = [
 		accessorFn: (user) => user.companyName !== null,
 		header: "Company",
 		meta: { className: "text-center", headClassName: "text-center" },
-		cell: ({ row }) =>
-			row.original.companyName ? (
-				<span className="font-medium text-primary">✓</span>
-			) : (
-				<span className="text-muted-foreground">-</span>
-			),
+		cell: ({ row }) => (
+			<span
+				className={
+					row.original.companyName
+						? "font-medium text-primary"
+						: "text-muted-foreground"
+				}
+			>
+				{row.original.companyName ? "Yes" : "No"}
+			</span>
+		),
 	},
 	{
 		id: "vendorProfile",
 		accessorFn: (user) => user.vendorProfile,
 		header: "Vendor Profile",
 		meta: { className: "text-center", headClassName: "text-center" },
-		cell: ({ row }) =>
-			row.original.vendorProfile ? (
-				<span className="font-medium text-primary">✓</span>
-			) : (
-				<span className="text-muted-foreground">-</span>
-			),
+		cell: ({ row }) => (
+			<span
+				className={
+					row.original.vendorProfile
+						? "font-medium text-primary"
+						: "text-muted-foreground"
+				}
+			>
+				{row.original.vendorProfile ? "Yes" : "No"}
+			</span>
+		),
 	},
 	{
 		id: "verification",
@@ -136,26 +159,36 @@ const blueprintColumns: ColumnDef<AdminBlueprint>[] = [
 interface AccountsTableProps {
 	users: AdminUser[];
 	limit?: number;
+	/** Data still in flight: same card and columns, shimmering rows. */
+	loading?: boolean;
 }
 
-export function AccountsTable({ users, limit = 5 }: AccountsTableProps) {
+export function AccountsTable({
+	users,
+	limit = 5,
+	loading = false,
+}: AccountsTableProps) {
 	return (
 		<Card>
 			<CardHeader>
 				<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 					<CardTitle className="text-xl">Latest Accounts</CardTitle>
-					<Button asChild variant="outline" className="!h-9 px-4 text-base">
+					<Button asChild variant="outline" className="">
 						<Link to="/admin/users">View more</Link>
 					</Button>
 				</div>
 			</CardHeader>
 			<CardContent className="pt-0">
-				<DataTable
-					columns={accountColumns}
-					data={users.slice(0, limit)}
-					getRowId={(user) => String(user.id)}
-					ariaLabel="Latest accounts"
-				/>
+				{loading ? (
+					<TableSkeleton headers={ACCOUNT_HEADERS} rows={limit} />
+				) : (
+					<DataTable
+						columns={accountColumns}
+						data={users.slice(0, limit)}
+						getRowId={(user) => String(user.id)}
+						ariaLabel="Latest accounts"
+					/>
+				)}
 			</CardContent>
 		</Card>
 	);
@@ -164,29 +197,36 @@ export function AccountsTable({ users, limit = 5 }: AccountsTableProps) {
 interface BlueprintsTableProps {
 	blueprints: AdminBlueprint[];
 	limit?: number;
+	/** Data still in flight: same card and columns, shimmering rows. */
+	loading?: boolean;
 }
 
 export function BlueprintsTable({
 	blueprints,
 	limit = 5,
+	loading = false,
 }: BlueprintsTableProps) {
 	return (
 		<Card>
 			<CardHeader>
 				<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 					<CardTitle className="text-xl">Latest Blueprints</CardTitle>
-					<Button asChild variant="outline" className="!h-9 px-4 text-base">
+					<Button asChild variant="outline" className="">
 						<Link to="/admin/projects">View more</Link>
 					</Button>
 				</div>
 			</CardHeader>
 			<CardContent className="pt-0">
-				<DataTable
-					columns={blueprintColumns}
-					data={blueprints.slice(0, limit)}
-					getRowId={(bp) => String(bp.id)}
-					ariaLabel="Latest blueprints"
-				/>
+				{loading ? (
+					<TableSkeleton headers={BLUEPRINT_HEADERS} rows={limit} />
+				) : (
+					<DataTable
+						columns={blueprintColumns}
+						data={blueprints.slice(0, limit)}
+						getRowId={(bp) => String(bp.id)}
+						ariaLabel="Latest blueprints"
+					/>
+				)}
 			</CardContent>
 		</Card>
 	);

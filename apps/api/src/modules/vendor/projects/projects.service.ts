@@ -21,17 +21,35 @@ export async function listMarketProjects(
 		limit,
 	);
 
-	return rows.map(({ project, companyName, tender, myProposalId }) => ({
-		id: project.id,
-		title: project.title,
-		companyName,
-		industrySector: project.industrySector,
-		location: project.location,
-		budget: project.budget,
-		status: project.status,
-		tender: tenderSummary(tender),
-		myProposalId,
-	}));
+	return rows.map(
+		({ project, companyName, tender, myProposalId, matchScore }) => ({
+			id: project.id,
+			title: project.title,
+			description: project.description,
+			companyName,
+			industrySector: project.industrySector,
+			location: project.location,
+			budget: project.budget,
+			status: project.status,
+			riskScore: project.riskScore,
+			carbonReductionTargetTons: project.targetEmissionReduction,
+			technicalRequirements: project.technicalRequirements ?? [],
+			deliverables: project.deliverables ?? [],
+			tender: tenderSummary(tender),
+			myProposalId,
+			matchScore: matchScore
+				? {
+						technicalFit: matchScore.technicalFit ?? 0,
+						relevantExperience: matchScore.relevantExperience ?? 0,
+						historicalPerformance: matchScore.historicalPerformance ?? 0,
+						priceValue: matchScore.priceValue ?? 0,
+						projectRisk: matchScore.projectRisk ?? 0,
+						totalScore: matchScore.totalScore ?? 0,
+						rank: matchScore.rank ?? 0,
+					}
+				: null,
+		}),
+	);
 }
 
 export async function getMarketProject(

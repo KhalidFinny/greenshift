@@ -1,142 +1,227 @@
 import {
-	faArrowLeft,
-	faCheckCircle,
+	faFileSignature,
 	faGavel,
+	faHandshake,
+	faTasks,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
 	Badge,
 	Button,
-	Card,
-	CardContent,
+	EmptyState,
 	Tabs,
 	TabsContent,
 	TabsList,
 	TabsTrigger,
 } from "@greenshift/ui";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { formatRupiah, formatShortDate } from "../lib/format";
 import { useVendorData } from "../lib/use-vendor-data";
 import { ActiveProjectCard } from "../organisms/active-project-card";
-import { ActiveProjectHero } from "../organisms/active-project-hero";
-import { MilestoneTrackerCard } from "../organisms/milestone-tracker-card";
-import { MonthlyEnergyReportCard } from "../organisms/monthly-energy-report-card";
 import { NegotiationCard } from "../organisms/negotiation-card";
 import { OpenBidLeaderboard } from "../organisms/open-bid-leaderboard";
 import { ProposalCard } from "../organisms/proposal-card";
 
+type Stage = "live" | "proposals" | "negotiation" | "execution";
+
 export function VendorDealsPage() {
 	const {
+		isLoading,
 		proposals,
 		negotiations,
 		activeProjects,
 		leaderboard,
+		leaderboardMeta,
 		placeOpenBid,
-		submitMilestoneEvidence,
 		submitNegotiationResponse,
 	} = useVendorData();
 
-	const [selectedActiveProjectId, setSelectedActiveProjectId] = useState<
-		string | null
-	>(null);
+	const navigate = useNavigate();
+	const [stage, setStage] = useState<Stage>("live");
 
-	const selectedProject = activeProjects.find(
-		(p) => p.id === selectedActiveProjectId,
-	);
-
-	// Find open bidding proposals (live auctions)
+	// One proposal per tender, so we can tell which one the standings belong to.
 	const openBiddingProposals = proposals.filter(
 		(p) =>
 			p.procurementMethod === "OPEN_BIDDING" && p.status === "UNDER_EVALUATION",
 	);
 
+	// Real counts drive the stage strip, so the pipeline reads at a glance.
+	const STAGES = [
+		{
+			key: "live" as const,
+			icon: faGavel,
+			label: "Live bidding",
+			blurb: "Open tenders you are bidding on",
+			count: openBiddingProposals.length,
+		},
+		{
+			key: "proposals" as const,
+			icon: faFileSignature,
+			label: "Proposals",
+			blurb: "Submitted, with the client",
+			count: proposals.length,
+		},
+		{
+			key: "negotiation" as const,
+			icon: faHandshake,
+			label: "Negotiation",
+			blurb: "Client revision requests",
+			count: negotiations.length,
+		},
+		{
+			key: "execution" as const,
+			icon: faTasks,
+			label: "Execution",
+			blurb: "Awarded, delivery in flight",
+			count: activeProjects.length,
+		},
+	];
+
+	const activeStage = STAGES.find((s) => s.key === stage);
+
 	return (
 		<div className="space-y-6">
-			<Tabs defaultValue="live-bidding">
-				<TabsList className="grid w-full grid-cols-5">
-					<TabsTrigger value="live-bidding" className="gap-1.5">
-						<span className="relative flex size-2">
-							<span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-							<span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
-						</span>
-						Live Bidding ({openBiddingProposals.length})
-					</TabsTrigger>
-					<TabsTrigger value="proposals">
-						Proposals ({proposals.length})
-					</TabsTrigger>
-					<TabsTrigger value="negotiations">
-						Negotiation ({negotiations.length})
-					</TabsTrigger>
-					<TabsTrigger value="execution">
-						Execution ({activeProjects.length})
-					</TabsTrigger>
-					<TabsTrigger value="completed">Completed</TabsTrigger>
-				</TabsList>
+			<Tabs value={stage} onValueChange={(v) => setStage(v as Stage)}>
+				{/* Stage strip with the page's one action inline, so the action shares
+				    the row instead of taking one of its own. The list's own height
+				    utility is variant-prefixed, so the override must match the
+				    variant or it loses on specificity. */}
+				<div className="flex flex-wrap items-center justify-between gap-4">
+					<TabsList className="flex w-fit flex-wrap items-center gap-1 rounded-xl border border-border bg-card p-1 group-data-horizontal/tabs:h-auto">
+						{STAGES.map((s) => (
+							<TabsTrigger
+								key={s.key}
+								value={s.key}
+								className="flex h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium whitespace-nowrap data-[state=active]:bg-[#00712D] data-[state=active]:text-white data-[state=active]:shadow-none"
+							>
+								<FontAwesomeIcon icon={s.icon} />
+								<span>{s.label}</span>
+								<span className="font-semibold tabular-nums">
+									{isLoading ? "-" : s.count}
+								</span>
+							</TabsTrigger>
+						))}
+					</TabsList>
 
-				{/* 1. Live Bidding Tab */}
-				<TabsContent value="live-bidding" className="mt-6 space-y-4">
-					{openBiddingProposals.length === 0 ? (
-						<Card>
-							<CardContent className="p-8 text-center text-xs text-muted-foreground space-y-3">
-								<div className="mx-auto flex size-12 items-center justify-center rounded-full bg-muted">
-									<FontAwesomeIcon
-										icon={faGavel}
-										className="text-xl text-muted-foreground"
-									/>
-								</div>
-								<h4 className="font-semibold text-sm text-foreground">
-									No Live Bidding in Progress
-								</h4>
-								<p className="max-w-md mx-auto">
-									When you submit a proposal for an Open Bidding tender, you can
-									track your ranking and revise your bid price in real-time
-									here.
-								</p>
-							</CardContent>
-						</Card>
+					<Link to="/vendor/opportunities">
+						<Button variant="outline" className="font-medium">
+							Browse open tenders
+						</Button>
+					</Link>
+				</div>
+
+				{/* The active stage's meaning, stated once rather than repeated
+				    under every tab. */}
+				{activeStage ? (
+					<p className="mt-3 text-sm text-muted-foreground">
+						{activeStage.blurb}
+					</p>
+				) : null}
+
+				{/* 1. Live bidding. Standings render only for the tender the
+				    leaderboard endpoint actually reports on. */}
+				<TabsContent value="live" className="mt-6 space-y-4">
+					{!isLoading && openBiddingProposals.length === 0 ? (
+						<EmptyState
+							icon={<FontAwesomeIcon icon={faGavel} />}
+							title="You are not bidding on anything open"
+							description="Submit a proposal to an Open Bidding tender and its live standings and your rank appear here, so you can revise your price before the deadline."
+							action={
+								<Link to="/vendor/opportunities">
+									<Button>Browse open tenders</Button>
+								</Link>
+							}
+						/>
 					) : (
-						<div className="space-y-4">
-							{openBiddingProposals.map((prop) => (
-								<div key={prop.id} className="space-y-3">
-									<div className="flex items-center justify-between">
-										<div>
-											<h4 className="text-sm font-semibold text-foreground">
-												{prop.projectTitle}
-											</h4>
-											<p className="text-xs text-muted-foreground">
-												{prop.companyName} • Deadline: Sep 12, 2026 17:00
-											</p>
-										</div>
-										<Badge className="bg-emerald-600 text-white">
-											<span className="relative flex size-2 mr-1.5">
-												<span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
-												<span className="relative inline-flex size-2 rounded-full bg-white" />
-											</span>
-											Live
-										</Badge>
-									</div>
+						<div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+							{openBiddingProposals.map((prop) => {
+								const hasStandings = leaderboardMeta.tenderId === prop.tenderId;
+								const facts = [
+									prop.submittedAt
+										? `Submitted ${formatShortDate(prop.submittedAt)}`
+										: null,
+									hasStandings && leaderboardMeta.myRank
+										? `Rank ${leaderboardMeta.myRank} of ${leaderboard.length}`
+										: null,
+									hasStandings && leaderboardMeta.deadlineAt
+										? `Closes ${formatShortDate(leaderboardMeta.deadlineAt)}`
+										: null,
+									`${prop.revisionCount} revision${prop.revisionCount === 1 ? "" : "s"}`,
+								].filter(Boolean);
 
-									<OpenBidLeaderboard
-										leaderboard={leaderboard}
-										projectTitle={prop.projectTitle}
-										projectClient={prop.companyName}
-										deadline="Sep 12, 2026 17:00"
-										onRevise={placeOpenBid}
-									/>
-								</div>
-							))}
+								return (
+									<div key={prop.id} className="p-5">
+										<div className="flex flex-wrap items-start justify-between gap-6">
+											<div className="min-w-0 flex-1">
+												<div className="flex flex-wrap items-center gap-3">
+													<Badge
+														className={
+															hasStandings
+																? "bg-emerald-700 text-white"
+																: "bg-muted text-foreground"
+														}
+													>
+														{hasStandings ? "Live" : "Standings pending"}
+													</Badge>
+													<h4 className="text-base font-semibold text-foreground">
+														{prop.projectTitle}
+													</h4>
+												</div>
+												<p className="mt-2 text-sm text-muted-foreground">
+													{facts.join(" · ")}
+												</p>
+											</div>
+
+											<div className="flex items-center gap-6">
+												<div className="text-right">
+													<p className="text-sm text-muted-foreground">
+														Your bid
+													</p>
+													<p className="text-lg font-bold text-foreground tabular-nums">
+														{formatRupiah(prop.costBreakdown.totalPrice)}
+													</p>
+												</div>
+												<Link
+													to="/vendor/tenders/$id"
+													params={{ id: prop.tenderId }}
+												>
+													<Button variant="outline">View tender</Button>
+												</Link>
+											</div>
+										</div>
+
+										{hasStandings ? (
+											<div className="mt-5">
+												<OpenBidLeaderboard
+													leaderboard={leaderboard}
+													projectTitle={prop.projectTitle}
+													projectClient={prop.companyName}
+													deadlineAt={leaderboardMeta.deadlineAt}
+													onRevise={placeOpenBid}
+												/>
+											</div>
+										) : null}
+									</div>
+								);
+							})}
 						</div>
 					)}
 				</TabsContent>
 
-				{/* 2. Submitted Proposals Tab */}
+				{/* 2. Submitted proposals */}
 				<TabsContent value="proposals" className="mt-6 space-y-4">
-					{proposals.length === 0 ? (
-						<Card>
-							<CardContent className="p-8 text-center text-xs text-muted-foreground">
-								No proposals currently submitted. Browse Opportunities to submit
-								bids.
-							</CardContent>
-						</Card>
+					{!isLoading && proposals.length === 0 ? (
+						<EmptyState
+							icon={<FontAwesomeIcon icon={faFileSignature} />}
+							title="No proposals submitted"
+							description="A proposal appears here the moment you submit it, with the client's evaluation status alongside."
+							action={
+								<Link to="/vendor/opportunities">
+									<Button>Find a tender</Button>
+								</Link>
+							}
+						/>
 					) : (
 						proposals.map((prop) => (
 							<ProposalCard key={prop.id} proposal={prop} />
@@ -144,14 +229,14 @@ export function VendorDealsPage() {
 					)}
 				</TabsContent>
 
-				{/* 3. In Negotiation Tab */}
-				<TabsContent value="negotiations" className="mt-6 space-y-4">
-					{negotiations.length === 0 ? (
-						<Card>
-							<CardContent className="p-8 text-center text-xs text-muted-foreground">
-								No active negotiations pending at this time.
-							</CardContent>
-						</Card>
+				{/* 3. Negotiation */}
+				<TabsContent value="negotiation" className="mt-6 space-y-4">
+					{!isLoading && negotiations.length === 0 ? (
+						<EmptyState
+							icon={<FontAwesomeIcon icon={faHandshake} />}
+							title="Nothing under negotiation"
+							description="When a client wants different terms, their revision request lands here for you to answer."
+						/>
 					) : (
 						negotiations.map((neg) => (
 							<NegotiationCard
@@ -163,81 +248,34 @@ export function VendorDealsPage() {
 					)}
 				</TabsContent>
 
-				{/* 4. In Execution Tab */}
-				<TabsContent value="execution" className="mt-6 space-y-6">
-					{selectedProject ? (
-						<div className="space-y-6">
-							<div className="flex items-center justify-between">
-								<Button
-									variant="ghost"
-									size="sm"
-									onClick={() => setSelectedActiveProjectId(null)}
-									className="gap-2 text-xs"
-								>
-									<FontAwesomeIcon icon={faArrowLeft} />
-									Back to Active Projects List
-								</Button>
-								<span className="text-xs text-muted-foreground">
-									Viewing project milestones for {selectedProject.title}
-								</span>
-							</div>
-
-							<ActiveProjectHero project={selectedProject} />
-
-							<MilestoneTrackerCard
-								projectId={selectedProject.id}
-								milestones={selectedProject.milestones}
-								onSubmitEvidence={submitMilestoneEvidence}
-							/>
-
-							<MonthlyEnergyReportCard
-								reports={selectedProject.monthlyReports}
-							/>
-						</div>
+				{/* 4. Execution. Selecting a project opens its own page rather than
+				    nesting a second detail view inside this tab. */}
+				<TabsContent value="execution" className="mt-6 space-y-4">
+					{!isLoading && activeProjects.length === 0 ? (
+						<EmptyState
+							icon={<FontAwesomeIcon icon={faTasks} />}
+							title="No projects in execution"
+							description="A project moves here when a client awards your proposal and the contract starts. Milestones and energy reporting open on the project's own page."
+							action={
+								<Link to="/vendor/opportunities">
+									<Button>Browse open tenders</Button>
+								</Link>
+							}
+						/>
 					) : (
-						<div className="space-y-6">
-							<div className="flex items-center justify-between">
-								<div>
-									<h3 className="text-base font-semibold text-foreground">
-										Concurrent Active Projects ({activeProjects.length})
-									</h3>
-									<p className="text-xs text-muted-foreground">
-										Select any project to drill down into milestone tracking,
-										upload execution evidence, and view energy reports.
-									</p>
-								</div>
-							</div>
-
-							<div className="grid grid-cols-1 gap-6">
-								{activeProjects.map((proj) => (
-									<ActiveProjectCard
-										key={proj.id}
-										project={proj}
-										onSelect={() => setSelectedActiveProjectId(proj.id)}
-									/>
-								))}
-							</div>
-						</div>
+						activeProjects.map((proj) => (
+							<ActiveProjectCard
+								key={proj.id}
+								project={proj}
+								onSelect={() =>
+									navigate({
+										to: "/vendor/active-projects/$id",
+										params: { id: proj.id },
+									})
+								}
+							/>
+						))
 					)}
-				</TabsContent>
-
-				{/* 5. Completed Deals Tab */}
-				<TabsContent value="completed" className="mt-6 space-y-4">
-					<Card>
-						<CardContent className="p-8 text-center text-xs text-muted-foreground space-y-2">
-							<div className="mx-auto flex size-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600">
-								<FontAwesomeIcon icon={faCheckCircle} className="text-xl" />
-							</div>
-							<h4 className="font-semibold text-sm text-foreground">
-								All Closed & Completed Deals
-							</h4>
-							<p className="max-w-md mx-auto">
-								Completed contracts with finalized BAST (Handover Certificate)
-								verification automatically archive into your verified Track
-								Record under Portfolio & Performance.
-							</p>
-						</CardContent>
-					</Card>
 				</TabsContent>
 			</Tabs>
 		</div>

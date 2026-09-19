@@ -15,10 +15,10 @@ export function PerformanceHeroCard({
 					{/* Header with Score */}
 					<div className="flex items-center justify-between">
 						<div className="space-y-1">
-							<h2 className="text-xs md:text-sm font-bold tracking-wider text-muted-foreground uppercase">
+							<h2 className="text-sm md:text-sm font-semibold text-muted-foreground">
 								Verified Performance Score
 							</h2>
-							<p className="text-xs text-muted-foreground">
+							<p className="text-sm text-muted-foreground">
 								{performanceMetrics.totalCompletedProjects} Verified Projects
 							</p>
 						</div>
@@ -35,7 +35,7 @@ export function PerformanceHeroCard({
 					{/* Metrics Grid */}
 					<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 						<div className="rounded-lg bg-muted/50 p-3">
-							<p className="text-xs font-medium text-muted-foreground">
+							<p className="text-sm font-medium text-muted-foreground">
 								Completion
 							</p>
 							<p className="mt-1 text-xl font-bold text-foreground">
@@ -43,7 +43,7 @@ export function PerformanceHeroCard({
 							</p>
 						</div>
 						<div className="rounded-lg bg-muted/50 p-3">
-							<p className="text-xs font-medium text-muted-foreground">
+							<p className="text-sm font-medium text-muted-foreground">
 								On-Time
 							</p>
 							<p className="mt-1 text-xl font-bold text-foreground">
@@ -51,15 +51,15 @@ export function PerformanceHeroCard({
 							</p>
 						</div>
 						<div className="rounded-lg bg-muted/50 p-3">
-							<p className="text-xs font-medium text-muted-foreground">
+							<p className="text-sm font-medium text-muted-foreground">
 								Energy Savings
 							</p>
-							<p className="mt-1 text-xl font-bold text-emerald-600 dark:text-emerald-400">
+							<p className="mt-1 text-xl font-bold text-emerald-700">
 								{performanceMetrics.energySavingAchievementPercent}%
 							</p>
 						</div>
 						<div className="rounded-lg bg-muted/50 p-3">
-							<p className="text-xs font-medium text-muted-foreground">
+							<p className="text-sm font-medium text-muted-foreground">
 								Satisfaction
 							</p>
 							<p className="mt-1 text-xl font-bold text-foreground">

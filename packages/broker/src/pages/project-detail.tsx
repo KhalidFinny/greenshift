@@ -1,6 +1,7 @@
 import {
 	faArrowLeft,
 	faBuilding,
+	faExclamationTriangle,
 	faEye,
 	faFileAlt,
 	faFileContract,
@@ -22,6 +23,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
+	EmptyState,
 	Input,
 	Label,
 } from "@greenshift/ui";
@@ -97,7 +99,7 @@ function CreateDocumentRequestModal({
 			<DialogTrigger asChild>
 				<Button
 					size="sm"
-					className="bg-[#03442C] text-white hover:bg-[#03442C]/90 gap-1.5 text-xs"
+					className="bg-[#03442C] text-white hover:bg-[#03442C]/90 gap-1.5 text-sm"
 				>
 					<FontAwesomeIcon icon={faPlus} />
 					Request Document
@@ -106,12 +108,12 @@ function CreateDocumentRequestModal({
 			<DialogContent className="max-w-lg">
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2">
-						<FontAwesomeIcon icon={faFileAlt} className="text-emerald-600" />
+						<FontAwesomeIcon icon={faFileAlt} className="text-emerald-700" />
 						Request Document from Client Company
 					</DialogTitle>
 				</DialogHeader>
 
-				<form onSubmit={handleSubmit} className="space-y-4 pt-2 text-xs">
+				<form onSubmit={handleSubmit} className="space-y-4 pt-2 text-sm">
 					<div className="rounded-lg bg-muted p-3">
 						<p className="font-semibold text-foreground">
 							Target Client: {companyName}
@@ -125,12 +127,12 @@ function CreateDocumentRequestModal({
 
 					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 						<div className="space-y-1.5">
-							<Label htmlFor="req-cat" className="text-xs font-semibold">
+							<Label htmlFor="req-cat" className="text-sm font-semibold">
 								Document Category:
 							</Label>
 							<select
 								id="req-cat"
-								className="w-full rounded-md border border-input bg-background p-2 text-xs"
+								className="w-full rounded-md border border-input bg-background p-2 text-sm"
 								value={category}
 								onChange={(e) =>
 									setCategory(e.target.value as DocumentCategory)
@@ -144,7 +146,7 @@ function CreateDocumentRequestModal({
 							</select>
 						</div>
 						<div className="space-y-1.5">
-							<Label htmlFor="req-type" className="text-xs font-semibold">
+							<Label htmlFor="req-type" className="text-sm font-semibold">
 								Document Type Name:
 							</Label>
 							<Input
@@ -159,7 +161,7 @@ function CreateDocumentRequestModal({
 
 					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 						<div className="space-y-1.5">
-							<Label htmlFor="req-period" className="text-xs font-semibold">
+							<Label htmlFor="req-period" className="text-sm font-semibold">
 								Document Period (Optional):
 							</Label>
 							<Input
@@ -170,7 +172,7 @@ function CreateDocumentRequestModal({
 							/>
 						</div>
 						<div className="space-y-1.5">
-							<Label htmlFor="req-deadline" className="text-xs font-semibold">
+							<Label htmlFor="req-deadline" className="text-sm font-semibold">
 								Submission Deadline:
 							</Label>
 							<Input
@@ -184,13 +186,13 @@ function CreateDocumentRequestModal({
 					</div>
 
 					<div className="space-y-1.5">
-						<Label htmlFor="req-reason" className="text-xs font-semibold">
+						<Label htmlFor="req-reason" className="text-sm font-semibold">
 							Reason for Request (Bond Purpose):
 						</Label>
 						<textarea
 							id="req-reason"
 							rows={3}
-							className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+							className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
 							value={reason}
 							onChange={(e) => setReason(e.target.value)}
 							placeholder="Explain why this document is required for green bond issuance..."
@@ -251,13 +253,20 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 						Back to Assigned Projects
 					</Button>
 				</Link>
-				<Card>
-					<CardContent className="p-8 text-center text-sm text-muted-foreground">
-						{isLoading
-							? "Loading the assigned project..."
-							: "This project is not assigned to you."}
-					</CardContent>
-				</Card>
+				{isLoading ? (
+					<Card>
+						<CardContent className="p-8 text-center text-sm text-muted-foreground">
+							Loading the assigned project...
+						</CardContent>
+					</Card>
+				) : (
+					<EmptyState
+						tone="error"
+						icon={<FontAwesomeIcon icon={faExclamationTriangle} />}
+						title="Project not assigned to you"
+						description="No assignment with this id is held by your brokerage. It may have been declined, completed, or reassigned to another underwriting broker."
+					/>
+				)}
 			</div>
 		);
 	}
@@ -297,12 +306,12 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 						<div className="flex items-center gap-2">
 							<Badge
 								variant="outline"
-								className="border-white/30 text-white uppercase text-xs"
+								className="border-white/30 text-sm text-white"
 							>
 								{workflowLabel(project.workflowStatus)}
 							</Badge>
 						</div>
-						<span className="text-xs text-emerald-200">
+						<span className="text-sm text-emerald-200">
 							Assigned Date:{" "}
 							{new Date(project.assignedAt).toLocaleDateString("en-US", {
 								dateStyle: "medium",
@@ -327,7 +336,7 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 						</p>
 					</div>
 
-					<div className="grid grid-cols-2 gap-4 rounded-xl bg-white/10 p-4 sm:grid-cols-4 text-xs">
+					<div className="grid grid-cols-2 gap-4 rounded-xl bg-white/10 p-4 sm:grid-cols-4 text-sm">
 						<div>
 							<p className="text-emerald-200">Project Contract Value</p>
 							<p className="mt-1 text-sm font-bold text-white">
@@ -371,12 +380,12 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 								{project.description}
 							</p>
 
-							<div className="grid grid-cols-1 gap-3 sm:grid-cols-3 text-xs rounded-lg bg-muted p-3">
+							<div className="grid grid-cols-1 gap-3 sm:grid-cols-3 text-sm rounded-lg bg-muted p-3">
 								<div>
 									<p className="text-muted-foreground">
 										Internal Rate of Return (IRR)
 									</p>
-									<p className="font-bold text-emerald-600 text-sm mt-0.5">
+									<p className="font-bold text-emerald-700 text-sm mt-0.5">
 										{project.financialProjections.irrPercent}%
 									</p>
 								</div>
@@ -412,16 +421,16 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 								<Badge
 									className={
 										latestReport.overallStatus === "ON_TRACK"
-											? "bg-emerald-600 text-white"
+											? "bg-emerald-700 text-white"
 											: latestReport.overallStatus === "ATTENTION_REQUIRED"
-												? "bg-amber-600 text-white"
+												? "bg-amber-700 text-white"
 												: "bg-red-600 text-white"
 									}
 								>
 									{latestReport.overallStatus.replace(/_/g, " ")}
 								</Badge>
 							</CardHeader>
-							<CardContent className="space-y-3 text-xs">
+							<CardContent className="space-y-3 text-sm">
 								<div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
 									<div>
 										<p className="text-muted-foreground">Progress</p>
@@ -432,7 +441,7 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 									</div>
 									<div>
 										<p className="text-muted-foreground">Energy savings</p>
-										<p className="mt-1 font-bold text-emerald-600">
+										<p className="mt-1 font-bold text-emerald-700">
 											{latestReport.actualEnergySavingsKwh.toLocaleString(
 												"en-US",
 											)}{" "}
@@ -441,7 +450,7 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 									</div>
 									<div>
 										<p className="text-muted-foreground">Emission reduction</p>
-										<p className="mt-1 font-bold text-emerald-600">
+										<p className="mt-1 font-bold text-emerald-700">
 											{latestReport.actualCarbonReductionTons} tCO2e
 										</p>
 									</div>
@@ -465,7 +474,7 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 									<Button
 										size="sm"
 										variant="outline"
-										className="gap-1.5 text-xs"
+										className="gap-1.5 text-sm"
 									>
 										<FontAwesomeIcon icon={faFileAlt} />
 										Open report
@@ -481,18 +490,18 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 							<CardTitle className="text-lg flex items-center gap-2">
 								<FontAwesomeIcon
 									icon={faShieldAlt}
-									className="text-emerald-600"
+									className="text-emerald-700"
 								/>
 								Project Risk Assessment
 							</CardTitle>
 							<Badge
 								variant="outline"
-								className="border-amber-500 text-amber-700 dark:text-amber-300"
+								className="border-amber-500 text-amber-700"
 							>
 								Overall Risk: {project.riskAssessment.overallRiskLevel}
 							</Badge>
 						</CardHeader>
-						<CardContent className="space-y-4 text-xs">
+						<CardContent className="space-y-4 text-sm">
 							<p className="text-muted-foreground">
 								This risk assessment is derived from GreenShift's official
 								project evaluation. Brokers can review this data for bond
@@ -502,33 +511,37 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 							<div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
 								<div className="rounded-lg border border-border p-3">
 									<p className="text-muted-foreground">Financial Risk</p>
-									<p className="mt-1 font-bold text-emerald-600">
+									<p className="mt-1 font-bold text-emerald-700">
 										{project.riskAssessment.financialRisk}
 									</p>
 								</div>
 								<div className="rounded-lg border border-border p-3">
 									<p className="text-muted-foreground">Technical Risk</p>
-									<p className="mt-1 font-bold text-amber-600">
+									<p className="mt-1 font-bold text-amber-700">
 										{project.riskAssessment.technicalRisk}
 									</p>
 								</div>
 								<div className="rounded-lg border border-border p-3">
 									<p className="text-muted-foreground">Implementation Risk</p>
-									<p className="mt-1 font-bold text-amber-600">
+									<p className="mt-1 font-bold text-amber-700">
 										{project.riskAssessment.implementationRisk}
 									</p>
 								</div>
 								<div className="rounded-lg border border-border p-3">
 									<p className="text-muted-foreground">Environmental Risk</p>
-									<p className="mt-1 font-bold text-emerald-600">
+									<p className="mt-1 font-bold text-emerald-700">
 										{project.riskAssessment.environmentalRisk}
 									</p>
 								</div>
 							</div>
 
-							<div className="rounded-lg bg-muted p-3 text-muted-foreground">
-								💡 <strong>Risk Review Notes:</strong>{" "}
-								{project.riskAssessment.notes}
+							<div className="rounded-lg bg-muted p-3">
+								<p className="font-semibold text-foreground">
+									Risk Review Notes
+								</p>
+								<p className="mt-1 text-muted-foreground">
+									{project.riskAssessment.notes}
+								</p>
 							</div>
 						</CardContent>
 					</Card>
@@ -537,16 +550,17 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 					<Card>
 						<CardHeader>
 							<CardTitle className="text-lg flex items-center gap-2">
-								<FontAwesomeIcon icon={faEye} className="text-emerald-600" />
+								<FontAwesomeIcon icon={faEye} className="text-emerald-700" />
 								Available Project Documents
 							</CardTitle>
 						</CardHeader>
-						<CardContent className="space-y-2 text-xs">
+						<CardContent className="space-y-2 text-sm">
 							{project.documents.length === 0 ? (
-								<p className="text-muted-foreground">
-									No project documents are held on GreenShift for this project
-									yet.
-								</p>
+								<EmptyState
+									icon={<FontAwesomeIcon icon={faEye} />}
+									title="No project documents on file"
+									description="GreenShift holds no verified documents for this project yet. Documents uploaded during LVV GRK verification will be listed here."
+								/>
 							) : (
 								project.documents.map((document) => (
 									<div
@@ -566,7 +580,7 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 											<Button
 												size="sm"
 												variant="outline"
-												className="text-xs"
+												className="text-sm"
 												onClick={() =>
 													window.open(document.fileUrl ?? "#", "_blank")
 												}
@@ -586,7 +600,7 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 							<CardTitle className="text-lg flex items-center gap-2">
 								<FontAwesomeIcon
 									icon={faFileAlt}
-									className="text-emerald-600"
+									className="text-emerald-700"
 								/>
 								Client Documents
 							</CardTitle>
@@ -596,12 +610,13 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 								onCreateRequest={createDocumentRequest}
 							/>
 						</CardHeader>
-						<CardContent className="space-y-4 text-xs">
+						<CardContent className="space-y-4 text-sm">
 							{projectDocs.length === 0 ? (
-								<p className="text-muted-foreground text-center py-6">
-									No document requests for this project yet. Click the button
-									above to create a request.
-								</p>
+								<EmptyState
+									icon={<FontAwesomeIcon icon={faFileAlt} />}
+									title="No document requests for this project"
+									description="Request the financial, legal, or technical files underwriting needs. Use Request Document above to send the first request to the client company."
+								/>
 							) : (
 								<div className="space-y-3">
 									{projectDocs.map((doc) => (
@@ -617,7 +632,7 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 															? "Submitted"
 															: doc.status}
 												</span>
-												<span className="text-muted-foreground text-[11px]">
+												<span className="text-muted-foreground text-sm">
 													Deadline: {doc.deadlineDate}
 												</span>
 											</div>
@@ -632,9 +647,10 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 
 											{/* Submitted File Details */}
 											{doc.submittedFileName && (
-												<div className="rounded-lg bg-emerald-50 p-3 dark:bg-emerald-950/40 flex items-center justify-between">
-													<span className="font-semibold text-emerald-900 dark:text-emerald-200">
-														📄 Uploaded File: {doc.submittedFileName}
+												<div className="rounded-lg bg-emerald-50 p-3 flex items-center justify-between">
+													<span className="flex items-center gap-1.5 font-semibold text-emerald-900">
+														<FontAwesomeIcon icon={faFileAlt} />
+														Uploaded File: {doc.submittedFileName}
 													</span>
 													<div className="flex items-center gap-2">
 														<Button
@@ -643,7 +659,7 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 															onClick={() =>
 																window.open(doc.submittedFileUrl, "_blank")
 															}
-															className="gap-1.5 text-xs"
+															className="gap-1.5 text-sm"
 														>
 															<FontAwesomeIcon icon={faEye} />
 															View Document
@@ -653,7 +669,7 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 																<Button
 																	size="sm"
 																	onClick={() => approveDocument(doc.id)}
-																	className="bg-emerald-600 text-white hover:bg-emerald-700 text-xs"
+																	className="bg-emerald-700 text-white hover:bg-emerald-700 text-sm"
 																>
 																	Approve Document
 																</Button>
@@ -666,7 +682,7 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 																			"Document does not cover the requested period.",
 																		)
 																	}
-																	className="text-red-600 border-red-200 hover:bg-red-50 text-xs"
+																	className="text-red-600 border-red-200 hover:bg-red-50 text-sm"
 																>
 																	Reject
 																</Button>
@@ -690,12 +706,12 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 							<CardTitle className="text-lg flex items-center gap-2">
 								<FontAwesomeIcon
 									icon={faFileContract}
-									className="text-emerald-600"
+									className="text-emerald-700"
 								/>
 								Bond Preparation Stage
 							</CardTitle>
 						</CardHeader>
-						<CardContent className="space-y-3 text-xs">
+						<CardContent className="space-y-3 text-sm">
 							<p className="text-muted-foreground">
 								The broker lifecycle tracks preparation inside GreenShift. Bond
 								issuance itself happens outside the platform.
@@ -724,7 +740,7 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 											key={status}
 											size="sm"
 											variant="outline"
-											className="w-full text-xs"
+											className="w-full text-sm"
 											onClick={() =>
 												updateWorkflowStatus(
 													project.id,
@@ -745,12 +761,12 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 							<CardTitle className="text-lg flex items-center gap-2">
 								<FontAwesomeIcon
 									icon={faFileContract}
-									className="text-emerald-600"
+									className="text-emerald-700"
 								/>
 								Underwriting & Funding Status
 							</CardTitle>
 						</CardHeader>
-						<CardContent className="space-y-4 text-xs">
+						<CardContent className="space-y-4 text-sm">
 							<p className="text-muted-foreground">
 								Bond issuance and placement are executed by the Broker outside
 								the GreenShift platform. The status below serves as an external
@@ -762,7 +778,7 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 									<span className="text-muted-foreground">
 										Issuance Status:
 									</span>
-									<Badge className="bg-[#03442C] text-white uppercase">
+									<Badge className="bg-[#03442C] text-white">
 										{BOND_STATUS_LABELS[project.bondInfo.status] ??
 											project.bondInfo.status}
 									</Badge>
@@ -777,7 +793,7 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 								</div>
 								<div className="flex justify-between">
 									<span className="text-muted-foreground">Coupon Rate:</span>
-									<span className="font-bold text-emerald-600">
+									<span className="font-bold text-emerald-700">
 										{project.bondInfo.couponRatePercent}% / yr
 									</span>
 								</div>

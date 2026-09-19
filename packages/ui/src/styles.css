@@ -7,8 +7,6 @@
 @import "@fontsource-variable/ibm-plex-sans";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
-
 @keyframes progress-indeterminate {
 	0% {
 		transform: translateX(-100%);
@@ -39,14 +37,14 @@
   --secondary: oklch(0.967 0.001 286.375);
   --secondary-foreground: oklch(0.21 0.006 285.885);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --muted-foreground: #6B6B6B;
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: #FFFFFF;
   --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --input: #828282;
+  --ring: #07815F;
   --chart-1: oklch(0.845 0.143 164.978);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.596 0.145 163.225);
@@ -61,41 +59,6 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.432 0.095 166.913);
-  --primary-foreground: oklch(0.979 0.021 166.113);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: #FFFFFF;
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.845 0.143 164.978);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.596 0.145 163.225);
-  --chart-4: oklch(0.508 0.118 165.612);
-  --chart-5: oklch(0.432 0.095 166.913);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.696 0.17 162.48);
-  --sidebar-primary-foreground: oklch(0.262 0.051 172.552);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
 }
 
 @theme inline {
@@ -165,14 +128,35 @@ body {
 }
 
 .page-wrap {
-  width: min(1480px, calc(100% - 2rem));
+  width: min(1200px, calc(100% - 8rem));
   margin-inline: auto;
+}
+
+/* Hide scrollbar but keep scroll functionality */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Leaderboard slide-up animation */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ── Landing hero composition ───────────────────────────────────────
    The hero fills the viewport and stacks absolutely positioned layers, so
    its content cannot reflow. Instead it is laid out on a design canvas of
-   1920 wide — the viewport the hero is authored against, i.e. the size at
+   1920 wide - the viewport the hero is authored against, i.e. the size at
    which `--u` is exactly 1px and every element renders at the pixel values
    written in the components. `--u` is one canvas pixel at the current
    viewport, every content size in the hero is a multiple of it and
@@ -183,13 +167,14 @@ body {
    scales the CSS viewport and `--u` with it (80% zoom -> viewport and
    `--u` x1.25 -> the same hero, drawn 1.25x).
    The two height terms keep the composition from ever colliding: the title
-   block needs its 96px floor plus 249u of content above the bottom-anchored
+   block needs its 150px floor (raised from 96px to give the headline real
+   air under the header) plus 249u of content above the bottom-anchored
    dashboard, which itself needs 504u, plus ~40u of air. Below u = 1 the
-   title offset is pinned to its 96px floor, so the hero needs at least
-   96px + 800u; at and above u = 1 the offset scales too and the whole stack
+   title offset is pinned to its 150px floor, so the hero needs at least
+   150px + 800u; at and above u = 1 the offset scales too and the whole stack
    is 900u. */
 #hero {
-  --u: min(100vw / 1920, (100vh - 96px) / 800, 100vh / 900);
+  --u: min(100vw / 1920, (100vh - 150px) / 800, 100vh / 900);
 }
 
 /* Below the desktop layout the hero keeps its own stacked, responsive
@@ -260,6 +245,43 @@ body {
 }
 ::view-transition-new(root) {
   animation: vt-fade-in 220ms ease-out 140ms backwards;
+}
+
+/* ── Shell chrome holds still; only the page content fades ───────────
+   The sidebar and the header outlive a route change: navigation swaps the
+   page inside them, so they are the same pixels before and after. They were
+   fading because the whole document is captured as the `root` group. Naming
+   each one lifts it out of that snapshot, which leaves the page content as
+   the only thing `root` still fades.
+
+   Each named group then keeps the incoming frame and drops the outgoing one.
+   `animation: none` on its own is not enough: the default `plus-lighter`
+   blend adds the two frames together, so two identical frames at full
+   opacity double-expose into a washed-out bar. Dropping the stale frame and
+   blending normally shows the new state at its true colour.
+
+   Named for both transition kinds: these same-document rules, and the
+   cross-document @view-transition at the end of this file.                */
+[data-shell-sidebar] {
+  view-transition-name: shell-sidebar;
+}
+[data-shell-header] {
+  view-transition-name: shell-header;
+}
+
+::view-transition-group(shell-sidebar),
+::view-transition-group(shell-header) {
+  animation: none;
+}
+::view-transition-old(shell-sidebar),
+::view-transition-old(shell-header) {
+  animation: none;
+  opacity: 0;
+}
+::view-transition-new(shell-sidebar),
+::view-transition-new(shell-header) {
+  animation: none;
+  mix-blend-mode: normal;
 }
 
 /* slide-fade: old exits left, new enters from the right */

@@ -2,8 +2,8 @@ import { Hono } from "hono";
 import { createFactory } from "hono/factory";
 import type { RegisterBody } from "../../../contracts";
 import type { ApiEnv } from "../../../env";
-import { rateLimited, requireJson } from "../../../lib/http";
-import { checkRateLimit, clientIp } from "../../../lib/rate-limit";
+import { clientIp, enforceRateLimit } from "../../../lib/rate-limit";
+import { apiError, apiSuccess } from "../../../lib/response";
 import { sessionCookie } from "../../../lib/session";
 import { MAX_EMAIL, MAX_PASSWORD } from "../auth.shared";
 import { registerUser } from "./register.service";
@@ -20,9 +20,6 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 registerRoutes.post(
 	"/register",
 	...factory.createHandlers(async (c) => {
-		const mediaTypeError = requireJson(c);
-		if (mediaTypeError) return mediaTypeError;
-
 		const body = (await c.req
 			.json()
 			.catch(() => null)) as Partial<RegisterBody> | null;
@@ -35,31 +32,20 @@ registerRoutes.post(
 			typeof body?.companyName === "string" ? body.companyName.trim() : "";
 
 		if (!name || !email || !password || !companyName) {
-			return c.json(
-				{
-					error: {
-						code: "VALIDATION",
-						message: "Name, email, password, and company name are required",
-					},
-				},
-				400,
+			return apiError(
+				c,
+				"VALIDATION",
+				"Name, email, password, and company name are required",
 			);
 		}
 		if (!EMAIL_RE.test(email)) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid email" } },
-				400,
-			);
+			return apiError(c, "VALIDATION", "Invalid email");
 		}
 		if (password.length < 8) {
-			return c.json(
-				{
-					error: {
-						code: "VALIDATION",
-						message: "Password must be at least 8 characters",
-					},
-				},
-				400,
+			return apiError(
+				c,
+				"VALIDATION",
+				"Password must be at least 8 characters",
 			);
 		}
 		if (
@@ -68,15 +54,10 @@ registerRoutes.post(
 			password.length > MAX_PASSWORD ||
 			companyName.length > MAX_COMPANY
 		) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid input" } },
-				400,
-			);
+			return apiError(c, "VALIDATION");
 		}
 
-		const ip = clientIp(c.req.raw);
-		const ipCheck = await checkRateLimit(c.env, `register:ip:${ip}`, 5, 900);
-		if (!ipCheck.ok) return rateLimited(c, ipCheck.retryAfter);
+		await enforceRateLimit(c.env, `register:ip:${clientIp(c.req.raw)}`, 5, 900);
 
 		const result = await registerUser(c.env, {
 			name,
@@ -85,18 +66,15 @@ registerRoutes.post(
 			companyName,
 		});
 		if (result.status === "email-taken") {
-			return c.json(
-				{
-					error: {
-						code: "EMAIL_TAKEN",
-						message: "Email already registered",
-					},
-				},
-				409,
-			);
+			return apiError(c, "EMAIL_TAKEN");
 		}
 
 		c.header("Set-Cookie", sessionCookie(result.token));
-		return c.json({ user: result.user }, 201);
+		return apiSuccess(
+			c,
+			{ user: result.user },
+			"Account created successfully",
+			201,
+		);
 	}),
 );

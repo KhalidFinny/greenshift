@@ -21,6 +21,7 @@ import {
 } from "../../db/schema";
 import type { ApiEnv } from "../../env";
 import { iso } from "../../lib/format";
+import { ApiFailure } from "../../lib/response";
 
 /**
  * A broker that is not verified cannot receive or process projects (§6, rule 1).
@@ -36,15 +37,9 @@ export const requireVerifiedBroker = createMiddleware<ApiEnv>(
 			.limit(1);
 
 		if (!profile?.verifiedAt) {
-			return c.json(
-				{
-					error: {
-						code: "VERIFICATION_REQUIRED",
-						message:
-							"Broker verification must be completed before processing projects",
-					},
-				},
-				403,
+			throw new ApiFailure(
+				"VERIFICATION_REQUIRED",
+				"Broker verification must be completed before processing projects",
 			);
 		}
 		await next();

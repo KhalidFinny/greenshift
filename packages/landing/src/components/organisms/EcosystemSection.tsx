@@ -193,7 +193,7 @@ export default function EcosystemSection() {
 						>
 							{/* Orbit ring */}
 							<div
-								className="absolute inset-0 m-auto rounded-full border border-[#03442C]/12"
+								className="absolute inset-0 m-auto rounded-full border border-[#E1E9E6]"
 								style={{
 									width: `calc(var(--o) * ${RADIUS * 2})`,
 									height: `calc(var(--o) * ${RADIUS * 2})`,
@@ -220,11 +220,10 @@ export default function EcosystemSection() {
 											y1={cy}
 											x2={nx}
 											y2={ny}
-											stroke="#03442C"
-											strokeOpacity={active === i ? "0.4" : "0.15"}
+											stroke={active === i ? "#9AB4AB" : "#D9E3DF"}
 											strokeWidth={active === i ? "1.5" : "1"}
 											strokeDasharray="4 4"
-											className="transition-all duration-500 motion-reduce:transition-none"
+											className="transition-all duration-200 motion-reduce:transition-none"
 										/>
 									);
 								})}
@@ -240,8 +239,7 @@ export default function EcosystemSection() {
 									cy={RADIUS + 60 + by}
 									r={10}
 									fill="none"
-									stroke="#00712D"
-									strokeOpacity={0.3}
+									stroke="#B2D4C0"
 									strokeWidth={2}
 								/>
 							</svg>
@@ -259,7 +257,8 @@ export default function EcosystemSection() {
 										type="button"
 										key={actor.label}
 										onClick={() => handleNodeClick(i)}
-										className="group absolute flex cursor-pointer flex-col items-center text-center transition-all duration-500 motion-reduce:transition-none"
+										aria-pressed={isActive}
+										className="group absolute flex cursor-pointer flex-col items-center text-center transition-all duration-200 motion-reduce:transition-none"
 										style={{
 											left: `calc(50% + var(--o) * ${x - 60})`,
 											top: `calc(50% + var(--o) * ${y - 44})`,
@@ -267,22 +266,24 @@ export default function EcosystemSection() {
 										}}
 									>
 										<div
-											className={`flex h-[calc(var(--o)*60)] w-[calc(var(--o)*60)] items-center justify-center rounded-full border transition-all duration-500 motion-reduce:transition-none ${
+											className={`flex h-[calc(var(--o)*60)] w-[calc(var(--o)*60)] items-center justify-center rounded-full border transition-all duration-200 motion-reduce:transition-none ${
 												isActive
-													? "border-[#03442C]/30 bg-[#03442C]"
-													: "border-[#03442C]/15 bg-white opacity-60 group-hover:opacity-90"
+													? "border-[#03442C] bg-[#03442C]"
+													: "border-[#D9E3DF] bg-white group-hover:border-[#B3C7C0] group-hover:bg-[#F2F6F4]"
 											}`}
 										>
 											<NodeIcon
-												className={`h-[calc(var(--o)*24)] w-[calc(var(--o)*24)] transition-colors duration-500 motion-reduce:transition-none ${
+												className={`h-[calc(var(--o)*24)] w-[calc(var(--o)*24)] transition-colors duration-200 motion-reduce:transition-none ${
 													isActive ? "text-white" : "text-[#03442C]"
 												}`}
 												strokeWidth={1.5}
 											/>
 										</div>
 										<p
-											className={`mt-[calc(var(--o)*8)] text-[length:calc(var(--o)*16)] font-semibold leading-tight transition-colors duration-500 motion-reduce:transition-none ${
-												isActive ? "text-[#1C1C1C]" : "text-[#4A4A4A]"
+											className={`mt-[calc(var(--o)*8)] text-[length:max(0.875rem,calc(var(--o)*16))] font-semibold leading-tight transition-colors duration-200 motion-reduce:transition-none ${
+												isActive
+													? "text-[#1C1C1C]"
+													: "text-[#4A4A4A] group-hover:text-[#1C1C1C]"
 											}`}
 										>
 											{actor.label}
@@ -293,7 +294,7 @@ export default function EcosystemSection() {
 
 							{/* Center logo */}
 							<div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-								<div className="flex h-[calc(var(--o)*100)] w-[calc(var(--o)*100)] items-center justify-center rounded-full border border-[#03442C]/20 bg-white">
+								<div className="flex h-[calc(var(--o)*100)] w-[calc(var(--o)*100)] items-center justify-center rounded-full border border-[#CDDAD5] bg-white">
 									<img
 										src="/logo-short.svg"
 										alt="GreenShift"
@@ -307,7 +308,7 @@ export default function EcosystemSection() {
 					{/* Right: Selected node detail */}
 					<article className="flex flex-col gap-8">
 						<div className="flex items-center gap-4">
-							<div className="flex h-[52px] w-[52px] items-center justify-center rounded-full border border-[#03442C]/20 bg-[#03442C]/5">
+							<div className="flex h-[52px] w-[52px] items-center justify-center rounded-full border border-[#CDDAD5] bg-[#F2F6F4]">
 								<Icon
 									className="h-[24px] w-[24px] text-[#03442C]"
 									strokeWidth={1.5}

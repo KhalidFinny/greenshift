@@ -1,42 +1,98 @@
-import { faPencil, faX } from "@fortawesome/free-solid-svg-icons";
+import { faAward, faPencil, faX } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "@greenshift/ui";
+import { Button, EmptyState } from "@greenshift/ui";
 import { useState } from "react";
+import { formatCompactRupiah } from "../lib/format";
 import { useVendorData } from "../lib/use-vendor-data";
 import { AddPortfolioDialog } from "../organisms/add-portfolio-dialog";
 import { PortfolioItemCard } from "../organisms/portfolio-item-card";
 
 export function VendorPortfolioPage() {
-	const { portfolio, addPortfolioItem, deletePortfolioItem } = useVendorData();
+	const { isLoading, portfolio, addPortfolioItem, deletePortfolioItem } =
+		useVendorData();
 	const [isEditMode, setIsEditMode] = useState(false);
+
+	// Totals are computed from the records on screen; nothing is estimated.
+	const verifiedCount = portfolio.filter((i) => i.status === "VERIFIED").length;
+	const carbonRecords = portfolio.filter((i) => i.carbonReductionTons !== null);
+	const totalCarbon = carbonRecords.reduce(
+		(sum, i) => sum + (i.carbonReductionTons ?? 0),
+		0,
+	);
+	const totalValue = portfolio.reduce((sum, i) => sum + i.projectValue, 0);
 
 	return (
 		<div className="space-y-6">
-			<div className="flex items-center justify-between">
-				<h3 className="text-base font-semibold text-foreground">Portfolio</h3>
+			{/* Page header. The shell already titles this page, so the heading here is
+			    the purpose, not a repeat of the word "Portfolio". */}
+			<div className="flex flex-wrap items-center justify-end gap-4">
 				<div className="flex items-center gap-2">
 					<Button
 						variant={isEditMode ? "destructive" : "outline"}
-						size="sm"
-						className="gap-2"
 						onClick={() => setIsEditMode(!isEditMode)}
+						className="font-medium"
 					>
 						<FontAwesomeIcon icon={isEditMode ? faX : faPencil} />
-						{isEditMode ? "Cancel" : "Edit"}
+						{isEditMode ? "Cancel" : "Edit records"}
 					</Button>
 					<AddPortfolioDialog onAdd={addPortfolioItem} />
 				</div>
 			</div>
 
-			<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-				{portfolio.map((item) => (
-					<PortfolioItemCard
-						key={item.id}
-						item={item}
-						onDelete={isEditMode ? deletePortfolioItem : undefined}
-					/>
-				))}
-			</div>
+			{/* Totals: one line per figure, in a single strip, so a one-digit count
+			    does not occupy a three-line tower. Hidden when there is nothing to
+			    total, since four zeroes tell the reader nothing. */}
+			{portfolio.length > 0 ? (
+				<dl className="flex flex-wrap items-center gap-x-10 gap-y-3 rounded-xl border border-border bg-card px-5 py-4">
+					{[
+						{ label: "Records", value: String(portfolio.length) },
+						{ label: "Verified", value: String(verifiedCount) },
+						{
+							label: "Carbon abated",
+							value: carbonRecords.length
+								? `${totalCarbon} tCO₂e/yr`
+								: "Not reported",
+							tone: "positive",
+						},
+						{
+							label: "Delivered value",
+							value: formatCompactRupiah(totalValue),
+						},
+					].map((stat) => (
+						<div key={stat.label} className="flex items-baseline gap-2">
+							<dt className="text-sm text-muted-foreground">{stat.label}</dt>
+							<dd
+								className={
+									stat.tone === "positive"
+										? "text-base font-semibold text-emerald-700 tabular-nums"
+										: "text-base font-semibold text-foreground tabular-nums"
+								}
+							>
+								{stat.value}
+							</dd>
+						</div>
+					))}
+				</dl>
+			) : null}
+
+			{!isLoading && portfolio.length === 0 ? (
+				<EmptyState
+					icon={<FontAwesomeIcon icon={faAward} />}
+					title="No delivered work recorded yet"
+					description="This is the evidence clients read before they shortlist you. Add a completed project, with its client, value, and measured carbon reduction."
+					action={<AddPortfolioDialog onAdd={addPortfolioItem} />}
+				/>
+			) : (
+				<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+					{portfolio.map((item) => (
+						<PortfolioItemCard
+							key={item.id}
+							item={item}
+							onDelete={isEditMode ? deletePortfolioItem : undefined}
+						/>
+					))}
+				</div>
+			)}
 		</div>
 	);
 }

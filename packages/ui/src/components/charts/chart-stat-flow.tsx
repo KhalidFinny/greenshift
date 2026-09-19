@@ -84,7 +84,7 @@ export function ChartStatFlow({
 	prefix,
 	suffix,
 	valueClassName = "text-2xl font-bold",
-	labelClassName = "text-xs",
+	labelClassName = "text-sm",
 	icon,
 }: ChartStatFlowProps) {
 	const numberFlowReady = useNumberFlowElementReady();

@@ -4,8 +4,8 @@ import type { ProposalUpdateBody } from "../../../contracts";
 import { createDb } from "../../../db";
 import type { ApiEnv } from "../../../env";
 import { invalidNumber } from "../../../lib/format";
-import { requireJson } from "../../../lib/http";
 import { mutationRateLimit } from "../../../lib/mutation-limit";
+import { apiError, apiNotFound, apiSuccess } from "../../../lib/response";
 import { MAX_SPEC_LENGTH, MAX_WARRANTY_MONTHS } from "../vendor.shared";
 import { MAX_REVISIONS, updateVendorProposal } from "./proposal-update.service";
 
@@ -17,19 +17,11 @@ const MAX_NOTE_LENGTH = 2000;
 
 proposalUpdateRoutes.patch(
 	"/proposals/:id",
+	mutationRateLimit("vendor", "proposal"),
 	...factory.createHandlers(async (c) => {
-		const mediaTypeError = requireJson(c);
-		if (mediaTypeError) return mediaTypeError;
-
-		const rateError = await mutationRateLimit("vendor", "proposal")(c);
-		if (rateError) return rateError;
-
 		const id = Number(c.req.param("id"));
 		if (!Number.isInteger(id) || id <= 0) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid ID" } },
-				400,
-			);
+			return apiError(c, "INVALID_ID");
 		}
 
 		const body = (await c.req
@@ -65,10 +57,7 @@ proposalUpdateRoutes.patch(
 			(note !== undefined &&
 				(typeof note !== "string" || note.length > MAX_NOTE_LENGTH))
 		) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid input" } },
-				400,
-			);
+			return apiError(c, "VALIDATION");
 		}
 
 		const db = createDb(c.env.DB);
@@ -83,53 +72,29 @@ proposalUpdateRoutes.patch(
 
 		switch (result.status) {
 			case "not_found":
-				return c.json(
-					{ error: { code: "NOT_FOUND", message: "Proposal not found" } },
-					404,
-				);
+				return apiNotFound(c, "Proposal");
 			case "unverified":
-				return c.json(
-					{
-						error: {
-							code: "FORBIDDEN",
-							message: "Vendor profile has not been verified by an admin",
-						},
-					},
-					403,
+				return apiError(
+					c,
+					"VERIFICATION_REQUIRED",
+					"Vendor profile has not been verified by an admin",
 				);
 			case "locked":
-				return c.json(
-					{
-						error: {
-							code: "PROPOSAL_LOCKED",
-							message:
-								"Proposal has already been processed and cannot be edited",
-						},
-					},
-					409,
-				);
+				return apiError(c, "PROPOSAL_LOCKED");
 			case "revision_limit":
-				return c.json(
-					{
-						error: {
-							code: "REVISION_LIMIT",
-							message: `Revision limit (${MAX_REVISIONS}) has been reached`,
-						},
-					},
-					409,
+				return apiError(
+					c,
+					"REVISION_LIMIT",
+					`Revision limit (${MAX_REVISIONS}) has been reached`,
 				);
 			case "revision_conflict":
-				return c.json(
-					{
-						error: {
-							code: "REVISION_LIMIT",
-							message: `Revision limit (${MAX_REVISIONS}) reached or the proposal has already been responded to`,
-						},
-					},
-					409,
+				return apiError(
+					c,
+					"REVISION_LIMIT",
+					`Revision limit (${MAX_REVISIONS}) reached or the proposal has already been responded to`,
 				);
 			default:
-				return c.json({ proposal: result.detail });
+				return apiSuccess(c, { proposal: result.detail }, "Proposal updated");
 		}
 	}),
 );

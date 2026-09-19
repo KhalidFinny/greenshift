@@ -1,6 +1,6 @@
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Card, CardContent } from "@greenshift/ui";
+import { Card, CardContent, ShimmerBlock } from "@greenshift/ui";
 
 interface MetricCardProps {
 	label: string;
@@ -8,6 +8,8 @@ interface MetricCardProps {
 	sub: string;
 	icon: IconDefinition;
 	subTone?: "muted" | "positive" | "destructive";
+	/** Data still in flight: same card, shimmering value and sub-line. */
+	loading?: boolean;
 }
 
 const SUB_TONE_CLASS: Record<
@@ -25,7 +27,10 @@ export function MetricCard({
 	sub,
 	icon,
 	subTone = "muted",
+	loading = false,
 }: MetricCardProps) {
+	// One frame, two leaf states: the label and icon are static, so only the
+	// fetched numbers shimmer and the card cannot drift from its loaded layout.
 	return (
 		<Card>
 			<CardContent className="space-y-6">
@@ -36,10 +41,18 @@ export function MetricCard({
 					</div>
 				</div>
 				<div>
-					<p className="text-4xl font-semibold leading-none tracking-tight tabular-nums">
-						{value}
-					</p>
-					<p className={`mt-3 text-base ${SUB_TONE_CLASS[subTone]}`}>{sub}</p>
+					{loading ? (
+						<ShimmerBlock className="h-9 w-24" />
+					) : (
+						<p className="text-4xl font-semibold leading-none tracking-tight tabular-nums">
+							{value}
+						</p>
+					)}
+					{loading ? (
+						<ShimmerBlock className="mt-3 h-5 w-40" />
+					) : (
+						<p className={`mt-3 text-base ${SUB_TONE_CLASS[subTone]}`}>{sub}</p>
+					)}
 				</div>
 			</CardContent>
 		</Card>

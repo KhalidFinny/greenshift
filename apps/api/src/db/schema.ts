@@ -107,6 +107,12 @@ export const projects = sqliteTable(
 		budget: real(),
 		location: text(),
 		industrySector: text("industry_sector"),
+		// Scope of work, shown to bidders on the project detail. Kept as JSON
+		// arrays because a project carries an open-ended number of each.
+		technicalRequirements: text("technical_requirements", { mode: "json" })
+			.$type<string[]>()
+			.default([]),
+		deliverables: text({ mode: "json" }).$type<string[]>().default([]),
 		// Risk assessment result
 		riskScore: real("risk_score"),
 		riskSummary: text("risk_summary"),

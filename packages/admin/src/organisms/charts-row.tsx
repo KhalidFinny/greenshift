@@ -10,26 +10,57 @@ import {
 	Grid,
 	Ring,
 	RingChart,
+	ShimmerBlock,
 } from "@greenshift/ui";
 
 interface ChartsRowProps {
+	/** Projects submitted per month over the trailing year. */
 	activityData: Array<{ label: string; value: number }>;
+	/** Tonnes of CO2e the MRV reports measured. */
 	carbonReduction: number;
+	/** Tonnes of CO2e the submitted projects target in total. */
+	carbonTarget: number;
+	/** Data still in flight: same two cards, shimmering plots and figures. */
+	loading?: boolean;
 }
 
-export function ChartsRow({ activityData, carbonReduction }: ChartsRowProps) {
+export function ChartsRow({
+	activityData,
+	carbonReduction,
+	carbonTarget,
+	loading = false,
+}: ChartsRowProps) {
+	// The ring saturates at the project target; the figures below stay exact.
+	const achieved = Math.min(carbonReduction, carbonTarget);
 	const carbonData = [
 		{
 			label: "Achieved",
-			value: carbonReduction,
-			maxValue: 100,
+			value: achieved,
+			maxValue: carbonTarget || 1,
 			color: "var(--chart-1)",
 		},
 		{
 			label: "Target",
-			value: 100 - carbonReduction,
-			maxValue: 100,
+			value: Math.max(carbonTarget - achieved, 0),
+			maxValue: carbonTarget || 1,
 			color: "var(--chart-5)",
+		},
+	];
+	const share =
+		carbonTarget > 0 ? Math.round((carbonReduction / carbonTarget) * 100) : 0;
+	// Row labels describe what is measured, so they stay real text while loading.
+	const carbonStats = [
+		{
+			label: "CO₂e reduced",
+			value: `${carbonReduction.toLocaleString("en-US")} tons`,
+		},
+		{
+			label: "Project target",
+			value: `${carbonTarget.toLocaleString("en-US")} tons`,
+		},
+		{
+			label: "Target progress",
+			value: `${share}%`,
 		},
 	];
 
@@ -39,16 +70,20 @@ export function ChartsRow({ activityData, carbonReduction }: ChartsRowProps) {
 				<CardHeader className="space-y-2">
 					<CardTitle className="text-xl">Platform Activity</CardTitle>
 					<p className="text-base text-muted-foreground">
-						Project submissions per month (2026)
+						Projects submitted per month
 					</p>
 				</CardHeader>
 				<CardContent className="pt-0">
-					<BarChart data={activityData} xDataKey="label" aspectRatio="16 / 9">
-						<Grid horizontal />
-						<Bar dataKey="value" fill="var(--chart-1)" lineCap="round" />
-						<BarXAxis />
-						<ChartTooltip />
-					</BarChart>
+					{loading ? (
+						<ShimmerBlock className="aspect-[16/9] w-full" />
+					) : (
+						<BarChart data={activityData} xDataKey="label" aspectRatio="16 / 9">
+							<Grid horizontal />
+							<Bar dataKey="value" fill="var(--chart-1)" lineCap="round" />
+							<BarXAxis />
+							<ChartTooltip />
+						</BarChart>
+					)}
 				</CardContent>
 			</Card>
 
@@ -56,38 +91,33 @@ export function ChartsRow({ activityData, carbonReduction }: ChartsRowProps) {
 				<CardHeader className="space-y-2">
 					<CardTitle className="text-xl">Carbon Reduction</CardTitle>
 					<p className="text-base text-muted-foreground">
-						Progress toward the annual target
+						Measured against what the projects target
 					</p>
 				</CardHeader>
 				<CardContent className="pt-0">
 					<div className="relative mx-auto w-fit">
-						<RingChart data={carbonData} size={220} strokeWidth={20}>
-							<Ring index={0} />
-							<Ring index={1} />
-						</RingChart>
-						<div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-							<p className="text-4xl font-semibold leading-none tabular-nums text-primary">
-								{carbonReduction}
-							</p>
-							<p className="mt-2 text-base text-muted-foreground">ton CO₂e</p>
-						</div>
+						{loading ? (
+							<ShimmerBlock className="size-[220px] rounded-full" />
+						) : (
+							<>
+								<RingChart data={carbonData} size={220} strokeWidth={20}>
+									<Ring index={0} />
+									<Ring index={1} />
+								</RingChart>
+								<div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+									<p className="text-4xl font-semibold leading-none tabular-nums text-primary">
+										{carbonReduction.toLocaleString("en-US")}
+									</p>
+									<p className="mt-2 text-base text-muted-foreground">
+										ton CO₂e
+									</p>
+								</div>
+							</>
+						)}
 					</div>
 
 					<div className="mt-6 overflow-hidden rounded-xl border border-border/70">
-						{[
-							{
-								label: "CO₂e reduced",
-								value: `${carbonReduction} tons`,
-							},
-							{
-								label: "Target progress",
-								value: `${carbonReduction}%`,
-							},
-							{
-								label: "Energy saved",
-								value: "63.000 kWh",
-							},
-						].map((stat, index) => (
+						{carbonStats.map((stat, index) => (
 							<div
 								key={stat.label}
 								className={`flex items-center justify-between gap-4 px-4 py-4 ${
@@ -95,9 +125,13 @@ export function ChartsRow({ activityData, carbonReduction }: ChartsRowProps) {
 								}`}
 							>
 								<p className="text-base text-muted-foreground">{stat.label}</p>
-								<p className="text-xl font-semibold leading-none tabular-nums text-primary">
-									{stat.value}
-								</p>
+								{loading ? (
+									<ShimmerBlock className="h-6 w-28" />
+								) : (
+									<p className="text-xl font-semibold leading-none tabular-nums text-primary">
+										{stat.value}
+									</p>
+								)}
 							</div>
 						))}
 					</div>

@@ -1,10 +1,9 @@
-import { faSearch } from "@fortawesome/free-solid-svg-icons";
+import { faSearch, faX } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAuth } from "@greenshift/core";
 import {
 	Button,
-	Card,
-	CardContent,
+	EmptyState,
 	Input,
 	Tabs,
 	TabsContent,
@@ -13,6 +12,7 @@ import {
 } from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { isTopMatch } from "../lib/matchmaking";
 import { useVendorData } from "../lib/use-vendor-data";
 import { VendorProjectCard } from "../organisms/vendor-project-card";
 
@@ -22,9 +22,12 @@ type ProcurementFilter =
 	| "CLOSED_BIDDING"
 	| "DIRECT_SELECTION";
 
+/** Card frames rendered while the tender list is still in flight. */
+const LOADING_SLOTS = Array.from({ length: 6 }, () => null);
+
 export function VendorOpportunitiesPage() {
 	const { user } = useAuth();
-	const { projects, toggleSaveProject, proposals } = useVendorData();
+	const { isLoading, projects, toggleSaveProject, proposals } = useVendorData();
 	const [searchQuery, setSearchQuery] = useState("");
 	const [selectedMethod, setSelectedMethod] =
 		useState<ProcurementFilter>("ALL");
@@ -58,8 +61,8 @@ export function VendorOpportunitiesPage() {
 	});
 
 	// Recommended = high match (≥90) among available unapplied tenders
-	const recommended = availableProjects.filter(
-		(p) => p.matchmaking.overallMatch >= 90,
+	const recommended = availableProjects.filter((p) =>
+		isTopMatch(p.matchmaking),
 	);
 	const saved = availableProjects.filter((p) => p.isSaved);
 
@@ -72,38 +75,9 @@ export function VendorOpportunitiesPage() {
 
 	return (
 		<div className="space-y-6">
-			{/* Search & Procurement Filter Bar */}
-			<div className="space-y-3">
-				<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-					<div className="relative flex-1">
-						<FontAwesomeIcon
-							icon={faSearch}
-							className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground"
-						/>
-						<Input
-							placeholder="Search open tenders by title, client company, or industrial sector..."
-							className="pl-9"
-							value={searchQuery}
-							onChange={(e) => setSearchQuery(e.target.value)}
-						/>
-					</div>
-					{searchQuery && (
-						<Button
-							variant="ghost"
-							size="sm"
-							onClick={() => setSearchQuery("")}
-							className="text-xs"
-						>
-							Clear Search
-						</Button>
-					)}
-				</div>
-
-				{/* Quick Method Filters */}
+			{/* Method filters + Search on one line */}
+			<div className="flex flex-wrap items-center gap-3">
 				<div className="flex flex-wrap items-center gap-2">
-					<span className="text-xs font-medium text-muted-foreground">
-						Method:
-					</span>
 					{methodPills.map((pill) => {
 						const isSelected = selectedMethod === pill.value;
 						return (
@@ -112,9 +86,9 @@ export function VendorOpportunitiesPage() {
 								variant={isSelected ? "default" : "outline"}
 								size="sm"
 								onClick={() => setSelectedMethod(pill.value)}
-								className={`h-7 px-3 text-xs ${
+								className={`h-8 px-3 text-sm ${
 									isSelected
-										? "bg-[#03442C] text-white hover:bg-[#03442C]/90"
+										? "bg-[#00712D] text-white hover:bg-[#00712D]/90"
 										: "text-muted-foreground hover:text-foreground"
 								}`}
 							>
@@ -124,13 +98,38 @@ export function VendorOpportunitiesPage() {
 					})}
 				</div>
 
-				{selectedMethod === "DIRECT_SELECTION" && (
-					<p className="text-xs text-purple-600 dark:text-purple-400">
-						ℹ️ Direct Selection projects are private invitations — only visible
-						if you've been invited by the company.
-					</p>
-				)}
+				<div className="relative ml-auto w-64">
+					<FontAwesomeIcon
+						icon={faSearch}
+						className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground"
+					/>
+					<Input
+						placeholder="Search tenders..."
+						className="h-8 pl-8 text-sm"
+						value={searchQuery}
+						onChange={(e) => setSearchQuery(e.target.value)}
+					/>
+					{searchQuery && (
+						<Button
+							type="button"
+							variant="ghost"
+							size="icon"
+							aria-label="Clear search"
+							onClick={() => setSearchQuery("")}
+							className="absolute right-1 top-1/2 size-7 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+						>
+							<FontAwesomeIcon icon={faX} />
+						</Button>
+					)}
+				</div>
 			</div>
+
+			{selectedMethod === "DIRECT_SELECTION" && (
+				<p className="text-sm text-purple-600">
+					Direct Selection projects are private invitations. Only visible if
+					you've been invited by the company.
+				</p>
+			)}
 
 			<Tabs defaultValue="available">
 				<TabsList className="grid w-full grid-cols-3">
@@ -145,53 +144,52 @@ export function VendorOpportunitiesPage() {
 
 				{/* 1. Available Tenders Tab */}
 				<TabsContent value="available" className="mt-6 space-y-4">
-					<div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 px-4 py-2.5 text-xs text-muted-foreground">
+					<div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 px-4 py-2.5 text-sm text-muted-foreground">
 						<span>
 							Showing unapplied tender opportunities. Already submitted a
 							proposal?
 						</span>
 						<Link
 							to="/vendor/deals"
-							className="font-semibold text-emerald-700 hover:underline dark:text-emerald-400"
+							className="font-semibold text-emerald-700 hover:underline"
 						>
-							Track in My Deals →
+							Track in My Deals
 						</Link>
 					</div>
 
-					{availableProjects.length === 0 ? (
-						<Card>
-							<CardContent className="p-8 text-center text-xs text-muted-foreground">
-								No available open tenders match your current search or filters.
-							</CardContent>
-						</Card>
+					{!isLoading && availableProjects.length === 0 ? (
+						<EmptyState
+							title="No tenders match"
+							description="No available tenders match your current search or filters."
+						/>
 					) : (
 						<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-							{availableProjects.map((proj) => (
-								<VendorProjectCard
-									key={proj.id}
-									project={proj}
-									onSave={toggleSaveProject}
-								/>
-							))}
+							{(isLoading ? LOADING_SLOTS : availableProjects).map(
+								(proj, i) => (
+									<VendorProjectCard
+										key={proj?.id ?? i}
+										project={proj ?? undefined}
+										onSave={toggleSaveProject}
+									/>
+								),
+							)}
 						</div>
 					)}
 				</TabsContent>
 
 				{/* 2. Recommended Tab */}
 				<TabsContent value="recommended" className="mt-6 space-y-4">
-					{recommended.length === 0 ? (
-						<Card>
-							<CardContent className="p-8 text-center text-xs text-muted-foreground">
-								No recommended tenders match your current criteria. Try
-								adjusting your search query or filters.
-							</CardContent>
-						</Card>
+					{!isLoading && recommended.length === 0 ? (
+						<EmptyState
+							title="No strong matches"
+							description="No recommended tenders match your current criteria. Try adjusting your search or filters."
+						/>
 					) : (
 						<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-							{recommended.map((proj) => (
+							{(isLoading ? LOADING_SLOTS : recommended).map((proj, i) => (
 								<VendorProjectCard
-									key={proj.id}
-									project={proj}
+									key={proj?.id ?? i}
+									project={proj ?? undefined}
 									onSave={toggleSaveProject}
 									variant="recommended"
 								/>
@@ -202,19 +200,17 @@ export function VendorOpportunitiesPage() {
 
 				{/* 3. Saved Tab */}
 				<TabsContent value="saved" className="mt-6 space-y-4">
-					{saved.length === 0 ? (
-						<Card>
-							<CardContent className="p-8 text-center text-xs text-muted-foreground">
-								No saved projects yet. Bookmark projects using the bookmark icon
-								on any project card to review them here.
-							</CardContent>
-						</Card>
+					{!isLoading && saved.length === 0 ? (
+						<EmptyState
+							title="No saved tenders"
+							description="Bookmark a tender from any card to shortlist it here."
+						/>
 					) : (
 						<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-							{saved.map((proj) => (
+							{(isLoading ? LOADING_SLOTS : saved).map((proj, i) => (
 								<VendorProjectCard
-									key={proj.id}
-									project={proj}
+									key={proj?.id ?? i}
+									project={proj ?? undefined}
 									onSave={toggleSaveProject}
 								/>
 							))}

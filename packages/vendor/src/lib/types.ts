@@ -17,18 +17,22 @@ export interface CompanyVerificationDetails {
 	verifiedAt?: string;
 }
 
+/**
+ * The matching model's output for one project, as the API returns it. Every
+ * score is 0-100 and `projectRisk` is inverted, so a higher number always means
+ * a better outcome. The criterion wording lives with the component that renders
+ * it (`lib/matchmaking.ts`); only the scores are data.
+ */
 export interface MatchmakingBreakdown {
-	technicalFit: number; // 0-100
-	technicalFitExplanation: string;
-	relevantExperience: number; // 0-100
-	relevantExperienceExplanation: string;
-	historicalPerformance: number; // 0-100
-	historicalPerformanceExplanation: string;
-	priceAndValue: number; // 0-100
-	priceAndValueExplanation: string;
-	projectRisk: number; // 0-100
-	projectRiskExplanation: string;
-	overallMatch: number; // 0-100
+	technicalFit: number;
+	relevantExperience: number;
+	historicalPerformance: number;
+	priceAndValue: number;
+	projectRisk: number;
+	/** Weighted total across the five criteria. */
+	overallMatch: number;
+	/** Position among the vendors scored for this project, 1 = best. */
+	rank: number;
 }
 
 export type ProcurementMethod =
@@ -56,18 +60,15 @@ export type ProposalStatus =
 	| "CLOSED";
 
 export interface CostBreakdown {
-	equipmentCost: number;
-	installationCost: number;
-	laborCost: number;
-	operationalCost: number;
-	otherCost: number;
+	/** The submitted amount. This is the only cost figure the API guarantees. */
 	totalPrice: number;
+	/** Reported separately by the vendor; null when the API has no value. */
+	operationalCost: number | null;
 }
 
 export interface ExpectedImpact {
-	energySavingsPercent: number; // e.g. 22%
-	carbonReductionTons: number; // e.g. 150 tCO2e/yr
-	projectedRoiPercent: number; // e.g. 14.5%
+	/** Null when the API has no value. Never defaulted to a plausible figure. */
+	projectedRoiPercent: number | null;
 }
 
 export interface StructuredProposal {
@@ -75,24 +76,21 @@ export interface StructuredProposal {
 	tenderId: string;
 	projectId: string;
 	projectTitle: string;
+	/** The client company, from the proposal detail. Empty when the API has none. */
 	companyName: string;
 	procurementMethod: ProcurementMethod;
 	status: ProposalStatus;
-	executiveSummary: string;
-	technicalSolution: string;
-	equipmentSpecs: string;
-	includedScope: string;
-	excludedScope: string;
-	estimatedStartDate: string;
-	estimatedDurationMonths: number;
+	/** Detail-endpoint fields. Null until the detail is fetched, or when absent. */
+	technicalSpec: string | null;
+	projectedRoi: number | null;
+	warrantyPeriod: number | null;
 	costBreakdown: CostBreakdown;
 	expectedImpact: ExpectedImpact;
-	warrantyYears: number;
-	warrantyCoverage: string;
-	pdfDocumentName?: string;
 	submittedAt?: string;
 	revisionCount: number;
 }
+
+export type Priority = "urgent" | "high" | "medium" | "low";
 
 export interface NegotiationRequest {
 	id: string;
@@ -107,6 +105,7 @@ export interface NegotiationRequest {
 		| "SUBMITTED_BY_VENDOR"
 		| "AGREED"
 		| "LOCKED";
+	priority?: Priority;
 	requestedPriceReduction?: number;
 	requestedWarrantyYears?: number;
 	requestedTimelineMonths?: number;
@@ -161,6 +160,26 @@ export interface MonthlyEnergyReport {
 	submittedAt: string;
 }
 
+/**
+ * One predictive-analytics period: what the model expects the site to consume
+ * and save, with the accuracy metrics it was scored on. Periods run forward from
+ * the last reported month, so they are directly comparable with the actuals
+ * above.
+ */
+export interface EnergyForecast {
+	id: string;
+	period: string; // e.g. "2026-10"
+	forecastedConsumptionKwh: number;
+	forecastedSavingsKwh: number;
+	modelName: string;
+	metrics: {
+		mae?: number;
+		rmse?: number;
+		r2?: number;
+		cvRmse?: number;
+	} | null;
+}
+
 export interface ActiveVendorProject {
 	id: string;
 	title: string;
@@ -170,10 +189,12 @@ export interface ActiveVendorProject {
 	agreedBudget: number;
 	overallProgressPercent: number;
 	currentMilestoneTitle: string;
-	deadlineDate: string;
+	deadlineDate: string | null;
 	status: "IN_PROGRESS" | "COMMISSIONING" | "COMPLETED";
 	milestones: ProjectMilestone[];
 	monthlyReports: MonthlyEnergyReport[];
+	/** Predictive periods, newest first. Empty when the model has not run. */
+	forecasts: EnergyForecast[];
 	expectedEnergySavingsPercent: number;
 	actualEnergySavingsPercent?: number;
 	expectedCarbonReductionTons: number;
@@ -188,11 +209,19 @@ export interface VendorPortfolioItem {
 	location: string;
 	description: string;
 	projectValue: number;
-	durationMonths: number;
+	/** Null when the record has no figure. Never defaulted to a plausible one. */
+	durationMonths: number | null;
 	servicesProvided: string;
-	energySavingPercent: number;
-	carbonReductionTons: number;
-	completionYear: number;
+	/**
+	 * Two different quantities share this record type. An awarded project reports
+	 * the saving in kWh/yr from the project itself; a vendor-authored record
+	 * reports a percentage the vendor entered. Keeping them apart stops the
+	 * kWh figure from being printed with a percent sign.
+	 */
+	energySavingKwh: number | null;
+	energySavingPercent: number | null;
+	carbonReductionTons: number | null;
+	completionYear: number | null;
 	status: "COMPLETED" | "VERIFIED";
 	documentName?: string;
 }
@@ -229,15 +258,19 @@ export interface VendorProjectCardData {
 	location: string;
 	estimatedValue: number;
 	clientBudget: number;
-	carbonReductionTargetTons: number;
+	/** Tonnes of CO2e the project targets; null when the company has not set one. */
+	carbonReductionTargetTons: number | null;
 	procurementMethod: ProcurementMethod;
 	tenderDeadlineAt: string;
-	matchmaking: MatchmakingBreakdown;
+	/** Null until the matching model has scored this project for the vendor. */
+	matchmaking: MatchmakingBreakdown | null;
+	priority?: Priority;
 	isSaved?: boolean;
 	/** For DIRECT_SELECTION: only the invited vendor can see this project */
 	invitedVendorId?: string;
 	description: string;
-	riskScore: number;
+	/** Assessed risk score; null when the project has not been assessed. */
+	riskScore: number | null;
 	technicalRequirements: string[];
 	deliverables: string[];
 }

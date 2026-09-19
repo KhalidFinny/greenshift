@@ -88,7 +88,7 @@ export default function HowItWorksSection() {
 							</button>
 							{index < steps.length - 1 && (
 								<div
-									className="mt-6 h-px w-12 bg-[#03442C]/20"
+									className="mt-6 h-px w-12 bg-[#CDDAD5]"
 									aria-hidden="true"
 								/>
 							)}
@@ -113,7 +113,7 @@ export default function HowItWorksSection() {
 					<figure className="m-0">
 						<div
 							ref={imageRef}
-							className="rounded-[16px] border border-[#03442C]/20 bg-white p-2 will-change-transform motion-reduce:!transform-none"
+							className="rounded-[16px] border border-[#CDDAD5] bg-white p-2 shadow-[0_2px_16px_rgba(0,0,0,0.08)] will-change-transform motion-reduce:!transform-none"
 						>
 							<img
 								src="/dashboard.webp"

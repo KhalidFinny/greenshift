@@ -6,9 +6,12 @@ import {
 	proposals,
 	tenders,
 	users,
+	vendorMatchScores,
 } from "../../../db/schema";
 
-// Every project that currently has a tender, open tenders first.
+// Every project that currently has a tender, open tenders first. The matching
+// model's score for the calling vendor rides along, so the list can rank and
+// explain each opportunity without a second request.
 export async function listProjectTenders(
 	db: GreenShiftDb,
 	vendorId: number,
@@ -21,6 +24,7 @@ export async function listProjectTenders(
 			companyName: users.name,
 			tender: tenders,
 			myProposalId: proposals.id,
+			matchScore: vendorMatchScores,
 		})
 		.from(tenders)
 		.innerJoin(projects, eq(tenders.projectId, projects.id))
@@ -28,6 +32,13 @@ export async function listProjectTenders(
 		.leftJoin(
 			proposals,
 			and(eq(proposals.tenderId, tenders.id), eq(proposals.vendorId, vendorId)),
+		)
+		.leftJoin(
+			vendorMatchScores,
+			and(
+				eq(vendorMatchScores.projectId, projects.id),
+				eq(vendorMatchScores.vendorId, vendorId),
+			),
 		)
 		.$dynamic();
 	if (tenderStatus) {

@@ -4,7 +4,7 @@ import { createDb } from "../../../db";
 import type { ApiEnv } from "../../../env";
 import { requireRecentStepUp } from "../../../lib/authz";
 import { iso, parseLimit } from "../../../lib/format";
-import { requireJson } from "../../../lib/http";
+import { apiError, apiNotFound, apiSuccess } from "../../../lib/response";
 import { factory } from "../admin.shared";
 import { listBrokers } from "./brokers.repository";
 import { verifyBroker } from "./brokers.service";
@@ -42,9 +42,6 @@ brokerRoutes.patch(
 	"/brokers/:id/verify",
 	requireRecentStepUp,
 	...factory.createHandlers(async (c) => {
-		const mediaTypeError = requireJson(c);
-		if (mediaTypeError) return mediaTypeError;
-
 		const id = Number(c.req.param("id"));
 		const body = (await c.req
 			.json()
@@ -57,21 +54,10 @@ brokerRoutes.patch(
 				(typeof body.rejectionReason !== "string" ||
 					body.rejectionReason.length > 500))
 		) {
-			return c.json(
-				{ error: { code: "VALIDATION", message: "Invalid input" } },
-				400,
-			);
+			return apiError(c, "VALIDATION");
 		}
 		if (!body.verified && !body.rejectionReason?.trim()) {
-			return c.json(
-				{
-					error: {
-						code: "VALIDATION",
-						message: "A rejection reason is required",
-					},
-				},
-				400,
-			);
+			return apiError(c, "VALIDATION", "A rejection reason is required");
 		}
 
 		const result = await verifyBroker(createDb(c.env.DB), {
@@ -81,11 +67,8 @@ brokerRoutes.patch(
 			actorId: c.get("user").id,
 		});
 		if (!result.ok) {
-			return c.json(
-				{ error: { code: "NOT_FOUND", message: "Broker not found" } },
-				404,
-			);
+			return apiNotFound(c, "Broker");
 		}
-		return c.json({ ok: true });
+		return apiSuccess(c, { ok: true }, "Changes saved successfully");
 	}),
 );

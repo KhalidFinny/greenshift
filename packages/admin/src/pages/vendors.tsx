@@ -17,12 +17,10 @@ import {
 	CardHeader,
 	CardTitle,
 	ChartTooltip,
-	ContentSkeleton,
 	DataTable,
 	EmptyState,
 	Grid,
-	Ring,
-	RingChart,
+	ShimmerBlock,
 } from "@greenshift/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -32,87 +30,18 @@ import { useStepUpAction } from "../lib/use-step-up-action";
 import { ExportMenu } from "../organisms/export-menu";
 import { MetricCard } from "../organisms/metric-card";
 import { StepUpDialog } from "../organisms/step-up-dialog";
+import { TableSkeleton } from "../organisms/table-skeleton";
 import { VendorDetailDialog } from "../organisms/vendor-detail-dialog";
 import { VendorPerformanceDialog } from "../organisms/vendor-performance-dialog";
 
-const MATCH_RATE = [
-	{ label: "Successful", value: 68, maxValue: 100, color: "var(--chart-1)" },
-	{ label: "Not matched", value: 32, maxValue: 100, color: "var(--chart-5)" },
-];
-
-const MATCHES_OVER_TIME = [
-	{ label: "Jan", value: 4 },
-	{ label: "Feb", value: 6 },
-	{ label: "Mar", value: 7 },
-	{ label: "Apr", value: 9 },
-	{ label: "May", value: 11 },
-	{ label: "Jun", value: 12 },
-	{ label: "Jul", value: 14 },
-	{ label: "Aug", value: 18 },
-];
-
-const DEMO_PERFORMANCE_VENDORS: AdminVendor[] = [
-	{
-		id: 1,
-		userId: 101,
-		email: "ops@ecotech.id",
-		userName: "EcoTech Team",
-		companyName: "EcoTech",
-		description: "HVAC retrofit and factory utility optimization specialist.",
-		certifications: ["ISO 50001", "General OHS"],
-		portfolio: [
-			"600 TR chiller retrofit",
-			"Textile factory compressor optimization",
-		],
-		rating: 4.6,
-		totalProjects: 7,
-		verifiedAt: "2026-07-14T09:00:00.000Z",
-		createdAt: "2026-05-03T09:00:00.000Z",
-	},
-	{
-		id: 2,
-		userId: 102,
-		email: "growth@greenworks.id",
-		userName: "GreenWorks Team",
-		companyName: "GreenWorks",
-		description:
-			"Energy-efficiency vendor focused on audits and LED retrofits.",
-		certifications: ["ISO 9001", "Energy Auditor"],
-		portfolio: ["Warehouse LED relamping", "FMCG factory energy audit"],
-		rating: 4.4,
-		totalProjects: 6,
-		verifiedAt: "2026-06-28T09:00:00.000Z",
-		createdAt: "2026-04-21T09:00:00.000Z",
-	},
-	{
-		id: 3,
-		userId: 103,
-		email: "project@solarx.id",
-		userName: "SolarX Team",
-		companyName: "SolarX",
-		description:
-			"Rooftop solar implementation and energy performance monitoring.",
-		certifications: ["IEC Solar Installer"],
-		portfolio: ["500 kWp rooftop solar", "Multi-site energy monitoring"],
-		rating: 4.2,
-		totalProjects: 5,
-		verifiedAt: "2026-06-02T09:00:00.000Z",
-		createdAt: "2026-03-17T09:00:00.000Z",
-	},
-	{
-		id: 4,
-		userId: 104,
-		email: "team@carbonflow.id",
-		userName: "CarbonFlow Team",
-		companyName: "CarbonFlow",
-		description: "Boiler retrofit and heat-recovery vendor for heavy industry.",
-		certifications: ["PJK3", "Boiler Specialist"],
-		portfolio: ["Heat recovery kiln", "Biomass boiler retrofit"],
-		rating: 4.0,
-		totalProjects: 5,
-		verifiedAt: null,
-		createdAt: "2026-02-11T09:00:00.000Z",
-	},
+/** Column labels for the loading frame, in table order. */
+const VENDOR_HEADERS = [
+	"Vendor",
+	"Certifications",
+	"Portfolio",
+	"Rating",
+	"Verification",
+	"Actions",
 ];
 
 const vendorColumns = (
@@ -238,35 +167,34 @@ export function AdminVendors() {
 			);
 	};
 
-	if (vendorsQuery.isPending) {
-		return <ContentSkeleton />;
-	}
-
 	if (vendorsQuery.isError) {
 		return (
-			<div className="space-y-4">
-				<EmptyState
-					title="Failed to load vendors"
-					description="Unable to retrieve vendor and matchmaking data."
-				/>
-			</div>
+			<EmptyState
+				tone="error"
+				title="Vendors did not load"
+				description="GET /api/admin/vendors did not answer, so the vendor roster and its matchmaking figures could not be read."
+				action={
+					<Button variant="outline" onClick={() => vendorsQuery.refetch()}>
+						Try again
+					</Button>
+				}
+			/>
 		);
 	}
 
-	const vendors = vendorsQuery.data.vendors;
+	// Cached vendors survive a refetch, so the page keeps its real frames and
+	// each part shimmers only its own values.
+	const loading = vendorsQuery.isPending;
+	const vendors = vendorsQuery.data?.vendors ?? [];
 	const totalVendors = vendors.length;
 	const verifiedCount = vendors.filter((v) => v.verifiedAt !== null).length;
+	// No vendors yet means no rating to average; anything else would be invented.
 	const averageRating =
 		totalVendors > 0
 			? vendors.reduce((sum, v) => sum + v.rating, 0) / totalVendors
-			: 4.2;
-	const totalProjects =
-		totalVendors > 0
-			? vendors.reduce((sum, v) => sum + v.totalProjects, 0)
-			: 23;
-	const performanceSource =
-		vendors.length > 0 ? vendors : [...DEMO_PERFORMANCE_VENDORS];
-	const topVendors = [...performanceSource]
+			: 0;
+	const totalProjects = vendors.reduce((sum, v) => sum + v.totalProjects, 0);
+	const topVendors = [...vendors]
 		.sort((a, b) => b.rating - a.rating)
 		.slice(0, 5);
 	const performanceChartData = topVendors.map((vendor) => ({
@@ -302,31 +230,27 @@ export function AdminVendors() {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex flex-wrap items-end justify-between gap-4">
-				<div>
-					<h1 className="text-2xl font-semibold">Vendors</h1>
-					<p className="mt-1 text-base text-muted-foreground">
-						Vendor curation and verification.
-					</p>
-				</div>
-				<ExportMenu
-					filename="vendors"
-					title="Vendors"
-					sections={vendorExportSections}
-				/>
+			<div className="flex flex-wrap items-center justify-end gap-4">
+				{loading ? null : (
+					<ExportMenu
+						filename="vendors"
+						title="Vendors"
+						sections={vendorExportSections}
+					/>
+				)}
 			</div>
 
 			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 				{[
 					{
 						label: "Total Vendors",
-						value: String(totalVendors || 12),
+						value: String(totalVendors),
 						icon: faWarehouse,
 						sub: "registered vendors",
 					},
 					{
 						label: "Verified",
-						value: String(verifiedCount || 8),
+						value: String(verifiedCount),
 						icon: faCheckCircle,
 						sub: "vendors passed curation",
 					},
@@ -349,6 +273,7 @@ export function AdminVendors() {
 						value={card.value}
 						sub={card.sub}
 						icon={card.icon}
+						loading={loading}
 					/>
 				))}
 			</div>
@@ -359,27 +284,31 @@ export function AdminVendors() {
 				</CardHeader>
 				<CardContent className="grid gap-6 lg:grid-cols-[minmax(0,1.65fr)_minmax(280px,1fr)]">
 					<div className="space-y-4">
-						<BarChart
-							data={performanceChartData}
-							xDataKey="label"
-							aspectRatio="16 / 8"
-						>
-							<Grid
-								horizontal
-								highlightRowValues={[4.5]}
-								highlightRowStroke="var(--chart-5)"
-							/>
-							<Bar dataKey="value" fill="var(--chart-3)" lineCap="round" />
-							<BarXAxis />
-							<ChartTooltip />
-						</BarChart>
+						{loading ? (
+							<ShimmerBlock className="aspect-[16/8] w-full" />
+						) : (
+							<BarChart
+								data={performanceChartData}
+								xDataKey="label"
+								aspectRatio="16 / 8"
+							>
+								<Grid
+									horizontal
+									highlightRowValues={[4.5]}
+									highlightRowStroke="var(--chart-5)"
+								/>
+								<Bar dataKey="value" fill="var(--chart-3)" lineCap="round" />
+								<BarXAxis />
+								<ChartTooltip />
+							</BarChart>
+						)}
 						<div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
 							<p className="text-base text-muted-foreground">
 								Target benchmark: 4.5 / 5
 							</p>
-							{performanceSource.length > 5 ? (
+							{vendors.length > 5 ? (
 								<Button variant="outline" onClick={() => setPerfOpen(true)}>
-									View All ({performanceSource.length})
+									View All ({vendors.length})
 								</Button>
 							) : null}
 						</div>
@@ -391,91 +320,49 @@ export function AdminVendors() {
 							<p className="text-xl font-semibold">Highest-rated vendors</p>
 						</div>
 						<ol className="divide-y divide-border">
-							{topVendors.map((vendor, index) => (
-								<li key={vendor.id} className="flex items-center gap-3 py-3">
-									<span className="w-6 shrink-0 text-base font-semibold tabular-nums text-muted-foreground">
-										{index + 1}
-									</span>
-									<div className="min-w-0 flex-1">
-										<p className="truncate text-base font-medium">
-											{vendor.companyName}
-										</p>
-										<p className="text-base text-muted-foreground">
-											{vendor.totalProjects} projects
-										</p>
-									</div>
-									<span className="shrink-0 text-xl font-semibold tabular-nums">
-										{vendor.rating.toFixed(1)}
-									</span>
-									<Button
-										variant="outline"
-										onClick={() => setDetailVendor(vendor)}
-									>
-										Detail
-									</Button>
-								</li>
-							))}
+							{loading
+								? Array.from({ length: 5 }, (_, index) => (
+										<li key={index} className="flex items-center gap-3 py-3">
+											<ShimmerBlock className="h-5 w-6 shrink-0" />
+											<div className="min-w-0 flex-1 space-y-2">
+												<ShimmerBlock className="h-5 w-40" />
+												<ShimmerBlock className="h-4 w-24" />
+											</div>
+											<ShimmerBlock className="h-6 w-10 shrink-0" />
+											<ShimmerBlock className="h-9 w-20 shrink-0" />
+										</li>
+									))
+								: topVendors.map((vendor, index) => (
+										<li
+											key={vendor.id}
+											className="flex items-center gap-3 py-3"
+										>
+											<span className="w-6 shrink-0 text-base font-semibold tabular-nums text-muted-foreground">
+												{index + 1}
+											</span>
+											<div className="min-w-0 flex-1">
+												<p className="truncate text-base font-medium">
+													{vendor.companyName}
+												</p>
+												<p className="text-base text-muted-foreground">
+													{vendor.totalProjects} projects
+												</p>
+											</div>
+											<span className="shrink-0 text-xl font-semibold tabular-nums">
+												{vendor.rating.toFixed(1)}
+											</span>
+											<Button
+												variant="outline"
+												onClick={() => setDetailVendor(vendor)}
+											>
+												Detail
+											</Button>
+										</li>
+									))}
 						</ol>
 					</div>
 				</CardContent>
 			</Card>
-
-			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-				<Card>
-					<CardHeader>
-						<CardTitle className="text-lg">Match Success Rate</CardTitle>
-					</CardHeader>
-					<CardContent className="flex items-center justify-center py-6">
-						<div className="relative shrink-0">
-							<RingChart data={MATCH_RATE} size={240} strokeWidth={18}>
-								<Ring index={0} />
-								<Ring index={1} />
-							</RingChart>
-							<div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-								<p className="text-4xl font-semibold tabular-nums text-primary">
-									68%
-								</p>
-								<p className="mt-1 text-base text-muted-foreground">
-									match rate
-								</p>
-							</div>
-						</div>
-					</CardContent>
-					<div className="mt-5 flex items-center justify-center gap-6">
-						{MATCH_RATE.map((item) => (
-							<div key={item.label} className="flex items-center gap-2">
-								<span
-									className="size-2.5 rounded-full"
-									style={{ backgroundColor: item.color }}
-									aria-hidden="true"
-								/>
-								<p className="text-base text-muted-foreground">{item.label}</p>
-								<p className="text-base font-semibold tabular-nums">
-									{item.value}%
-								</p>
-							</div>
-						))}
-					</div>
-				</Card>
-
-				<Card>
-					<CardHeader>
-						<CardTitle className="text-xl">Matches Over Time</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<BarChart
-							data={MATCHES_OVER_TIME}
-							xDataKey="label"
-							aspectRatio="16 / 9"
-						>
-							<Grid horizontal />
-							<Bar dataKey="value" fill="var(--chart-1)" lineCap="round" />
-							<BarXAxis />
-							<ChartTooltip />
-						</BarChart>
-					</CardContent>
-				</Card>
-			</div>
 
 			<Card>
 				<CardHeader>
@@ -485,10 +372,13 @@ export function AdminVendors() {
 					{verifyError && (
 						<p className="mb-4 text-base text-destructive">{verifyError}</p>
 					)}
-					{vendors.length === 0 ? (
-						<p className="text-base text-muted-foreground">
-							No registered vendors yet.
-						</p>
+					{loading ? (
+						<TableSkeleton headers={VENDOR_HEADERS} search rows={5} />
+					) : vendors.length === 0 ? (
+						<EmptyState
+							title="No vendors to verify"
+							description="No vendor account has completed registration yet, so the curation queue is empty. Vendors appear here as soon as they sign up."
+						/>
 					) : (
 						<DataTable
 							columns={columns}
@@ -511,7 +401,7 @@ export function AdminVendors() {
 			<VendorPerformanceDialog
 				open={perfOpen}
 				onOpenChange={setPerfOpen}
-				vendors={performanceSource}
+				vendors={vendors}
 				onViewDetails={setDetailVendor}
 			/>
 

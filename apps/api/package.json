@@ -6,6 +6,7 @@
 		".": "./src/index.ts",
 		"./contracts": "./src/contracts.ts",
 		"./lib/session": "./src/lib/session.ts",
+		"./lib/authz": "./src/lib/authz.ts",
 		"./lib/password": "./src/lib/password.ts"
 	}
 }

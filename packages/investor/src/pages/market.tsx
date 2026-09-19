@@ -2,24 +2,63 @@ import { faArrowLeft, faCircleInfo } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import type { BondListing } from "@greenshift/api/contracts";
 import { api } from "@greenshift/core";
-import { Button, ContentSkeleton, cn, EmptyState } from "@greenshift/ui";
+import { Button, cn, EmptyState } from "@greenshift/ui";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { PRIMARY_BROKER } from "../lib/broker-platforms";
-import { BondCard } from "../organisms/market-card";
+import { BondCard, BondCardSkeleton } from "../organisms/market-card";
 
 type BondTab = "verified" | "on_progress";
 
-function ListingGrid({ listings }: { listings: BondListing[] }) {
-	if (listings.length === 0) {
+interface ListingGridProps {
+	listings: BondListing[];
+	/** Data still in flight: the same two-column grid, shimmering cards. */
+	loading: boolean;
+	tab: BondTab;
+	onSwitchTab: (tab: BondTab) => void;
+}
+
+function ListingGrid({
+	listings,
+	loading,
+	tab,
+	onSwitchTab,
+}: ListingGridProps) {
+	if (loading) {
 		return (
+			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+				{Array.from({ length: 4 }, (_, index) => (
+					<BondCardSkeleton key={index} />
+				))}
+			</div>
+		);
+	}
+
+	if (listings.length === 0) {
+		return tab === "verified" ? (
 			<EmptyState
-				title="No bonds yet"
-				description="There are no bonds in this category yet."
+				title="No verified bonds listed"
+				description="No bond has cleared verification and broker placement yet, so there is nothing to buy. Bonds still under review sit on the In Progress tab."
+				action={
+					<Button variant="outline" onClick={() => onSwitchTab("on_progress")}>
+						View bonds in progress
+					</Button>
+				}
+			/>
+		) : (
+			<EmptyState
+				title="No bonds under review"
+				description="Every listed bond has cleared verification, so nothing is waiting on review. Buyable bonds sit on the Verified tab."
+				action={
+					<Button variant="outline" onClick={() => onSwitchTab("verified")}>
+						View verified bonds
+					</Button>
+				}
 			/>
 		);
 	}
+
 	return (
 		<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 			{listings.map((listing) => (
@@ -36,6 +75,7 @@ export function BondsPage() {
 	});
 	const [tab, setTab] = useState<BondTab>("verified");
 
+	const loading = query.isPending;
 	const source = query.data?.bonds ?? [];
 
 	const verified = source.filter((listing) => listing.status === "verified");
@@ -50,7 +90,7 @@ export function BondsPage() {
 	return (
 		<main className="pb-20">
 			{/* Sticky command bar: back button stays reachable while the list scrolls. */}
-			<div className="sticky top-0 z-30 border-b border-border/70 bg-background/85 backdrop-blur">
+			<div className="sticky top-0 z-30 border-b border-border/70 bg-background">
 				<div className="page-wrap mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
 					<Link to="/">
 						<Button variant="outline" size="lg">
@@ -58,9 +98,11 @@ export function BondsPage() {
 							Back to Home
 						</Button>
 					</Link>
-					<span className="hidden text-sm text-muted-foreground sm:block">
-						{source.length} bonds listed
-					</span>
+					{loading ? null : (
+						<span className="hidden text-sm text-muted-foreground sm:block">
+							{source.length} bonds listed
+						</span>
+					)}
 				</div>
 			</div>
 
@@ -86,44 +128,46 @@ export function BondsPage() {
 					</p>
 				</div>
 
-				{query.isPending ? (
-					<div className="mt-8">
-						<ContentSkeleton />
-					</div>
-				) : query.isError ? (
-					<div className="mt-8">
-						<EmptyState
-							title="Failed to load bonds"
-							description="Unable to fetch the bond list right now."
-						/>
-					</div>
-				) : (
-					<>
-						<div className="mt-8 inline-flex flex-wrap gap-1 rounded-lg border border-border/70 bg-muted/40 p-1">
-							{tabs.map((item) => (
-								<button
-									key={item.value}
-									type="button"
-									onClick={() => setTab(item.value)}
-									className={cn(
-										"rounded-md px-4 py-2 text-base font-medium transition-colors",
-										tab === item.value
-											? "bg-background text-foreground shadow-sm"
-											: "text-muted-foreground hover:text-foreground",
-									)}
-								>
-									{item.label} ({item.count})
-								</button>
-							))}
-						</div>
+				<div className="mt-8 inline-flex flex-wrap gap-1 rounded-lg border border-border/70 bg-muted/40 p-1">
+					{tabs.map((item) => (
+						<button
+							key={item.value}
+							type="button"
+							onClick={() => setTab(item.value)}
+							className={cn(
+								"rounded-md px-4 py-2 text-base font-medium transition-colors",
+								tab === item.value
+									? "bg-background text-foreground shadow-sm"
+									: "text-muted-foreground hover:text-foreground",
+							)}
+						>
+							{item.label}
+							{loading ? null : ` (${item.count})`}
+						</button>
+					))}
+				</div>
 
-						<div className="mt-6">
-							<ListingGrid
-								listings={tab === "verified" ? verified : onProgress}
-							/>
-						</div>
-					</>
-				)}
+				<div className="mt-6">
+					{query.isError ? (
+						<EmptyState
+							tone="error"
+							title="Bond list did not load"
+							description="GET /api/investor/market did not answer, so no listings could be retrieved."
+							action={
+								<Button variant="outline" onClick={() => query.refetch()}>
+									Try again
+								</Button>
+							}
+						/>
+					) : (
+						<ListingGrid
+							listings={tab === "verified" ? verified : onProgress}
+							loading={loading}
+							tab={tab}
+							onSwitchTab={setTab}
+						/>
+					)}
+				</div>
 			</div>
 		</main>
 	);

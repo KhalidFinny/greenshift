@@ -65,13 +65,13 @@ export default function FaqSection() {
 					<Accordion
 						type="single"
 						collapsible
-						className="border-t border-[#03442C]/20"
+						className="border-t border-[#CDDAD5]"
 					>
 						{faqs.slice(0, 3).map((faq) => (
 							<AccordionItem
 								key={faq.question}
 								value={faq.question}
-								className="border-b border-[#03442C]/20"
+								className="border-b border-[#CDDAD5]"
 							>
 								<AccordionTrigger className="py-6 text-xl font-semibold text-[#1C1C1C]">
 									{faq.question}
@@ -85,13 +85,13 @@ export default function FaqSection() {
 					<Accordion
 						type="single"
 						collapsible
-						className="border-t border-[#03442C]/20"
+						className="border-t border-[#CDDAD5]"
 					>
 						{faqs.slice(3).map((faq) => (
 							<AccordionItem
 								key={faq.question}
 								value={faq.question}
-								className="border-b border-[#03442C]/20"
+								className="border-b border-[#CDDAD5]"
 							>
 								<AccordionTrigger className="py-6 text-xl font-semibold text-[#1C1C1C]">
 									{faq.question}
