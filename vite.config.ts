@@ -37,6 +37,11 @@ function warmSsrOnBoot(): Plugin {
 const config = defineConfig({
 	resolve: { tsconfigPaths: true, dedupe: ["lucide-react"] },
 	server: {
+		// Vite binds `localhost`, which resolves to ::1 here, so a readiness probe
+		// against 127.0.0.1 is refused while http://localhost:3000 answers fine.
+		// Point probes at localhost (or pass --host 127.0.0.1) before reading a
+		// start as a failure.
+		//
 		// Pre-transform the app graph at boot so the first page load doesn't
 		// pay the on-demand compile waterfall (~6s on cold start). The SSR
 		// render path imports the route graph via TanStack Start's generated
@@ -55,7 +60,17 @@ const config = defineConfig({
 	},
 	plugins: [
 		devtools(),
-		cloudflare({ viteEnvironment: { name: "ssr" } }),
+		// Workers AI has no local emulation, so the plugin proxies that binding to
+		// Cloudflare by default, and starting the proxy is an OAuth round-trip:
+		// when the browser prompt is not answered in time the whole dev server
+		// exits. Dev therefore runs local, where the review reading falls back to
+		// the composed one (apps/api/src/modules/business/review/analyst.ts), and
+		// the proxy is opt-in for when the real model is wanted:
+		//   CLOUDFLARE_VITE_REMOTE_BINDINGS=true bun run dev
+		cloudflare({
+			viteEnvironment: { name: "ssr" },
+			remoteBindings: process.env.CLOUDFLARE_VITE_REMOTE_BINDINGS === "true",
+		}),
 		tailwindcss(),
 		tanstackStart(),
 		viteReact(),

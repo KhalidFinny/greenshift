@@ -15,6 +15,23 @@ export interface ToastMessage {
 
 type ToastListener = (toast: ToastMessage) => void;
 
+/**
+ * Where the provider keeps the toasts that have not been dismissed yet, so a
+ * full page load does not wipe one mid-flight. A toast can name a project, a
+ * proposal or an amount, so the store is cleared when the session ends: the next
+ * person to sign in on the same tab must not read the last one's messages.
+ */
+export const TOAST_STORAGE_KEY = "greenshift:toasts";
+
+/** Drops the persisted queue. Called on sign-out, before the router reloads. */
+export function clearStoredToasts(): void {
+	try {
+		window.sessionStorage.removeItem(TOAST_STORAGE_KEY);
+	} catch {
+		// Private-mode storage is unavailable; nothing was persisted to clear.
+	}
+}
+
 const listeners = new Set<ToastListener>();
 
 export function publishToast(toast: ToastMessage): void {

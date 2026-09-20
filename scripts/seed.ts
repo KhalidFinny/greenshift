@@ -83,8 +83,8 @@ export async function buildSeed(): Promise<SeedGroups> {
 	// reviewed / accepted. P3 has a business revision request with a note.
 	lines.push(
 		// vendor profile
-		`INSERT INTO vendor_profiles (user_id, company_name, description, certifications, portfolio, rating, total_projects, verified_at, created_at)
-	SELECT id, 'EcoTech Solutions', 'Industrial energy-efficiency solutions provider: energy audits, equipment retrofits, and renewable energy installation.', '["SNI ISO 50001","K3 Certificate","PJK3"]', '["Boiler retrofit PT Maju Bersama (2023)","Solar rooftop 300 kWp PT Sinar Abadi (2024)"]', 4.6, 12, ${nowTs(-30)}, ${nowTs(-30)}
+		`INSERT INTO vendor_profiles (user_id, company_name, description, location, certifications, portfolio, rating, total_projects, verified_at, created_at)
+	SELECT id, 'EcoTech Solutions', 'Industrial energy-efficiency solutions provider: energy audits, equipment retrofits, and renewable energy installation.', 'Cikarang, Jawa Barat', '["SNI ISO 50001","K3 Certificate","PJK3"]', '["Boiler retrofit PT Maju Bersama (2023)","Solar rooftop 300 kWp PT Sinar Abadi (2024)"]', 4.6, 12, ${nowTs(-30)}, ${nowTs(-30)}
 	FROM users WHERE email = 'vendor1@greenshift.dev';`,
 
 		// projects (all in tendering)
@@ -142,6 +142,14 @@ export async function buildSeed(): Promise<SeedGroups> {
 	VALUES (${BUSINESS}, 'Factory Chiller Retrofit', 'Replacement of the old chiller with a high-efficiency unit and automatic load control.', 'funding', 500000000, 'Sidoarjo', 'base metals', 320, 420000, 24, ${nowTs(-120)}, ${nowTs(-120)});`,
 		`INSERT INTO projects (company_id, title, description, status, budget, location, industry_sector, target_emission_reduction, estimated_energy_saving, risk_score, created_at, updated_at)
 	VALUES (${BUSINESS}, 'Electric Motor Efficiency', 'Retrofit of standard electric motors to premium IE3 motors with VSD.', 'funding', 300000000, 'Gresik', 'manufacturing', 180, 260000, 18, ${nowTs(-90)}, ${nowTs(-90)});`,
+
+		// A project that has passed verification and is in matchmaking with no
+		// tender yet: the ranking is what the company reads first, and choosing a
+		// route is what opens the tender.
+		`INSERT INTO projects (company_id, title, description, status, budget, location, industry_sector, target_emission_reduction, estimated_energy_saving, risk_score, created_at, updated_at)
+	VALUES (${BUSINESS}, 'Cooling Tower Retrofit, Gresik', 'Replacement of the existing cooling tower with a high-efficiency unit and automatic load control, metered against the plant baseline.', 'tendering', 2400000000, 'Gresik', 'chemical', 480, 620000, 22, ${nowTs(-45)}, ${nowTs(-4)});`,
+		`INSERT INTO blueprints (project_id, status, document, validated_at, published_at, created_at, updated_at)
+	VALUES (${projectId("Cooling Tower Retrofit, Gresik")}, 'published', '{"financialProjections":{"npv":310000000,"irr":15.4,"paybackPeriod":4}}', ${nowTs(-40)}, ${nowTs(-38)}, ${nowTs(-42)}, ${nowTs(-38)});`,
 
 		// published blueprints (validated before publication, per lifecycle)
 		`INSERT INTO blueprints (project_id, status, document, validated_at, published_at, created_at, updated_at)
@@ -217,10 +225,10 @@ export async function buildSeed(): Promise<SeedGroups> {
 	// forwards to investors.
 	brokerLines.push(
 		// vendor profiles for the two vendors that won the broker-stage projects
-		`INSERT INTO vendor_profiles (user_id, company_name, description, certifications, portfolio, rating, total_projects, verified_at, created_at)
-	SELECT id, 'PT Eco Power Indonesia', 'HVAC and refrigeration efficiency contractor: chiller retrofits, controls, and measurement-based performance contracting.', '["SNI ISO 9001","K3 Certificate","Refrigerant Handling License"]', '["Central chiller retrofit PT Sentra Graha Medika (2024)","Cold storage controls PT Pangan Utama (2025)"]', 4.4, 9, ${nowTs(-120)}, ${nowTs(-120)} FROM users WHERE email = 'vendor2@greenshift.dev';`,
-		`INSERT INTO vendor_profiles (user_id, company_name, description, certifications, portfolio, rating, total_projects, verified_at, created_at)
-	SELECT id, 'PT Bio Thermal Energy', 'Biomass and waste-heat thermal systems: boiler conversion, feed systems, and emission control equipment.', '["SNI ISO 45001","K3 Certificate","Boiler Operator License"]', '["Biomass boiler 5 MWth PT Agro Industri Nusantara (2026)","Waste heat recovery PT Semen Nusantara (2025)"]', 4.7, 14, ${nowTs(-200)}, ${nowTs(-200)} FROM users WHERE email = 'vendor3@greenshift.dev';`,
+		`INSERT INTO vendor_profiles (user_id, company_name, description, location, certifications, portfolio, rating, total_projects, verified_at, created_at)
+	SELECT id, 'PT Eco Power Indonesia', 'HVAC and refrigeration efficiency contractor: chiller retrofits, controls, and measurement-based performance contracting.', 'Surabaya, Jawa Timur', '["SNI ISO 9001","K3 Certificate","Refrigerant Handling License"]', '["Central chiller retrofit PT Sentra Graha Medika (2024)","Cold storage controls PT Pangan Utama (2025)"]', 4.4, 9, ${nowTs(-120)}, ${nowTs(-120)} FROM users WHERE email = 'vendor2@greenshift.dev';`,
+		`INSERT INTO vendor_profiles (user_id, company_name, description, location, certifications, portfolio, rating, total_projects, verified_at, created_at)
+	SELECT id, 'PT Bio Thermal Energy', 'Biomass and waste-heat thermal systems: boiler conversion, feed systems, and emission control equipment.', 'Bekasi, Jawa Barat', '["SNI ISO 45001","K3 Certificate","Boiler Operator License"]', '["Biomass boiler 5 MWth PT Agro Industri Nusantara (2026)","Waste heat recovery PT Semen Nusantara (2025)"]', 4.7, 14, ${nowTs(-200)}, ${nowTs(-200)} FROM users WHERE email = 'vendor3@greenshift.dev';`,
 
 		// verified broker profile (self-registered, licence verified by the platform)
 		`INSERT INTO broker_profiles (user_id, company_name, description, representative, contact_email, contact_phone, website, address, nib, financial_license_number, license_authority, submitted_at, verified_at, created_at, updated_at)
@@ -500,6 +508,7 @@ function buildVolumeFixtures(): string[] {
 		{
 			email: "vendor4",
 			company: "PT Solar Cipta Energi",
+			location: "Tangerang, Banten",
 			description:
 				"Solar PV engineering, procurement and construction for rooftop and ground-mount systems, including net-metering permits.",
 			certifications: '["SNI ISO 9001","K3 Certificate","IUPTLU Solar"]',
@@ -511,6 +520,7 @@ function buildVolumeFixtures(): string[] {
 		{
 			email: "vendor5",
 			company: "PT Efisiensi Mesin Nusantara",
+			location: "Gresik, Jawa Timur",
 			description:
 				"Industrial motor and drive efficiency specialist: energy audits, IE3 retrofits and variable speed drive integration.",
 			certifications: '["SNI ISO 50001","K3 Certificate"]',
@@ -521,8 +531,8 @@ function buildVolumeFixtures(): string[] {
 		},
 	]) {
 		out.push(
-			`INSERT INTO vendor_profiles (user_id, company_name, description, certifications, portfolio, rating, total_projects, verified_at, created_at)
-	SELECT id, '${v.company}', '${v.description}', '${v.certifications}', '${v.portfolio}', ${v.rating}, ${v.total}, ${nowTs(-150)}, ${nowTs(-150)} FROM users WHERE email = '${v.email}@greenshift.dev';`,
+			`INSERT INTO vendor_profiles (user_id, company_name, description, location, certifications, portfolio, rating, total_projects, verified_at, created_at)
+	SELECT id, '${v.company}', '${v.description}', '${v.location}', '${v.certifications}', '${v.portfolio}', ${v.rating}, ${v.total}, ${nowTs(-150)}, ${nowTs(-150)} FROM users WHERE email = '${v.email}@greenshift.dev';`,
 		);
 	}
 
@@ -854,6 +864,7 @@ function buildVolumeFixtures(): string[] {
 		["Electric Motor Efficiency", "Motor Efficiency"],
 		["Industrial Waste Heat Recovery", "Waste Heat Recovery"],
 		["Cold Storage Efficiency Retrofit", "Chiller Replacement"],
+		["Cooling Tower Retrofit, Gresik", "Chiller Replacement"],
 		...Array.from(
 			{ length: STAGE_PROJECTS },
 			(_, j) =>
@@ -892,7 +903,9 @@ function buildVolumeFixtures(): string[] {
 	};
 
 	// Every tender the vendor can see is scored, so no opportunity card renders
-	// unscored. The story fixtures carry their own risk score and budget, so
+	// unscored, and every project a company can rank is scored too: an awarded
+	// tender without a ranking behind it reads as a project that was never
+	// matched. The story fixtures carry their own risk score and budget, so
 	// those are passed in rather than recomputed.
 	const matchTargets: Array<{
 		title: string;
@@ -907,6 +920,15 @@ function buildVolumeFixtures(): string[] {
 			risk: 20 + (n % 5) * 4,
 			budget: 400000000 + n * 150000000,
 			seed: n,
+		})),
+		// The company's own projects, read off the same figures the stage block
+		// above inserts, so each one's ranking matches the tender it carries.
+		...Array.from({ length: STAGE_PROJECTS }, (_, j) => ({
+			title: generatedTitle(10 + j),
+			measure: MEASURES[(10 + j) % MEASURES.length] as string,
+			risk: 18 + (j % 6) * 4,
+			budget: 600000000 + (j % 7) * 250000000,
+			seed: 10 + j,
 		})),
 		{
 			title: "Textile Factory Retrofit",
@@ -942,6 +964,43 @@ function buildVolumeFixtures(): string[] {
 			risk: 41,
 			budget: 2500000000,
 			seed: 9,
+		},
+		// The funded projects carry an awarded tender too, and a project past
+		// procurement still has to show the ranking it was awarded out of.
+		{
+			title: "Factory Chiller Retrofit",
+			measure: "Chiller Replacement",
+			risk: 24,
+			budget: 500000000,
+			seed: 40,
+		},
+		{
+			title: "Electric Motor Efficiency",
+			measure: "Motor Efficiency",
+			risk: 18,
+			budget: 300000000,
+			seed: 41,
+		},
+		{
+			title: "Industrial Waste Heat Recovery",
+			measure: "Waste Heat Recovery",
+			risk: 30,
+			budget: 1800000000,
+			seed: 42,
+		},
+		{
+			title: "Cold Storage Efficiency Retrofit",
+			measure: "Chiller Replacement",
+			risk: 26,
+			budget: 900000000,
+			seed: 43,
+		},
+		{
+			title: "Cooling Tower Retrofit, Gresik",
+			measure: "Chiller Replacement",
+			risk: 22,
+			budget: 2400000000,
+			seed: 44,
 		},
 	];
 

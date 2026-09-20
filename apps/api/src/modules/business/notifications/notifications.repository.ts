@@ -2,6 +2,20 @@ import { and, desc, eq } from "drizzle-orm";
 import type { GreenShiftDb } from "../../../db";
 import { notifications } from "../../../db/schema";
 
+/** One notification for one user, written where the event happens. */
+export async function insertNotification(
+	db: GreenShiftDb,
+	entry: {
+		userId: number;
+		type: string;
+		title: string;
+		body: string;
+		link: string;
+	},
+): Promise<void> {
+	await db.insert(notifications).values(entry);
+}
+
 export async function listNotifications(
 	db: GreenShiftDb,
 	userId: number,

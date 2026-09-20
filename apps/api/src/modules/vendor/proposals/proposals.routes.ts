@@ -108,6 +108,12 @@ proposalsRoutes.post(
 				return apiNotFound(c, "Tender");
 			case "tender_closed":
 				return apiError(c, "TENDER_CLOSED");
+			case "not_invited":
+				return apiError(
+					c,
+					"FORBIDDEN",
+					"This tender was not opened to your company.",
+				);
 			case "deadline_passed":
 				return apiError(c, "TENDER_DEADLINE");
 			case "duplicate":

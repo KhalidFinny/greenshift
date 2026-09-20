@@ -66,6 +66,9 @@ draftsRoutes.get(
 		const result = await loadDraft(db, c.get("user").id, draftId);
 		if (result.outcome === "not_found") return apiNotFound(c, "Draft");
 
-		return c.json({ draft: result.draft });
+		return c.json({
+			draft: result.draft,
+			documents: result.documents,
+		});
 	}),
 );

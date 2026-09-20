@@ -4,11 +4,13 @@ import type {
 	BusinessSubmittedProject,
 } from "../../../contracts";
 import type { GreenShiftDb } from "../../../db";
+import type { projects } from "../../../db/schema";
 import { iso } from "../../../lib/format";
 import {
 	creditScore,
 	finansialTone,
 	implementasiTone,
+	levelForRiskScore,
 	projectRisk,
 	teknisTone,
 } from "../business.scoring";
@@ -22,6 +24,8 @@ import {
 } from "../business.validation";
 import * as documentsRepository from "../documents/documents.repository";
 import * as draftsRepository from "../drafts/drafts.repository";
+import { runMatching } from "../matchmaking/matching.service";
+import { insertNotification } from "../notifications/notifications.repository";
 import * as repository from "./projects.repository";
 
 export type SubmitResult =
@@ -168,20 +172,131 @@ export async function submitProject(
 	await repository.attachProjectToDraft(db, body.draftId, project.id);
 	await documentsRepository.promoteDraftDocuments(db, body.draftId, project.id);
 
+	return { outcome: "ok", project: toSubmittedProject(project) };
+}
+
+/**
+ * The submitted project as the app reads it back. The scores and the baseline
+ * are the stored figures rather than a second derivation, and the risk level
+ * follows from the stored score, so every screen that shows the project agrees
+ * with the submission that created it.
+ */
+export function toSubmittedProject(
+	row: typeof projects.$inferSelect,
+): BusinessSubmittedProject {
 	return {
-		outcome: "ok",
-		project: {
-			id: project.id,
-			title: project.title,
-			status: project.status,
-			submittedAt: iso(project.submittedAt),
-			baselineTco2,
-			creditScore: credit.score,
-			creditRating: credit.rating,
-			riskScore: risk.score,
-			riskLevel: risk.level,
-		},
+		id: row.id,
+		title: row.title,
+		status: row.status,
+		statusLabel: pillStatus(row.status),
+		submittedAt: iso(row.submittedAt),
+		baselineTco2:
+			row.konsumsiMwh !== null && row.faktorEmisi !== null
+				? row.konsumsiMwh * row.faktorEmisi
+				: null,
+		creditScore: row.creditScore,
+		creditRating: row.creditRating,
+		riskScore: row.riskScore,
+		riskLevel: row.riskScore === null ? null : levelForRiskScore(row.riskScore),
 	};
+}
+
+/** One submitted project, scoped to the company that owns it. */
+export async function readProject(
+	db: GreenShiftDb,
+	companyId: number,
+	projectId: number,
+): Promise<BusinessSubmittedProject | null> {
+	const row = await repository.findCompanyProject(db, projectId, companyId);
+	return row ? toSubmittedProject(row) : null;
+}
+
+/**
+ * Waits without holding the isolate's CPU, which is what `waitUntil` needs.
+ * The executor form is deliberate: `Promise.withResolvers` is not in this
+ * project's type lib, and a timer callback is the whole body.
+ */
+function sleep(ms: number): Promise<void> {
+	return new Promise((resolve) => {
+		setTimeout(resolve, ms);
+	});
+}
+
+/**
+ * What the environmental registry answers about a project.
+ *
+ * The verification body checks a project against the environmental registry;
+ * the platform has no integration with that registry yet, so this stands in for
+ * the call and reports the outcome the body would report. A real integration
+ * replaces this function and nothing else: the caller only reads the verdict.
+ */
+export interface RegistryCheck {
+	registered: boolean;
+	/** What the registry is answering about, for the record. */
+	subject: string;
+}
+
+async function checkEnvironmentalRegistry(
+	title: string,
+): Promise<RegistryCheck> {
+	await sleep(REGISTRY_LOOKUP_MS);
+	return { registered: true, subject: title };
+}
+
+/** How long the verification body takes to answer, in this flow. */
+const LVV_REVIEW_MS = 10_000;
+/** How long the registry lookup takes, before the body's own verdict. */
+const REGISTRY_LOOKUP_MS = 1_000;
+
+/**
+ * The verification body's answer, after the wait the real one takes.
+ *
+ * Order matters and mirrors the real chain: the registry is asked first, and
+ * only a project it knows about is moved on. A verified project then goes
+ * straight into the matching table, so the vendors are ranked before the company
+ * ever opens the screen, and the notification carries how many were scored.
+ *
+ * A deployed flow would have the body's callback (or a queue) own this rather
+ * than a timer inside the request.
+ */
+export async function completeLvvReview(
+	db: GreenShiftDb,
+	companyId: number,
+	projectId: number,
+	title: string,
+): Promise<void> {
+	await sleep(LVV_REVIEW_MS);
+
+	const registry = await checkEnvironmentalRegistry(title);
+	if (!registry.registered) {
+		await insertNotification(db, {
+			userId: companyId,
+			type: "verification",
+			title: "Verification needs attention",
+			body: `The environmental registry has no record for "${title}". Upload the site permit and registration documents, then the review continues.`,
+			link: "/business/projects",
+		});
+		return;
+	}
+
+	// Verification clears the project into matchmaking, and the matching run
+	// ranks its vendor pool in the same pass: the screen the company opens is
+	// already populated.
+	const matching = await runMatching(db, projectId);
+	await repository.setProjectStatus(db, projectId, "tendering");
+
+	const shortlist =
+		matching && matching.shortlist.length > 0
+			? ` The matching run scored ${matching.scored} verified vendor${matching.scored === 1 ? "" : "s"}; ${matching.shortlist.map((vendor) => vendor.name).join(", ")} lead the ranking.`
+			: " No verified vendor could be scored yet, so the ranking will fill in as vendor profiles are verified.";
+
+	await insertNotification(db, {
+		userId: companyId,
+		type: "verification",
+		title: "Project verified by LVV",
+		body: `"${title}" passed verification. Vendor matchmaking is open: choose a vendor when you are ready.${shortlist}`,
+		link: "/business/matchmaking",
+	});
 }
 
 /** The company's project table, newest first, drafts excluded. */

@@ -50,6 +50,8 @@ export interface DataTableProps<TData, TValue = unknown> {
 	searchPlaceholder?: string;
 	emptyMessage?: string;
 	onRowClick?: (row: TData) => void;
+	/** Per-row classes, for a table that marks one row as picked or current. */
+	rowClassName?: (row: TData) => string | undefined;
 }
 
 /** Optional per-column presentational metadata. */
@@ -78,6 +80,7 @@ export function DataTable<TData, TValue = unknown>({
 	searchPlaceholder,
 	emptyMessage = "No results.",
 	onRowClick,
+	rowClassName,
 }: DataTableProps<TData, TValue>) {
 	const [sorting, setSorting] = React.useState<SortingState>(
 		initialSorting ?? [],
@@ -187,7 +190,10 @@ export function DataTable<TData, TValue = unknown>({
 								onClick={
 									onRowClick ? () => onRowClick(row.original) : undefined
 								}
-								className={onRowClick ? "cursor-pointer" : undefined}
+								className={cn(
+									onRowClick && "cursor-pointer",
+									rowClassName?.(row.original),
+								)}
 							>
 								{row.getVisibleCells().map((cell) => (
 									<TableCell

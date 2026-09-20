@@ -1,4 +1,7 @@
-import type { BusinessDocument } from "../../../contracts";
+import type {
+	BusinessDocument,
+	BusinessDraftDocument,
+} from "../../../contracts";
 import type { GreenShiftDb } from "../../../db";
 import type { Env } from "../../../env";
 import {
@@ -12,7 +15,7 @@ import {
 import * as repository from "./documents.repository";
 
 export type DocumentResult =
-	| { outcome: "ok"; document: BusinessDocument }
+	| { outcome: "ok"; document: BusinessDraftDocument }
 	| { outcome: "ok_deleted" }
 	| { outcome: "not_found" }
 	| { outcome: "too_large" }

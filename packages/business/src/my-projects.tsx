@@ -31,45 +31,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
-import { formatId } from "./lib/number-format";
-import { RiskAssessmentBody } from "./views/step-4";
-
-/** Status pill colours, keyed by the pill label the API returns. */
-const STATUS_PILL: Record<string, string> = {
-	"Review LVV": "bg-amber-50 text-amber-700",
-	Matchmaking: "bg-blue-50 text-blue-700",
-	Verified: "bg-emerald-50 text-emerald-700",
-};
-
-/** "12 Sep 2026" from an ISO timestamp, or an honest blank. */
-function formatSubmittedAt(iso: string | null): string {
-	if (!iso) return "Not submitted";
-	return new Date(iso).toLocaleDateString("en-GB", { dateStyle: "medium" });
-}
-
-/**
- * CAPEX in rupiah, or an honest blank. The column and the phone line that
- * replaces it both read the number through here, so the two cannot drift.
- */
-function formatCapex(capexRp: number | null): string {
-	return capexRp === null ? "Not filled in" : `Rp ${formatId(capexRp)}`;
-}
-
-/**
- * Submitted and CAPEX as one line for the phone layout. Below `md` their
- * columns are hidden, so their headers can no longer label the values and the
- * line carries the labels instead.
- */
-function foldedDetail(project: BusinessProjectSummary): string {
-	const submitted = project.submittedAt
-		? `Submitted ${formatSubmittedAt(project.submittedAt)}`
-		: "Not submitted";
-	const capex =
-		project.capexRp === null
-			? "CAPEX not filled in"
-			: `CAPEX ${formatCapex(project.capexRp)}`;
-	return `${submitted} · ${capex}`;
-}
+import {
+	foldedDetail,
+	formatCapex,
+	formatSubmittedAt,
+	STATUS_PILL,
+} from "./lib/project-display";
+import { RiskAssessmentBody } from "./views/risk-assessment";
 
 export function MyProjects() {
 	const [riskProject, setRiskProject] = useState<{

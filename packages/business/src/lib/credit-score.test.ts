@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { creditScore, ratingForScore } from "./credit-score";
+import { creditScore, nextRatingBand, ratingForScore } from "./credit-score";
 
 describe("creditScore", () => {
 	test("empty inputs -> null score and rating", () => {
@@ -71,5 +71,24 @@ describe("creditScore", () => {
 		expect(full.score).not.toBeNull();
 		expect(none.score).not.toBeNull();
 		expect((full.score as number) - (none.score as number)).toBe(30);
+	});
+});
+
+describe("rating bands", () => {
+	// The panel reads the score as "N more to the next band", so the boundary
+	// between two bands is what decides that sentence.
+	test("a score one point under a band still points at it", () => {
+		expect(nextRatingBand(84)).toEqual({ rating: "AAA", min: 85 });
+		expect(ratingForScore(84)).toBe("AA");
+		expect(nextRatingBand(84)?.min).toBe(84 + 1);
+	});
+	test("a score on the top band has no next band", () => {
+		expect(nextRatingBand(85)).toBeNull();
+		expect(nextRatingBand(100)).toBeNull();
+		expect(ratingForScore(100)).toBe("AAA");
+	});
+	test("an empty score reads as the bottom band", () => {
+		expect(ratingForScore(0)).toBe("B");
+		expect(nextRatingBand(0)).toEqual({ rating: "BB", min: 35 });
 	});
 });

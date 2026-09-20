@@ -59,7 +59,9 @@ function LandingHeader() {
 
 	return (
 		<>
-			<header className="absolute inset-x-0 top-0 z-40 border-b border-transparent bg-transparent">
+			{/* The hero is full-bleed, so the bar sits clear of the viewport edge
+			    rather than in it: the logo's own top edge lands 24px down. */}
+			<header className="absolute inset-x-0 top-4 z-40 border-b border-transparent bg-transparent">
 				<HeaderNav onDark />
 			</header>
 
@@ -110,10 +112,10 @@ function HeaderNav({ onDark }: { onDark: boolean }) {
 
 	return (
 		<nav
-			className="page-wrap flex items-center justify-between py-2"
+			className="page-wrap flex items-center justify-between gap-4 py-2"
 			aria-label="Main navigation"
 		>
-			<Link to="/" className="no-underline shrink-0">
+			<Link to="/" className="shrink-0 no-underline">
 				<img
 					src={onDark ? "/logo-white.webp" : "/logo-long.svg"}
 					alt="GreenShift"
@@ -121,7 +123,7 @@ function HeaderNav({ onDark }: { onDark: boolean }) {
 				/>
 			</Link>
 
-			<ul className="flex items-center gap-1 m-0 list-none">
+			<ul className="m-0 hidden list-none items-center gap-1 md:flex">
 				{navLinks.map((link) => {
 					const isActive = isHome && activeSection === link.href;
 					const className = cn(
@@ -181,7 +183,7 @@ function HeaderNav({ onDark }: { onDark: boolean }) {
 				</li>
 			</ul>
 
-			<div className="flex items-center gap-2.5">
+			<div className="flex shrink-0 items-center gap-2.5">
 				<Link
 					to="/login"
 					className={cn(
@@ -194,11 +196,13 @@ function HeaderNav({ onDark }: { onDark: boolean }) {
 				>
 					Login
 				</Link>
+				{/* On a phone the compact bar has room for the brand and one action,
+				    and the hero's own "Get Started Free" is the signup path there. */}
 				<Link
 					to="/register"
 					className={cn(
 						buttonVariants({ variant: "outline" }),
-						"h-8 cursor-pointer rounded-lg px-4 text-sm normal-case tracking-normal",
+						"h-8 max-sm:hidden cursor-pointer rounded-lg px-4 text-sm normal-case tracking-normal",
 						onDark
 							? "border-white/60 text-white hover:bg-white hover:text-black"
 							: "text-foreground hover:bg-white hover:text-black",

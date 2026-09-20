@@ -4,6 +4,7 @@ import {
 	useStore,
 } from "@tanstack/react-form";
 import type * as React from "react";
+import { useLayoutEffect, useRef } from "react";
 
 import { cn } from "#/lib/utils";
 import { Spinner } from "../loaders/spinner";
@@ -28,6 +29,88 @@ function toMessage(error: unknown): string | null {
 		return String(error.message);
 	}
 	return String(error);
+}
+
+/** Puts a dot after every third digit from the right. */
+const THOUSANDS = /\B(?=(\d{3})+(?!\d))/g;
+
+/** Digits, grouped in threes from the right. */
+function groupDigits(digits: string): string {
+	return digits.replace(THOUSANDS, ".");
+}
+
+/**
+ * A numeric entry in the app's Indonesian convention, the one `parseIdNumber`
+ * reads: dots group the integer part in threes, and a comma starts the decimals.
+ * Four decimals is the ceiling, which is past any field here.
+ *
+ * This runs on every keystroke, so it reads intent rather than normalising a
+ * finished value: a dot already sitting in a grouping position is the grouping
+ * this field produced, a dot in a small number (`0.85`, `12.5`) is a decimal
+ * point the user typed, and anything else (a digit added after a grouped number,
+ * an edit in the middle of one) leaves the dots as grouping, which is what they
+ * mean in this convention. The result is what the field shows and what it
+ * stores, and it parses back to the number the user meant.
+ */
+function regroupNumber(raw: string): string {
+	const cleaned = raw.replace(/[^0-9.,]/g, "");
+	if (!cleaned) return "";
+
+	const comma = cleaned.lastIndexOf(",");
+	if (comma >= 0) {
+		const whole = groupDigits(cleaned.slice(0, comma).replace(/[.,]/g, ""));
+		const decimals = cleaned
+			.slice(comma + 1)
+			.replace(/[.,]/g, "")
+			.slice(0, 4);
+		// A comma with nothing after it is the user starting the decimals, so it
+		// stays: the next digit lands where they meant it to.
+		if (cleaned.endsWith(",")) return `${whole},`;
+		return decimals ? `${whole},${decimals}` : whole;
+	}
+
+	if (cleaned.includes(".")) {
+		// Already grouped by this function: nothing to change.
+		if (/^\d{1,3}(\.\d{3})+$/.test(cleaned)) return cleaned;
+
+		const dot = cleaned.indexOf(".");
+		const whole = cleaned.slice(0, dot).replace(/\D/g, "");
+		const decimals = cleaned.slice(dot + 1).replace(/\D/g, "");
+		const oneDot = dot === cleaned.lastIndexOf(".");
+		if (oneDot && whole.length <= 2 && decimals.length <= 2) {
+			const grouped = groupDigits(whole);
+			// A dot typed at the end reads as the decimal point being started, so
+			// it becomes the comma that opens the decimals.
+			if (cleaned.endsWith(".")) return `${grouped},`;
+			return decimals ? `${grouped},${decimals}` : grouped;
+		}
+		return groupDigits(cleaned.replace(/\./g, ""));
+	}
+
+	return groupDigits(cleaned);
+}
+
+/**
+ * Where the caret belongs after regrouping: after the same digit it was after
+ * before, counted ignoring the grouping dots the field itself inserted, so
+ * typing in the middle of a number does not jump to the end.
+ */
+function caretAfterRegrouping(
+	raw: string,
+	grouped: string,
+	caret: number,
+): number {
+	const significantBefore = raw.slice(0, caret).replace(/[^0-9,]/g, "").length;
+	if (significantBefore === 0) return 0;
+
+	let seen = 0;
+	for (let index = 0; index < grouped.length; index += 1) {
+		if (/[0-9,]/.test(grouped[index] ?? "")) {
+			seen += 1;
+			if (seen === significantBefore) return index + 1;
+		}
+	}
+	return grouped.length;
 }
 
 /**
@@ -141,13 +224,19 @@ export interface NumberFieldProps
 	prefix?: string;
 	/** Static unit after the input, such as `MWh/year`. */
 	unit?: string;
+	/** Minimum allowed value (passed to the input as an HTML attribute). */
+	min?: number;
+	/** Maximum allowed value (passed to the input as an HTML attribute). */
+	max?: number;
 }
 
 /**
- * Numeric input bound to the nearest field. The value stays the string the user
- * typed (Indonesian grouping included), so what is stored is what is shown back;
- * callers parse it at the edge. The unit sits outside the input, so it can never
- * be mistaken for part of the number.
+ * Numeric input bound to the nearest field. The value is the string the field
+ * shows, Indonesian grouping included, so what is stored is what is on screen
+ * and callers parse it at the edge. Grouping is applied on every keystroke
+ * rather than on blur, because the point of it is reading the number while
+ * typing it. The unit sits outside the input, so it can never be mistaken for
+ * part of the number.
  */
 function NumberField({
 	label,
@@ -156,11 +245,26 @@ function NumberField({
 	unit,
 	id,
 	inputMode = "decimal",
+	min,
+	max,
 	className,
 	...props
 }: NumberFieldProps) {
 	const field = useFieldContext<string>();
 	const error = toMessage(field.state.meta.errors[0]);
+	const inputRef = useRef<HTMLInputElement | null>(null);
+	/* Where the caret belongs once the regrouped value has been committed. */
+	const caretRef = useRef<number | null>(null);
+
+	// Re-rendering a controlled value drops the caret to the end of it, so the
+	// position worked out on the keystroke is restored after the commit and
+	// before the browser paints.
+	useLayoutEffect(() => {
+		const caret = caretRef.current;
+		if (caret === null) return;
+		caretRef.current = null;
+		inputRef.current?.setSelectionRange(caret, caret);
+	});
 	const inputId = id ?? field.name;
 	const unitId = `${inputId}-unit`;
 	// Exactly one marker carries the id, so the description never dangles.
@@ -185,11 +289,35 @@ function NumberField({
 					</span>
 				) : null}
 				<Input
+					ref={inputRef}
 					id={inputId}
 					inputMode={inputMode}
+					min={min}
+					max={max}
 					value={field.state.value ?? ""}
-					onBlur={field.handleBlur}
-					onChange={(event) => field.handleChange(event.target.value)}
+					onBlur={() => {
+						const regrouped = regroupNumber(field.state.value ?? "");
+						if (regrouped !== field.state.value) field.handleChange(regrouped);
+						field.handleBlur();
+					}}
+					onChange={(event) => {
+						const input = event.target;
+						const caret = input.selectionStart ?? input.value.length;
+						// A number field takes numbers, and it groups them as they are
+						// typed: everything that is not a digit, a dot or a comma is
+						// dropped, and the dots are placed in threes so the entry reads
+						// at a glance from thousands to millions.
+						const regrouped = regroupNumber(input.value);
+						// Always written back, even when the text already reads as
+						// grouped: the value is controlled, so this is also what strips
+						// a character the field does not take.
+						caretRef.current = caretAfterRegrouping(
+							input.value,
+							regrouped,
+							caret,
+						);
+						field.handleChange(regrouped);
+					}}
 					aria-invalid={error ? true : undefined}
 					aria-describedby={describedBy}
 					className={cn("text-base tabular-nums", className)}
@@ -350,7 +478,7 @@ function CheckboxField({
 					onChange={(event) => field.handleChange(event.target.checked)}
 					aria-invalid={error ? true : undefined}
 					aria-describedby={describes(inputId, error, description)}
-					className={cn("mt-1 size-5 shrink-0 accent-primary", className)}
+					className={cn("mt-0.5 size-5 shrink-0 accent-primary", className)}
 					{...props}
 				/>
 				<Label htmlFor={inputId} className="text-base font-normal leading-6">

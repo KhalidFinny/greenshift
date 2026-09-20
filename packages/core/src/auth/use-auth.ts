@@ -1,6 +1,7 @@
 import { useRouteContext, useRouter } from "@tanstack/react-router";
 
 import { api } from "../api/client";
+import { clearStoredToasts } from "../toast-bus";
 import type { AuthUser } from "./types";
 
 export function useAuth() {
@@ -31,6 +32,9 @@ export function useAuth() {
 
 	async function logout(silent = false): Promise<void> {
 		await api.auth.logout(silent);
+		// The queue outlives the page on purpose, so it is dropped here rather
+		// than left for whoever signs in next on this tab.
+		clearStoredToasts();
 		await router.invalidate();
 	}
 

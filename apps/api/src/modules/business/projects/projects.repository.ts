@@ -34,6 +34,21 @@ export async function listCompanyProjects(
 
 export type NewProject = typeof projects.$inferInsert;
 
+/** Moves one project along its lifecycle. Returns the row, or undefined. */
+export async function setProjectStatus(
+	db: GreenShiftDb,
+	projectId: number,
+	status: (typeof projects.$inferSelect)["status"],
+) {
+	const [row] = await db
+		.update(projects)
+		.set({ status, updatedAt: new Date() })
+		.where(eq(projects.id, projectId))
+		.returning();
+
+	return row;
+}
+
 /**
  * Writes the submitted project and its risk assessment together, so a project
  * can never exist without the assessment that justified it.
@@ -76,4 +91,35 @@ export async function attachProjectToDraft(
 	projectId: number,
 ): Promise<void> {
 	await db.update(drafts).set({ projectId }).where(eq(drafts.id, draftId));
+}
+
+/** The written reading stored with a project's assessment, if it has one yet. */
+export async function findRiskInsight(db: GreenShiftDb, projectId: number) {
+	const [row] = await db
+		.select({
+			insight: riskAssessments.insight,
+			source: riskAssessments.insightSource,
+		})
+		.from(riskAssessments)
+		.where(eq(riskAssessments.projectId, projectId))
+		.limit(1);
+
+	return row ?? null;
+}
+
+/**
+ * Stores the reading beside the assessment it was written about. Called once per
+ * project: a read that finds nothing asks for one, and every read after that is
+ * served from the row.
+ */
+export async function writeRiskInsight(
+	db: GreenShiftDb,
+	projectId: number,
+	insight: string,
+	source: string,
+): Promise<void> {
+	await db
+		.update(riskAssessments)
+		.set({ insight, insightSource: source })
+		.where(eq(riskAssessments.projectId, projectId));
 }

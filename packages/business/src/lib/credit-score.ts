@@ -18,14 +18,51 @@ export interface CreditScoreResult {
 	rating: string | null;
 }
 
+/**
+ * What each half of the score is worth. The wizard draws the score as these two
+ * parts, so the weights live here once rather than in the panel.
+ */
+export const SCORE_WEIGHTS = { funding: 70, documents: 30 } as const;
+
+/**
+ * Files the document share is measured against: the financial statements and
+ * the cost budget. Uploading both fills it to 30; submit only needs one.
+ */
+export const STEP2_DOC_TARGET = 2;
+
+/**
+ * The rating bands, low to high; `min` is the first score in the band. The
+ * thresholds live here once, and both the rating and the next band read them.
+ */
+const RATING_BANDS = [
+	{ rating: "B", min: 0 },
+	{ rating: "BB", min: 35 },
+	{ rating: "BBB", min: 45 },
+	{ rating: "BBB+", min: 55 },
+	{ rating: "A", min: 65 },
+	{ rating: "AA", min: 75 },
+	{ rating: "AAA", min: 85 },
+] as const;
+
+/** The band the score sits in, as an index into `RATING_BANDS`. */
+function ratingBandIndex(score: number): number {
+	let index = 0;
+	for (const [i, band] of RATING_BANDS.entries()) {
+		if (score >= band.min) index = i;
+	}
+	return index;
+}
+
 export function ratingForScore(score: number): string {
-	if (score >= 85) return "AAA";
-	if (score >= 75) return "AA";
-	if (score >= 65) return "A";
-	if (score >= 55) return "BBB+";
-	if (score >= 45) return "BBB";
-	if (score >= 35) return "BB";
-	return "B";
+	return RATING_BANDS[ratingBandIndex(score)].rating;
+}
+
+/** The next band up, or null when the score is already in the top band. */
+export function nextRatingBand(
+	score: number,
+): { rating: string; min: number } | null {
+	const next = RATING_BANDS[ratingBandIndex(score) + 1];
+	return next ? { rating: next.rating, min: next.min } : null;
 }
 
 export function creditScore(input: CreditScoreInput): CreditScoreResult {
@@ -40,6 +77,9 @@ export function creditScore(input: CreditScoreInput): CreditScoreResult {
 		docsTotal > 0
 			? Math.min(100, Math.max(0, (docsDone / docsTotal) * 100))
 			: 0;
-	const score = Math.round(debtPoints * 0.7 + docPoints * 0.3);
+	const score = Math.round(
+		debtPoints * (SCORE_WEIGHTS.funding / 100) +
+			docPoints * (SCORE_WEIGHTS.documents / 100),
+	);
 	return { score, rating: ratingForScore(score) };
 }

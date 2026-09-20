@@ -17,6 +17,57 @@ export interface ProjectRiskInput {
 	docsTotal: number;
 }
 
+/** The three Step 1 tones, as the wizard derives them from its own fields. */
+export interface Step1RiskTones {
+	finansial: ProjectRiskTone;
+	teknis: ProjectRiskTone;
+	implementasi: ProjectRiskTone;
+}
+
+/**
+ * ADR-003: the Step 1 tones are derived from the inputs, never stored. They feed
+ * both the Step 1 risk preview and, through `projectRisk`, the assessment the
+ * review step shows, so the derivation lives here rather than in either view.
+ */
+export function step1RiskTones(input: {
+	biaya: number | null;
+	konsumsi: number | null;
+	timelineYear: number | null;
+	docsDone: number;
+	docsTotal: number;
+	currentYear: number;
+}): Step1RiskTones {
+	const { biaya, konsumsi, timelineYear, docsDone, docsTotal, currentYear } =
+		input;
+	return {
+		finansial:
+			biaya === null
+				? null
+				: biaya > 5_000_000_000
+					? "High"
+					: biaya > 1_000_000_000
+						? "Medium"
+						: "Low",
+		teknis:
+			konsumsi === null
+				? null
+				: konsumsi > 10_000
+					? "High"
+					: konsumsi > 2_000
+						? "Medium"
+						: "Low",
+		implementasi:
+			timelineYear === null && docsDone === 0
+				? null
+				: docsDone === 0 ||
+						(timelineYear !== null && timelineYear < currentYear + 1)
+					? "High"
+					: docsDone < docsTotal
+						? "Medium"
+						: "Low",
+	};
+}
+
 export interface ProjectRiskBreakdown {
 	key: string;
 	label: string;
@@ -32,6 +83,14 @@ export interface ProjectRiskResult {
 	factors: string[];
 	mitigations: string[];
 	summary: string;
+	/**
+	 * Eleanor's written reading.
+	 *
+	 * Absent on an assessment the wizard composes from the form, because she
+	 * writes about a submitted record: the API returns one with every project it
+	 * reads back, and the review step shows the payload's own prose until then.
+	 */
+	insight?: { text: string; source: "ai" | "model" } | null;
 }
 
 export function toneToPct(tone: ProjectRiskTone): number {

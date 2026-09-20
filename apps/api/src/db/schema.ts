@@ -73,6 +73,8 @@ export const vendors = sqliteTable(
 			.references(() => users.id, { onDelete: "cascade" }),
 		companyName: text("company_name").notNull(),
 		description: text(),
+		/** Where the vendor works from: proximity is part of what it delivers at. */
+		location: text(),
 		certifications: text({ mode: "json" }).$type<string[]>().default([]),
 		portfolio: text({ mode: "json" }).$type<string[]>().default([]),
 		rating: real().default(0),
@@ -281,6 +283,14 @@ export const riskAssessments = sqliteTable(
 		// Mitigation
 		recommendations: text({ mode: "json" }).$type<string[]>().default([]),
 		notes: text(),
+		/**
+		 * Eleanor's written reading of this assessment. Written once, when the
+		 * project is submitted, and kept with the record: a view costs nothing and
+		 * the analysis cannot drift from the figures it was written about.
+		 */
+		insight: text(),
+		/** "ai" when Workers AI wrote it, "model" when the analyst composed it. */
+		insightSource: text("insight_source"),
 		assessedBy: text("assessed_by"), // system or user id
 		assessedAt: integer("assessed_at", { mode: "timestamp_ms" }),
 	},
@@ -335,6 +345,51 @@ export const vendorMatchScoresRelations = relations(
 		}),
 		vendor: one(vendors, {
 			fields: [vendorMatchScores.vendorId],
+			references: [vendors.id],
+		}),
+	}),
+);
+
+// ── vendor_assignments (the company's matchmaking choice) ─
+/**
+ * The company's choice: the vendor it appoints and the procurement route it
+ * will run. `method` shares `tenderMethods` with the tender this opens, so the
+ * choice and the tender it becomes are the same value in the same dialect.
+ */
+export const vendorAssignments = sqliteTable(
+	"vendor_assignments",
+	{
+		id: integer().primaryKey({ autoIncrement: true }),
+		projectId: integer("project_id")
+			.notNull()
+			.references(() => projects.id, { onDelete: "cascade" }),
+		vendorId: integer("vendor_id")
+			.notNull()
+			.references(() => vendors.id, { onDelete: "cascade" }),
+		// Kept beside the id so the list keeps the name the company actually
+		// chose, even if the vendor profile is renamed afterwards.
+		vendorName: text("vendor_name").notNull(),
+		method: text({ enum: tenderMethods }).notNull(),
+		createdAt: integer("created_at", { mode: "timestamp_ms" })
+			.notNull()
+			.$defaultFn(() => new Date()),
+		updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+			.notNull()
+			.$defaultFn(() => new Date())
+			.$onUpdateFn(() => new Date()),
+	},
+	(t) => [uniqueIndex("vendor_assignments_project_unique").on(t.projectId)],
+);
+
+export const vendorAssignmentsRelations = relations(
+	vendorAssignments,
+	({ one }) => ({
+		project: one(projects, {
+			fields: [vendorAssignments.projectId],
+			references: [projects.id],
+		}),
+		vendor: one(vendors, {
+			fields: [vendorAssignments.vendorId],
 			references: [vendors.id],
 		}),
 	}),
@@ -721,6 +776,13 @@ export type NegotiationStatus = (typeof negotiationStatuses)[number];
 
 /** A proposal can be renegotiated at most three times. */
 export const maxNegotiationIterations = 3;
+
+/**
+ * How many of a project's ranked vendors the company is offered to choose
+ * between. A direct selection appoints one of them; a closed tender invites only
+ * these, while an open one invites every verified vendor.
+ */
+export const matchShortlistSize = 3;
 
 export const negotiations = sqliteTable(
 	"negotiations",

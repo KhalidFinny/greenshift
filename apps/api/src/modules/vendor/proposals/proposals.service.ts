@@ -4,6 +4,7 @@ import type { proposals } from "../../../db/schema";
 import { iso } from "../../../lib/format";
 import {
 	getProposalDetail,
+	isTenderVisibleTo,
 	recordAudit,
 	vendorProfileId,
 } from "../vendor.shared";
@@ -70,6 +71,7 @@ export type SubmitProposalResult =
 	| { status: "unverified" }
 	| { status: "tender_not_found" }
 	| { status: "tender_closed" }
+	| { status: "not_invited" }
 	| { status: "deadline_passed" }
 	| { status: "duplicate" }
 	| { status: "conflict" }
@@ -87,6 +89,13 @@ export async function submitProposal(
 	const tender = await repository.findTenderById(db, input.tenderId);
 	if (!tender) return { status: "tender_not_found" };
 	if (tender.status !== "open") return { status: "tender_closed" };
+	// A closed or direct tender is bid on by invitation only: a vendor that was
+	// never put forward for this project cannot bid on it, whatever it guesses.
+	if (
+		!(await isTenderVisibleTo(db, tender.projectId, profile.id, tender.method))
+	) {
+		return { status: "not_invited" };
+	}
 	if (tender.deadlineAt && tender.deadlineAt.getTime() < Date.now()) {
 		return { status: "deadline_passed" };
 	}

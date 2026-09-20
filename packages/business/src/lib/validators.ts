@@ -23,8 +23,8 @@ export function validateStep1(v: Step1Values): Record<string, string> {
 		e.konsumsi = "Enter a valid number, e.g. 12.500,5.";
 	if (v.biaya === null || v.biaya < 0)
 		e.biaya = "Enter a valid amount in rupiah, e.g. 4.200.000.000.";
-	if (v.faktor === null || v.faktor < 0)
-		e.faktor = "Enter a valid factor, e.g. 0,85.";
+	if (v.faktor === null || v.faktor < 0 || v.faktor > 10)
+		e.faktor = "Enter a factor between 0 and 10, e.g. 0,85.";
 	const targetValid =
 		v.targetPct !== null && v.targetPct >= 0 && v.targetPct <= 100;
 	if (!targetValid) e.targetPct = "Enter a value between 0 and 100.";

@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, lte } from "drizzle-orm";
 import type {
 	ProposalDetail,
 	ProposalRevisionEntry,
@@ -13,6 +13,7 @@ import {
 	auditLogs,
 	type emissionReports,
 	type energyForecasts,
+	matchShortlistSize,
 	type milestoneEvidence,
 	type projectMilestones,
 	projects,
@@ -20,6 +21,8 @@ import {
 	proposals,
 	tenders,
 	users,
+	vendorAssignments,
+	vendorMatchScores,
 	vendors,
 } from "../../db/schema";
 import { iso } from "../../lib/format";
@@ -199,4 +202,48 @@ export function monthlyReportEntry(
 		evidenceDocs: reportData?.evidenceDocs ?? [],
 		submittedAt: row.createdAt.toISOString(),
 	};
+}
+
+/**
+ * Whether a tender is this vendor's business at all, by the route it runs on.
+ * Open bidding is public to every verified vendor; closed bidding belongs to
+ * the vendors the matching model put forward for the project; direct selection
+ * is a private 1-on-1 with the one vendor the company appointed.
+ */
+export async function isTenderVisibleTo(
+	db: GreenShiftDb,
+	projectId: number,
+	vendorId: number,
+	method: string,
+): Promise<boolean> {
+	if (method === "open") return true;
+
+	const [appointed] = await db
+		.select({ id: vendorAssignments.id })
+		.from(vendorAssignments)
+		.where(
+			and(
+				eq(vendorAssignments.projectId, projectId),
+				eq(vendorAssignments.vendorId, vendorId),
+			),
+		)
+		.limit(1);
+	if (appointed) return true;
+	if (method === "direct") return false;
+
+	// A closed tender invites the ranked shortlist only: being scored is not the
+	// same as being put forward, and the rest of the pool is not offered.
+	const [shortlisted] = await db
+		.select({ id: vendorMatchScores.id })
+		.from(vendorMatchScores)
+		.where(
+			and(
+				eq(vendorMatchScores.projectId, projectId),
+				eq(vendorMatchScores.vendorId, vendorId),
+				lte(vendorMatchScores.rank, matchShortlistSize),
+			),
+		)
+		.limit(1);
+
+	return shortlisted !== undefined;
 }

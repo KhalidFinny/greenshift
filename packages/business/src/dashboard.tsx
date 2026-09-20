@@ -10,19 +10,21 @@ import {
 	Button,
 	DataTable,
 	EmptyState,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
 	ShimmerBlock,
 } from "@greenshift/ui";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
+import { useMemo, useState } from "react";
 import { formatId } from "./lib/number-format";
+import { formatSubmittedAt } from "./lib/project-display";
 
 // ── helpers ────────────────────────────────────────────────
-
-function formatSubmittedAt(iso: string | null): string {
-	if (!iso) return "Not submitted";
-	return new Date(iso).toLocaleDateString("en-GB", { dateStyle: "medium" });
-}
 
 /** Projects submitted in the month `offset` months back, optionally filtered. */
 function inMonth(
@@ -128,6 +130,8 @@ const columns: ColumnDef<BusinessProjectSummary>[] = [
 // ── dashboard ──────────────────────────────────────────────
 
 export function BusinessDashboard() {
+	const [statusFilter, setStatusFilter] = useState("all");
+	const [sectorFilter, setSectorFilter] = useState("all");
 	const projectsQuery = useQuery({
 		queryKey: ["business", "projects"],
 		queryFn: async () => (await api.business.projects({ limit: 50 })).projects,
@@ -164,6 +168,32 @@ export function BusinessDashboard() {
 
 	const rows = [...projects].sort((a, b) =>
 		(b.submittedAt ?? "").localeCompare(a.submittedAt ?? ""),
+	);
+
+	/**
+	 * Filter options are read off the loaded rows in the order the table already
+	 * shows them, so a select can only offer a status or sector some project
+	 * actually has, and never a stage that is not in the data.
+	 */
+	const statusOptions = useMemo(
+		() => [...new Set(projects.map((project) => project.status))],
+		[projects],
+	);
+	const sectorOptions = useMemo(() => {
+		const sectors = new Set<string>();
+		for (const project of projects) {
+			if (project.sector) sectors.add(project.sector);
+		}
+		return [...sectors];
+	}, [projects]);
+	const filteredRows = useMemo(
+		() =>
+			rows.filter(
+				(project) =>
+					(statusFilter === "all" || project.status === statusFilter) &&
+					(sectorFilter === "all" || project.sector === sectorFilter),
+			),
+		[rows, statusFilter, sectorFilter],
 	);
 
 	const share = (n: number) =>
@@ -334,14 +364,64 @@ export function BusinessDashboard() {
 
 					{/* ── Projects ── */}
 					<div className="rounded-lg bg-white p-4 shadow-sm">
+						{/* The two filters sit above the table; the search box below them
+						    is the table's own and narrows whatever they leave. */}
+						<div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+							<Select
+								value={statusFilter}
+								onValueChange={setStatusFilter}
+								disabled={rows.length === 0}
+							>
+								<SelectTrigger
+									aria-label="Filter by status"
+									className="w-full sm:w-[200px]"
+								>
+									<SelectValue placeholder="All statuses" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="all">All statuses</SelectItem>
+									{statusOptions.map((option) => (
+										<SelectItem key={option} value={option}>
+											{option}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+							<Select
+								value={sectorFilter}
+								onValueChange={setSectorFilter}
+								disabled={rows.length === 0}
+							>
+								<SelectTrigger
+									aria-label="Filter by sector"
+									className="w-full sm:w-[200px]"
+								>
+									<SelectValue placeholder="All sectors" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="all">All sectors</SelectItem>
+									{sectorOptions.map((option) => (
+										<SelectItem key={option} value={option}>
+											{option}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</div>
 						<DataTable
 							columns={columns}
-							data={loading ? [] : rows}
+							data={loading ? [] : filteredRows}
 							getRowId={(p) => String(p.id)}
 							pageSize={10}
 							pageSizeOptions={[5, 10, "all"]}
-							searchPlaceholder="Filter projects"
-							emptyMessage={loading ? undefined : "No projects yet."}
+							searchPlaceholder="Search projects"
+							emptyMessage={
+								loading
+									? undefined
+									: rows.length > 0 && filteredRows.length === 0
+										? "No project matches this search and these filters. Set Status and Sector back to All to see every project."
+										: "No projects yet."
+							}
 							ariaLabel="Projects"
 						/>
 					</div>

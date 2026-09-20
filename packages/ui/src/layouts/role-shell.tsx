@@ -169,6 +169,10 @@ export function RoleShell({
 		queryKey: ["shell-notifications", role],
 		enabled: hasFeed,
 		staleTime: 60 * 1000,
+		// Events the company is waiting on (a submission's verification) are
+		// written after the request that caused them, so the feed polls for them
+		// rather than only loading when the shell mounts.
+		refetchInterval: 10 * 1000,
 		queryFn: async (): Promise<ShellNotification[]> => {
 			if (role === "vendor") {
 				const { notifications } = await api.vendor.notifications({ limit: 5 });
@@ -308,7 +312,10 @@ export function RoleShell({
 			<main className="flex min-w-0 flex-1 flex-col overflow-hidden">
 				<header
 					data-shell-header
-					className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-border bg-background px-3 py-2 sm:gap-3 sm:px-6 sm:py-4"
+					/* Above the wizard's own sticky bar (z-20): the notification
+					   and account panels hang from this row, and a bar that outranks
+					   it would cut them off. Still under the mobile sidebar (z-40). */
+					className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-border bg-background px-3 py-2 sm:gap-3 sm:px-6 sm:py-4"
 				>
 					<div className="flex min-w-0 items-center gap-1 sm:gap-2">
 						{/* Labelled rather than a bare icon: a hamburger with no word
@@ -513,8 +520,8 @@ export function RoleShell({
 					</div>
 				</header>
 
-				<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-6 pb-16 sm:px-6 sm:pt-8 sm:pb-20">
-					{children}
+				<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-0 pb-16 sm:px-6 sm:pb-20">
+					<div className="flex flex-col pt-6 sm:pt-8">{children}</div>
 				</div>
 			</main>
 		</div>

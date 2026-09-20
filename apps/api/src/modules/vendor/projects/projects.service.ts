@@ -3,7 +3,11 @@ import type {
 	VendorProjectListItem,
 } from "../../../contracts";
 import type { GreenShiftDb } from "../../../db";
-import { tenderSummary, vendorProfileId } from "../vendor.shared";
+import {
+	isTenderVisibleTo,
+	tenderSummary,
+	vendorProfileId,
+} from "../vendor.shared";
 import * as repository from "./projects.repository";
 
 // ── projects (procurement market) ─────────────────────────
@@ -61,6 +65,18 @@ export async function getMarketProject(
 	if (!row) return null;
 
 	const vendorId = await vendorProfileId(db, userId);
+
+	// A private tender is not this vendor's to read unless it was opened for it.
+	if (
+		row.tender &&
+		row.tender.method !== "open" &&
+		!(
+			vendorId !== null &&
+			(await isTenderVisibleTo(db, row.project.id, vendorId, row.tender.method))
+		)
+	) {
+		return null;
+	}
 
 	let canSubmit = false;
 	if (vendorId !== null && row.tender) {

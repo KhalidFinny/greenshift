@@ -27,3 +27,11 @@ export function formatId(n: number, digits = 0): string {
 		maximumFractionDigits: digits,
 	});
 }
+
+/** A file size for the attachment list: 812 B, 340 KB, 1.4 MB. */
+export function formatBytes(bytes: number): string {
+	if (bytes < 1024) return `${bytes} B`;
+	const kb = bytes / 1024;
+	if (kb < 1024) return `${Math.round(kb)} KB`;
+	return `${(kb / 1024).toFixed(1)} MB`;
+}

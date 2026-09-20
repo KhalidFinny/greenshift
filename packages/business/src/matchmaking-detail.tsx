@@ -1,446 +1,694 @@
+/* The vendor ranking for one project: who is available, what the model scored
+ * them, the route the company appoints one by, and the window that opens.
+ *
+ * Selecting a vendor reads it: its record and its weighted score appear in the
+ * panel beside the table, one vendor at a time, which is how a shortlist is
+ * actually read. Selecting it again puts it back.
+ *
+ * Nobody is appointed here. The route is what opens the tender, and the vendor a
+ * project ends up with is whichever bid the company awards on the bidding page;
+ * only the direct route names a vendor up front, because that is the route that
+ * runs without competing bids.
+ *
+ * Nobody is bidding until a route is chosen and the tender is open, so this page
+ * carries no bidding of its own: once there are bids, a button on the table
+ * opens the bidding page, which is where the offers, the closing and the verdicts
+ * live.
+ */
+
 import {
 	faArrowRight,
-	faBolt,
-	faBuilding,
-	faCheck,
-	faChevronDown,
 	faCircleCheck,
 	faGavel,
 	faHandshake,
-	faLeaf,
 	faMagnifyingGlassChart,
-	faShieldHalved,
-	faSolarPanel,
-	faStar,
-	faWallet,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+	ApiError,
+	api,
+	type BusinessMatchmakingDetail,
+	type BusinessMatchmakingMethod,
+	type BusinessRecommendedVendor,
+} from "@greenshift/core";
 import {
 	Badge,
 	Button,
 	Card,
 	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
+	cn,
+	DataTable,
+	EmptyState,
+	Input,
+	ShimmerBlock,
 } from "@greenshift/ui";
-import { useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, useNavigate } from "@tanstack/react-router";
+import type { ColumnDef } from "@tanstack/react-table";
+import { useMemo, useState } from "react";
+import { formatSubmittedAt } from "./lib/project-display";
 import {
-	MATCH_FACTORS,
-	MATCHMAKING_PROJECTS,
-	PROCUREMENT_METHODS,
-	type ProcurementMethod,
-	RECOMMENDED_VENDORS,
-	type RecommendedVendor,
-} from "./lib/matchmaking";
-import { formatId } from "./lib/number-format";
+	deadlinePhrase,
+	defaultDeadline,
+	ModelCard,
+	ProjectFacts,
+	StageBand,
+	stageIndex,
+	stageSummary,
+	TENDER_STATUS_LABEL,
+	toLocalInput,
+	VendorCriteria,
+	VendorRecord,
+} from "./matchmaking-shared";
 
-const METHOD_ICONS = {
-	DIRECT_SELECTION: faHandshake,
-	CLOSED_BIDDING: faGavel,
-	OPEN_BIDDING: faMagnifyingGlassChart,
-} as const;
+/** The icon each route draws, keyed by the route id. */
+const ROUTE_ICONS = {
+	open: faMagnifyingGlassChart,
+	closed: faGavel,
+	direct: faHandshake,
+} as const satisfies Record<BusinessMatchmakingMethod, unknown>;
 
-const NEED_ICONS = [faBolt, faWallet, faLeaf, faBuilding] as const;
-
-function VendorRow({
-	vendor,
-	rank,
-	best,
-	expanded,
-	onToggle,
-}: {
-	vendor: RecommendedVendor;
-	rank: number;
-	best: boolean;
-	expanded: boolean;
-	onToggle: () => void;
-}) {
-	return (
-		<div>
-			<button
-				type="button"
-				onClick={onToggle}
-				aria-expanded={expanded}
-				className="flex w-full cursor-pointer flex-row items-center justify-between gap-4 p-4 text-left"
-			>
-				<span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-green-700 text-base font-semibold text-white tabular-nums">
-					{rank}
-				</span>
-				<span className="flex min-w-0 flex-1 items-center gap-3">
-					<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700">
-						<FontAwesomeIcon icon={faSolarPanel} className="size-5" />
-					</span>
-					<span className="min-w-0">
-						<span className="block truncate text-base font-semibold">
-							{vendor.name}
-						</span>
-						<span className="block truncate text-base text-gray-500">
-							{vendor.subtitle}
-						</span>
-					</span>
-				</span>
-				<span className="shrink-0 text-center">
-					{best && (
-						<Badge className="bg-green-100 text-green-800">Best Match</Badge>
-					)}
-					<span className="mt-1 block text-2xl font-bold tabular-nums text-green-700">
-						{vendor.score}%
-					</span>
-					<span className="block text-base text-gray-500">Match Score</span>
-				</span>
-				<span className="hidden min-w-0 flex-1 grid-cols-3 gap-6 md:grid">
-					<span className="min-w-0">
-						<span className="block text-base text-gray-500">
-							Estimasi Biaya
-						</span>
-						<span className="block truncate text-base font-semibold tabular-nums">
-							{vendor.costEstimate}
-						</span>
-						<span className="block truncate text-base text-gray-500 tabular-nums">
-							{vendor.price} · {vendor.duration}
-						</span>
-					</span>
-					<span className="min-w-0">
-						<span className="block text-base text-gray-500">
-							Pengalaman Relevan
-						</span>
-						<span className="block truncate text-base font-semibold">
-							{vendor.relevantExperience}
-						</span>
-						<span className="block truncate text-base text-gray-500">
-							{vendor.duration}
-						</span>
-					</span>
-					<span className="min-w-0">
-						<span className="block text-base text-gray-500">Risiko</span>
-						<span className="block truncate text-base font-semibold">
-							{vendor.riskLevel}
-						</span>
-						<span className="block truncate text-base text-gray-500">
-							{vendor.desc}
-						</span>
-					</span>
-				</span>
-				<span className="flex shrink-0 items-center gap-1 text-base font-medium text-green-700">
-					Lihat Detail
-					<FontAwesomeIcon
-						icon={faChevronDown}
-						className={
-							expanded
-								? "size-4 rotate-180 transition-transform"
-								: "size-4 transition-transform"
-						}
-					/>
-				</span>
-			</button>
-			{expanded && (
-				<div className="border-t border-green-100 bg-green-50/50 p-4">
-					{best ? (
-						<>
-							<p className="text-base font-semibold text-green-800">
-								Mengapa peringkat #1?
-							</p>
-							<ul className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-								{vendor.whyRank.map((reason) => (
-									<li
-										key={reason}
-										className="flex items-start gap-2 text-base text-green-800"
-									>
-										<FontAwesomeIcon
-											icon={faCheck}
-											className="mt-1 size-4 shrink-0"
-										/>
-										{reason}
-									</li>
-								))}
-							</ul>
-						</>
-					) : (
-						<div className="space-y-1 text-base">
-							<p className="tabular-nums">
-								{vendor.price} · {vendor.duration}
-							</p>
-							<p className="text-muted-foreground">{vendor.desc}</p>
-							<p className="text-muted-foreground">
-								{vendor.relevantExperience} · Risiko {vendor.riskLevel}
-							</p>
-						</div>
-					)}
-				</div>
-			)}
-		</div>
-	);
-}
+/** Every cell carries this, so a row has room to be read rather than scanned. */
+const CELL = "px-6 py-5";
 
 export function MatchmakingDetail({ projectId }: { projectId: string }) {
-	const project = MATCHMAKING_PROJECTS.find((p) => p.id === projectId);
-	const [method, setMethod] = useState<ProcurementMethod["id"] | null>(null);
-	const navigate = useNavigate();
+	const id = Number(projectId);
 
-	function handleLanjutkan() {
-		if (method === null) return;
-		window.alert("Vendor dan metode procurement berhasil disimpan!");
-		void navigate({ to: "/business/matchmaking" });
-	}
+	const detailQuery = useQuery({
+		queryKey: ["business", "matchmaking", id],
+		enabled: Number.isInteger(id),
+		queryFn: async () => api.business.matchmakingDetail(id),
+	});
 
-	if (!project) {
+	if (detailQuery.isPending) {
 		return (
 			<div className="space-y-6">
-				<div>
-					<h1 className="text-2xl font-semibold">Vendor Matchmaking</h1>
-					<p className="mt-1 text-base text-muted-foreground">
-						Proyek tidak ditemukan
-					</p>
-				</div>
+				<ShimmerBlock className="h-24 w-full rounded-xl" />
+				<ShimmerBlock className="h-72 w-full rounded-xl" />
 			</div>
 		);
 	}
 
-	const [best, ...rest] = [...RECOMMENDED_VENDORS].sort(
-		(a, b) => b.score - a.score,
+	if (detailQuery.isError || !detailQuery.data) {
+		// A missing project and a failed request are told apart: the first is the
+		// route's own answer, the second is worth retrying.
+		const missing =
+			detailQuery.error instanceof ApiError && detailQuery.error.status === 404;
+		return (
+			<EmptyState
+				tone={missing ? "neutral" : "error"}
+				title={missing ? "Project not found" : "This project did not load"}
+				description={
+					missing
+						? "It is not one of your projects."
+						: "The matchmaking endpoint could not be reached."
+				}
+				action={
+					missing ? (
+						<Button asChild>
+							<Link to="/business/matchmaking">Back to matchmaking</Link>
+						</Button>
+					) : (
+						<Button variant="outline" onClick={() => detailQuery.refetch()}>
+							Try again
+						</Button>
+					)
+				}
+			/>
+		);
+	}
+
+	return <VendorRanking detail={detailQuery.data} projectId={projectId} />;
+}
+
+/**
+ * The ranking, with the project already loaded. It is its own component so the
+ * table's columns are built under the same hooks every render: a hook below the
+ * loading return would change the hook order the moment the query lands.
+ */
+function VendorRanking({
+	detail,
+	projectId,
+}: {
+	detail: BusinessMatchmakingDetail;
+	projectId: string;
+}) {
+	const id = detail.project.id;
+	const navigate = useNavigate();
+	const queryClient = useQueryClient();
+	const [vendorId, setVendorId] = useState<number | null>(null);
+	const [method, setMethod] = useState<BusinessMatchmakingMethod | null>(null);
+	const [deadline, setDeadline] = useState(defaultDeadline);
+	const [reading, setReading] = useState<number | null>(null);
+	const [busy, setBusy] = useState(false);
+
+	/** Runs a write and says whether it landed, so a flow can continue on it. */
+	async function act(action: () => Promise<unknown>): Promise<boolean> {
+		setBusy(true);
+		try {
+			await action();
+			await queryClient.invalidateQueries({
+				queryKey: ["business", "matchmaking"],
+			});
+			return true;
+		} catch {
+			// The shared client already reported the failure as a toast.
+			return false;
+		} finally {
+			setBusy(false);
+		}
+	}
+
+	const { recommendedVendors, matchFactors } = detail;
+	const tender = detail.tender;
+	const route = method ?? detail.selectedMethod ?? tender?.method ?? null;
+	// Once bidding closes the terms are frozen: the bids were made against them.
+	const shaping = tender === null || tender.status === "open";
+	// The vendor the project went with, once its tender is awarded. Until then no
+	// vendor holds it: the bids decide that, on the bidding page.
+	const winnerName = tender?.awardedVendorName ?? null;
+	// The direct route is the only one that names a vendor up front, because it is
+	// the only route that runs without competing bids.
+	const direct = route === "direct";
+	const namedVendor =
+		recommendedVendors.find(
+			(vendor) => vendor.id === (vendorId ?? detail.selectedVendorId),
+		) ?? null;
+	// What the panel beside the table is showing: the vendor the reader picked, or
+	// the project's own vendor when they have not picked one.
+	const readVendor =
+		recommendedVendors.find(
+			(vendor) => vendor.id === reading || vendor.name === winnerName,
+		) ?? null;
+	// Vendors are only bidding once a route has been chosen and offers are in.
+	const bidding = (tender?.bidCount ?? 0) > 0;
+	// Whether the tender can open: a route is chosen, and the direct route has
+	// named the vendor it appoints.
+	const canOpen =
+		route !== null && (route !== "direct" || namedVendor !== null);
+	// What the route has produced so far, in one line the strip can carry.
+	const vendorOutcome =
+		winnerName ??
+		(direct ? (namedVendor?.name ?? "Not named yet") : null) ??
+		(tender === null ? "Not chosen yet" : "Waiting on the bids");
+
+	/** Selecting the vendor already being read puts it back down again. */
+	function toggleRead(vendorId: number) {
+		setReading((current) =>
+			current === vendorId || (current === null && readVendor?.id === vendorId)
+				? null
+				: vendorId,
+		);
+	}
+
+	/** The direct route names the vendor it appoints. It is not an award. */
+	function nameVendor(vendor: BusinessRecommendedVendor) {
+		setVendorId(vendor.id);
+		setReading(vendor.id);
+		if (!shaping) return;
+		void saveTerms("direct", vendor);
+	}
+
+	function chooseRoute(nextMethod: BusinessMatchmakingMethod) {
+		setMethod(nextMethod);
+		if (!shaping) return;
+		// The open and closed routes open the tender on their own rule. The direct
+		// route cannot open until it has named the vendor it appoints.
+		if (nextMethod === "direct" && namedVendor === null) return;
+		void saveTerms(nextMethod);
+	}
+
+	/**
+	 * The terms as the route picker and the deadline field have them. The vendor
+	 * is sent only for the direct route, which is the one that names one.
+	 */
+	function saveTerms(
+		nextMethod: BusinessMatchmakingMethod | null = route,
+		vendor: BusinessRecommendedVendor | null = namedVendor,
+	): Promise<boolean> {
+		if (nextMethod === null) return Promise.resolve(false);
+		if (nextMethod === "direct" && vendor === null) {
+			return Promise.resolve(false);
+		}
+		return act(() =>
+			api.business.saveMatchmakingSelection(id, {
+				...(nextMethod === "direct" && vendor ? { vendorId: vendor.id } : {}),
+				method: nextMethod,
+				deadlineAt: new Date(tender?.deadlineAt ?? deadline).toISOString(),
+			}),
+		);
+	}
+
+	/**
+	 * Choosing the route opens the tender and lands on the phase it starts, so
+	 * the company sees the window running rather than a button that changed.
+	 */
+	async function openTender() {
+		const opened = await saveTerms();
+		if (!opened) return;
+		await navigate({
+			to: "/business/matchmaking/$projectId/bidding",
+			params: { projectId },
+		});
+	}
+
+	const columns = useMemo<ColumnDef<BusinessRecommendedVendor>[]>(
+		() => [
+			{
+				id: "rank",
+				header: "#",
+				meta: { className: cn(CELL, "w-14"), headClassName: cn(CELL, "w-14") },
+				cell: ({ row }) => (
+					<button
+						type="button"
+						onClick={(event) => {
+							// The row's own click would put it straight back down.
+							event.stopPropagation();
+							toggleRead(row.original.id);
+						}}
+						aria-pressed={row.original.id === readVendor?.id}
+						aria-label={`Read ${row.original.name}`}
+						className="rounded-sm text-sm font-semibold tabular-nums outline-none focus-visible:ring-2 focus-visible:ring-ring"
+					>
+						{row.original.rank}
+					</button>
+				),
+			},
+			{
+				id: "vendor",
+				header: "Vendor",
+				meta: {
+					className: cn(CELL, "w-[26rem] whitespace-normal"),
+					headClassName: cn(CELL, "w-[26rem]"),
+				},
+				cell: ({ row }) => (
+					<div className="min-w-0">
+						<p className="flex items-center gap-2">
+							<span className="truncate text-sm font-medium">
+								{row.original.name}
+							</span>
+							{row.original.verified && (
+								<FontAwesomeIcon
+									icon={faCircleCheck}
+									className="size-4 shrink-0 text-primary"
+									aria-label="Verified vendor"
+								/>
+							)}
+						</p>
+						<p className="mt-1 text-sm text-muted-foreground">
+							{row.original.subtitle}
+						</p>
+						<p className="mt-2 text-sm leading-6 text-muted-foreground">
+							{row.original.whyRank[0] ?? "—"}
+						</p>
+					</div>
+				),
+			},
+			{
+				id: "standing",
+				header: "Standing",
+				meta: { className: cn(CELL, "w-40"), headClassName: cn(CELL, "w-40") },
+				cell: ({ row }) =>
+					row.original.name === winnerName ? (
+						<Badge className="bg-primary text-primary-foreground">
+							Awarded
+						</Badge>
+					) : row.original.shortlisted ? (
+						<Badge className="bg-primary/10 text-primary">Shortlist</Badge>
+					) : (
+						<span className="text-sm text-muted-foreground">—</span>
+					),
+			},
+			{
+				id: "match",
+				header: "Match",
+				meta: { className: cn(CELL, "w-28"), headClassName: cn(CELL, "w-28") },
+				cell: ({ row }) => (
+					<div>
+						<p className="text-sm font-semibold tabular-nums">
+							{row.original.score}
+						</p>
+						<div className="mt-1.5 h-1.5 w-20 rounded-full bg-muted">
+							<div
+								className="h-1.5 rounded-full bg-primary"
+								style={{ width: `${row.original.score}%` }}
+							/>
+						</div>
+					</div>
+				),
+			},
+			{
+				id: "record",
+				header: "Record",
+				meta: { className: cn(CELL, "w-40"), headClassName: cn(CELL, "w-40") },
+				cell: ({ row }) => (
+					<div className="text-sm tabular-nums">
+						<p className="font-medium">
+							{row.original.rating.toFixed(1)} rated
+						</p>
+						<p className="mt-1 text-muted-foreground">
+							{row.original.totalProjects} projects
+						</p>
+					</div>
+				),
+			},
+			{
+				id: "act",
+				header: "",
+				meta: { className: cn(CELL, "w-40 text-right"), headClassName: CELL },
+				// The open and closed routes invite their pool by their own rule and
+				// the bids decide the rest, so naming a vendor here is the direct
+				// route's act alone.
+				cell: ({ row }) =>
+					direct ? (
+						<Button
+							type="button"
+							size="sm"
+							variant={
+								row.original.id === namedVendor?.id ? "default" : "outline"
+							}
+							onClick={(event) => {
+								// Naming the vendor is its own act, not the row's selection.
+								event.stopPropagation();
+								nameVendor(row.original);
+							}}
+							disabled={!shaping}
+						>
+							{row.original.id === namedVendor?.id ? "Appointed" : "Appoint"}
+						</Button>
+					) : null,
+			},
+		],
+		// The row actions close over the terms on screen, so the columns are
+		// rebuilt when those change rather than reading a stale route or deadline.
+		[
+			deadline,
+			detail.selectedVendorId,
+			direct,
+			namedVendor?.id,
+			readVendor?.id,
+			route,
+			shaping,
+			winnerName,
+		],
 	);
-	const [expandedVendor, setExpandedVendor] = useState(best.id);
-	const capacity =
-		project.capex !== null
-			? `${((project.capex / 1_000_000_000) * 0.5).toFixed(1).replace(".", ",")} MWp`
-			: "—";
-	const budget =
-		project.capex !== null
-			? `Rp ${(project.capex / 1_000_000_000).toFixed(1).replace(".", ",")} Miliar`
-			: "—";
-	const metrics = [
-		{ icon: faBolt, label: "Kapasitas", value: capacity },
-		{ icon: faWallet, label: "Budget", value: budget },
-		{ icon: faLeaf, label: "Target Emisi", value: "45% vs baseline" },
-		{ icon: faBuilding, label: "Tipe Proyek", value: project.sector },
-	];
-	const needs = [
-		{
-			label: "Nilai CAPEX",
-			value: project.capex !== null ? `Rp ${formatId(project.capex)}` : "—",
-		},
-		{ label: "Lokasi", value: project.location },
-		{ label: "Sektor", value: project.sector },
-		{ label: "Pengajuan", value: project.submittedAt },
-	];
 
 	return (
-		<div className="space-y-6 bg-gray-50 p-6">
+		<div className="space-y-6">
 			<div>
-				<h1 className="text-2xl font-semibold">{project.name}</h1>
-				<p className="mt-1 text-base text-muted-foreground">
-					Rekomendasi vendor dan metode procurement untuk proyek ini.
+				<h1 className="text-xl font-semibold">Vendor Matchmaking</h1>
+				<p className="mt-0.5 text-sm text-muted-foreground">
+					{detail.project.name}
 				</p>
 			</div>
 
-			<div className="flex items-center gap-6 rounded-xl border border-gray-100 bg-white p-4">
-				<span className="shrink-0 rounded-lg bg-green-50 p-3 text-green-700">
-					<FontAwesomeIcon icon={faSolarPanel} className="size-6" />
-				</span>
-				<div className="grid min-w-0 flex-1 grid-cols-2 divide-x divide-gray-200 sm:grid-cols-4">
-					{metrics.map((m) => (
-						<div key={m.label} className="flex items-center gap-3 px-4">
-							<FontAwesomeIcon
-								icon={m.icon}
-								className="size-5 shrink-0 text-green-700"
+			<StageBand
+				index={stageIndex(detail.selectedVendorId, tender)}
+				summary={stageSummary(
+					tender,
+					winnerName ?? (direct ? namedVendor?.name : null) ?? null,
+				)}
+				tender={tender}
+			>
+				<div className="mt-4 flex flex-wrap items-end justify-between gap-x-8 gap-y-5 border-t border-border pt-4">
+					<ProjectFacts detail={detail} />
+					{/* The window is a fact about the tender, so it sits with the rest of
+					    the project's facts rather than down with the route picker. */}
+					{shaping && (
+						<div className="space-y-3">
+							<label
+								className="block text-sm font-medium"
+								htmlFor="tender-deadline"
+							>
+								Bidding closes
+							</label>
+							<Input
+								id="tender-deadline"
+								type="datetime-local"
+								className="w-64"
+								value={
+									tender?.deadlineAt
+										? toLocalInput(new Date(tender.deadlineAt))
+										: deadline
+								}
+								onChange={(event) => setDeadline(event.target.value)}
 							/>
-							<div className="min-w-0">
-								<p className="truncate text-base text-gray-500">{m.label}</p>
-								<p className="truncate text-base font-semibold tabular-nums">
-									{m.value}
+						</div>
+					)}
+				</div>
+			</StageBand>
+
+			<div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+				<div className="min-w-0 space-y-8">
+					<section className="space-y-3">
+						<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+							<h2 className="text-lg font-semibold">Available vendors</h2>
+							{/* The bidding list is its own page, reached from the table, and
+							    only once vendors are actually bidding on the open tender. */}
+							<div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+								<p className="text-sm text-muted-foreground">
+									{recommendedVendors.length} scored, {detail.shortlistSize}{" "}
+									shortlisted
 								</p>
+								{/* The bidding list is its own page, reached from the table, and
+								    only once vendors are actually bidding on the open tender. */}
+								{bidding && (
+									<Button asChild>
+										<Link
+											to="/business/matchmaking/$projectId/bidding"
+											params={{ projectId }}
+										>
+											{tender?.bidCount === 1
+												? "See the vendor bidding"
+												: `See the vendors bidding (${tender?.bidCount})`}
+											<FontAwesomeIcon icon={faArrowRight} aria-hidden />
+										</Link>
+									</Button>
+								)}
 							</div>
 						</div>
-					))}
-				</div>
-			</div>
-
-			<div className="grid grid-cols-1 gap-6 xl:grid-cols-[65fr_35fr]">
-				<div className="min-w-0 space-y-6">
-					<Card>
-						<CardHeader>
-							<CardTitle>Smart Recommendation</CardTitle>
-							<CardDescription>
-								Vendor dengan skor kecocokan tertinggi untuk kebutuhan proyek.
-							</CardDescription>
-						</CardHeader>
-						<CardContent className="space-y-4">
-							<div
-								className={
-									expandedVendor === best.id
-										? "overflow-hidden rounded-xl border-2 border-green-500"
-										: "overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
+						{recommendedVendors.length === 0 ? (
+							<EmptyState
+								title="No ranking for this project yet"
+								description="Run the matching to rank the verified vendors against it. The run reads their profiles, so it can be repeated as they change."
+								action={
+									<Button
+										disabled={busy}
+										onClick={() => void act(() => api.business.runMatching(id))}
+									>
+										Run the matching
+									</Button>
 								}
-							>
-								<VendorRow
-									vendor={best}
-									rank={1}
-									best
-									expanded={expandedVendor === best.id}
-									onToggle={() => setExpandedVendor(best.id)}
-								/>
-							</div>
-							{rest.map((vendor, i) => (
-								<div
-									key={vendor.id}
-									className={
-										expandedVendor === vendor.id
-											? "overflow-hidden rounded-xl border-2 border-green-500 bg-white shadow-sm"
-											: "overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
-									}
-								>
-									<VendorRow
-										vendor={vendor}
-										rank={i + 2}
-										best={false}
-										expanded={expandedVendor === vendor.id}
-										onToggle={() => setExpandedVendor(vendor.id)}
-									/>
-								</div>
-							))}
-						</CardContent>
-					</Card>
+							/>
+						) : (
+							<DataTable
+								ariaLabel={`Vendors matched to ${detail.project.name}`}
+								className="rounded-xl border border-border bg-card"
+								columns={columns}
+								data={recommendedVendors}
+								getRowId={(vendor) => String(vendor.id)}
+								onRowClick={(vendor) => toggleRead(vendor.id)}
+								rowClassName={(vendor) =>
+									vendor.id === readVendor?.id
+										? [
+												"bg-primary/5",
+												"[&>td]:border-y-2 [&>td]:border-y-primary",
+												"[&>td:first-child]:border-l-2 [&>td:first-child]:border-l-primary",
+												"[&>td:last-child]:border-r-2 [&>td:last-child]:border-r-primary",
+											].join(" ")
+										: undefined
+								}
+							/>
+						)}
+					</section>
 
-					<Card>
-						<CardHeader>
-							<CardTitle>Pilih Metode Procurement</CardTitle>
-							<CardDescription>
-								Tentukan cara vendor dipilih untuk proyek ini.
-							</CardDescription>
-						</CardHeader>
-						<CardContent className="flex flex-col gap-4 sm:flex-row">
-							{PROCUREMENT_METHODS.map((m) => {
-								const selected = method === m.id;
+					<section className="space-y-3">
+						<div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+							<h2 className="text-lg font-semibold">Route and window</h2>
+							<p className="text-sm text-muted-foreground">
+								{shaping
+									? "Opening the tender starts the clock."
+									: "How it opened."}
+							</p>
+						</div>
+						<div className="grid gap-3 sm:grid-cols-3">
+							{detail.procurementMethods.map((option) => {
+								const selected = route === option.id;
 								return (
 									<button
-										key={m.id}
+										key={option.id}
 										type="button"
 										aria-pressed={selected}
-										onClick={() => setMethod(m.id)}
-										className={
+										disabled={!shaping}
+										onClick={() => chooseRoute(option.id)}
+										className={cn(
+											"rounded-xl border p-5 text-left transition-colors",
 											selected
-												? "relative flex-1 rounded-xl border-2 border-green-500 bg-white p-4 text-left shadow-sm"
-												: "flex-1 rounded-xl border bg-white p-4 text-left shadow-sm"
-										}
-									>
-										{selected && (
-											<FontAwesomeIcon
-												icon={faCircleCheck}
-												className="absolute right-3 top-3 size-4 text-green-600"
-											/>
+												? "border-primary bg-primary/5"
+												: "border-border hover:bg-muted/50",
+											!shaping && "cursor-default opacity-70",
 										)}
-										<FontAwesomeIcon
-											icon={METHOD_ICONS[m.id]}
-											className="size-5 text-green-700"
-										/>
-										<p className="mt-2 text-base font-semibold">{m.label}</p>
-										<p className="mt-1 text-base font-normal text-muted-foreground">
-											{m.desc}
-										</p>
+									>
+										<span className="flex items-center justify-between gap-2">
+											<FontAwesomeIcon
+												icon={ROUTE_ICONS[option.id]}
+												className="size-4 text-primary"
+												aria-hidden
+											/>
+											{selected && (
+												<FontAwesomeIcon
+													icon={faCircleCheck}
+													className="size-4 text-primary"
+													aria-hidden
+												/>
+											)}
+										</span>
+										<span className="mt-3 block text-sm font-semibold">
+											{option.label}
+										</span>
+										<span className="mt-1.5 block text-sm text-muted-foreground">
+											{option.desc}
+										</span>
 									</button>
 								);
 							})}
-						</CardContent>
-					</Card>
+						</div>
+
+						<div className="flex flex-wrap items-center gap-3 pt-1">
+							{shaping && (
+								<Button
+									disabled={busy || !canOpen}
+									onClick={() => void openTender()}
+								>
+									{tender
+										? "Save and go to the bidding phase"
+										: "Open the tender"}
+									<FontAwesomeIcon icon={faArrowRight} aria-hidden />
+								</Button>
+							)}
+							{/* A closed tender has no table button when nothing came in, so
+							    the way to its page stays here. */}
+							{!shaping && (
+								<Button variant="outline" asChild>
+									<Link
+										to="/business/matchmaking/$projectId/bidding"
+										params={{ projectId }}
+									>
+										Read the bids
+									</Link>
+								</Button>
+							)}
+							{shaping && !canOpen && (
+								<p className="text-sm text-muted-foreground">
+									{route === "direct"
+										? "The direct route appoints one vendor: pick it on the row first."
+										: "Choose a route to open the tender."}
+								</p>
+							)}
+						</div>
+
+						{/* What the choices above add up to, on the record. */}
+						<div className="grid gap-x-6 gap-y-3 border-t border-border pt-4 sm:grid-cols-4">
+							{[
+								{
+									label: "Vendor",
+									value: vendorOutcome,
+								},
+								{
+									label: "Route",
+									value:
+										detail.procurementMethods.find(
+											(option) => option.id === route,
+										)?.label ?? "Not chosen",
+								},
+								{
+									label: "Tender",
+									value: tender
+										? (TENDER_STATUS_LABEL[tender.status] ?? tender.status)
+										: "Not opened",
+								},
+								{
+									label: "Deadline",
+									value: tender?.deadlineAt
+										? `${formatSubmittedAt(tender.deadlineAt)} · ${deadlinePhrase(tender.deadlineAt)}`
+										: "Not set",
+								},
+							].map((row) => (
+								<div key={row.label} className="min-w-0">
+									<dt className="text-sm text-muted-foreground">{row.label}</dt>
+									<dd className="truncate text-sm font-semibold">
+										{row.value}
+									</dd>
+								</div>
+							))}
+						</div>
+					</section>
 				</div>
 
 				<div className="min-w-0 space-y-6">
-					<Card>
-						<CardHeader>
-							<CardTitle>Ringkasan Kebutuhan Proyek</CardTitle>
-						</CardHeader>
-						<CardContent className="space-y-2">
-							{needs.map((n, i) => (
-								<div
-									key={n.label}
-									className="flex items-center justify-between gap-4"
-								>
-									<p className="flex items-center gap-2 text-base text-gray-500">
-										<FontAwesomeIcon
-											icon={NEED_ICONS[i % NEED_ICONS.length]}
-											className="size-4"
-										/>
-										{n.label}
-									</p>
-									<p className="text-base font-semibold tabular-nums">
-										{n.value}
-									</p>
-								</div>
-							))}
-						</CardContent>
-					</Card>
-
-					<Card>
-						<CardHeader>
-							<CardTitle>Match Factors</CardTitle>
-						</CardHeader>
-						<CardContent className="space-y-3">
-							{MATCH_FACTORS.map((f) => (
-								<div key={f.label} className="space-y-1">
-									<div className="flex items-center justify-between gap-3">
-										<p className="text-base font-medium">{f.label}</p>
-										<p className="text-base tabular-nums text-muted-foreground">
-											{f.pct}%
-										</p>
-									</div>
-									<div
-										role="progressbar"
-										aria-valuenow={f.pct}
-										aria-valuemin={0}
-										aria-valuemax={100}
-										aria-label={f.label}
-										className="h-2 rounded-full bg-gray-200"
-									>
-										<div
-											className="h-2 rounded-full bg-green-600"
-											style={{ width: `${f.pct}%` }}
-										/>
-									</div>
-								</div>
-							))}
-						</CardContent>
-					</Card>
-
-					<div className="rounded-lg bg-green-50 p-4 text-green-800">
-						<p className="flex items-center gap-2 text-base font-semibold">
-							<FontAwesomeIcon icon={faStar} className="size-4" />
-							Bagaimana match score dihitung?
-						</p>
-						<p className="mt-2 text-base">
-							Skor kecocokan dihitung dari kesesuaian teknis (40%) + rekam jejak
-							(30%) + harga (20%) + kapasitas (10%).
-						</p>
-					</div>
+					<SelectedVendorPanel vendor={readVendor} />
+					{recommendedVendors.length > 0 && (
+						<ModelCard factors={matchFactors}>
+							<Button
+								type="button"
+								variant="outline"
+								size="sm"
+								disabled={busy}
+								onClick={() => void act(() => api.business.runMatching(id))}
+							>
+								Re-run the matching
+							</Button>
+						</ModelCard>
+					)}
 				</div>
-			</div>
-
-			<div className="flex items-center justify-between gap-4 rounded-xl border border-green-200 bg-green-50 p-4">
-				<div className="flex items-center gap-3">
-					<FontAwesomeIcon
-						icon={faShieldHalved}
-						className="size-5 text-green-700"
-					/>
-					<div>
-						<p className="text-base font-semibold">Langkah Selanjutnya</p>
-						{method === null && (
-							<p className="text-base text-muted-foreground">
-								Pilih metode procurement di atas untuk melanjutkan.
-							</p>
-						)}
-					</div>
-				</div>
-				<Button
-					type="button"
-					disabled={method === null}
-					onClick={handleLanjutkan}
-					className="cursor-pointer transition-colors hover:bg-green-700"
-				>
-					Lanjutkan
-					<FontAwesomeIcon icon={faArrowRight} />
-				</Button>
 			</div>
 		</div>
+	);
+}
+
+/** The vendor being read: its record, then the five criteria behind its score. */
+function SelectedVendorPanel({
+	vendor,
+}: {
+	vendor: BusinessRecommendedVendor | null;
+}) {
+	return (
+		<Card>
+			<CardContent className="space-y-4">
+				{vendor === null ? (
+					<>
+						<p className="text-sm font-semibold">Selected vendor</p>
+						<p className="text-sm text-muted-foreground">
+							Select a vendor to see its record and weighted score.
+						</p>
+					</>
+				) : (
+					<>
+						<div>
+							<p className="flex items-center gap-2 text-sm font-semibold">
+								{vendor.name}
+								{vendor.verified && (
+									<FontAwesomeIcon
+										icon={faCircleCheck}
+										className="size-4 text-primary"
+										aria-label="Verified vendor"
+									/>
+								)}
+							</p>
+							<p className="mt-0.5 text-sm text-muted-foreground">
+								Rank #{vendor.rank} · {vendor.score} match
+							</p>
+						</div>
+						<VendorRecord vendor={vendor} />
+						<div className="border-t border-border pt-3">
+							<p className="text-sm font-medium">Weighted score</p>
+							<div className="mt-2">
+								<VendorCriteria vendor={vendor} />
+							</div>
+						</div>
+					</>
+				)}
+			</CardContent>
+		</Card>
 	);
 }

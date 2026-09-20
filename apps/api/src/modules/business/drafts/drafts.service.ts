@@ -1,12 +1,17 @@
 import type {
 	BusinessDraft,
 	BusinessDraftBody,
+	BusinessDraftDocument,
 	BusinessStep1Patch,
 	BusinessStep2Patch,
 	BusinessStep3,
 } from "../../../contracts";
 import type { GreenShiftDb } from "../../../db";
-import { draftEntry, readPayload } from "../business.shared";
+import {
+	draftDocumentEntry,
+	draftEntry,
+	readPayload,
+} from "../business.shared";
 import {
 	type FieldErrors,
 	step1Errors,
@@ -22,9 +27,13 @@ export type DraftResult =
 	| { outcome: "not_found" }
 	| { outcome: "invalid"; fields: FieldErrors };
 
-/** A resume either returns the draft or reports it missing. It never validates. */
+/**
+ * A resume returns the draft with the files attached to it, or reports it
+ * missing. It never validates: the draft's blocks reference those files by id,
+ * so without them a resumed step can only show the ids it cannot name.
+ */
 export type LoadDraftResult =
-	| { outcome: "ok"; draft: BusinessDraft }
+	| { outcome: "ok"; draft: BusinessDraft; documents: BusinessDraftDocument[] }
 	| { outcome: "not_found" };
 
 /**
@@ -111,7 +120,7 @@ export async function saveDraft(
 	return { outcome: "ok", draft: draftEntry(row) };
 }
 
-/** Resumes a draft, or reports it missing (including another company's). */
+/** Resumes a draft with its files, or reports it missing (including another company's). */
 export async function loadDraft(
 	db: GreenShiftDb,
 	companyId: number,
@@ -120,5 +129,11 @@ export async function loadDraft(
 	const row = await repository.findDraft(db, draftId, companyId);
 	if (!row) return { outcome: "not_found" };
 
-	return { outcome: "ok", draft: draftEntry(row) };
+	const files = await repository.listDraftDocuments(db, draftId);
+
+	return {
+		outcome: "ok",
+		draft: draftEntry(row),
+		documents: files.map((file) => draftDocumentEntry(file)),
+	};
 }

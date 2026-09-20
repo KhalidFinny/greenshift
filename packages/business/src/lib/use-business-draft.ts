@@ -1,5 +1,6 @@
 import {
 	api,
+	type BusinessDraftDocument,
 	type BusinessStep1,
 	type BusinessStep1Patch,
 	type BusinessStep2,
@@ -49,6 +50,8 @@ export interface DraftResume {
 	step1: Step1Patch | null;
 	step2: Step2Patch | null;
 	step3: BusinessStep3 | null;
+	/** The draft's files, which its blocks reference only by id. */
+	documents: BusinessDraftDocument[];
 	step: number | null;
 }
 
@@ -114,25 +117,42 @@ export function useBusinessDraft(
 		if (!stored) window.localStorage.setItem(DRAFT_KEY, id);
 		setDraftId(id);
 
-		// A draft that was never saved yet does not exist on the server, which is
-		// not an error: it is simply a new project.
-		api.business
-			.draft(id)
-			.then(({ draft }) => {
-				if (cancelled) return;
-				onResumeRef.current({
+		/**
+		 * Hands the stored draft to the caller's resume callback.
+		 *
+		 * A read that fails means the draft was never saved yet, which is a new
+		 * project rather than an error. A callback that throws is a different thing:
+		 * it is a bug in the seeding, so it must not be read as an empty draft, and
+		 * autosave stays off rather than writing blanks over what the server holds.
+		 */
+		async function resume(id: string): Promise<void> {
+			let storedDraft: DraftResume | null = null;
+			try {
+				const { draft, documents } = await api.business.draft(id);
+				storedDraft = {
 					step1: draft.step1 ?? null,
 					step2: draft.step2 ?? null,
 					step3: draft.step3 ?? null,
+					documents,
 					step: draft.step,
-				});
-			})
-			.catch(() => {
+				};
+			} catch {
 				// No stored draft: carry on with an empty form.
+			}
+			if (cancelled) return;
+			if (storedDraft) onResumeRef.current(storedDraft);
+			// Armed either way: with nothing stored, the empty form is the truth.
+			resumed.current = true;
+		}
+
+		void resume(id)
+			.catch((error) => {
+				// `resumed` is still false, so this costs the session's autosave
+				// rather than the stored draft.
+				console.error("[draft] resume failed, autosave stays off", error);
 			})
 			.finally(() => {
 				if (cancelled) return;
-				resumed.current = true;
 				setLoading(false);
 			});
 

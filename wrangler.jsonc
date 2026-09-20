@@ -29,5 +29,8 @@
       "binding": "R2",
       "bucket_name": "greenshift-assets"
     }
-  ]
+  ],
+  "ai": {
+    "binding": "AI"
+  }
 }

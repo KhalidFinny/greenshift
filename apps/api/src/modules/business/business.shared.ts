@@ -1,6 +1,7 @@
 import type {
 	BusinessDocument,
 	BusinessDraft,
+	BusinessDraftDocument,
 	BusinessStep1Patch,
 	BusinessStep2Patch,
 	BusinessStep3,
@@ -140,17 +141,19 @@ export function draftEntry(row: typeof drafts.$inferSelect): BusinessDraft {
 }
 
 /**
- * An uploaded wizard file. `downloadUrl` is only offered once OCR has finished,
- * so the UI cannot link to a file that is not readable yet.
+ * A file attached to a draft. Draft files are not OCR'd: that only happens once
+ * submit promotes them onto a project, so this carries the size rather than an
+ * OCR state.
  */
 export function draftDocumentEntry(
 	row: typeof draftDocuments.$inferSelect,
-): BusinessDocument {
+): BusinessDraftDocument {
 	return {
 		id: row.id,
 		slot: row.slot,
 		fileName: row.fileName,
-		ocrStatus: "pending",
+		sizeBytes: row.sizeBytes ?? null,
+		uploadedAt: iso(row.uploadedAt),
 	};
 }
 

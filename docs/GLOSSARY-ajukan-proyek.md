@@ -14,7 +14,23 @@ as. Structural changes from ADR-008 are noted per section.
   one line at `sm` and up: Back (never validates) plus the primary action, which
   is "Save & continue" on steps 1 to 3 and "Submit the Project" on step 4. The
   submit action stays disabled until both declaration checkboxes are ticked, and
-  there is no bottom action row.
+  there is no bottom action row. The step strip shows all four names at `sm` and
+  up, with a short horizontal connector in each gap between steps at the
+  circles' centre line; below `sm` the circles are shown alone and the active
+  step's name appears beside them. The sticky bar sits flush under the shell
+  header (gap 0) because the scroll container's top-padding was moved into an
+  inner flex wrapper (ADR-008.6).
+- Number entry (ADR-009): every numeric field groups large numbers with dots
+  (`12.500,5`, `4.200.000.000`) once the field loses focus, drops characters
+  that are not part of a number as they are typed, and refuses the values its
+  rule set bands: the emission-reduction target is 0-100, the tenor 1-30, and
+  the rest are non-negative. Grouping is display only; what is stored is the
+  number the user typed.
+- Eleanor (ADR-009): the review step's risk assessment is read back in prose.
+  She is named in the UI, writes once per project into the assessment record,
+  and states only what the assessment holds. A read serves the stored reading,
+  or composes one from the same figures while the model call runs out of band,
+  so the wizard itself never calls a model.
 
 ## Step 1 — Profil & Kebutuhan (implemented)
 

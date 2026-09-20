@@ -7,7 +7,12 @@ import { parseLimit } from "../../../lib/format";
 import { requireJsonBody } from "../../../lib/http";
 import { mutationRateLimit } from "../../../lib/mutation-limit";
 import { apiError, apiNotFound, apiSuccess } from "../../../lib/response";
-import { listProjects, submitProject } from "./projects.service";
+import {
+	completeLvvReview,
+	listProjects,
+	readProject,
+	submitProject,
+} from "./projects.service";
 
 const factory = createFactory<ApiEnv>();
 
@@ -46,7 +51,35 @@ projectsRoutes.post(
 			});
 		}
 
+		// The file goes to a verification body, which answers later: the answer is
+		// carried out of band so the response is the submission, not the review.
+		c.executionCtx.waitUntil(
+			completeLvvReview(
+				db,
+				c.get("user").id,
+				result.project.id,
+				result.project.title,
+			),
+		);
+
 		return apiSuccess(c, { project: result.project }, "Project submitted", 201);
+	}),
+);
+
+// ── read one ──────────────────────────────────────────────
+// The confirmation page reads the project it just created, so the figures on it
+// are the stored ones rather than a second derivation in the browser.
+projectsRoutes.get(
+	"/projects/:id",
+	...factory.createHandlers(async (c) => {
+		const raw = c.req.param("id");
+		if (!raw || !/^\d+$/.test(raw)) return apiError(c, "INVALID_ID");
+
+		const db = createDb(c.env.DB);
+		const project = await readProject(db, c.get("user").id, Number(raw));
+		if (!project) return apiNotFound(c, "Project");
+
+		return c.json({ project });
 	}),
 );
 

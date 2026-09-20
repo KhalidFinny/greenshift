@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, isNotNull, or, sql } from "drizzle-orm";
 import type { GreenShiftDb } from "../../../db";
 import {
 	blueprints,
@@ -6,6 +6,7 @@ import {
 	proposals,
 	tenders,
 	users,
+	vendorAssignments,
 	vendorMatchScores,
 } from "../../../db/schema";
 
@@ -40,10 +41,30 @@ export async function listProjectTenders(
 				eq(vendorMatchScores.vendorId, vendorId),
 			),
 		)
+		.leftJoin(vendorAssignments, eq(vendorAssignments.projectId, projects.id))
 		.$dynamic();
-	if (tenderStatus) {
-		query.where(eq(tenders.status, tenderStatus));
-	}
+	// Open bidding is open to every verified vendor. Closed bidding and direct
+	// selection are private to the vendors the project was opened for: those the
+	// matching model scored, and the one the company appointed.
+	query.where(
+		and(
+			...(tenderStatus ? [eq(tenders.status, tenderStatus)] : []),
+			or(
+				eq(tenders.method, "open"),
+				and(
+					eq(tenders.method, "closed"),
+					or(
+						isNotNull(vendorMatchScores.id),
+						eq(vendorAssignments.vendorId, vendorId),
+					),
+				),
+				and(
+					eq(tenders.method, "direct"),
+					eq(vendorAssignments.vendorId, vendorId),
+				),
+			),
+		),
+	);
 	query
 		.orderBy(
 			sql`case when ${tenders.status} = 'open' then 0 else 1 end`,

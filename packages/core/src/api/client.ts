@@ -24,15 +24,29 @@ import type {
 	BrokerProfile,
 	BrokerProfileBody,
 	BrokerProjectStatusBody,
+	BusinessAwardBody,
+	BusinessBidReviewBody,
 	BusinessDocumentResponse,
 	BusinessDocumentsResponse,
 	BusinessDraftBody,
 	BusinessDraftResponse,
+	BusinessDraftResumeResponse,
+	BusinessMatchingRunResponse,
+	BusinessMatchmakingDetail,
+	BusinessMatchmakingListResponse,
+	BusinessMatchmakingSelectionBody,
+	BusinessMatchmakingSelectionResponse,
 	BusinessNotification,
+	BusinessProjectReadingRequest,
+	BusinessProjectReadingResponse,
+	BusinessProjectResponse,
 	BusinessProjectsResponse,
+	BusinessRiskInsightRequest,
+	BusinessRiskInsightResponse,
 	BusinessRiskResponse,
 	BusinessSubmitBody,
 	BusinessSubmitResponse,
+	BusinessTender,
 	CsrfResponse,
 	HealthResponse,
 	LoginBody,
@@ -155,6 +169,76 @@ export const api = {
 					silent: true,
 				},
 			),
+		matchmaking: (params?: { limit?: number }) =>
+			request<BusinessMatchmakingListResponse>(
+				apiRoutes.businessMatchmaking.path + query(params),
+			),
+		/** Re-runs the matching model over the verified vendor pool. */
+		runMatching: (projectId: number) =>
+			request<BusinessMatchingRunResponse>(
+				apiRoutes.businessMatchmakingMatching.path.replace(
+					":projectId",
+					String(projectId),
+				),
+				{ method: apiRoutes.businessMatchmakingMatching.method },
+			),
+		matchmakingDetail: (projectId: number) =>
+			request<BusinessMatchmakingDetail>(
+				apiRoutes.businessMatchmakingDetail.path.replace(
+					":projectId",
+					String(projectId),
+				),
+			),
+		saveMatchmakingSelection: (
+			projectId: number,
+			body: BusinessMatchmakingSelectionBody,
+		) =>
+			request<BusinessMatchmakingSelectionResponse>(
+				apiRoutes.businessMatchmakingSelection.path.replace(
+					":projectId",
+					String(projectId),
+				),
+				{
+					method: apiRoutes.businessMatchmakingSelection.method,
+					body: JSON.stringify(body satisfies BusinessMatchmakingSelectionBody),
+				},
+			),
+		closeTender: (projectId: number) =>
+			request<{ tender: BusinessTender }>(
+				apiRoutes.businessTenderClose.path.replace(
+					":projectId",
+					String(projectId),
+				),
+				{
+					method: apiRoutes.businessTenderClose.method,
+					body: JSON.stringify({ action: "close" }),
+				},
+			),
+		awardBid: (projectId: number, body: BusinessAwardBody) =>
+			request<{ tender: BusinessTender }>(
+				apiRoutes.businessTenderAward.path.replace(
+					":projectId",
+					String(projectId),
+				),
+				{
+					method: apiRoutes.businessTenderAward.method,
+					body: JSON.stringify(body satisfies BusinessAwardBody),
+				},
+			),
+		reviewBid: (
+			projectId: number,
+			proposalId: number,
+			body: BusinessBidReviewBody,
+		) =>
+			request<{ status: string }>(
+				apiRoutes.businessBidReview.path
+					.replace(":projectId", String(projectId))
+					.replace(":proposalId", String(proposalId)),
+				{
+					method: apiRoutes.businessBidReview.method,
+					body: JSON.stringify(body satisfies BusinessBidReviewBody),
+				},
+			),
 		notifications: (params?: { limit?: number }) =>
 			request<{ notifications: BusinessNotification[] }>(
 				apiRoutes.businessNotifications.path + query(params),
@@ -165,7 +249,7 @@ export const api = {
 				{ method: apiRoutes.businessReadNotification.method },
 			),
 		draft: (draftId: string) =>
-			request<BusinessDraftResponse>(
+			request<BusinessDraftResumeResponse>(
 				apiRoutes.businessDraftResume.path.replace(
 					":draftId",
 					encodeURIComponent(draftId),
@@ -200,9 +284,28 @@ export const api = {
 			request<BusinessProjectsResponse>(
 				apiRoutes.businessProjects.path + query(params),
 			),
+		project: (id: number) =>
+			request<BusinessProjectResponse>(
+				apiRoutes.businessProject.path.replace(":id", String(id)),
+			),
 		risk: (id: number) =>
 			request<BusinessRiskResponse>(
 				apiRoutes.businessProjectRisk.path.replace(":id", String(id)),
+			),
+		/** The wizard's assessment, answered with Eleanor's reading of it. */
+		riskInsight: (body: BusinessRiskInsightRequest) =>
+			request<BusinessRiskInsightResponse>(apiRoutes.businessRiskInsight.path, {
+				method: apiRoutes.businessRiskInsight.method,
+				body: JSON.stringify(body satisfies BusinessRiskInsightRequest),
+			}),
+		/** The review step's opening reading, written from the figures entered so far. */
+		projectReading: (body: BusinessProjectReadingRequest) =>
+			request<BusinessProjectReadingResponse>(
+				apiRoutes.businessProjectReading.path,
+				{
+					method: apiRoutes.businessProjectReading.method,
+					body: JSON.stringify(body satisfies BusinessProjectReadingRequest),
+				},
 			),
 		documents: (id: number) =>
 			request<BusinessDocumentsResponse>(

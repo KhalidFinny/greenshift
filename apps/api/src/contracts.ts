@@ -163,6 +163,31 @@ export const apiRoutes = {
 	// Creates a project while consuming a draft and scoring it, so it reads as
 	// an action rather than a plain collection POST.
 	businessSubmit: { method: "POST", path: "/api/business/projects/submit" },
+	businessMatchmaking: { method: "GET", path: "/api/business/matchmaking" },
+	businessMatchmakingDetail: {
+		method: "GET",
+		path: "/api/business/matchmaking/:projectId",
+	},
+	businessMatchmakingMatching: {
+		method: "POST",
+		path: "/api/business/matchmaking/:projectId/matching",
+	},
+	businessMatchmakingSelection: {
+		method: "POST",
+		path: "/api/business/matchmaking/:projectId/selection",
+	},
+	businessTenderClose: {
+		method: "PATCH",
+		path: "/api/business/procurement/:projectId/tender",
+	},
+	businessTenderAward: {
+		method: "POST",
+		path: "/api/business/procurement/:projectId/award",
+	},
+	businessBidReview: {
+		method: "POST",
+		path: "/api/business/procurement/:projectId/proposals/:proposalId/review",
+	},
 	businessNotifications: {
 		method: "GET",
 		path: "/api/business/notifications",
@@ -172,9 +197,21 @@ export const apiRoutes = {
 		path: "/api/business/notifications/:id",
 	},
 	businessProjects: { method: "GET", path: "/api/business/projects" },
+	businessProject: {
+		method: "GET",
+		path: "/api/business/projects/:id",
+	},
 	businessProjectRisk: {
 		method: "GET",
 		path: "/api/business/projects/:id/risk",
+	},
+	businessRiskInsight: {
+		method: "POST",
+		path: "/api/business/risk/insight",
+	},
+	businessProjectReading: {
+		method: "POST",
+		path: "/api/business/review/reading",
 	},
 	businessProjectDocuments: {
 		method: "GET",
@@ -877,6 +914,26 @@ export interface BusinessDraftResponse {
 	draft: BusinessDraft;
 }
 
+/**
+ * A file attached to an unsubmitted draft. The upload returns it and the resume
+ * returns them all, so a draft that comes back after a reload still knows the
+ * files it holds: the ids inside `step2.fileIds` and `step3.docStates` name
+ * files, and this is what the file names and sizes are read from.
+ */
+export interface BusinessDraftDocument {
+	id: string;
+	slot: string;
+	fileName: string;
+	sizeBytes: number | null;
+	uploadedAt: string | null;
+}
+
+/** The draft plus its attached files, which its blocks only reference by id. */
+export interface BusinessDraftResumeResponse {
+	draft: BusinessDraft;
+	documents: BusinessDraftDocument[];
+}
+
 /** Body of `POST /api/business/projects/submit`: every block is required. */
 export interface BusinessSubmitBody {
 	draftId: string;
@@ -895,6 +952,8 @@ export interface BusinessSubmittedProject {
 	id: number;
 	title: string;
 	status: string;
+	/** The stage in the words the app shows, e.g. "Review LVV". */
+	statusLabel: string;
 	submittedAt: string | null;
 	/** Tonnes of CO2e per year: consumption x emission factor. */
 	baselineTco2: number | null;
@@ -905,6 +964,14 @@ export interface BusinessSubmittedProject {
 }
 
 export interface BusinessSubmitResponse {
+	project: BusinessSubmittedProject;
+}
+
+/**
+ * The submitted project as any surface reads it back, so the confirmation the
+ * company lands on shows the same figures the submission answered with.
+ */
+export interface BusinessProjectResponse {
 	project: BusinessSubmittedProject;
 }
 
@@ -950,6 +1017,245 @@ export interface BusinessRisk {
 	factors: string[];
 	mitigations: string[];
 	summary: string;
+	/**
+	 * Eleanor's written reading of these figures. Stored with the assessment, so
+	 * it is written once per project rather than per view, and always about the
+	 * numbers it travels with.
+	 */
+	insight: BusinessRiskInsight;
+}
+
+/**
+ * What Eleanor is given to write about: the assessment's figures, without the
+ * one-line summary she is asked to expand on or the reading being replaced.
+ */
+export type BusinessRiskInsightBody = Omit<BusinessRisk, "summary" | "insight">;
+
+/** Eleanor's reading. */
+export interface BusinessRiskInsight {
+	text: string;
+	/**
+	 * `ai` when Workers AI wrote it, `model` when the analyst composed it from
+	 * the same figures because the binding is absent or the provider failed.
+	 * Both are readings of the assessment; the source is reported so a caller
+	 * can tell them apart.
+	 */
+	source: "ai" | "model";
+}
+
+/**
+ * Body of `POST /api/business/risk/insight`: the assessment the wizard derived
+ * from the form. The figures are the client's because no project row exists yet
+ * to read them from; the reading is composed server-side from them either way,
+ * so the wizard shows Eleanor's own words rather than a second implementation
+ * of them in the browser.
+ *
+ * `mode` picks how much she writes: `brief` is the two or three sentences a
+ * summary panel holds, `full` is the reading the detail view shows.
+ */
+export interface BusinessRiskInsightRequest extends BusinessRiskInsightBody {
+	mode?: AnalystReadingMode;
+}
+
+export type AnalystReadingMode = "brief" | "full";
+
+export interface BusinessRiskInsightResponse {
+	insight: BusinessRiskInsight;
+}
+
+/**
+ * Body of `POST /api/business/review/reading`: the project and its money as
+ * Steps 1 and 2 hold them, for the summary the review step opens with. Sent
+ * rather than read, for the same reason the risk insight is: the project does
+ * not exist yet.
+ */
+export interface BusinessProjectReadingRequest {
+	namaProyek: string;
+	lokasi: string;
+	sektor: string;
+	capexRp: number | null;
+	tenorTahun: number | null;
+	penghematanRp: number | null;
+	pendapatanRp: number | null;
+	jaminan: string | null;
+}
+
+/** The reading has the same shape wherever it is written: text, and who wrote it. */
+export interface BusinessProjectReadingResponse {
+	reading: BusinessRiskInsight;
+}
+
+/**
+ * The three procurement routes, in the vocabulary the tender stores and the
+ * vendor API already speaks, so a choice needs no translation to become one.
+ */
+export const tenderMethodIds = ["open", "closed", "direct"] as const;
+export type BusinessMatchmakingMethod = (typeof tenderMethodIds)[number];
+
+/** A tender's life: bidding, then evaluation, then closed or awarded. */
+export type BusinessTenderStatus = "open" | "evaluation" | "closed" | "awarded";
+
+/** One company project on the matchmaking list. */
+export interface BusinessMatchmakingProject {
+	id: number;
+	name: string;
+	location: string | null;
+	sector: string | null;
+	submittedAt: string | null;
+	capexRp: number | null;
+	/** The pill label the list renders, from the API's `pillStatus`. */
+	status: string;
+	/** The vendor this project's tender was awarded to, or null until it is. */
+	awardedVendor: string | null;
+	/** The tender's state, so the list can send a decided project to its bids. */
+	tenderStatus: BusinessTenderStatus | null;
+}
+
+/**
+ * One criterion of the matching model: how this project's pool scores on it,
+ * what it was worth, and whether it went into the total at all. A criterion the
+ * whole pool scores the same on cannot separate the vendors, so the run leaves
+ * it out and renormalises the rest; `weight` is the share it actually carried,
+ * which is zero for the ones left out.
+ */
+export interface BusinessMatchFactor {
+	label: string;
+	pct: number;
+	weight: number;
+	applied: boolean;
+}
+
+/** A scored vendor for one project, with the facts its row renders. */
+export interface BusinessRecommendedVendor {
+	id: number;
+	name: string;
+	subtitle: string;
+	/** Weighted total of the five criteria, 0–100. */
+	score: number;
+	rank: number;
+	rating: number;
+	totalProjects: number;
+	verified: boolean;
+	/**
+	 * Among the best few the company is offered to choose between. A closed or
+	 * direct tender invites these; an open one invites every verified vendor.
+	 */
+	shortlisted: boolean;
+	/** This vendor's own reading on each criterion, best first. */
+	criteria: Array<{ label: string; pct: number }>;
+	/** Why this vendor ranks here, read off its own scores. */
+	whyRank: string[];
+}
+
+export interface BusinessProcurementMethod {
+	id: BusinessMatchmakingMethod;
+	label: string;
+	desc: string;
+}
+
+/** The tender a project is running, and the bids on it. */
+export interface BusinessTender {
+	id: number;
+	projectId: number;
+	method: BusinessMatchmakingMethod;
+	status: BusinessTenderStatus;
+	deadlineAt: string | null;
+	budgetMin: number | null;
+	budgetMax: number | null;
+	awardedProposalId: number | null;
+	/** How many bids are in, so a list row needs no second request. */
+	bidCount: number;
+	awardedVendorName: string | null;
+}
+
+/** One vendor's bid on a tender, in the fields the spec's form collects. */
+export interface BusinessProcurementBid {
+	id: number;
+	vendorId: number;
+	vendorName: string;
+	amount: number;
+	technicalSpec: string | null;
+	operationalCost: number | null;
+	projectedRoi: number | null;
+	/** Months of warranty offered. */
+	warrantyPeriod: number | null;
+	status: string;
+	revisionCount: number;
+	submittedAt: string | null;
+	/**
+	 * How this offer scores against the others on the same tender, from the
+	 * figures it states. Null when it is the only bid, because one offer cannot
+	 * be compared with anything.
+	 */
+	score: number | null;
+}
+
+/** Everything the matchmaking detail screen renders for one project. */
+export interface BusinessMatchmakingDetail {
+	project: BusinessMatchmakingProject;
+	matchFactors: BusinessMatchFactor[];
+	procurementMethods: BusinessProcurementMethod[];
+	selectedMethod: BusinessMatchmakingMethod | null;
+	selectedVendorId: number | null;
+	/** Every ranked vendor, best first, each marked with whether it is shortlisted. */
+	recommendedVendors: BusinessRecommendedVendor[];
+	/** How many verified vendors the matching run scored. */
+	poolSize: number;
+	/** How many of them the shortlist holds. */
+	shortlistSize: number;
+	/** Absent until the company's choice opens one. */
+	tender: BusinessTender | null;
+	bids: BusinessProcurementBid[];
+}
+
+export interface BusinessMatchmakingListResponse {
+	projects: BusinessMatchmakingProject[];
+}
+
+/** What a matching run did, so the screen can say it in words. */
+export interface BusinessMatchingRunResponse {
+	scored: number;
+	shortlist: Array<{ vendorId: number; name: string; score: number }>;
+}
+
+export interface BusinessMatchmakingSelectionBody {
+	/**
+	 * The vendor the company names. Required by the direct route, which is the
+	 * one that appoints a single vendor up front; the open and closed routes
+	 * invite their pool by their own rule, so they open without one.
+	 */
+	vendorId?: number;
+	method: BusinessMatchmakingMethod;
+	/** When bidding closes. The tender runs until this moment. */
+	deadlineAt: string;
+	budgetMin?: number | null;
+	budgetMax?: number | null;
+}
+
+/** Closing bidding freezes the terms and puts the tender under evaluation. */
+export interface BusinessTenderCloseBody {
+	action: "close";
+}
+
+export interface BusinessAwardBody {
+	proposalId: number;
+}
+
+export interface BusinessBidReviewBody {
+	decision: "accept" | "revision" | "reject";
+	/** Required when asking for a revision: the vendor is told what to change. */
+	note?: string | null;
+}
+
+export interface BusinessMatchmakingSelectionResponse {
+	selection: {
+		projectId: number;
+		/** The vendor named up front, which the open and closed routes do not name. */
+		vendorId: number | null;
+		vendorName: string | null;
+		method: BusinessMatchmakingMethod;
+	};
+	tender: BusinessTender;
 }
 
 /** One row of the company feed the shell bell renders. */
@@ -967,7 +1273,7 @@ export interface BusinessRiskResponse {
 	risk: BusinessRisk;
 }
 
-/** An uploaded wizard file. `slot` is the checklist key it fills. */
+/** A file on a submitted project, after OCR has had it. `slot` is the checklist key it fills. */
 export interface BusinessDocument {
 	id: string;
 	slot: string;
@@ -978,7 +1284,7 @@ export interface BusinessDocument {
 }
 
 export interface BusinessDocumentResponse {
-	document: BusinessDocument;
+	document: BusinessDraftDocument;
 }
 
 export interface BusinessDocumentsResponse {

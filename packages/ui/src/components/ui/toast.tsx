@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
 	publishToast,
 	subscribeToasts,
+	TOAST_STORAGE_KEY,
 	type ToastMessage,
 	type ToastTone,
 } from "@greenshift/core";
@@ -28,7 +29,7 @@ import { Button } from "./button";
  * otherwise wipe an in-memory-only toast mid-flight. sessionStorage is
  * per-tab, so nothing lingers after the tab closes.
  */
-const STORAGE_KEY = "greenshift:toasts";
+const STORAGE_KEY = TOAST_STORAGE_KEY;
 
 interface ToastItem extends ToastMessage {
 	id: number;
@@ -228,7 +229,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 			{children}
 			<div
 				aria-live="polite"
-				className="pointer-events-none fixed right-0 top-0 z-[100] flex flex-col items-end gap-2 px-4 pt-4"
+				// The shell's header owns the top-right corner: its bell and profile
+				// card are the same 56-80px strip, and a toast over them both hides
+				// the controls and swallows the clicks aimed at them. The stack sits
+				// below that strip instead.
+				className="pointer-events-none fixed top-20 right-0 z-[100] flex flex-col items-end gap-2 px-4"
 			>
 				{items.map((item) => (
 					<ToastCard
