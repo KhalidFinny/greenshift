@@ -9,6 +9,7 @@ import { useVendorData } from "../lib/use-vendor-data";
 import { VendorKpiRow } from "../molecules/vendor-kpi-row";
 import { VerificationBanner } from "../molecules/verification-banner";
 import { ActionRequiredCard } from "../organisms/action-required-card";
+import { GettingStartedCard } from "../organisms/getting-started-card";
 import { RecommendedProjectsPreview } from "../organisms/recommended-projects-preview";
 
 export function VendorDashboard() {
@@ -25,10 +26,14 @@ export function VendorDashboard() {
 
 	if (!isLoading && projects.length === 0 && negotiations.length === 0) {
 		return (
-			<EmptyState
-				title="No activity yet"
-				description="Open tenders and client requests will appear here once your profile is verified."
-			/>
+			<div className="space-y-6">
+				<GettingStartedCard />
+
+				<EmptyState
+					title="No activity yet"
+					description="Open tenders and client requests will appear here once your profile is verified."
+				/>
+			</div>
 		);
 	}
 
@@ -70,6 +75,8 @@ export function VendorDashboard() {
 
 	return (
 		<div className="space-y-6">
+			<GettingStartedCard />
+
 			<VerificationBanner status={verification.status} />
 
 			<VendorKpiRow items={kpiItems} loading={isLoading} />

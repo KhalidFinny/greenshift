@@ -29,9 +29,87 @@ import { riskMeta } from "../lib/labels";
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
 	return (
-		<div className="flex items-baseline justify-between gap-4 border-b border-border/60 pb-2">
+		<div className="flex items-baseline justify-between gap-4 border-b border-border/60 pb-2.5">
 			<dt className="text-sm text-muted-foreground">{label}</dt>
 			<dd className="text-right text-sm font-medium tabular-nums">{value}</dd>
+		</div>
+	);
+}
+
+/** Facts pair up from sm, so a wide dialog reads as two columns; a narrow one stacks them. */
+function Facts({ children }: { children: React.ReactNode }) {
+	return <dl className="grid gap-x-8 gap-y-3 sm:grid-cols-2">{children}</dl>;
+}
+
+/* Shared by the scenario table and its narrow-width stack, so the two cannot state a case differently. */
+function irrLabel(value: number | null | undefined): string {
+	return value === null || value === undefined ? "Not reached" : `${value}%`;
+}
+
+function paybackLabel(value: number | null | undefined): string {
+	return value === null || value === undefined ? "Not reached" : `${value} yr`;
+}
+
+type Scenario = NonNullable<BondListing["blueprint"]>["scenarios"][number];
+
+/** Below sm five columns have no room, so each case reads as its own block instead. */
+function ScenarioStack({ scenarios }: { scenarios: Scenario[] }) {
+	return (
+		<ul className="space-y-3 sm:hidden">
+			{scenarios.map((scenario) => (
+				<li
+					key={scenario.key}
+					className="rounded-lg border border-border px-4 py-3"
+				>
+					<p className="text-sm font-semibold">{scenario.label}</p>
+					<dl className="mt-2 space-y-2 text-sm">
+						<Row label="Saving assumed" value={`${scenario.savingPct}%`} />
+						<Row label="Net present value" value={formatIdr(scenario.npvRp)} />
+						<Row label="IRR" value={irrLabel(scenario.irrPct)} />
+						<Row label="Payback" value={paybackLabel(scenario.paybackYears)} />
+					</dl>
+				</li>
+			))}
+		</ul>
+	);
+}
+
+function ScenarioTable({ scenarios }: { scenarios: Scenario[] }) {
+	return (
+		<div className="hidden overflow-x-auto sm:block">
+			<table className="w-full text-left text-sm">
+				<thead>
+					<tr className="border-b border-border text-muted-foreground">
+						<th className="py-2.5 pr-4 font-medium">Case</th>
+						<th className="py-2.5 pr-4 font-medium">Saving assumed</th>
+						<th className="py-2.5 pr-4 font-medium">Net present value</th>
+						<th className="py-2.5 pr-4 font-medium">IRR</th>
+						<th className="py-2.5 font-medium">Payback</th>
+					</tr>
+				</thead>
+				<tbody>
+					{scenarios.map((scenario) => (
+						<tr
+							key={scenario.key}
+							className="border-b border-border/60 last:border-0"
+						>
+							<td className="py-2.5 pr-4 font-medium">{scenario.label}</td>
+							<td className="py-2.5 pr-4 tabular-nums">
+								{scenario.savingPct}%
+							</td>
+							<td className="py-2.5 pr-4 tabular-nums">
+								{formatIdr(scenario.npvRp)}
+							</td>
+							<td className="py-2.5 pr-4 tabular-nums">
+								{irrLabel(scenario.irrPct)}
+							</td>
+							<td className="py-2.5 tabular-nums">
+								{paybackLabel(scenario.paybackYears)}
+							</td>
+						</tr>
+					))}
+				</tbody>
+			</table>
 		</div>
 	);
 }
@@ -46,9 +124,13 @@ function Section({
 	children: React.ReactNode;
 }) {
 	return (
-		<section className="space-y-3">
-			<h3 className="flex items-center gap-2 text-base font-semibold">
-				<FontAwesomeIcon icon={icon} className="text-[#03442C]" aria-hidden />
+		<section className="space-y-4">
+			<h3 className="flex items-center gap-2.5 border-b border-border pb-3 text-lg font-semibold">
+				<FontAwesomeIcon
+					icon={icon}
+					className="size-4 text-[#03442C]"
+					aria-hidden
+				/>
 				{title}
 			</h3>
 			{children}
@@ -58,7 +140,7 @@ function Section({
 
 function Missing({ children }: { children: React.ReactNode }) {
 	return (
-		<p className="rounded-lg border border-dashed border-border/70 bg-muted/40 p-3 text-sm leading-relaxed text-muted-foreground">
+		<p className="rounded-lg border border-dashed border-border/70 bg-muted/40 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
 			{children}
 		</p>
 	);
@@ -98,15 +180,15 @@ export function BondDetailDialog({ listing }: { listing: BondListing }) {
 					View details
 				</Button>
 			</DialogTrigger>
-			<DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
-				<DialogHeader>
+			<DialogContent className="max-h-[90vh] gap-6 overflow-y-auto p-5 sm:max-w-3xl sm:p-6">
+				<DialogHeader className="gap-2 border-b border-border pr-8 pb-5">
 					<DialogTitle className="flex flex-wrap items-center gap-3 text-xl">
 						{listing.title}
 						<Badge variant="secondary" className="rounded-md px-3 !h-8 text-sm">
 							{listing.status === "verified" ? "Verified" : "On progress"}
 						</Badge>
 					</DialogTitle>
-					<DialogDescription className="text-base">
+					<DialogDescription className="text-sm leading-relaxed">
 						{listing.companyName ?? "Company not recorded"} ·{" "}
 						{listing.industrySector
 							? titleCase(listing.industrySector)
@@ -116,9 +198,9 @@ export function BondDetailDialog({ listing }: { listing: BondListing }) {
 					</DialogDescription>
 				</DialogHeader>
 
-				<div className="space-y-7 pt-2">
+				<div className="space-y-7">
 					<Section title="Risk" icon={faGaugeHigh}>
-						<dl className="space-y-2">
+						<Facts>
 							<Row
 								label="Rating"
 								value={
@@ -138,7 +220,7 @@ export function BondDetailDialog({ listing }: { listing: BondListing }) {
 										: `${listing.riskScore} / 100`
 								}
 							/>
-						</dl>
+						</Facts>
 						<p className="text-sm leading-relaxed text-muted-foreground">
 							The platform's readiness score for the project, over its
 							financial, technical, implementation and environmental factors. A
@@ -147,7 +229,7 @@ export function BondDetailDialog({ listing }: { listing: BondListing }) {
 					</Section>
 
 					<Section title="Project details" icon={faChartLine}>
-						<dl className="space-y-2">
+						<Facts>
 							<Row
 								label="Target emission reduction"
 								value={
@@ -188,7 +270,7 @@ export function BondDetailDialog({ listing }: { listing: BondListing }) {
 										: "None reported"
 								}
 							/>
-						</dl>
+						</Facts>
 						<p
 							className={cn(
 								"text-sm leading-relaxed",
@@ -213,70 +295,68 @@ export function BondDetailDialog({ listing }: { listing: BondListing }) {
 								validator clears it.
 							</Missing>
 						) : (
-							<div className="space-y-4">
-								<dl className="space-y-2">
-									<Row
-										label="Validated"
-										value={
-											blueprint.validatedAt
-												? formatDate(blueprint.validatedAt)
-												: "Date not recorded"
-										}
-									/>
-									{blueprint.emissionTargets ? (
-										<>
+							<Facts>
+								<Row
+									label="Validated"
+									value={
+										blueprint.validatedAt
+											? formatDate(blueprint.validatedAt)
+											: "Date not recorded"
+									}
+								/>
+								{blueprint.emissionTargets ? (
+									<>
+										<Row
+											label="Baseline emissions"
+											value={`${formatTonnes(blueprint.emissionTargets.baselineTco2)} / yr`}
+										/>
+										<Row
+											label="Target cut"
+											value={`${blueprint.emissionTargets.targetPct}%`}
+										/>
+										<Row
+											label="Target emissions"
+											value={`${formatTonnes(blueprint.emissionTargets.targetTco2)} / yr`}
+										/>
+										<Row
+											label="Annual energy saving"
+											value={`${formatNumber(blueprint.emissionTargets.energySavingKwh)} kWh`}
+										/>
+									</>
+								) : null}
+								{blueprint.fundingStructure ? (
+									<>
+										<Row
+											label="Capital"
+											value={formatIdr(blueprint.fundingStructure.capexRp)}
+										/>
+										<Row
+											label="Tenor"
+											value={`${blueprint.fundingStructure.tenorYears} years`}
+										/>
+										<Row
+											label="Annual saving"
+											value={formatIdr(
+												blueprint.fundingStructure.annualSavingRp,
+											)}
+										/>
+										{blueprint.fundingStructure.annualRevenueRp !== null ? (
 											<Row
-												label="Baseline emissions"
-												value={`${formatTonnes(blueprint.emissionTargets.baselineTco2)} / yr`}
-											/>
-											<Row
-												label="Target cut"
-												value={`${blueprint.emissionTargets.targetPct}%`}
-											/>
-											<Row
-												label="Target emissions"
-												value={`${formatTonnes(blueprint.emissionTargets.targetTco2)} / yr`}
-											/>
-											<Row
-												label="Annual energy saving"
-												value={`${formatNumber(blueprint.emissionTargets.energySavingKwh)} kWh`}
-											/>
-										</>
-									) : null}
-									{blueprint.fundingStructure ? (
-										<>
-											<Row
-												label="Capital"
-												value={formatIdr(blueprint.fundingStructure.capexRp)}
-											/>
-											<Row
-												label="Tenor"
-												value={`${blueprint.fundingStructure.tenorYears} years`}
-											/>
-											<Row
-												label="Annual saving"
+												label="Annual revenue"
 												value={formatIdr(
-													blueprint.fundingStructure.annualSavingRp,
+													blueprint.fundingStructure.annualRevenueRp,
 												)}
 											/>
-											{blueprint.fundingStructure.annualRevenueRp !== null ? (
-												<Row
-													label="Annual revenue"
-													value={formatIdr(
-														blueprint.fundingStructure.annualRevenueRp,
-													)}
-												/>
-											) : null}
-											{blueprint.fundingStructure.collateral ? (
-												<Row
-													label="Collateral"
-													value={blueprint.fundingStructure.collateral}
-												/>
-											) : null}
-										</>
-									) : null}
-								</dl>
-							</div>
+										) : null}
+										{blueprint.fundingStructure.collateral ? (
+											<Row
+												label="Collateral"
+												value={blueprint.fundingStructure.collateral}
+											/>
+										) : null}
+									</>
+								) : null}
+							</Facts>
 						)}
 					</Section>
 
@@ -287,8 +367,8 @@ export function BondDetailDialog({ listing }: { listing: BondListing }) {
 								with it.
 							</Missing>
 						) : (
-							<div className="space-y-4">
-								<dl className="space-y-2">
+							<>
+								<Facts>
 									<Row
 										label="Discount rate"
 										value={
@@ -309,14 +389,7 @@ export function BondDetailDialog({ listing }: { listing: BondListing }) {
 										label="Net present value"
 										value={npv === undefined ? "Not projected" : formatIdr(npv)}
 									/>
-									<Row
-										label="Project IRR"
-										value={
-											irr === undefined || irr === null
-												? "Not reached"
-												: `${irr}%`
-										}
-									/>
+									<Row label="Project IRR" value={irrLabel(irr)} />
 									<Row
 										label="Payback"
 										value={
@@ -325,54 +398,15 @@ export function BondDetailDialog({ listing }: { listing: BondListing }) {
 												: `${payback} years`
 										}
 									/>
-								</dl>
+								</Facts>
 
 								{blueprint.scenarios.length > 0 ? (
-									<div className="overflow-x-auto">
-										<table className="w-full text-left text-sm">
-											<thead>
-												<tr className="text-muted-foreground">
-													<th className="py-1.5 pr-4 font-medium">Case</th>
-													<th className="py-1.5 pr-4 font-medium">
-														Saving assumed
-													</th>
-													<th className="py-1.5 pr-4 font-medium">
-														Net present value
-													</th>
-													<th className="py-1.5 pr-4 font-medium">IRR</th>
-													<th className="py-1.5 font-medium">Payback</th>
-												</tr>
-											</thead>
-											<tbody>
-												{blueprint.scenarios.map((scenario) => (
-													<tr
-														key={scenario.key}
-														className="border-t border-border/60"
-													>
-														<td className="py-1.5 pr-4">{scenario.label}</td>
-														<td className="py-1.5 pr-4 tabular-nums">
-															{scenario.savingPct}%
-														</td>
-														<td className="py-1.5 pr-4 tabular-nums">
-															{formatIdr(scenario.npvRp)}
-														</td>
-														<td className="py-1.5 pr-4 tabular-nums">
-															{scenario.irrPct === null
-																? "Not reached"
-																: `${scenario.irrPct}%`}
-														</td>
-														<td className="py-1.5 tabular-nums">
-															{scenario.paybackYears === null
-																? "Not reached"
-																: `${scenario.paybackYears} yr`}
-														</td>
-													</tr>
-												))}
-											</tbody>
-										</table>
-									</div>
+									<>
+										<ScenarioStack scenarios={blueprint.scenarios} />
+										<ScenarioTable scenarios={blueprint.scenarios} />
+									</>
 								) : null}
-							</div>
+							</>
 						)}
 					</Section>
 
@@ -384,8 +418,8 @@ export function BondDetailDialog({ listing }: { listing: BondListing }) {
 								licensed securities partner.
 							</Missing>
 						) : (
-							<div className="space-y-4">
-								<dl className="space-y-2">
+							<>
+								<Facts>
 									<Row
 										label="Issuance status"
 										value={terms.status ?? "Not recorded"}
@@ -433,14 +467,14 @@ export function BondDetailDialog({ listing }: { listing: BondListing }) {
 												: formatIdr(totalAtMaturity)
 										}
 									/>
-								</dl>
+								</Facts>
 								<p className="text-sm leading-relaxed text-muted-foreground">
 									These are the terms the platform records from the broker's
 									issuance. The bond is traded and held in the securities
 									partner's app, which is where the position and its payments
 									are followed.
 								</p>
-							</div>
+							</>
 						)}
 					</Section>
 				</div>

@@ -60,13 +60,43 @@ accounts are rows in the D1 database, so load the seed once (see
 [Database setup](#database-setup)) after the dev server has created that database.
 The deployed database carries the same accounts.
 
-| Username | Email | Role | Use it to test |
-|---|---|---|---|
-| `business1` … `business10` | `business1@greenshift.dev` … | company | The company side: submission wizard, matchmaking, tenders, awards. Each company runs two procurement rounds, one open and taking bids and one awarded. `business1` is PT Green Nusantara (Malang), `business2` is PT Sinar Abadi Textile (Bandung) if you want a named one. |
-| `vendor1` … `vendor10` | `vendor1@greenshift.dev` … | vendor | The vendor side: open tenders, bids and revisions, delivery. `vendor1` (EcoTech Solutions) carries deals at every stage, including awarded projects with milestones and MRV periods. |
-| `broker1` … `broker5` | `broker1@greenshift.dev` … | broker | The broker side: assignments at every lifecycle stage, client document requests in each state, monthly monitoring reports. |
-| `admin1` | `admin1@greenshift.dev` | admin | Account and vendor verification, blueprint publishing, ROI payouts, the anomaly console, the audit trail. |
-| `investor1` | `investor1@greenshift.dev` | investor | Nothing: the platform has no investor surface. The row exists so the investment and ROI fixtures have a user to join on, and the account lands on the public bond catalog at `/bonds`. |
+| Username | Email | Role | Person | Organization |
+|---|---|---|---|---|
+| `business1` | `business1@greenshift.dev` | company | Rangga Wibisono | PT Green Nusantara |
+| `business2` | `business2@greenshift.dev` | company | Sinta Maharani | PT Sinar Abadi Textile |
+| `business3` | `business3@greenshift.dev` | company | Yusuf Hidayat | PT Pangan Utama |
+| `business4` | `business4@greenshift.dev` | company | Ratna Kusuma | PT Semen Nusantara |
+| `business5` | `business5@greenshift.dev` | company | Agus Prakoso | PT Agro Industri Nusantara |
+| `business6` | `business6@greenshift.dev` | company | Bambang Sutrisno | PT Kertas Nusantara |
+| `business7` | `business7@greenshift.dev` | company | Dedi Kurniawan | PT Baja Prima |
+| `business8` | `business8@greenshift.dev` | company | Maya Puspita | PT Graha Sentra Properti |
+| `business9` | `business9@greenshift.dev` | company | Iwan Susanto | PT Sawit Lestari |
+| `business10` | `business10@greenshift.dev` | company | Nur Aini | PT Tekstil Jaya |
+| `vendor1` | `vendor1@greenshift.dev` | vendor | Andi Saputra | EcoTech Solutions |
+| `vendor2` | `vendor2@greenshift.dev` | vendor | Dewi Anggraini | PT Eco Power Indonesia |
+| `vendor3` | `vendor3@greenshift.dev` | vendor | Bayu Nugroho | PT Bio Thermal Energy |
+| `vendor4` | `vendor4@greenshift.dev` | vendor | Lestari Widodo | PT Solar Cipta Energi |
+| `vendor5` | `vendor5@greenshift.dev` | vendor | Fajar Ramadhan | PT Efisiensi Mesin Nusantara |
+| `vendor6` | `vendor6@greenshift.dev` | vendor | Komang Aditya | PT Sinar Energi Terang |
+| `vendor7` | `vendor7@greenshift.dev` | vendor | Sri Wahyuni | PT Karya Efisiensi Industri |
+| `vendor8` | `vendor8@greenshift.dev` | vendor | Yoga Pratama | PT Mitra Kendali Termal |
+| `vendor9` | `vendor9@greenshift.dev` | vendor | Andi Tenri | PT Cahaya Teknik Mandiri |
+| `vendor10` | `vendor10@greenshift.dev` | vendor | Gunawan Wibowo | PT Rekayasa Termal Nusantara |
+| `broker1` | `broker1@greenshift.dev` | broker | Budi Santoso | Capital Green Securities |
+| `broker2` | `broker2@greenshift.dev` | broker | Rina Hartati | Nusantara Sekuritas Hijau |
+| `broker3` | `broker3@greenshift.dev` | broker | Hendra Gunawan | Mitra Obligasi Indonesia |
+| `broker4` | `broker4@greenshift.dev` | broker | Clara Wijaya | Pacific Sustainable Capital |
+| `broker5` | `broker5@greenshift.dev` | broker | Teguh Prasetya | Graha Green Underwriters |
+| `admin1` | `admin1@greenshift.dev` | admin | Administrator | - |
+| `investor1` | `investor1@greenshift.dev` | investor | Green Fund Capital | Green Fund Capital |
+
+What to open with each role: the ten companies each run two procurement rounds (one open
+and taking bids, one awarded) with five bidders drawn from the vendor pool, so any of them
+shows matchmaking, tenders and awards with real data; `vendor1` (EcoTech Solutions) carries
+deals at every stage, including awarded work with milestones and MRV periods; `broker1` has
+assignments at every lifecycle stage with document requests in each state; `admin1` sees the
+verification queues, blueprint publishing, payouts and the audit trail. `investor1` has no
+surface: the account lands on the public bond catalog at `/bonds`.
 
 The seeded companies and vendors are already verified, so every role surface opens
 without going through the verification step. To exercise that step instead,

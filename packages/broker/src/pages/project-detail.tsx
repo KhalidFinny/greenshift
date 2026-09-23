@@ -17,6 +17,7 @@ import {
 	CardContent,
 	CardHeader,
 	CardTitle,
+	cn,
 	Dialog,
 	DialogContent,
 	DialogHeader,
@@ -222,6 +223,60 @@ function CreateDocumentRequestModal({
 	);
 }
 
+/** The lifecycle in the order the broker walks it; DECLINED leaves it. */
+const LIFECYCLE_STAGES: BrokerProjectWorkflowStatus[] = [
+	"ASSIGNED",
+	"DOCUMENT_COLLECTION",
+	"UNDER_REVIEW",
+	"READY_FOR_BOND_ISSUANCE",
+	"BOND_ISSUANCE",
+	"MONITORING",
+	"COMPLETED",
+];
+
+/** A stage a move can land on; ASSIGNED starts the walk and DECLINED leaves it. */
+type MoveTarget = Exclude<BrokerProjectWorkflowStatus, "ASSIGNED" | "DECLINED">;
+
+/** Every move the lifecycle accepts, each with the one-line reason for taking it. */
+const MOVES: { status: MoveTarget; reason: string }[] = [
+	{
+		status: "DOCUMENT_COLLECTION",
+		reason: "Send the file back when the documents are not complete.",
+	},
+	{
+		status: "UNDER_REVIEW",
+		reason: "The documents are collected, so the file goes to appraisal.",
+	},
+	{
+		status: "READY_FOR_BOND_ISSUANCE",
+		reason: "The appraisal is finished, so the file can go to issuance.",
+	},
+	{
+		status: "BOND_ISSUANCE",
+		reason: "The issuance you arranged with the partner is starting.",
+	},
+	{
+		status: "MONITORING",
+		reason: "The bond is issued, so the file moves to the monthly reports.",
+	},
+	{
+		status: "COMPLETED",
+		reason: "Nothing is left to record; the closed file stays readable.",
+	},
+];
+
+/** A stage with no move states where the assignment stands, in one line. */
+function standingNote(status: BrokerProjectWorkflowStatus): string {
+	switch (status) {
+		case "ASSIGNED":
+			return "Awaiting your response: accept, decline or ask for information on Assigned Projects.";
+		case "DECLINED":
+			return "This assignment was declined, so it left the lifecycle.";
+		default:
+			return "This project is complete; nothing is left to move.";
+	}
+}
+
 export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 	const {
 		projects,
@@ -301,6 +356,14 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 	);
 	const latestReport = projectReports[0];
 	const nextStatuses = nextWorkflowStatuses(project.workflowStatus);
+	const currentStageIndex = LIFECYCLE_STAGES.indexOf(project.workflowStatus);
+	// The forward move leads; a one-step correction follows it.
+	const moves = MOVES.filter((move) => nextStatuses.includes(move.status))
+		.map((move) => ({
+			...move,
+			forward: LIFECYCLE_STAGES.indexOf(move.status) > currentStageIndex,
+		}))
+		.sort((a, b) => Number(b.forward) - Number(a.forward));
 
 	return (
 		<div className="space-y-6">
@@ -389,70 +452,91 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 							icon={faFileContract}
 							className="text-emerald-700"
 						/>
-						Bond Preparation Stage
+						Lifecycle Position
 					</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-4 text-sm">
-					<div className="grid gap-4 sm:grid-cols-2">
-						<div className="rounded-xl bg-muted p-3">
-							<p className="text-muted-foreground">Current stage</p>
-							<p className="mt-1 font-bold text-foreground">
-								{workflowLabel(project.workflowStatus)}
-							</p>
-						</div>
-						<div className="space-y-2 rounded-xl bg-muted p-3">
-							<div className="flex items-center justify-between gap-2">
-								<span className="text-muted-foreground">Bond tenor</span>
-								<span className="font-semibold text-foreground">
-									{project.bondInfo.tenorMonths} months
-								</span>
-							</div>
-							<div className="flex items-center justify-between gap-2">
-								<span className="text-muted-foreground">
-									Lead representative
-								</span>
-								<span className="font-semibold text-foreground">
-									{project.bondInfo.brokerRepresentative}
-								</span>
-							</div>
-						</div>
-					</div>
+					{project.workflowStatus !== "DECLINED" && (
+						<ol aria-label="Broker lifecycle" className="space-y-1.5">
+							{LIFECYCLE_STAGES.map((stage, index) => {
+								const isCurrent = stage === project.workflowStatus;
 
-					{nextStatuses.length === 0 ? (
-						<p className="text-muted-foreground">
-							{project.workflowStatus === "ASSIGNED"
-								? "Accept the assignment to start document collection."
-								: project.workflowStatus === "DECLINED"
-									? "This assignment was declined by the broker."
-									: "This assignment has been completed."}
-						</p>
-					) : (
-						<div className="space-y-2">
-							<p className="font-semibold text-foreground">
-								Move to the next stage:
-							</p>
-							{nextStatuses.map((status) => (
-								<Button
-									key={status}
-									size="sm"
-									variant="outline"
-									className="w-full"
-									onClick={() =>
-										updateWorkflowStatus(
-											project.id,
-											status as BrokerProjectWorkflowStatus,
-										)
-									}
-								>
-									{workflowLabel(status)}
-								</Button>
-							))}
-						</div>
+								return (
+									<li
+										key={stage}
+										aria-current={isCurrent ? "step" : undefined}
+										className="flex items-center gap-2.5"
+									>
+										<span
+											className={cn(
+												"w-4 shrink-0 text-right tabular-nums",
+												isCurrent
+													? "font-semibold text-foreground"
+													: "text-muted-foreground",
+											)}
+										>
+											{index + 1}
+										</span>
+										<span
+											className={cn(
+												isCurrent
+													? "font-semibold text-foreground"
+													: "text-muted-foreground",
+											)}
+										>
+											{workflowLabel(stage)}
+										</span>
+										{isCurrent && <Badge variant="outline">Current</Badge>}
+									</li>
+								);
+							})}
+						</ol>
 					)}
 
-					<div className="space-y-2 border-t border-border pt-4">
-						<p className="font-semibold text-foreground">Record issuance</p>
-						<div className="grid grid-cols-2 gap-2">
+					{moves.length > 0 ? (
+						<div className="space-y-3 rounded-xl bg-muted p-3">
+							<p className="font-semibold text-foreground">Next step</p>
+							{moves.map((move) => (
+								<div key={move.status} className="space-y-1.5">
+									<Button
+										size="sm"
+										variant={move.forward ? "default" : "outline"}
+										className={cn(
+											"w-full",
+											move.forward &&
+												"bg-[#00712D] text-white hover:bg-[#00712D]/90",
+										)}
+										onClick={() =>
+											updateWorkflowStatus(project.id, move.status)
+										}
+									>
+										Move to {workflowLabel(move.status)}
+									</Button>
+									<p className="text-muted-foreground">{move.reason}</p>
+								</div>
+							))}
+						</div>
+					) : (
+						<p className="text-muted-foreground">
+							{standingNote(project.workflowStatus)}
+						</p>
+					)}
+
+					<div className="space-y-3 border-t border-border pt-4">
+						<div className="flex flex-wrap items-center justify-between gap-2">
+							<p className="font-semibold text-foreground">
+								External bond issuance
+							</p>
+							<Badge
+								className={BOND_STATUS_META[project.bondInfo.status].className}
+							>
+								{BOND_STATUS_META[project.bondInfo.status].label}
+							</Badge>
+						</div>
+						<p className="text-muted-foreground">
+							Recorded here for this file; issued in the partner app.
+						</p>
+						<div className="flex flex-wrap items-center gap-2">
 							<Button
 								size="sm"
 								variant="outline"
@@ -467,6 +551,20 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 							>
 								Mark as Issued
 							</Button>
+						</div>
+						<div className="flex flex-wrap gap-x-6 gap-y-1">
+							<span className="text-muted-foreground">
+								Bond tenor:{" "}
+								<span className="font-semibold text-foreground">
+									{project.bondInfo.tenorMonths} months
+								</span>
+							</span>
+							<span className="text-muted-foreground">
+								Lead representative:{" "}
+								<span className="font-semibold text-foreground">
+									{project.bondInfo.brokerRepresentative}
+								</span>
+							</span>
 						</div>
 					</div>
 				</CardContent>

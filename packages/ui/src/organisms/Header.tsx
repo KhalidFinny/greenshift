@@ -108,7 +108,7 @@ function HeaderNav({ onDark }: { onDark: boolean }) {
 				<img
 					src={onDark ? "/logo-white.webp" : "/logo-long.svg"}
 					alt="GreenShift"
-					className="h-8"
+					className={onDark ? "h-11" : "h-10"}
 				/>
 			</Link>
 

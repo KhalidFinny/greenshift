@@ -14,6 +14,7 @@ export * from "./organisms/certifications-card";
 export * from "./organisms/closed-bid-card";
 export * from "./organisms/company-profile-form";
 export * from "./organisms/documents-vault-card";
+export * from "./organisms/getting-started-card";
 export * from "./organisms/matchmaking-deep-dive-card";
 export * from "./organisms/milestone-tracker-card";
 export * from "./organisms/monthly-energy-report-card";
