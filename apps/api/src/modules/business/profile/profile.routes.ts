@@ -41,8 +41,7 @@ profileRoutes.get(
 	}),
 );
 
-// The company's own record: the organization it registers as and the person who
-// represents it. The sign-in email is identity, not writable here.
+// The company's own record; the sign-in email is identity, not writable here.
 profileRoutes.put(
 	"/profile",
 	mutationLimit,
@@ -88,8 +87,7 @@ profileRoutes.put(
 
 		const values: CompanyProfileValues = {
 			companyName,
-			// A blank name keeps the stored representative, since the account row
-			// requires one.
+			// A blank name keeps the stored representative: the account row requires one.
 			...(representative ? { representative } : {}),
 			industrySector,
 			address,

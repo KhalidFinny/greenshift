@@ -64,8 +64,7 @@ export async function findProjectDocument(
 	return row;
 }
 
-// Moves a draft's files onto the project it became, then clears them from the
-// draft. Runs as one batch so a project can never end up half-documented.
+// Moves a draft's files onto the project it became, as one batch, so a project is never half-documented.
 export async function promoteDraftDocuments(
 	db: GreenShiftDb,
 	draftId: string,

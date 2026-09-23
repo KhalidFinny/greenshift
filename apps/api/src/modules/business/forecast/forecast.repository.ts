@@ -17,8 +17,7 @@ export async function findBlueprintIdForProject(
 	return row?.id ?? null;
 }
 
-// The project's blueprint row, document included, or null while it has none. Read
-// by the owning company at whatever stage it has reached.
+// Read by the owning company at whatever stage the blueprint has reached.
 export async function findBlueprintForProject(
 	db: GreenShiftDb,
 	projectId: number,
@@ -33,8 +32,7 @@ export async function findBlueprintForProject(
 	return row ?? null;
 }
 
-// The row is written `validated`: LVV GRK already gated the project, and an admin
-// still has to publish it. The audit entry is written after the row, which names it.
+// Written `validated`: LVV GRK already gated the project, and an admin still has to publish it.
 export async function insertValidatedBlueprint(
 	db: GreenShiftDb,
 	input: {

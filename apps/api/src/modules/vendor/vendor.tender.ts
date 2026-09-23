@@ -3,7 +3,7 @@ import type { VendorTenderSummary } from "../../contracts";
 import type { GreenShiftDb } from "../../db";
 import {
 	matchShortlistSize,
-	tenders,
+	type tenders,
 	vendorAssignments,
 	vendorMatchScores,
 } from "../../db/schema";

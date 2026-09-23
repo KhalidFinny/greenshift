@@ -1,5 +1,4 @@
-/* Eleanor's reading of the ROI forecast: what the computed scenarios mean for the
- * company, written from the forecast itself so every sentence traces to a figure. */
+// Eleanor's reading of the ROI forecast, written from the forecast itself.
 
 import type {
 	BusinessRiskInsight,
@@ -58,8 +57,7 @@ function stated(scenario: ForecastScenario): string {
 	return `${scenario.label} assumes ${percent(scenario.savingPct)} of the plan, ${rupiah(scenario.firstYearSavingRp)} in the first year, with the saving growing at ${percent(scenario.inflationPct)} a year against ${percent(scenario.degradationPct)} of wear: ${presentValue}, ${projectReturn}, and ${payback}.`;
 }
 
-// The reading composed from the forecast alone, in the analyst's voice. Every
-// sentence traces to a computed figure, so it is safe to show when the model is down.
+// Every sentence traces to a computed figure, so it is safe to show when the model is down.
 export function composeForecastReading(forecast: RoiForecast): string {
 	const { capexRp, discountRatePct, horizonYears, scenarios } = forecast;
 	const { recovered, short } = partitionByRecovery(forecast);
@@ -114,8 +112,7 @@ function forecastReadingSignature(forecast: RoiForecast): string {
 	].join("|");
 }
 
-// The forecast as a brief, derived values included, so the model reasons about the
-// case instead of recomputing it and cannot mistake a share for an input.
+// The derived values are given too, so the model cannot mistake a share for an input.
 function asBrief(forecast: RoiForecast): string {
 	const lines = [
 		`Capital: ${rupiah(forecast.capexRp)}.`,

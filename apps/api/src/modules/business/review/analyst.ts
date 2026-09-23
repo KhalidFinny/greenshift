@@ -1,11 +1,4 @@
-/* The analyst model, and the reading it writes.
- *
- * Eleanor's two subjects (an assessment, a project's funding case) differ only
- * in what they are told and what she is asked to write, so the call, the cache
- * and the fallback live here once. Every reading is cached against the figures
- * it was written about: the same figures read the same way, and A fails to the
- * composed reading rather than to a spinner.
- */
+// The analyst model and the reading it writes: the call, the cache and the fallback live here once.
 
 import type { BusinessRiskInsight } from "../../../contracts";
 import type { Env } from "../../../env";
@@ -30,10 +23,7 @@ export const ANALYST_VOICE = [
 	"only: no headings, no bullet points, no markdown, no em dashes.",
 ].join("\n");
 
-/**
- * The reading, or null when the model answered with nothing usable. Anything
- * over the length cap counts as a miss the caller falls back from.
- */
+// Anything over the length cap counts as a miss the caller falls back from.
 function readModelText(result: unknown): string | null {
 	const text = aiAnswerText(result);
 	return text && text.length <= MAX_READING_CHARS ? text : null;
@@ -72,8 +62,7 @@ export async function analystReading(
 		await env.KV.put(cacheKey, text, { expirationTtl: CACHE_TTL_SECONDS });
 		return { text, source: "ai" };
 	} catch (error) {
-		// An outage at the provider must not cost the reviewer the reading, so the
-		// composed one stands in and the failure is logged rather than swallowed.
+		// An outage at the provider must not cost the reviewer the reading.
 		console.error("[eleanor] Workers AI failed", error);
 		return { text: brief.fallback, source: "model" };
 	}

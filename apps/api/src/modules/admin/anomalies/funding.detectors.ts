@@ -1,11 +1,11 @@
 import type { GreenShiftDb } from "../../../db";
-import type { AnomalyPush } from "./anomaly-report";
 import {
 	selectBadBondSerials,
 	selectFailedRoiPayments,
 	selectOverfundedProjects,
 	selectPaidRoiPayments,
 } from "./anomalies.repository";
+import type { AnomalyPush } from "./anomaly-report";
 
 export async function collectFundingAnomalies(
 	db: GreenShiftDb,

@@ -1,4 +1,8 @@
-import type { CompanyDocument, CompanyDocumentScan, CompanyVerificationStatus } from "./verification";
+import type {
+	CompanyDocument,
+	CompanyDocumentScan,
+	CompanyVerificationStatus,
+} from "./verification";
 
 export interface VerifyUserBody {
 	verified: boolean;

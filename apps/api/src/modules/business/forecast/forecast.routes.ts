@@ -1,5 +1,4 @@
-/* The ROI forecast the review step shows, for the project as entered so far: the
- * same engine the blueprint uses, asked before a project exists to generate one for. */
+// The ROI forecast the review step shows, asked before a project exists to carry one.
 
 import { Hono } from "hono";
 import { createFactory } from "hono/factory";
@@ -18,8 +17,7 @@ const factory = createFactory<ApiEnv>();
 
 export const forecastRoutes = new Hono<ApiEnv>();
 
-// The company's own blueprint, written at verification, so a project still waiting
-// on its LVV body answers null. A bidder only sees it once validated or published.
+// A bidder only sees the blueprint once it is validated or published.
 forecastRoutes.get(
 	"/projects/:id/blueprint",
 	...factory.createHandlers(async (c) => {
@@ -82,8 +80,7 @@ forecastRoutes.post(
 	}),
 );
 
-// Eleanor's reading of the same forecast, asked for separately so the charts do not
-// wait on a model. The figures travel because the cache key reads the same inputs.
+// Asked for separately so the charts do not wait on a model; the figures travel because the cache key reads them.
 forecastRoutes.post(
 	"/review/forecast/reading",
 	mutationRateLimit("business", "project-forecast-reading"),
@@ -93,8 +90,7 @@ forecastRoutes.post(
 		if (body === null) return apiError(c, "VALIDATION");
 
 		const forecast = roiForecast(body);
-		// The panel asks for the reading only once it has a forecast to read, so
-		// figures that produce none are an incomplete request and not a state.
+		// Figures that produce no forecast are an incomplete request, not a state.
 		if (forecast === null) return apiError(c, "VALIDATION");
 
 		const reading = await forecastReading(c.env, forecast);

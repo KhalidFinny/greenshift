@@ -6,11 +6,11 @@ import {
 	text,
 	uniqueIndex,
 } from "drizzle-orm/sqlite-core";
+import type { CompanyDocumentScan } from "../../contracts";
 import {
 	companyDocumentSlots,
 	companyVerificationStatuses,
 } from "../../contracts";
-import type { CompanyDocumentScan } from "../../contracts";
 
 export const userRoles = [
 	"business",

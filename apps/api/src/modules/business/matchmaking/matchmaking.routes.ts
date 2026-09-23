@@ -56,8 +56,7 @@ matchmakingRoutes.get(
 	}),
 );
 
-// The pool moves as vendor profiles are verified, so the company can ask for the
-// ranking again rather than living with the one its verification produced.
+// The pool moves as vendor profiles are verified, so the ranking can be asked for again.
 matchmakingRoutes.post(
 	"/matchmaking/:projectId/matching",
 	mutationRateLimit("business", "matching"),

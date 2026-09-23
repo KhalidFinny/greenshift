@@ -10,8 +10,7 @@ import {
 	vendors,
 } from "../../../db/schema";
 
-// Each project's tender state and its awarded vendor, so the list can name the
-// vendor without a second request per row.
+// Each project's tender state and awarded vendor, so the list needs no request per row.
 export async function listTenderOutcomes(db: GreenShiftDb, companyId: number) {
 	const rows = await db
 		.select({
@@ -92,8 +91,7 @@ export async function findScoredVendor(
 	return row ?? null;
 }
 
-// One row per project: a second save replaces the first, so the company can change
-// its mind before the tender opens.
+// One row per project: a second save replaces the first, before the tender opens.
 export async function upsertAssignment(
 	db: GreenShiftDb,
 	values: {

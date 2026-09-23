@@ -25,7 +25,7 @@ document reading plus the analyst narrative run through Workers AI.
 | radix-ui | 1.6 | The primitive set the components are built on: dialog, dropdown, select, tabs, tooltip and the rest. |
 | Font Awesome | 7.3 | The icon set the UI guidelines call for (`agent.md`). |
 | lucide-react | 1.34 | Icons inside the shadcn primitives and a few landing sections. |
-| @visx/* | 4.0 | Chart scales, grids, groups, shapes and patterns (`packages/ui/src/components/charts`). |
+| @visx/* | 4.0 | Chart scales, grids, groups, shapes and patterns (`packages/ui/src/organisms/charts`). |
 | Motion | 13.4 | Chart and UI animation (`motion/react`). |
 | d3-shape | 3.2 | Pie and arc geometry for the chart package. |
 | @number-flow/react | 0.6 | Animated numeric transitions on statistic cards. |
@@ -105,8 +105,8 @@ for routing, data fetching, tables and forms.
 | Routing and URL state | TanStack Router | `src/routes/*`, `src/router.tsx` |
 | SSR, server functions, mutations scope | TanStack Start | `src/server.ts`, `src/routes/*` |
 | Server state (fetching, caching, invalidation) | TanStack Query | every dashboard page (`useQuery` / `useQueryClient`) |
-| Tables | TanStack Table | `DataTable` in `packages/ui/src/components/ui/data-table.tsx`, used by the project list, the admin tables and every other table |
-| Forms | TanStack Form | `useAppForm` plus the field bundle (`TextField`/`NumberField`/`SelectField`/`TextareaField`/`CheckboxField`/`PasswordField`/`SubmitButton`) in `packages/ui/src/components/form/form.tsx`, used by login, register, the step-up dialog and the submission wizard |
+| Tables | TanStack Table | `DataTable` in `packages/ui/src/organisms/data-table.tsx`, used by the project list, the admin tables and every other table |
+| Forms | TanStack Form | `useAppForm` plus the field bundle (`TextField`/`NumberField`/`SelectField`/`TextareaField`/`CheckboxField`/`PasswordField`/`SubmitButton`) in `packages/ui/src/molecules/form.tsx`, used by login, register, the step-up dialog and the submission wizard |
 | Devtools | TanStack Devtools (Query, Router) | dev builds only |
 
 Router, Start and Query cover routing, SSR and server state; Table and Form are adopted everywhere, so no page

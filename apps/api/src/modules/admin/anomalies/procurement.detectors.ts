@@ -1,10 +1,10 @@
 import type { GreenShiftDb } from "../../../db";
 import { iso } from "../../../lib/format";
-import type { AnomalyPush } from "./anomaly-report";
 import {
 	selectOverRevisedProposals,
 	selectStaleTenders,
 } from "./anomalies.repository";
+import type { AnomalyPush } from "./anomaly-report";
 
 export async function collectProcurementAnomalies(
 	db: GreenShiftDb,

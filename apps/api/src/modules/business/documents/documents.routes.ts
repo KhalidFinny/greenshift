@@ -24,8 +24,7 @@ function numericId(raw: string | undefined): number | null {
 	return Number.isSafeInteger(value) ? value : null;
 }
 
-// Multipart rather than JSON: `requireJsonBody` caps bodies at 16 KB, and a
-// scanned document is far larger than that.
+// Multipart rather than JSON: `requireJsonBody` caps bodies at 16 KB and a scanned document is far larger.
 documentsRoutes.post(
 	"/drafts/:draftId/documents",
 	mutationRateLimit("business", "document"),
@@ -159,7 +158,6 @@ documentsRoutes.get(
 		return new Response(result.body, {
 			headers: {
 				"Content-Type": result.contentType,
-				// An attachment, because the file is downloaded rather than shown.
 				"Content-Disposition": `attachment; filename="${result.fileName.replace(/["\\]/g, "")}"`,
 				"Cache-Control": "private, no-store",
 			},

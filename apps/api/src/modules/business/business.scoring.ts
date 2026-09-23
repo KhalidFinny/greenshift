@@ -1,50 +1,9 @@
-// Scoring mirrors the frontend's `credit-score.ts` and `project-risk.ts`; the
-// two must agree, so parameters match the frontend lib, not the wire contract.
+// Project risk, mirroring the frontend's `project-risk.ts`: the parameters match it, not the wire contract.
 
-// ADR-004.4: 0-100 from a debt-service proxy (annual saving / (CAPEX / tenor),
-// capped) plus document completeness; missing inputs yield null, never a guess.
-export interface CreditScoreInput {
-	capex: number | null;
-	tenor: number | null;
-	saving: number | null;
-	docsDone: number;
-	docsTotal: number;
-}
+export type { CreditScoreInput, CreditScoreResult } from "./credit-score";
+export { creditScore, ratingForScore } from "./credit-score";
 
-export interface CreditScoreResult {
-	score: number | null;
-	rating: string | null;
-}
-
-/** Rating bands per ADR-004.4. */
-export function ratingForScore(score: number): string {
-	if (score >= 85) return "AAA";
-	if (score >= 75) return "AA";
-	if (score >= 65) return "A";
-	if (score >= 55) return "BBB+";
-	if (score >= 45) return "BBB";
-	if (score >= 35) return "BB";
-	return "B";
-}
-
-export function creditScore(input: CreditScoreInput): CreditScoreResult {
-	const { capex, tenor, saving, docsDone, docsTotal } = input;
-	if (capex === null || tenor === null || tenor <= 0 || saving === null) {
-		return { score: null, rating: null };
-	}
-	const annualDebt = capex / tenor;
-	if (!(annualDebt > 0)) return { score: null, rating: null };
-	const debtPoints = Math.min(100, Math.max(0, (saving / annualDebt) * 100));
-	const docPoints =
-		docsTotal > 0
-			? Math.min(100, Math.max(0, (docsDone / docsTotal) * 100))
-			: 0;
-	const score = Math.round(debtPoints * 0.7 + docPoints * 0.3);
-	return { score, rating: ratingForScore(score) };
-}
-
-// ADR-006.7: 0-100, the mean of four contributions. Finansial, Teknis and
-// Implementasi come from Step 1, Pembiayaan from the credit score; empty yields null.
+// ADR-006.7: 0-100, the mean of four contributions; empty yields null.
 export type ProjectRiskTone = "Low" | "Medium" | "High" | null;
 
 export type ProjectRiskLevel = "Low" | "Medium" | "High";
@@ -174,8 +133,7 @@ export function projectRisk(input: ProjectRiskInput): ProjectRiskResult | null {
 	};
 }
 
-// Bands the frontend uses to colour each field: money above 5M is high and above
-// 1M medium; consumption above 10k is high and above 2k medium.
+// Bands the frontend uses to colour each field: money above 5M is high and above 1M medium.
 const BIAYA_TINGGI = 5_000_000;
 const BIAYA_SEDANG = 1_000_000;
 const KONSUMSI_TINGGI = 10_000;
@@ -198,8 +156,7 @@ export function teknisTone(konsumsiMwh: number | null): ProjectRiskTone {
 	return "Low";
 }
 
-// Risk from how soon the project lands: inside a year high, inside three years
-// medium, later low; an unparseable quarter is unknown, not assumed.
+// Risk from how soon the project lands: inside a year high, inside three years medium; an unparseable quarter is unknown.
 export function implementasiTone(
 	timelineQuarter: string | null,
 	now: Date = new Date(),

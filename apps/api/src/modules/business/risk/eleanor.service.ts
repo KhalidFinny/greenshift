@@ -6,8 +6,7 @@ import type {
 import type { Env } from "../../../env";
 import { ANALYST_VOICE, analystReading, joinWords } from "../review/analyst";
 
-/* Eleanor, the risk analyst on the review step. She reads only the assessment the
- * platform produced; the model writes the narrative when bound, the same figures otherwise. */
+// Eleanor, the risk analyst on the review step: she reads the assessment the platform produced.
 
 const FULL_SYSTEM_PROMPT = [
 	ANALYST_VOICE,
@@ -58,8 +57,7 @@ const AREA_READING: Record<string, string> = {
 		"The credit profile raises the cost of the debt the project depends on.",
 };
 
-// The reading composed from the figures alone, in Eleanor's voice. An area is only
-// called a pressure when the model banded it as one, so the prose never argues with the number.
+// An area is only called a pressure when the model banded it as one, so the prose never argues with the number.
 export function composeInsight(risk: BusinessRiskInsightBody): string {
 	const answered = risk.breakdown.filter((row) => row.tone !== null);
 	if (answered.length === 0) {
@@ -154,8 +152,7 @@ function riskSignature(risk: BusinessRiskInsightBody): string {
 	].join("|");
 }
 
-// The two sentences the summary panels hold, composed from the figures alone. Same
-// discipline as the full reading: each sentence traces back to an input.
+// Same discipline as the full reading: each sentence traces back to an input.
 export function composeBriefInsight(risk: BusinessRiskInsightBody): string {
 	const answered = risk.breakdown.filter((row) => row.tone !== null);
 	if (answered.length === 0) {

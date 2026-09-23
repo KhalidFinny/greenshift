@@ -1,5 +1,4 @@
-/* The reading the review step opens with, for the project as entered so far. Same
- * shape as the risk insight: the figures travel, the analyst's words come back. */
+// The reading the review step opens with, for the project as entered so far.
 
 import { Hono } from "hono";
 import { createFactory } from "hono/factory";

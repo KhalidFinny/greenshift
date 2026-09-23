@@ -15,7 +15,6 @@ const factory = createFactory<ApiEnv>();
 export const riskRoutes = new Hono<ApiEnv>();
 
 // Mirrors the frontend's `ProjectRiskResult`, so the card renders it without a mapper.
-// Eleanor's reading travels with it: from the row, or composed and written out of band.
 riskRoutes.get(
 	"/projects/:id/risk",
 	...factory.createHandlers(async (c) => {
@@ -46,8 +45,7 @@ riskRoutes.get(
 	}),
 );
 
-// The assessment the wizard derived, answered with Eleanor's reading of it. Nothing is
-// written: the reading is cached against the figures it was written about.
+// The reading is cached against the figures it was written about, so nothing is written here.
 const RISK_LEVELS = ["Low", "Medium", "High"] as const;
 type RiskLevelValue = (typeof RISK_LEVELS)[number];
 /** Four areas, one per contribution to the score. */
@@ -97,8 +95,7 @@ function readMode(
 	return value === "brief" || value === "full" ? value : undefined;
 }
 
-// The assessment as this route will hand it on, or null when it is not one. Every
-// field is narrowed here: the score and band decide what the prose may claim.
+// Every field is narrowed here: the score and the band decide what the prose may claim.
 function readInsightRequest(raw: unknown): BusinessRiskInsightRequest | null {
 	const score = readField(raw, "score");
 	const level = readField(raw, "level");

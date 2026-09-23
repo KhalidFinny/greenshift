@@ -61,7 +61,7 @@ Strict rules for all UI work in this project. Read on every session startup.
 
 ## File locations
 
-- UI components: `packages/ui/src/components/ui/`
+- UI components: `packages/ui/src/{atoms,molecules,organisms}/`
 - UI exports: `packages/ui/src/index.ts`
 - Design tokens: `packages/ui/src/styles.css` (CSS variables)
 - Role packages import from: `@greenshift/core`, `@greenshift/ui`, `@tanstack/*`, `@fortawesome/*`

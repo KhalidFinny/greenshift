@@ -25,8 +25,7 @@ export type RiskResult =
 	  }
 	| { outcome: "not_found" };
 
-// Recomputes the assessment from the stored inputs, so a changed project is never
-// described by a stale score; no wizard inputs means no assessment, not an invented one.
+// Recomputed from the stored inputs, so a changed project is never described by a stale score.
 export async function readProjectRisk(
 	db: GreenShiftDb,
 	projectId: number,
@@ -64,8 +63,7 @@ export async function readProjectRisk(
 	};
 }
 
-// Writes the reading for a project that has none, out of band so a read never waits on
-// the model. Runs at most once: a row with any reading, even a composed one, is left alone.
+// Runs at most once: a row with any reading, even a composed one, is left alone.
 export async function writeProjectInsight(
 	env: Env,
 	db: GreenShiftDb,

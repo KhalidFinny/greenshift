@@ -65,11 +65,7 @@ export async function saveCompanyDetails(
 	return row ?? null;
 }
 
-/**
- * Files one certificate. The slot is unique per account, so a re-upload
- * replaces the file it supersedes and answers with the row it replaced, whose
- * object the caller then removes.
- */
+// The slot is unique per account, so a re-upload replaces the file and answers with the row it replaced.
 export async function upsertCompanyDocument(
 	db: GreenShiftDb,
 	values: {
@@ -126,8 +122,7 @@ export async function markVerificationSubmitted(
 		.update(users)
 		.set({
 			legalDocsSubmittedAt: submittedAt,
-			// A fresh filing clears the previous verdict: the account is waiting on
-			// a new reading, not still turned down by the old one.
+			// A fresh filing clears the previous verdict.
 			verificationRejectionReason: null,
 		})
 		.where(eq(users.id, userId))
@@ -151,11 +146,7 @@ export async function saveDocumentScan(
 		);
 }
 
-/**
- * The verdict, written where the gate reads it. `verified` is the dated fact an
- * administrator or the scan established; the state is what every request is
- * decided on, so the two are written together.
- */
+// `verified` is the dated fact an admin or the scan established; the state is what every request reads.
 export async function setVerificationState(
 	db: GreenShiftDb,
 	userId: number,

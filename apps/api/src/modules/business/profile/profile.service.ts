@@ -33,8 +33,7 @@ export async function getBusinessProfile(
 	return row ? toBusinessProfile(row) : null;
 }
 
-// Saves and reads back through the same mapper, so the screen renders the stored
-// values rather than the ones the form held.
+// Reads back through the same mapper, so the screen renders the stored values.
 export async function saveBusinessProfile(
 	db: GreenShiftDb,
 	userId: number,

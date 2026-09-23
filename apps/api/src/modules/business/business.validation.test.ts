@@ -7,8 +7,7 @@ import {
 	validationSummary,
 } from "./business.validation";
 
-// A complete, valid pair of blocks. Each test breaks exactly one field, so a
-// failure names the rule it broke.
+// A complete, valid pair of blocks; each test breaks exactly one field, so a failure names the rule.
 const STEP1: BusinessStep1 = {
 	namaProyek: "PLTS Atap Pabrik Cikarang",
 	lokasi: "Cikarang Pusat, Kabupaten Bekasi, Jawa Barat",

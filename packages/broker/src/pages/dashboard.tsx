@@ -23,6 +23,8 @@ import { Link } from "@tanstack/react-router";
 import { workflowLabel } from "../lib/lifecycle";
 import { useBrokerData } from "../lib/use-broker-data";
 import { KpiRow } from "../molecules/kpi-row";
+import { BrokerLifecycleCard } from "../organisms/broker-lifecycle-card";
+import { BrokerRoleCard } from "../organisms/broker-role-card";
 
 function formatRupiah(amount: number) {
 	return new Intl.NumberFormat("en-US", {
@@ -100,6 +102,8 @@ export function BrokerDashboard() {
 
 	return (
 		<div className="space-y-6">
+			<BrokerRoleCard />
+
 			{!isVerified && (
 				<div className="flex items-start justify-between rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900">
 					<div className="flex items-start gap-3">
@@ -128,6 +132,8 @@ export function BrokerDashboard() {
 			)}
 
 			<KpiRow items={kpiItems} loading={isLoading} />
+
+			<BrokerLifecycleCard projects={projects} loading={isLoading} />
 
 			<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 				<Card className="lg:col-span-2">

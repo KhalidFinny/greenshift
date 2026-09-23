@@ -1,10 +1,10 @@
 import type { GreenShiftDb } from "../../../db";
-import type { AnomalyPush } from "./anomaly-report";
 import {
 	selectProjectsWithoutMrv,
 	selectUnverifiedUsers,
 	selectVendorsWithoutProfile,
 } from "./anomalies.repository";
+import type { AnomalyPush } from "./anomaly-report";
 
 /** Records that exist without the profile, verification or reporting they are required to carry. */
 export async function collectCompletenessAnomalies(

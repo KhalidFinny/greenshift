@@ -1,3 +1,5 @@
+// The wizard's field rules. Messages mirror the frontend's `validators.ts` and the keys are the wire contract's.
+
 import type {
 	BusinessStep1Patch,
 	BusinessStep2Patch,
@@ -8,50 +10,30 @@ import {
 	SCOPE_MAX_ITEMS,
 	scopeEntries,
 } from "./business.shared";
+import {
+	checker,
+	type FieldErrors,
+	isFiniteNumber,
+	isJaminan,
+	isNonNegative,
+	RINGKASAN_MAX,
+	RINGKASAN_MIN,
+	TENOR_MAX,
+	TENOR_MIN,
+	TIMELINE_RE,
+} from "./validation.shared";
 
-// Mirrors the frontend's `validators.ts`: messages are copied verbatim and the
-// keys are the wire contract's field names, so `error.fields` applies directly.
-
-/** Field name to message, as returned in `error.fields`. */
-export type FieldErrors = Record<string, string>;
-
-/** The closed set of collateral forms. Mirrors `JAMINAN_OPTIONS`. */
-export const JAMINAN_OPTIONS = [
-	"Land or building certificate",
-	"Machinery and equipment",
-	"Trade receivables",
-	"Corporate guarantee / letter of comfort",
-] as const;
-
-/** Quarter plus year, e.g. "Q1 2026". */
-const TIMELINE_RE = /^Q[1-4]\s+\d{4}$/i;
-
-export const RINGKASAN_MIN = 50;
-export const RINGKASAN_MAX = 1000;
-export const TENOR_MIN = 1;
-export const TENOR_MAX = 30;
-
-function isFiniteNumber(value: unknown): value is number {
-	return typeof value === "number" && Number.isFinite(value);
-}
-
-function isNonNegative(value: unknown): value is number {
-	return isFiniteNumber(value) && value >= 0;
-}
-
-export function isJaminan(value: unknown): boolean {
-	return (
-		typeof value === "string" &&
-		(JAMINAN_OPTIONS as readonly string[]).includes(value)
-	);
-}
-
-// Whether a field is worth checking: always on submit, and on autosave only
-// when the client actually sent a value (sent-but-null means cleared).
-function checker(partial: boolean) {
-	return (value: Record<string, unknown>, key: string) =>
-		!partial || (value[key] !== undefined && value[key] !== null);
-}
+export {
+	CONSENT_MESSAGE,
+	type FieldErrors,
+	isJaminan,
+	JAMINAN_OPTIONS,
+	RINGKASAN_MAX,
+	RINGKASAN_MIN,
+	TENOR_MAX,
+	TENOR_MIN,
+	validationSummary,
+} from "./validation.shared";
 
 export function step1Errors(
 	value: BusinessStep1Patch,
@@ -105,8 +87,7 @@ export function step1Errors(
 	return errors;
 }
 
-// Step 2 rules. `fileCount` is the number of documents attached to the draft;
-// the minimum of one is only enforced on submit.
+// `fileCount` is the number of documents attached to the draft; the minimum of one is only enforced on submit.
 export function step2Errors(
 	value: BusinessStep2Patch,
 	partial = false,
@@ -145,8 +126,7 @@ export function step2Errors(
 	return errors;
 }
 
-// Scope of work. Both lists are open-ended, so the rule counts entries carrying
-// text; an empty list is only an error on submit, since a draft may be incomplete.
+// Both scope lists are open-ended, so the rule counts entries carrying text; an empty list is only an error on submit.
 export function step3Errors(
 	value: BusinessStep3Patch,
 	partial = false,
@@ -195,12 +175,4 @@ function scopeListProblem(
 		return `Add at least one ${noun}.`;
 	}
 	return null;
-}
-
-export const CONSENT_MESSAGE = "Both boxes must be ticked to submit.";
-
-export function validationSummary(count: number): string {
-	return count === 1
-		? "1 field is not valid."
-		: `${count} fields are not valid.`;
 }

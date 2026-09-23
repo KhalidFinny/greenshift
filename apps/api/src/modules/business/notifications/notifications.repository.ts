@@ -42,7 +42,6 @@ export async function markNotificationRead(
 	return updated;
 }
 
-// Marks every notification of one account read, so a read feed clears in one move.
 // Answers with the number of rows changed, 0 when there was nothing unread.
 export async function markAllNotificationsRead(
 	db: GreenShiftDb,

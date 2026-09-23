@@ -1,163 +1,25 @@
+// The matchmaking screen's reads: the company's projects, and one project's ranking with its tender.
+
 import type {
-	BusinessMatchFactor,
 	BusinessMatchmakingDetail,
-	BusinessMatchmakingMethod,
 	BusinessMatchmakingProject,
-	BusinessRecommendedVendor,
-	BusinessTender,
 	BusinessTenderStatus,
 } from "../../../contracts";
 import type { GreenShiftDb } from "../../../db";
-import type { projects, vendorMatchScores, vendors } from "../../../db/schema";
+import type { projects } from "../../../db/schema";
 import { matchShortlistSize } from "../../../db/schema";
 import { parseLimit } from "../../../lib/format";
 import { pillStatus } from "../business.shared";
 import * as procurement from "../procurement/procurement.service";
 import * as projectsRepository from "../projects/projects.repository";
 import * as repository from "./matchmaking.repository";
-import { MATCH_CRITERIA, separatingCriteria } from "./scoring";
+import { poolFactors, toRecommendedVendor } from "./matchmaking-ranking";
+import { PROCUREMENT_METHODS } from "./matchmaking-selection.service";
+
+export type { SelectionResult } from "./matchmaking-selection.service";
+export { saveSelection } from "./matchmaking-selection.service";
 
 type ProjectRow = typeof projects.$inferSelect;
-type ScoreRow = typeof vendorMatchScores.$inferSelect;
-type VendorRow = typeof vendors.$inferSelect;
-
-/** The three procurement routes, in the order the picker renders them. */
-export const PROCUREMENT_METHODS: Array<{
-	id: BusinessMatchmakingMethod;
-	label: string;
-	desc: string;
-}> = [
-	{
-		id: "open",
-		label: "Open Bidding",
-		desc: "Every verified vendor can bid, and all of them see the bids as they come in.",
-	},
-	{
-		id: "closed",
-		label: "Closed Bidding",
-		desc: "Only the recommended vendors are invited, and no bidder sees another's price.",
-	},
-	{
-		id: "direct",
-		label: "Direct Selection",
-		desc: "One appointed vendor, privately, with no competing bids.",
-	},
-];
-
-/** The stored score as a whole percentage, clamped to the model's 0–100. */
-function pct(value: number | null): number {
-	if (typeof value !== "number" || !Number.isFinite(value)) return 0;
-	return Math.round(Math.min(Math.max(value, 0), 100));
-}
-
-/** One vendor's own readings, for the reasons its row gives. Not the pool's. */
-interface VendorCriterionReading {
-	label: string;
-	pct: number;
-}
-
-function criteriaFor(score: ScoreRow): VendorCriterionReading[] {
-	return MATCH_CRITERIA.map((criterion) => ({
-		label: criterion.label,
-		pct: pct(score[criterion.key]),
-	}));
-}
-
-/** What the vendor does, read off its own profile: certifications, or volume. */
-function subtitleFor(profile: VendorRow): string {
-	const certifications = profile.certifications ?? [];
-	if (certifications.length > 0) return certifications.slice(0, 2).join(" · ");
-	return `${profile.totalProjects ?? 0} projects delivered`;
-}
-
-// The criterion a vendor stands out on is the one it beats the pool on, not its
-// highest outright: every vendor shares its strongest line. Best own line if none.
-function whyRank(
-	criteria: VendorCriterionReading[],
-	profile: VendorRow,
-	poolMeans: Map<string, number>,
-): string[] {
-	const [lead] = [...criteria].sort(
-		(a, b) =>
-			b.pct -
-			(poolMeans.get(b.label) ?? b.pct) -
-			(a.pct - (poolMeans.get(a.label) ?? a.pct)),
-	);
-	const pool = lead ? poolMeans.get(lead.label) : undefined;
-	const reasons =
-		lead && pool !== undefined && lead.pct > pool
-			? [`Leads on ${lead.label.toLowerCase()} · ${lead.pct}% vs ${pool}% pool`]
-			: lead
-				? [`Best on ${lead.label.toLowerCase()} · ${lead.pct}%`]
-				: [];
-
-	if (profile.totalProjects) {
-		reasons.push(
-			`${profile.totalProjects} projects delivered, rated ${(profile.rating ?? 0).toFixed(1)}`,
-		);
-	}
-
-	return reasons;
-}
-
-// The pool's mean on each criterion, so the bars describe this project's market,
-// and the share each criterion actually carried in the score.
-function poolFactors(scored: ScoreRow[]): BusinessMatchFactor[] {
-	if (scored.length === 0) return [];
-
-	// The run's own rule over the stored rows: a criterion the whole pool ties on
-	// was left out, so the weight shown is the one the score was built from.
-	const applied = separatingCriteria(
-		scored.map((row) => ({
-			technicalFit: pct(row.technicalFit),
-			relevantExperience: pct(row.relevantExperience),
-			historicalPerformance: pct(row.historicalPerformance),
-			priceValue: pct(row.priceValue),
-			projectRisk: pct(row.projectRisk),
-		})),
-	);
-	const appliedWeight = MATCH_CRITERIA.filter((criterion) =>
-		applied.includes(criterion.key),
-	).reduce((sum, criterion) => sum + criterion.weight, 0);
-
-	return MATCH_CRITERIA.map((criterion) => {
-		const isApplied = applied.includes(criterion.key);
-		return {
-			label: criterion.label,
-			pct: Math.round(
-				scored.reduce((total, row) => total + pct(row[criterion.key]), 0) /
-					scored.length,
-			),
-			weight:
-				isApplied && appliedWeight > 0
-					? Math.round((criterion.weight / appliedWeight) * 100)
-					: 0,
-			applied: isApplied,
-		};
-	}).sort((a, b) => b.weight - a.weight || b.pct - a.pct);
-}
-
-function toRecommendedVendor(
-	score: ScoreRow,
-	profile: VendorRow,
-	poolMeans: Map<string, number>,
-): BusinessRecommendedVendor {
-	const criteria = criteriaFor(score);
-	return {
-		id: profile.id,
-		name: profile.companyName,
-		subtitle: subtitleFor(profile),
-		score: pct(score.totalScore),
-		rank: score.rank ?? 0,
-		rating: profile.rating ?? 0,
-		totalProjects: profile.totalProjects ?? 0,
-		verified: profile.verifiedAt !== null,
-		shortlisted:
-			(score.rank ?? 0) > 0 && (score.rank ?? 0) <= matchShortlistSize,
-		criteria,
-		whyRank: whyRank(criteria, profile, poolMeans),
-	};
-}
 
 function toProjectRow(
 	project: ProjectRow,
@@ -179,21 +41,6 @@ function toProjectRow(
 export type DetailResult =
 	| { outcome: "ok"; detail: BusinessMatchmakingDetail }
 	| { outcome: "not_found" };
-
-export type SelectionResult =
-	| {
-			outcome: "ok";
-			vendorId: number | null;
-			vendorName: string | null;
-			method: BusinessMatchmakingMethod;
-			tender: BusinessTender;
-	  }
-	| { outcome: "not_found" }
-	| { outcome: "unknown_method" }
-	| { outcome: "unknown_vendor" }
-	| { outcome: "vendor_required" }
-	| { outcome: "deadline_invalid" }
-	| { outcome: "tender_locked"; status: string };
 
 export async function listMatchmaking(
 	db: GreenShiftDb,
@@ -226,8 +73,7 @@ export async function readMatchmakingDetail(
 		procurement.readTender(db, companyId, projectId),
 	]);
 
-	// The pool's means are read once: each vendor's row is described against the
-	// pool it is ranked in, and the panel describes that same pool.
+	// The pool's means are read once: each vendor's row is described against the pool it is ranked in.
 	const factors = poolFactors(scored.map((row) => row.score));
 	const poolMeans = new Map(
 		factors.map((factor) => [factor.label, factor.pct]),
@@ -240,13 +86,10 @@ export async function readMatchmakingDetail(
 				status: (tender?.tender.status ?? "open") as BusinessTenderStatus,
 				vendorName: tender?.tender.awardedVendorName ?? null,
 			}),
-			// The whole pool, not only the shortlist: the company reads the ranking
-			// before it appoints, and picks between the shortlisted few from it.
+			// The whole pool, not only the shortlist: the company reads the ranking before it appoints.
 			recommendedVendors: scored.map((row) =>
 				toRecommendedVendor(row.score, row.profile, poolMeans),
 			),
-			// The factors describe the whole pool, not the shortlist: they are a
-			// reading of this project's market rather than of the three offered.
 			matchFactors: factors,
 			poolSize: scored.length,
 			shortlistSize: matchShortlistSize,
@@ -257,94 +100,4 @@ export async function readMatchmakingDetail(
 			bids: tender?.bids ?? [],
 		},
 	};
-}
-
-// Records the choice and opens the tender it implies: from here the project is
-// tendering, the deadline is running, and invited vendors can bid.
-export async function saveSelection(
-	db: GreenShiftDb,
-	companyId: number,
-	projectId: number,
-	body: {
-		vendorId?: unknown;
-		method?: unknown;
-		deadlineAt?: unknown;
-		budgetMin?: unknown;
-		budgetMax?: unknown;
-	},
-): Promise<SelectionResult> {
-	const project = await projectsRepository.findCompanyProject(
-		db,
-		projectId,
-		companyId,
-	);
-	if (!project) return { outcome: "not_found" };
-
-	const method = PROCUREMENT_METHODS.find((m) => m.id === body.method);
-	if (!method) return { outcome: "unknown_method" };
-
-	// The direct route is the only one that names a vendor before the tender opens;
-	// open and closed invite their own pool and decide on the bidding page.
-	const rawVendorId = Number(body.vendorId);
-	const namedVendorId =
-		Number.isInteger(rawVendorId) && rawVendorId > 0 ? rawVendorId : null;
-	if (method.id === "direct" && namedVendorId === null) {
-		return { outcome: "vendor_required" };
-	}
-
-	const vendor =
-		namedVendorId === null
-			? null
-			: await repository.findScoredVendor(db, projectId, namedVendorId);
-	if (namedVendorId !== null && !vendor) return { outcome: "unknown_vendor" };
-
-	const deadlineAt = new Date(String(body.deadlineAt ?? ""));
-	if (Number.isNaN(deadlineAt.getTime())) {
-		return { outcome: "deadline_invalid" };
-	}
-
-	// The tender opens first: a deadline the server refuses must not leave an
-	// appointment recorded against a project that never started bidding.
-	const opened = await procurement.openTender(db, companyId, projectId, {
-		method: method.id,
-		deadlineAt,
-		budgetMin: numberOrNull(body.budgetMin),
-		budgetMax: numberOrNull(body.budgetMax),
-	});
-	if (opened.outcome === "deadline_invalid") {
-		return { outcome: "deadline_invalid" };
-	}
-	if (opened.outcome === "tender_locked") {
-		return { outcome: "tender_locked", status: opened.status };
-	}
-
-	if (vendor) {
-		await repository.upsertAssignment(db, {
-			projectId,
-			vendorId: vendor.vendorId,
-			vendorName: vendor.vendorName,
-			method: method.id,
-		});
-	}
-
-	return {
-		outcome: "ok",
-		vendorId: vendor?.vendorId ?? null,
-		vendorName: vendor?.vendorName ?? null,
-		method: method.id,
-		tender: procurement.toTender(opened.tender, {
-			bidCount: 0,
-			awardedVendorName: null,
-		}),
-	};
-}
-
-function numberOrNull(value: unknown): number | null {
-	const parsed = Number(value);
-	return value === null ||
-		value === undefined ||
-		value === "" ||
-		!Number.isFinite(parsed)
-		? null
-		: parsed;
 }

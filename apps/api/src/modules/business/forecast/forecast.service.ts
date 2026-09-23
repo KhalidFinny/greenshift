@@ -1,5 +1,4 @@
-/* The project's funding case in one place: the review step and the verification flow
- * both go through `roiForecast`, so the blueprint carries the scenarios shown. */
+// The project's funding case: the review step and the verification flow both go through `roiForecast`.
 
 import type {
 	BlueprintDocument,
@@ -13,8 +12,7 @@ import * as repository from "./forecast.repository";
 
 type ProjectRow = typeof projects.$inferSelect;
 
-// Narrower than the project row on purpose: the verification flow passes a row and
-// the fixture seed passes its figures, so seeded documents match verification's.
+// Narrower than the project row on purpose: the fixture seed passes its figures, so seeded documents match verification's.
 export interface BlueprintInput {
 	capexRp: number | null;
 	tenorTahun: number | null;
@@ -27,8 +25,7 @@ export interface BlueprintInput {
 	targetMwh: number | null;
 }
 
-// What the project costs and how it is funded, what it promises to cut, and the
-// three scenarios. Null unless it can state both a funding case and an emission target.
+// Null unless the project can state both a funding case and an emission target.
 export function buildBlueprintDocument(
 	row: BlueprintInput,
 ): BlueprintDocument | null {
@@ -80,8 +77,7 @@ export function buildBlueprintDocument(
 	};
 }
 
-// Generates the blueprint now verification has cleared the project and answers its
-// id, or null with no funding case. An existing blueprint is kept, never stacked on.
+// An existing blueprint is kept, never stacked on; null when there is no funding case.
 export async function generateBlueprint(
 	db: GreenShiftDb,
 	row: ProjectRow,
@@ -101,8 +97,7 @@ export async function generateBlueprint(
 	return id;
 }
 
-// The project's own blueprint, or null while it has none. The stored sections are
-// optional, so the projections are lifted out here for the page to read directly.
+// The stored sections are optional, so the projections are lifted out here for the page to read.
 export async function readProjectBlueprint(
 	db: GreenShiftDb,
 	projectId: number,

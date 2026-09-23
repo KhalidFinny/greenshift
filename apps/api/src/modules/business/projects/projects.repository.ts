@@ -48,8 +48,7 @@ export async function setProjectStatus(
 	return row;
 }
 
-// Writes the submitted project and its risk assessment together, so a project can
-// never exist without the assessment that justified it.
+// Writes the project and its risk assessment together, so a project cannot exist without one.
 export async function insertProjectWithRisk(
 	db: GreenShiftDb,
 	values: NewProject,
@@ -65,8 +64,7 @@ export async function insertProjectWithRisk(
 		financialScore: pctFor("finansial"),
 		technicalScore: pctFor("teknis"),
 		implementationScore: pctFor("implementasi"),
-		// The wizard's model does not score an environmental dimension, so it
-		// stays empty rather than being filled with a number from elsewhere.
+		// The wizard's model does not score an environmental dimension.
 		environmentalScore: null,
 		overallScore: risk.score,
 		recommendations: risk.mitigations,
@@ -78,8 +76,7 @@ export async function insertProjectWithRisk(
 	return project;
 }
 
-// Records that a draft became a project, so a replay can be answered with the
-// project it already created.
+// So a replay can be answered with the project the draft already created.
 export async function attachProjectToDraft(
 	db: GreenShiftDb,
 	draftId: string,
@@ -102,8 +99,7 @@ export async function findRiskInsight(db: GreenShiftDb, projectId: number) {
 	return row ?? null;
 }
 
-// Stores the reading beside the assessment it was written about. Called once per
-// project: a read that finds nothing asks for one, later reads are served from the row.
+// Called once per project: a read that finds nothing asks for a reading, later reads are served from the row.
 export async function writeRiskInsight(
 	db: GreenShiftDb,
 	projectId: number,

@@ -20,8 +20,7 @@ const factory = createFactory<ApiEnv>();
 
 export const projectsRoutes = new Hono<ApiEnv>();
 
-// Creates the project while consuming its draft and scoring it, which is why
-// it reads as an action rather than a collection POST.
+// Creates the project while consuming its draft and scoring it, so it reads as an action, not a collection POST.
 projectsRoutes.post(
 	"/projects/submit",
 	mutationRateLimit("business", "submit"),
@@ -56,8 +55,7 @@ projectsRoutes.post(
 	}),
 );
 
-// The company registers the project at the registry and appoints its LVV body, then
-// marks it registered here; the body's review runs out of band, so this answers the project.
+// The body's review runs out of band, so this answers the project the company marked registered.
 projectsRoutes.post(
 	"/projects/:id/lvv",
 	mutationRateLimit("business", "start-lvv"),
@@ -90,8 +88,7 @@ projectsRoutes.post(
 	}),
 );
 
-// The confirmation page reads the project it just created, so the figures on it
-// are the stored ones rather than a second derivation in the browser.
+// The figures are the stored ones rather than a second derivation in the browser.
 projectsRoutes.get(
 	"/projects/:id",
 	...factory.createHandlers(async (c) => {
@@ -106,8 +103,7 @@ projectsRoutes.get(
 	}),
 );
 
-// Registration at Sistem Registri is a step taken off-platform. Reading it back lets
-// the project page prompt a company that has done it there to start verification here.
+// Registration at Sistem Registri is off-platform, so reading it back lets the page prompt the company.
 projectsRoutes.get(
 	"/projects/:id/registry",
 	...factory.createHandlers(async (c) => {

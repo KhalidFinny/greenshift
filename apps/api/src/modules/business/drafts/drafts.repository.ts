@@ -2,8 +2,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import type { GreenShiftDb } from "../../../db";
 import { draftDocuments, drafts } from "../../../db/schema";
 
-// Scoped to the company, so another company's id is indistinguishable from a
-// missing one: a cross-company read can only answer "not found".
+// Scoped to the company, so another company's id is indistinguishable from a missing one.
 export async function findDraft(
 	db: GreenShiftDb,
 	draftId: string,
@@ -32,8 +31,7 @@ export async function draftIdExists(
 	return row !== undefined;
 }
 
-// Creates the draft on first save and merges on every later one. One statement,
-// so two autosaves racing cannot both try to insert.
+// One statement, so two autosaves racing cannot both try to insert.
 export async function upsertDraft(
 	db: GreenShiftDb,
 	params: {

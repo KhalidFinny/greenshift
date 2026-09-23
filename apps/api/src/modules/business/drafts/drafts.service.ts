@@ -27,8 +27,7 @@ export type DraftResult =
 	| { outcome: "not_found" }
 	| { outcome: "invalid"; fields: FieldErrors };
 
-// A resume returns the draft with its files. It never validates: the blocks
-// reference those files by id, so without them a resumed step can only show ids.
+// Never validates: the blocks reference files by id, so a resumed step needs the files to show anything.
 export type LoadDraftResult =
 	| { outcome: "ok"; draft: BusinessDraft; documents: BusinessDraftDocument[] }
 	| { outcome: "not_found" };
@@ -41,8 +40,7 @@ function referencedFileIds(body: BusinessDraftBody): string[] {
 	return [...ids];
 }
 
-// An absent key means untouched and null means cleared, so the patch spreads over
-// the stored block rather than replacing it; validation runs against the patch only.
+// An absent key means untouched and null means cleared, so the patch spreads over the stored block.
 export async function saveDraft(
 	db: GreenShiftDb,
 	companyId: number,
@@ -51,8 +49,7 @@ export async function saveDraft(
 ): Promise<DraftResult> {
 	const existing = await repository.findDraft(db, draftId, companyId);
 
-	// A draft that exists but belongs to another company is reported as missing
-	// rather than forbidden, so the id cannot be probed for existence.
+	// Another company's draft is reported as missing rather than forbidden, so the id cannot be probed.
 	if (!existing && (await repository.draftIdExists(db, draftId))) {
 		return { outcome: "not_found" };
 	}

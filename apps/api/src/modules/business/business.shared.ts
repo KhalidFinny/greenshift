@@ -11,8 +11,7 @@ import { iso } from "../../lib/format";
 
 export const MAX_DOCUMENT_BYTES = 25 * 1024 * 1024;
 
-// Extensions are checked alongside the MIME type: browsers report spreadsheets
-// inconsistently, often as `application/octet-stream`.
+// Extensions are checked alongside the MIME type: browsers report spreadsheets inconsistently.
 export const ALLOWED_DOCUMENT_EXTENSIONS = [
 	"pdf",
 	"xls",
@@ -30,8 +29,7 @@ export const ALLOWED_DOCUMENT_TYPES: readonly string[] = [
 	"image/jpeg",
 ];
 
-// Slot vocabulary so an upload cannot invent a checklist entry; mirrors the
-// frontend. The LVV's own pack is filed at Sistem Registri, not collected here.
+// Slot vocabulary, so an upload cannot invent a checklist entry. The LVV's own pack is filed at Sistem Registri.
 export const DOCUMENT_SLOTS = [
 	"tagihan",
 	"beban",
@@ -42,8 +40,7 @@ export const DOCUMENT_SLOTS = [
 
 export const STEP1_SLOTS = ["tagihan", "beban", "izin"] as const;
 
-// The denominator the credit score and risk model use for document
-// completeness; mirrors `REQUIRED_DOCS` in the frontend.
+// The denominator the credit score and risk model use for document completeness.
 export const CHECKLIST_SLOTS = [...STEP1_SLOTS] as const;
 
 /** The client generates the draft id, so it is bounded rather than trusted. */
@@ -65,8 +62,7 @@ export function isDocumentSlot(value: unknown): value is string {
 	);
 }
 
-// The list shows this label rather than the raw status enum. `registry` and
-// `assessment` are the two halves of verification: register, then await the LVV.
+// `registry` and `assessment` are the two halves of verification: register, then await the LVV.
 export function pillStatus(status: string): string {
 	switch (status) {
 		case "registry":
@@ -96,8 +92,7 @@ export interface StoredDraftPayload {
 export const SCOPE_MAX_ITEMS = 20;
 export const SCOPE_ITEM_MAX = 300;
 
-// Trimmed, blanks dropped, cut to the cap. The validator and the submit path
-// both read the list this way, so a whitespace entry never reaches a project row.
+// Trimmed, blanks dropped, cut to the cap: the validator and the submit path both read the list this way.
 export function scopeEntries(value: unknown): string[] {
 	if (!Array.isArray(value)) return [];
 	return value
@@ -107,8 +102,7 @@ export function scopeEntries(value: unknown): string[] {
 		.slice(0, SCOPE_MAX_ITEMS);
 }
 
-// The stored payload is the client's own blocks, written through the autosave
-// validator, so it is read back as those blocks rather than re-derived.
+// The stored payload is the client's own blocks, written through the autosave validator.
 export function readPayload(payload: unknown): StoredDraftPayload {
 	return (payload ?? {}) as StoredDraftPayload;
 }
@@ -125,8 +119,7 @@ export function draftEntry(row: typeof drafts.$inferSelect): BusinessDraft {
 	};
 }
 
-// Draft files are not OCR'd (that happens when submit promotes them to a
-// project), so this carries the size rather than an OCR state.
+// Draft files are not OCR'd (that happens when submit promotes them), so this carries the size, not an OCR state.
 export function draftDocumentEntry(
 	row: typeof draftDocuments.$inferSelect,
 ): BusinessDraftDocument {

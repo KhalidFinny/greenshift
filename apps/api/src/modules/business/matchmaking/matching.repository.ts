@@ -51,8 +51,7 @@ export async function listVerifiedVendors(db: GreenShiftDb) {
 		.where(isNotNull(vendors.verifiedAt));
 }
 
-// Each vendor's share of past bids made on projects in one sector, 0-100; vendors
-// with no bids are absent. Platform history, not a guess about the vendor's text.
+// Each vendor's share of past bids made in one sector, 0-100; a vendor with no bids is absent.
 export async function sectorShareByVendor(
 	db: GreenShiftDb,
 	sector: string,
@@ -76,8 +75,7 @@ export async function sectorShareByVendor(
 	);
 }
 
-// Each vendor's mean bid as a share of the budget it was made against; a vendor
-// with no bids is absent from the map.
+// Each vendor's mean bid as a share of the budget it was made against; no bids, no row.
 export async function meanBidShareByVendor(
 	db: GreenShiftDb,
 ): Promise<Map<number, number>> {
@@ -101,8 +99,7 @@ export async function meanBidShareByVendor(
 	);
 }
 
-// Stores one project's ranking, replacing whatever it held, so a re-run cannot
-// leave a half-ranked pool behind.
+// Replaces whatever the project held, so a re-run cannot leave a half-ranked pool behind.
 export async function replaceProjectScores(
 	db: GreenShiftDb,
 	projectId: number,

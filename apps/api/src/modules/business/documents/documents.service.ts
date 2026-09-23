@@ -27,8 +27,7 @@ function extensionOf(fileName: string): string {
 	return dot === -1 ? "" : fileName.slice(dot + 1).toLowerCase();
 }
 
-// Browsers report spreadsheet types inconsistently (often as
-// `application/octet-stream`), so a file passes on a known MIME type or extension.
+// A file passes on a known extension or MIME type: browsers report spreadsheets inconsistently.
 function isAcceptedType(file: File): boolean {
 	const extension = extensionOf(file.name);
 	const byExtension = (
@@ -73,8 +72,7 @@ export async function uploadDraftDocument(
 		});
 		return { outcome: "ok", document: draftDocumentEntry(row) };
 	} catch (err) {
-		// The row is the source of truth: a stored object with no row would be
-		// unreachable, so take it back out rather than leaving it behind.
+		// The row is the source of truth: a stored object with no row would be unreachable.
 		await env.R2.delete(fileKey);
 		throw err;
 	}
@@ -101,8 +99,7 @@ export async function listProjectDocuments(
 	return rows.map((row) => projectDocumentEntry(row, projectId));
 }
 
-// The stored object for a project document, ready to stream. Refuses while OCR
-// is still running, because the file is not readable yet at that point.
+// Refuses while OCR is still running, because the file is not readable yet at that point.
 export type ProjectDocumentStream =
 	| {
 			outcome: "ok";

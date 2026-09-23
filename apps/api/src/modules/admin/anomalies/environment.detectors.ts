@@ -1,9 +1,9 @@
 import type { GreenShiftDb } from "../../../db";
-import type { AnomalyPush } from "./anomaly-report";
 import {
 	selectAnomalousEmissionReports,
 	selectRogueBlueprints,
 } from "./anomalies.repository";
+import type { AnomalyPush } from "./anomaly-report";
 
 export async function collectEnvironmentAnomalies(
 	db: GreenShiftDb,

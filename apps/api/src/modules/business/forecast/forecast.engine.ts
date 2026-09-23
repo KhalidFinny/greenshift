@@ -1,5 +1,4 @@
-/* The ROI engine shared by the wizard's review step and the blueprint, so both
- * carry the same scenarios. Only the project's own saving counts as a return. */
+// The ROI engine shared by the wizard's review step and the blueprint, so both carry the same scenarios.
 
 import type {
 	ForecastScenario,
@@ -7,8 +6,7 @@ import type {
 	RoiForecast,
 } from "../../../contracts";
 
-// A stated platform assumption, not a per-project cost of capital: partners
-// compare projects, so the rate has to be the same for all of them.
+// A stated platform assumption, not a per-project cost of capital: partners compare projects.
 export const DISCOUNT_RATE_PCT = 12;
 
 /** A tenor beyond this is a typo, and the cash flows stop there. */
@@ -23,8 +21,7 @@ interface ScenarioSpec {
 	degradationPct: number;
 }
 
-// Conservative / Base Case / Optimistic, in the order the screen shows them. The
-// conservative case assumes under-delivery and faster wear; the optimistic, the reverse.
+// Conservative / Base Case / Optimistic, in the order the screen shows them.
 const SCENARIO_SPECS: readonly ScenarioSpec[] = [
 	{
 		key: "conservative",
@@ -56,8 +53,7 @@ export interface ForecastInput {
 	penghematanRp: number | null;
 }
 
-// The funding's own tenor, floored at a year so a project cannot be modelled over
-// no time, and capped so a mistyped tenor does not run into the next century.
+// Floored at a year so a project cannot be modelled over no time, capped against a mistyped tenor.
 function horizonFor(tenorTahun: number | null): number | null {
 	if (tenorTahun === null || !Number.isFinite(tenorTahun) || tenorTahun <= 0) {
 		return null;
@@ -65,8 +61,7 @@ function horizonFor(tenorTahun: number | null): number | null {
 	return Math.min(Math.max(Math.round(tenorTahun), 1), MAX_HORIZON_YEARS);
 }
 
-// First year is the planned saving at the scenario's share; every year after grows
-// with the energy price and shrinks with the asset's degradation.
+// First year is the planned saving at the scenario's share; each year after grows with the price and shrinks with wear.
 function cashFlows(
 	spec: ScenarioSpec,
 	annualSavingRp: number,
@@ -94,8 +89,7 @@ function npvAt(rate: number, capexRp: number, flows: number[]): number {
 	);
 }
 
-// Positive flows against up-front capital make present value fall monotonically, so
-// bisection finds the single root; flows that never cover capital return null.
+// Positive flows against up-front capital make present value fall monotonically, so bisection finds the root.
 function irrPct(capexRp: number, flows: number[]): number | null {
 	if (capexRp <= 0 || flows.length === 0) return null;
 
@@ -104,8 +98,7 @@ function irrPct(capexRp: number, flows: number[]): number | null {
 
 	let low = -0.9;
 	let high = 10;
-	// 60 halvings of the interval is far below the rounding the answer is
-	// reported at, so the loop is bounded by precision rather than by luck.
+	// 60 halvings is far below the rounding the answer is reported at.
 	for (let step = 0; step < 60; step += 1) {
 		const mid = (low + high) / 2;
 		if (npvAt(mid, capexRp, flows) > 0) {
@@ -118,8 +111,7 @@ function irrPct(capexRp: number, flows: number[]): number | null {
 	return Math.round(((low + high) / 2) * 1000) / 10;
 }
 
-// The capital account as one series: out at year zero, then each year's discounted
-// inflow, so a chart can mark the year the capital comes back.
+// The capital account as one series: out at year zero, then each year's discounted inflow.
 function recovery(capexRp: number, flows: number[]): number[] {
 	const series = [-Math.round(capexRp)];
 	let recovered = -capexRp;
@@ -156,8 +148,7 @@ function scenario(
 	};
 }
 
-// The three scenarios plus the base case lifted to the top level. Null when the
-// figures cannot state a funding case: capital, tenor and saving are all required.
+// Null when the figures cannot state a funding case: capital, tenor and saving are all required.
 export function roiForecast(input: ForecastInput): RoiForecast | null {
 	const { capexRp, penghematanRp } = input;
 	const horizonYears = horizonFor(input.tenorTahun);

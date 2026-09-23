@@ -68,8 +68,7 @@ describe("roiForecast", () => {
 		const forecast = forecastOf(PROJECT);
 		const irr = forecast.irrPct;
 
-		// 2.4bn repaid from 600m a year, growing with inflation and wearing with the
-		// asset: the answer sits in the low teens, not at the undiscounted 25%.
+		// 2.4bn repaid from 600m a year, so the answer sits in the low teens, not at the undiscounted 25%.
 		expect(irr).not.toBeNull();
 		if (irr === null) throw new Error("Expected an IRR");
 		expect(irr).toBeGreaterThan(5);
@@ -104,8 +103,7 @@ describe("roiForecast", () => {
 			expect(series[0]).toBe(-forecast.capexRp);
 			expect(series[series.length - 1]).toBe(scenario.npvRp);
 
-			// The saving only ever comes back, so nothing in the series falls
-			// below the year before it: a chart reads one line, not noise.
+			// The saving only ever comes back, so nothing in the series falls below the year before it.
 			const falling = series.filter(
 				(value, year) => year > 0 && value < (series[year - 1] ?? 0),
 			);
@@ -118,8 +116,7 @@ describe("roiForecast", () => {
 		const base = forecast.scenarios.find((s) => s.key === "base");
 		if (!base) throw new Error("Expected a base case");
 
-		// Zero is the year the capital is back in present-value terms, and it is
-		// the year the chart marks.
+		// Zero is the year the capital is back in present-value terms, and the year the chart marks.
 		const repaid = base.recoveryRp.findIndex((value) => value >= 0);
 		expect(repaid).toBeGreaterThan(0);
 		expect(repaid <= forecast.horizonYears).toBe(true);

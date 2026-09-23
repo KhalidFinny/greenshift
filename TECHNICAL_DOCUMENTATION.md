@@ -492,22 +492,22 @@ deploys.
 The shared UI layer (`@greenshift/ui`) builds on the shadcn primitives and adds the components every page
 uses:
 
-- **`DataTable`** (`packages/ui/src/components/ui/data-table.tsx`) - a generic TanStack Table wrapper over the
+- **`DataTable`** (`packages/ui/src/organisms/data-table.tsx`) - a generic TanStack Table wrapper over the
   shadcn table primitives. Pages pass a typed `ColumnDef<T>[]` and data. It provides column sorting (click a
   string header), optional global search (`searchPlaceholder`), row ids (`getRowId`), per-cell classes via
   column `meta`, and an empty state. No page hand-writes table rows anymore.
   **Every table pages**: `pageSize` defaults to 10 and the footer (rows-per-page, "Page X of Y", Previous /
   Next) renders itself while the rows exceed one page, so a table can never render an unbounded dataset whole.
 - **Pagination for lists that are not tables** - `usePagedRows(rows)` plus `<PaginationBar/>`
-  (`packages/ui/src/hooks/use-paged-rows.ts`, `packages/ui/src/components/ui/pagination-bar.tsx`). A page that
+  (`packages/ui/src/hooks/use-paged-rows.ts`, `packages/ui/src/molecules/pagination-bar.tsx`). A page that
   renders its own rows (card grids, feeds, document lists) passes the array it already has to the hook, renders
   `pageRows`, and puts the bar under them, so a list and a table page the same way. Fixed-length collections
   (a stage timeline, a legend, a definition list) are left unpaged on purpose.
-- **Charts** (`packages/ui/src/components/charts/`) - visx-based, themed through the `--chart-*` tokens: `BarChart`
+- **Charts** (`packages/ui/src/organisms/charts/`) - visx-based, themed through the `--chart-*` tokens: `BarChart`
   with `Bar`/`BarXAxis`/`Grid`, `PieChart`, `RingChart`, and `LineChart`
   (`line-chart.tsx`) for projections, which plots one path per series with the
   y domain derived from the values it is given and an optional `reference` line.
-- **Forms** (`packages/ui/src/components/form/form.tsx`) - a `createFormHook` bundle exposing `useAppForm`
+- **Forms** (`packages/ui/src/molecules/form.tsx`) - a `createFormHook` bundle exposing `useAppForm`
   plus the field components `TextField`, `NumberField` (optional `prefix`/`unit`), `SelectField`,
   `TextareaField`, `CheckboxField`, and `PasswordField`, and the `SubmitButton`. Field components read the
   field from context, own their label, message and aria wiring, and render validation errors with
