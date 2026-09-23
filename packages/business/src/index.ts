@@ -1,3 +1,4 @@
+export * from "./organisms/getting-started-card";
 export * from "./pages/dashboard";
 export * from "./pages/matchmaking-bidding";
 export * from "./pages/matchmaking-detail";

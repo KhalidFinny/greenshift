@@ -8,6 +8,7 @@ import {
 	faCheck,
 	faChevronDown,
 	faChevronUp,
+	faCircleInfo,
 	faClipboardList,
 	faFileLines,
 	faGauge,
@@ -26,6 +27,15 @@ import { api } from "@greenshift/core";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useState } from "react";
+import { Button } from "../atoms/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "../atoms/dialog";
 import { ShimmerBlock } from "../atoms/skeleton-loader";
 import { useRoleShell } from "../hooks/use-role-shell";
 import { relativeTime } from "../lib/time";
@@ -37,6 +47,8 @@ interface RoleShellProps {
 	title: string;
 	navItems: Array<{ to: string; label: string }>;
 	showHeaderTitle?: boolean;
+	/** The role's getting-started steps, opened from the sidebar button. */
+	tutorial?: ReactNode;
 }
 
 const ROLES_WITH_FEED: Record<string, true> = {
@@ -135,6 +147,7 @@ export function RoleShell({
 	title,
 	navItems,
 	showHeaderTitle = true,
+	tutorial,
 }: RoleShellProps) {
 	const {
 		user,
@@ -336,6 +349,26 @@ export function RoleShell({
 							);
 						})}
 					</nav>
+
+					{tutorial ? (
+						<Dialog>
+							<DialogTrigger asChild>
+								<Button variant="outline" className="mt-3 w-full justify-start">
+									<FontAwesomeIcon icon={faCircleInfo} className="size-4" />
+									Getting started
+								</Button>
+							</DialogTrigger>
+							<DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+								<DialogHeader>
+									<DialogTitle className="text-lg">Getting started</DialogTitle>
+									<DialogDescription className="text-sm">
+										The steps this account takes, and where each one happens.
+									</DialogDescription>
+								</DialogHeader>
+								{tutorial}
+							</DialogContent>
+						</Dialog>
+					) : null}
 				</div>
 			</aside>
 

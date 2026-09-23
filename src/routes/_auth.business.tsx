@@ -1,3 +1,4 @@
+import { GettingStartedCard } from "@greenshift/business";
 import { requireRole, requireVerifiedCompany, roleNav } from "@greenshift/core";
 import { RoleShell } from "@greenshift/ui";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
@@ -10,7 +11,11 @@ export const Route = createFileRoute("/_auth/business")({
 		requireVerifiedCompany(options);
 	},
 	component: () => (
-		<RoleShell title="Company" navItems={roleNav.business}>
+		<RoleShell
+			title="Company"
+			navItems={roleNav.business}
+			tutorial={<GettingStartedCard />}
+		>
 			<Outlet />
 		</RoleShell>
 	),

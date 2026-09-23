@@ -23,7 +23,6 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
 import { formatId } from "../lib/number-format";
 import { formatSubmittedAt } from "../lib/project-display";
-import { GettingStartedCard } from "../organisms/getting-started-card";
 
 function inMonth(
 	projects: BusinessProjectSummary[],
@@ -195,8 +194,6 @@ export function BusinessDashboard() {
 
 	return (
 		<div className="space-y-6">
-			<GettingStartedCard />
-
 			{projectsQuery.isError ? (
 				<div className="py-20">
 					<EmptyState
