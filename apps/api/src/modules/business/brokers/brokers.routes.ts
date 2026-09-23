@@ -39,7 +39,7 @@ brokersRoutes.get(
 		const result = await readProjectBroker(db, c.get("user").id, id);
 		if (result.outcome === "not_found") return apiNotFound(c, "Project");
 
-		return c.json({ awarded: result.awarded, assignment: result.assignment });
+		return c.json({ ready: result.ready, assignment: result.assignment });
 	}),
 );
 
