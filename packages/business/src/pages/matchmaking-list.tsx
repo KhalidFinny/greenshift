@@ -27,6 +27,7 @@ import {
 	formatSubmittedAt,
 	STATUS_PILL,
 } from "../lib/project-display";
+import { ChooseBrokerDialog } from "../organisms/choose-broker-dialog";
 
 const VENDOR_FILTERS = [
 	{ value: "chosen", label: "Vendor chosen" },
@@ -150,6 +151,12 @@ export function MatchmakingList() {
 				cell: ({ row }) => (
 					// Below md the button is icon-only behind a 44px target; the aria-label keeps it nameable.
 					<div className="flex flex-wrap items-center gap-2">
+						{row.original.tenderStatus === "awarded" ? (
+							<ChooseBrokerDialog
+								projectId={row.original.id}
+								projectTitle={row.original.name}
+							/>
+						) : null}
 						{decided(row.original) ? (
 							<Button
 								variant="outline"

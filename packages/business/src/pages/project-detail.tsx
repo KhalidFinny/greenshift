@@ -8,7 +8,6 @@ import {
 	formatSubmittedAt,
 	STATUS_PILL,
 } from "../lib/project-display";
-import { ChooseBrokerCard } from "../organisms/choose-broker-card";
 import { isMatchmakingOpen, ProjectRecord } from "./project-record";
 
 export function ProjectDetail({ projectId }: { projectId: string }) {
@@ -114,9 +113,6 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
 
 			<ProjectRecord projectId={projectId} />
 
-			<ChooseBrokerCard projectId={id} />
-
-			{}
 			{isMatchmakingOpen(project.status) ? (
 				<div className="flex flex-wrap items-center gap-3">
 					<Button variant="outline" asChild>

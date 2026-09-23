@@ -514,8 +514,6 @@ function VendorRanking({
 							)}
 						</div>
 
-						<ChooseBrokerCard projectId={Number(projectId)} />
-
 						<div className="grid gap-x-6 gap-y-3 border-t border-border pt-4 sm:grid-cols-4">
 							{[
 								{
