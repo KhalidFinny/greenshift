@@ -64,17 +64,11 @@ function Missing({ children }: { children: React.ReactNode }) {
 	);
 }
 
-/**
- * The listing's own detail preview: the risk it was scored on, the project
- * behind it, the published blueprint, the projections that case rests on, and
- * the terms of the instrument. Every figure is read from the record; a section
- * with nothing on file says so instead of showing a plausible number.
- */
+/** The listing's own detail preview; a section with nothing on file says so instead of showing a plausible number. */
 export function BondDetailDialog({ listing }: { listing: BondListing }) {
 	const blueprint = listing.blueprint;
 	const terms = listing.bondTerms;
 	const risk = riskMeta(listing.riskScore);
-	// A document that carries only the three cases still has a headline: the base case.
 	const baseCase =
 		blueprint?.scenarios.find((scenario) => scenario.key === "base") ?? null;
 	const npv = blueprint?.npv ?? baseCase?.npvRp;

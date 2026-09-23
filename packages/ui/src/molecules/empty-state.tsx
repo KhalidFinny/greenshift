@@ -2,14 +2,10 @@ import type { ReactNode } from "react";
 import { cn } from "../lib/utils";
 
 interface EmptyStateProps {
-	/** Pass the surface's own icon, so the set matches the screen it sits in. */
 	icon?: ReactNode;
-	/** Required, so every empty state states what is actually empty. */
 	title: string;
-	/** What the user can do about it. Omit only when there is genuinely nothing. */
 	description?: string;
 	action?: ReactNode;
-	/** `error` distinguishes a failed load from a legitimately empty result. */
 	tone?: "neutral" | "error";
 }
 

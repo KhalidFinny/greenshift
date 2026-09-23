@@ -2,8 +2,7 @@ import { useEffect, useRef } from "react";
 import { publishToast } from "../toast-bus";
 import { useAuth } from "./use-auth";
 
-/** Mirrors the server default in apps/api/src/lib/session.ts: keep in sync.
- * SESSION_IDLE_MINUTES can shorten the server check below this watcher. */
+/** Mirrors the server default in apps/api/src/lib/session.ts; keep in sync. */
 export const SESSION_IDLE_MS = 15 * 60 * 1000;
 
 const ACTIVITY_EVENTS = [
@@ -14,8 +13,7 @@ const ACTIVITY_EVENTS = [
 	"scroll",
 ] as const;
 
-/** Logs out after SESSION_IDLE_MS of inactivity, including a tab returning
- * to focus past the window. Mount once in src/routes/_auth.tsx. */
+/** Logs out after SESSION_IDLE_MS of inactivity, including a tab returning to focus past the window. */
 export function useIdleSessionExpiry(): void {
 	const { logout } = useAuth();
 	const lastActiveRef = useRef<number>(Date.now());
@@ -37,8 +35,7 @@ export function useIdleSessionExpiry(): void {
 		const expire = async () => {
 			if (expiringRef.current) return;
 			expiringRef.current = true;
-			// Silent: the request layer's "Signed out" toast would be misleading for
-			// a kick. Invalidate redirects in-app; hard nav only if the API is gone.
+			// Silent: the request layer's "Signed out" toast would be misleading for a kick.
 			try {
 				await logoutRef.current(true);
 			} catch {
@@ -63,8 +60,7 @@ export function useIdleSessionExpiry(): void {
 
 		document.addEventListener("visibilitychange", onVisibility);
 		window.addEventListener("focus", checkIdle);
-		// Poll backstop: background tabs throttle interval timers, so the
-		// visibility handler does the work there.
+		// Poll backstop: background tabs throttle interval timers, so visibility does the work there.
 		const timer = window.setInterval(checkIdle, 10_000);
 
 		return () => {

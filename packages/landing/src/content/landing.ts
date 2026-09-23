@@ -1,5 +1,4 @@
-/** What a step shows beside its copy: a product screen, or the partner apps the
- * step happens with, since the bond is issued and held outside GreenShift. */
+/** What a step shows beside its copy: a product screen, or the partner apps it happens with. */
 export type StepVisual =
 	| {
 			kind: "image";
@@ -18,7 +17,6 @@ export interface LandingStep {
 	visual: StepVisual;
 }
 
-/** The four stages a project goes through, read the same way on desktop and on a phone. */
 export const howItWorksSteps: LandingStep[] = [
 	{
 		id: "01",
@@ -26,8 +24,7 @@ export const howItWorksSteps: LandingStep[] = [
 		title: "Start with Ease",
 		description:
 			"Simply fill in your company profile and upload supporting documents such as electricity bills, energy audits, and other operational data. Our system validates every piece of information automatically so the process stays fast, transparent, and hassle-free.",
-		// Each step shows the real screen it describes. All three are 16:9, and the size
-		// is declared so the frame keeps its height while a swapped image is still loading.
+		// The size is declared so the frame keeps its height while a swapped image is still loading.
 		visual: {
 			kind: "image",
 			src: "/wizard-project-profile.webp",
@@ -112,7 +109,6 @@ export const landingFaqs: LandingFaq[] = [
 	},
 ];
 
-/** What the platform measures itself, stated as three facts rather than as figures. */
 export const landingFacts: Array<{ title: string; body: string }> = [
 	{
 		title: "The target is the one that was verified",

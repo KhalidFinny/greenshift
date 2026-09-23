@@ -25,8 +25,7 @@ export const roleNav: Record<UserRole, NavItem[]> = {
 		{ to: "/business/projects", label: "My Projects" },
 		{ to: "/business/matchmaking", label: "Vendor Matchmaking" },
 	],
-	// Origin wired /investor/* routes that do not exist; the built surface is
-	// the public catalog at /bonds.
+	// No /investor/* routes exist; the investor surface is the public catalog at /bonds.
 	investor: [{ to: "/bonds", label: "Green Market" }],
 	vendor: [
 		{ to: "/vendor", label: "Dashboard" },
@@ -57,11 +56,9 @@ export function requireRole(role: UserRole) {
 	};
 }
 
-/** Where an unverified company account is held until it is verified. */
 export const COMPANY_VERIFICATION_PATH = "/business/verification";
 
-/** Client-side mirror of the API gate: an unverified business account may only
- * reach the verification step, so it is sent there instead of empty panels. */
+/** Client-side mirror of the API gate: an unverified company may only reach the verification step. */
 export function requireVerifiedCompany({
 	context,
 	location,
@@ -78,15 +75,13 @@ export function requireVerifiedCompany({
 	}
 }
 
-/** Role the dev server is scoped to (bun dev:<role> sets VITE_ROLE); undefined
- * in full-app mode. */
+/** Role the dev server is scoped to (bun dev:<role> sets VITE_ROLE). */
 export function getDevRole(): UserRole | undefined {
 	const raw = (import.meta.env.VITE_ROLE as string | undefined)?.trim() ?? "";
 	return raw && raw in roleHome ? (raw as UserRole) : undefined;
 }
 
-/** Dev surface scope (bun dev:landing sets VITE_SCOPE=landing): landing serves
- * only the public site, everything else redirects home. */
+/** Landing scope (bun dev:landing sets VITE_SCOPE=landing): other routes redirect home. */
 export function getDevScope(): "landing" | undefined {
 	const raw = (import.meta.env.VITE_SCOPE as string | undefined)?.trim() ?? "";
 	return raw === "landing" ? "landing" : undefined;

@@ -1,11 +1,6 @@
 import { buttonVariants, cn } from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
 
-/**
- * The phone hero: the deep-green band, one headline, two actions, then the real
- * wizard screen. No parallax and no absolutely positioned canvas, because the
- * phone composition is laid out at the phone's own width.
- */
 export default function MobileHero() {
 	return (
 		<section id="hero" className="bg-white">

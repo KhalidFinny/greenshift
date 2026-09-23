@@ -7,14 +7,12 @@ import {
 	SelectValue,
 } from "../atoms/select";
 
-/** The sizes a paged list offers, `"all"` being "show everything". */
 export const PAGE_SIZE_OPTIONS: Array<number | "all"> = [10, 25, 50, "all"];
 
 export interface PaginationBarProps {
 	pageIndex: number;
 	pageSize: number;
 	pageCount: number;
-	/** How many rows are being paged, for the "all" size. */
 	total: number;
 	onPageIndexChange: (index: number) => void;
 	onPageSizeChange: (size: number) => void;
@@ -23,8 +21,6 @@ export interface PaginationBarProps {
 	label: string;
 }
 
-/** The one pagination control, shared by `DataTable` and self-paged lists. It
- * renders nothing for a single page, where it could only say "Page 1 of 1". */
 export function PaginationBar({
 	pageIndex,
 	pageSize,
@@ -37,8 +33,7 @@ export function PaginationBar({
 }: PaginationBarProps) {
 	if (pageCount <= 1) return null;
 
-	/* The select must be able to show the size in use, so a non-standard page size
-	   is added to its options; a size standing in for "all" is left out. */
+	/* The select must be able to show the size in use, so a non-standard page size is added to its options. */
 	const sizes = [
 		...new Set([...pageSizeOptions, pageSize >= total ? null : pageSize]),
 	]

@@ -1,5 +1,4 @@
-/* Districts come from the closed list in `@greenshift/core`, so a picked address
-   is one the platform can compare; the plain input keeps text-field keyboard behaviour. */
+/* Districts come from the closed list in `@greenshift/core`, so a picked address is one the platform can compare. */
 
 import {
 	faChevronDown,
@@ -10,16 +9,13 @@ import { loadDistricts } from "@greenshift/core";
 import { useMemo, useRef, useState } from "react";
 import { cn } from "../lib/utils";
 
-/** How many matches the list shows before it asks the reader to keep typing. */
 const MAX_SHOWN = 100;
 
 export interface DistrictComboboxProps {
 	id: string;
 	value: string;
 	onChange: (value: string) => void;
-	/** Called when the field loses focus, for a caller that validates on blur. */
 	onBlur?: () => void;
-	/** A field message, which the input points at when it has one. */
 	error?: string;
 	placeholder?: string;
 	className?: string;
@@ -119,8 +115,6 @@ export function DistrictCombobox({
 
 			{open ? (
 				<>
-					{/* A click anywhere else closes the list without stealing the one
-					    the reader was making. */}
 					<button
 						type="button"
 						tabIndex={-1}

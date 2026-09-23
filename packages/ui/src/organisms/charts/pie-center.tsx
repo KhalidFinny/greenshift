@@ -15,9 +15,7 @@ import {
 import { usePieHover, usePieStable } from "./pie-context";
 
 export interface PieCenterProps {
-	/** Label shown below the value. Default: "Total" when not hovering */
 	defaultLabel?: string;
-	/** Format options for NumberFlow. Default: standard notation */
 	formatOptions?: ChartStatFlowFormat;
 	children?: (props: {
 		value: number;
@@ -26,16 +24,13 @@ export interface PieCenterProps {
 		data: { label: string; value: number; color?: string; fill?: string };
 	}) => ReactNode;
 	className?: string;
-	/** Class name for the value text. Scales with center size via container queries. */
 	valueClassName?: string;
-	/** Class name for the label text. Scales with center size via container queries. */
 	labelClassName?: string;
 	prefix?: string;
 	suffix?: string;
 }
 
-/** Renders as pure HTML, not inside SVG foreignObject: avoids Safari WebKit #23113 mispositioning.
- * PieChart overlays it with CSS Grid stacking. */
+/** Renders as pure HTML, not inside SVG foreignObject: avoids Safari WebKit #23113 mispositioning. */
 export function PieCenter({
 	defaultLabel = "Total",
 	formatOptions = defaultChartStatFlowFormat,
@@ -55,10 +50,8 @@ export function PieCenter({
 	const displayValue = hoveredData ? hoveredData.value : totalValue;
 	const displayLabel = hoveredData ? hoveredData.label : defaultLabel;
 
-	// Padding so text doesn't touch the inner edge
 	const centerSize = innerRadius * 2 - 16;
 
-	// Solid pie (innerRadius 0) has no center to render into
 	if (innerRadius <= 0) {
 		return null;
 	}

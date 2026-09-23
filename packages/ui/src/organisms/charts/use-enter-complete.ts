@@ -3,8 +3,7 @@
 import type { MotionValue } from "motion/react";
 import { useEffect, useState } from "react";
 
-/** True once a mount-progress MotionValue reaches 1: swap animated props for static values after
- * enter, dropping per-frame subscriptions during pan/hover. */
+/** True once enter progress reaches 1: swap animated props for static values, dropping per-frame subscriptions during pan/hover. */
 export function useEnterComplete(mountProgress: MotionValue<number>): boolean {
 	const [complete, setComplete] = useState(() => mountProgress.get() >= 1);
 

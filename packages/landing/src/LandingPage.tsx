@@ -6,12 +6,7 @@ import HowItWorksSection from "./components/organisms/HowItWorksSection";
 import { useIsMobile } from "./hooks/useIsMobile";
 import MobileLanding from "./mobile/MobileLanding";
 
-/**
- * The landing owns its own composition: one design for a wide canvas, one for a
- * phone. They are separate trees, so neither has to compromise for the other and
- * only one of them is in the document at a time. `initialMobile` comes from the
- * server's user-agent read, so the right tree is the first one painted.
- */
+/** One tree per form factor, chosen from the server's user-agent read so the right one is painted first. */
 export default function LandingPage({
 	initialMobile = false,
 }: {

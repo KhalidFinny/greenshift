@@ -15,7 +15,6 @@ interface ProjectProcurementActionCardProps {
 	applied?: boolean;
 	onOpenProposal: () => void;
 	onViewBlueprint: () => void;
-	/** Verification / bid state still in flight: same frames, shimmering leaves. */
 	loading?: boolean;
 }
 
@@ -98,7 +97,7 @@ export function ProjectProcurementActionCard({
 				</div>
 			)}
 
-			{/* The blueprint travels with the tender: readable before a bid exists and while one is drafted. */}
+			{/* The blueprint travels with the tender, so it is readable before a bid exists. */}
 			{loading ? null : (
 				<Button
 					variant="outline"

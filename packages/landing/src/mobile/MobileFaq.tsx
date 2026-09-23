@@ -9,7 +9,6 @@ import {
 import { Link } from "@tanstack/react-router";
 import { landingFaqs } from "../content/landing";
 
-/** The FAQ and the closing action, in the order a phone reads them: answer, then act. */
 export default function MobileFaq() {
 	return (
 		<>

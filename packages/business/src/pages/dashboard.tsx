@@ -45,8 +45,7 @@ function signed(delta: number): string {
 	return `${delta > 0 ? "+" : ""}${delta}`;
 }
 
-/** The badge follows the record, not the raw status: no submission date is a
- * draft, whatever stage the row carries. */
+// No submission date reads as a draft, whatever stage the row carries.
 function StatusBadge({
 	status,
 	submittedAt,
@@ -167,8 +166,7 @@ export function BusinessDashboard() {
 		(b.submittedAt ?? "").localeCompare(a.submittedAt ?? ""),
 	);
 
-	/** Options come off the loaded rows in table order, so a select can only
-	 * offer a status or sector some project actually has. */
+	// Options come off the loaded rows, so a select only offers a status or sector a project has.
 	const statusOptions = useMemo(
 		() => [...new Set(projects.map((project) => project.status))],
 		[projects],
@@ -356,8 +354,6 @@ export function BusinessDashboard() {
 					</div>
 
 					<div className="rounded-lg bg-white p-4 shadow-sm">
-						{/* The two filters sit above the table; the search box below them
-						    is the table's own and narrows whatever they leave. */}
 						<div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
 							<Select
 								value={statusFilter}

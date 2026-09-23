@@ -1,6 +1,3 @@
-/* The wizard shell: it owns the four steps' state, the draft (autosave, resume,
- * submit) and the values derived from it. Payload shapes and the models live in `lib/`. */
-
 import { useStore, useToast } from "@greenshift/ui";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -26,7 +23,6 @@ import { Step2View } from "../organisms/wizard/step-2";
 import { Step3View } from "../organisms/wizard/step-3";
 import { WizardHeader } from "../organisms/wizard/wizard-header";
 
-/* The slot vocabulary a resumed file is matched against, taken from the checklist. */
 const STEP1_SLOT_IDS = REQUIRED_DOCS.map((doc) => doc.id);
 
 export function BusinessSubmit() {
@@ -35,57 +31,42 @@ export function BusinessSubmit() {
 	const { toast } = useToast();
 	const navigate = useNavigate();
 
-	/* ADR-006: shell state (the active step, and whether Save and continue was pressed). */
 	const [activeStep, setActiveStep] = useState(0);
-	/* Save and continue re-runs the step's rules with their messages on; step 2 also asks its document
-	 * count. */
 	const [step2Attempted, setStep2Attempted] = useState(false);
-	/* Step 1 documents (ADR-003): slot to name shown, slot to document id. Uploads are imperative, not
-	 * form fields. */
 	const [uploaded, setUploaded] = useState<Record<string, string>>({});
 	const [uploadedIds, setUploadedIds] = useState<Record<string, string>>({});
 
-	/* Step 2 documents (ADR-004): one list, since an upload and its id appear and disappear
-	 * together. */
+	// One list: an upload and its id appear and disappear together.
 	const [finFiles, setFinFiles] = useState<WizardFile[]>([]);
 	const finFileIds = useMemo(() => finFiles.map((file) => file.id), [finFiles]);
 
-	/* Draft persistence: a stored draft seeds every step in one reset before autosave
-	   arms. Stored files are seeded too: an empty list would detach every upload. */
 	const readyToSave = useRef(false);
 	const draft = useBusinessDraft((resume) => {
-		// `useForm` re-applies the caller's blank `defaultValues` while the form is
-		// untouched, so seeded values must not become defaults: `keepDefaultValues` fixes it.
+		// useForm re-applies blank defaultValues while untouched, so seeded values must not become defaults.
 		form.reset(resumeValues(resume), { keepDefaultValues: true });
 
-		// The blocks hold file ids, so the files come from the resume list; otherwise a
-		// resumed step would count files it cannot name.
+		// Blocks hold file ids, so a resumed step needs the resume list to name its files.
 		const files = resumeFiles(resume.documents, resume.step2?.fileIds ?? []);
 		const step1Files = slotFiles(files.bySlot, STEP1_SLOT_IDS);
 		setFinFiles(files.step2);
 		setUploaded(step1Files.names);
 		setUploadedIds(step1Files.ids);
 
-		// Four screens, four payload steps: the review is the fourth.
 		if (resume.step != null && resume.step > 1) {
 			setActiveStep(Math.min(resume.step, 3) - 1);
 		}
-		// Last statement: autosave may only start once the stored draft is in the form.
 		readyToSave.current = true;
 	});
 
-	// A draft that was never saved has nothing to wait for, so the load settling arms autosave.
 	useEffect(() => {
 		if (!draft.loading) readyToSave.current = true;
 	}, [draft.loading]);
 
 	const draftStep: 1 | 2 | 3 | 4 = (activeStep + 1) as 1 | 2 | 3 | 4;
 
-	/** One autosave, built from the values the form holds when it is called: a snapshot
-	 * taken in an effect misses later edits and can send `null` over a stored value. */
+	// Built from live values at call time: a snapshot in an effect misses later edits and can null out a stored value.
 	const saveDraft = useCallback(() => {
-		// Nothing may be written before the stored draft is applied: a blank patch would
-		// be the last word on a draft that already has data.
+		// A blank patch written before resume would overwrite a draft that already has data.
 		if (!readyToSave.current) return;
 		const live = form.state.values;
 		if (draftStep === 1) {
@@ -100,20 +81,16 @@ export function BusinessSubmit() {
 			draft.saveStep({ step: 3, step3: step3Patch(live) });
 			return;
 		}
-		// The review step holds no block: uploads are stored as they happen, and the
-		// declarations belong to submit.
+		// Step 4 holds no block: uploads are stored as they happen.
 		draft.saveStep({ step: 4 });
 	}, [draft.saveStep, draftStep, finFileIds]);
 
-	// The form's change notification drives autosave; the hook debounces and stays quiet
-	// until the resume above has been applied.
 	useEffect(() => {
 		const subscription = form.store.subscribe(saveDraft);
 		return () => subscription.unsubscribe();
 	}, [form, saveDraft]);
 
-	// An upload changes no form value, so the new file list nudges the same save; so does
-	// landing on a step whose block has not been written yet.
+	// An upload changes no form value, so the new file list nudges the same save.
 	useEffect(() => {
 		saveDraft();
 	}, [saveDraft]);
@@ -131,7 +108,6 @@ export function BusinessSubmit() {
 	const docsDone = REQUIRED_DOCS.filter((doc) => uploaded[doc.id]).length;
 	const timelineMatch = values.timeline.match(/(\d{4})/);
 
-	/* ADR-003: the Step 1 tones are derived from the inputs, never stored. */
 	const tones = step1RiskTones({
 		biaya: biayaNum,
 		konsumsi: konsumsiNum,
@@ -145,12 +121,10 @@ export function BusinessSubmit() {
 		capex: capexNum,
 		tenor: tenorNum,
 		saving: savingNum,
-		// The draft's attached documents, which a resume restores by id, names included.
 		docsDone: finFileIds.length,
 		docsTotal: STEP2_DOC_TARGET,
 	});
 
-	/* The review's derived risk (ADR-006.7: Step 1 trio + Step 2 files). */
 	const riskDocsDone = docsDone + finFileIds.length;
 	const riskDocsTotal = REQUIRED_DOCS.length + STEP2_DOC_TARGET;
 	const riskInputsEmpty =
@@ -170,8 +144,7 @@ export function BusinessSubmit() {
 				docsTotal: riskDocsTotal,
 			});
 
-	/* The step's rules over live values; one map drives field messages, the step gate and
-	   the banner count, so they cannot disagree. */
+	// One map drives field messages, the step gate and the banner count, so they cannot disagree.
 	const step1Messages = validateStep1(step1Values(values));
 	const step2Messages = validateStep2(step2Values(values, finFileIds.length));
 	const step3Messages = validateStep3(step3Values(values));
@@ -216,10 +189,6 @@ export function BusinessSubmit() {
 		setFinFiles((prev) => prev.filter((file) => file.id !== id));
 	}
 
-	/* Shell navigation (ADR-006.1 + 006.6): a step only advances on an empty rule map, so
-	   every step behind is a link and every step ahead is inert. */
-
-	/** Says how many fields of the step are still open. */
 	function reportStep(messages: Record<string, unknown>) {
 		const count = Object.keys(messages).length;
 		toast({
@@ -232,8 +201,6 @@ export function BusinessSubmit() {
 		});
 	}
 
-	/** Save and continue: every message the step's rules produce is shown at once, and
-	 * the step only advances on an empty map. The refusal itself is a toast. */
 	async function handleNext() {
 		if (activeStep === 0) {
 			await form.validateAllFields("change");
@@ -270,11 +237,9 @@ export function BusinessSubmit() {
 		setActiveStep((step) => Math.max(0, step - 1));
 	}
 
-	/** Sends the draft: the server revalidates, scores it and returns the project, so
-	 * nothing here decides the outcome. */
+	// The server revalidates and scores the draft: nothing here decides the outcome.
 	async function handleSubmitProject() {
-		// The client rules run again, so a value that went missing fails here instead of
-		// being sent as a zero.
+		// Rules re-run so a missing value fails here instead of being sent as a zero.
 		if (
 			Object.keys(step1Messages).length > 0 ||
 			Object.keys(step2Messages).length > 0 ||
@@ -332,7 +297,6 @@ export function BusinessSubmit() {
 			declaration: values.declaration,
 		});
 
-		// The wizard is finished with: the record it just created is the page.
 		if (project) {
 			void navigate({
 				to: "/business/submitted/$projectId",
@@ -342,8 +306,7 @@ export function BusinessSubmit() {
 	}
 
 	return (
-		/* The shell's content wrapper has no padding, so this root cancels the inner
-		   wrapper's pt-6/pt-8 to keep the bar flush under the header while scrolling. */
+		// Cancels the shell wrapper's pt-6/pt-8 so the bar stays flush under the header.
 		<div className="flex flex-col -mt-6 space-y-6 sm:-mt-8 sm:space-y-8">
 			<WizardHeader
 				activeStep={activeStep}

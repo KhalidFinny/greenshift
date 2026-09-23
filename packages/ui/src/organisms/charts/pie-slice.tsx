@@ -41,18 +41,11 @@ export type PieSliceHoverEffect = "translate" | "grow" | "none";
 
 export interface PieSliceProps {
 	index: number;
-	/** Optional color override - falls back to data color or palette */
 	color?: string;
-	/** Optional fill override for patterns/gradients (e.g., "url(#patternId)") */
 	fill?: string;
-	/** Animate the slice on mount. Default: true */
 	animate?: boolean;
-	/** Show glow effect on hover. Default: true */
 	showGlow?: boolean;
-	/** Hover effect. Default: "translate" pops the slice outward, "grow" extends its outer radius,
-	 * "none" is static. */
 	hoverEffect?: PieSliceHoverEffect;
-	/** Distance in pixels for hover effect (translate distance or grow amount). Defaults to PieChart's hoverOffset */
 	hoverOffset?: number;
 	className?: string;
 }
@@ -401,7 +394,6 @@ export const PieSlice = memo(function PieSlice({
 			);
 		}
 
-		// Default: translate effect (also covers "none" with hoverOffset=0)
 		return (
 			<AnimatedSliceTranslate
 				animationKey={animationKey}

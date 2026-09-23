@@ -5,12 +5,10 @@ export interface AuthUser {
 	email: string;
 	name: string;
 	role: UserRole;
-	/** The organization the person registered; null for accounts with none, such
-	 * as an administrator. Shown under the person's own name. */
+	/** The organization the person registered; null for an account with none, such as an administrator. */
 	companyName: string | null;
 	/** R2 object key of the account picture, or null; also the cache-buster. */
 	avatarKey: string | null;
-	/** Null for roles verified another way (a vendor through its profile, an
-	 * administrator not at all); the company surfaces gate on this. */
+	/** Null for roles verified another way (a vendor through its profile, an administrator not at all). */
 	companyVerification: CompanyVerificationStatus | null;
 }

@@ -10,9 +10,7 @@ import { MATCH_CRITERIA, matchStrength } from "../lib/matchmaking";
 import type { MatchmakingBreakdown } from "../lib/types";
 
 interface MatchmakingDeepDiveProps {
-	/** Null when the matching model has not scored this project for the vendor. */
 	matchmaking?: MatchmakingBreakdown | null;
-	/** Scores still in flight: same card, shimmering values. */
 	loading?: boolean;
 }
 

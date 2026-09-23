@@ -48,8 +48,7 @@ const STATUS_META: Record<
 	},
 };
 
-/** Sector icons keyed by the submitted sector vocabulary: the sector decides the
- * icon, so a boiler retrofit in a textile plant still reads as textile. */
+/** Sector icons keyed by the submitted sector vocabulary, so a boiler retrofit in a textile plant still reads as textile. */
 const SECTOR_ICONS: Record<string, IconDefinition> = {
 	cement: faIndustry,
 	"iron and steel": faIndustry,
@@ -157,8 +156,6 @@ export function BondCard({ listing }: BondCardProps) {
 					</div>
 				</div>
 
-				{/* What GreenShift can report itself: the measured reductions its
-				    MRV periods account for, against the baseline they held to. */}
 				<div className="rounded-lg border border-border/70 p-3">
 					{monitoring.periods === 0 ? (
 						<p className="text-sm leading-relaxed text-muted-foreground">
@@ -193,8 +190,6 @@ export function BondCard({ listing }: BondCardProps) {
 			</CardContent>
 
 			<CardFooter className="flex-col items-stretch gap-3">
-				{/* The preview is open to both tabs: a project still in progress has a
-				    risk score, details and its monitoring, and is worth reading too. */}
 				<BondDetailDialog listing={listing} />
 				{verified ? (
 					<>
@@ -218,8 +213,6 @@ export function BondCard({ listing }: BondCardProps) {
 	);
 }
 
-/** Loading frame for `BondCard`: the same card, header, metric grid and footer with
- * shimmering leaves, kept beside the card so the two cannot drift apart. */
 export function BondCardSkeleton() {
 	return (
 		<Card className="flex flex-col">

@@ -21,11 +21,9 @@ type ScaleBand<Domain extends { toString(): string }> = ReturnType<
 export type BarLineCap = "round" | "butt" | number;
 export type BarAnimationType = "grow" | "fade";
 
-// Shared bar-depth geometry lives in `bar-depth-geometry.ts`: a `<Bar perspective>`
-// front face lines up exactly with `<BarDepthBack>`'s lid.
+// A `<Bar perspective>` front face must line up exactly with `<BarDepthBack>`'s lid.
 
-/** perspectiveRise for a positive bar whose visual top sits at `topY`.
- * Returns 0 for a dead-center bar or a dense chart (degenerate depth). */
+/** 0 for a dead-center bar or a dense chart (degenerate depth). */
 function barDepthPerspectiveRise(
 	barScale: ScaleBand<string>,
 	bandWidth: number,
@@ -51,31 +49,17 @@ function barDepthPerspectiveRise(
 
 export interface BarProps {
 	dataKey: string;
-	/** Y-scale group id for vertical bars (Recharts `yAxisId`). Default: `"left"`. */
 	yAxisId?: string | number;
-	/** Fill color for the bar. Can be a color, gradient url, or pattern url. Default: var(--chart-line-primary) */
 	fill?: string;
-	/** Color for tooltip dot. Use when fill is a gradient/pattern. Default: uses fill value */
 	stroke?: string;
-	/** Line cap style for bar ends: "round", "butt", or a number for custom radius. Default: "round" */
 	lineCap?: BarLineCap;
-	/** Whether to animate the bars. Default: true */
 	animate?: boolean;
-	/** Animation type: "grow" (height) or "fade" (opacity + blur). Default: "grow" */
 	animationType?: BarAnimationType;
-	/** Opacity when not hovered (when another bar is hovered). Default: 0.3 */
 	fadedOpacity?: number;
-	/** Stagger delay between bars in seconds. Auto-calculated if not provided. */
 	staggerDelay?: number;
-	/** Gap between stacked bars in pixels. Default: 0 */
 	stackGap?: number;
-	/** Gap between grouped bars in pixels. Default: 4 */
 	groupGap?: number;
-	/** Shrink each positive bar's top by its perspective rise so the front face
-	 * lines up with `<BarDepthBack>`'s lid. Pass `true` when 3D surfaces render. Default: false */
 	perspective?: boolean;
-	/** Minimum rendered bar height in px (non-stacked, vertical): floors short or
-	 * zero-value bars so they stay visible. Pair with `<BarDepthProvider minBarHeight>`. Default: 0 */
 	minBarHeight?: number;
 }
 
@@ -238,8 +222,7 @@ const BarInner = memo(function BarInner({
 		return (bandWidth - effectiveGroupGap * (seriesCount - 1)) / seriesCount;
 	}, [bandWidth, seriesCount, stacked, groupGap]);
 
-	// Perspective bars force radius 0: a rounded top would leave a wedge where the
-	// `<BarDepthBack>` lid meets the bar.
+	// Perspective bars force radius 0: a rounded top would leave a wedge against the `<BarDepthBack>` lid.
 	const cornerRadius = useMemo(() => {
 		if (perspective) {
 			return 0;
@@ -317,8 +300,7 @@ const BarInner = memo(function BarInner({
 						: bandPos +
 							seriesIndex * (barWidth + (seriesCount > 1 ? groupGap : 0));
 
-					// Floor short/zero non-stacked bars, growing up from the baseline, so a
-					// zero value still reads as a tiny bar. Floored bars skip the perspective trim.
+					// Floored short/zero bars skip the perspective trim.
 					let isFloored = false;
 					if (
 						!stacked &&
@@ -332,8 +314,7 @@ const BarInner = memo(function BarInner({
 						isFloored = true;
 					}
 
-					// Trim the topmost positive bar's front face by its perspective rise to meet
-					// `<BarDepthBack>`'s lid. Stacked: last series only; clamped to `barHeight - 1`.
+					// Stacked: trim the last series only, clamped to `barHeight - 1`.
 					if (
 						perspective &&
 						value > 0 &&

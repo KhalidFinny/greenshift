@@ -1,6 +1,3 @@
-/* Where the wizard hands over: the project is submitted, and this says so and says
- * what happens next. The record is `ProjectRecord`, as on the project's own page. */
-
 import { faCircleCheck } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ApiError, api } from "@greenshift/core";
@@ -51,7 +48,6 @@ export function SubmitConfirmation({ projectId }: { projectId: string }) {
 		);
 	}
 
-	// The same width as the project's own page: the same record, at handover.
 	return (
 		<div className="space-y-8">
 			<div className="rounded-xl border border-border bg-muted/50 px-6 py-6">
@@ -78,8 +74,6 @@ export function SubmitConfirmation({ projectId }: { projectId: string }) {
 					</p>
 				</div>
 
-				{/* Where to go next, above the record, so the next actions are not buried
-				    under the summary. Every one is a button: a text-only action would read as a note. */}
 				<div className="mt-4 flex flex-wrap items-center gap-3">
 					<Button asChild>
 						<Link to="/business/projects">View my projects</Link>

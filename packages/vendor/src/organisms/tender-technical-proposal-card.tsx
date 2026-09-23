@@ -7,7 +7,6 @@ import {
 } from "@greenshift/ui";
 
 interface TenderTechnicalProposalCardProps {
-	/** The submitted technical specification, or null when the API has none. */
 	technicalSpec: string | null;
 	loading?: boolean;
 }

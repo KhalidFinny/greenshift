@@ -17,7 +17,6 @@ import {
 } from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
 
-/** The anomaly engine reports severity; the console shows it as-is. */
 const SEVERITY_STYLE: Record<
 	AdminAnomaly["severity"],
 	{
@@ -49,13 +48,10 @@ const SEVERITY_STYLE: Record<
 };
 
 interface PendingActionsCardProps {
-	/** Rule breaches reported by the anomaly engine, most severe first. */
 	actions: AdminAnomaly[];
-	/** Data still in flight: same card, shimmering rows. */
 	loading?: boolean;
 }
 
-/** Open issues the platform is watching, straight from the anomaly engine. */
 export function PendingActionsCard({
 	actions,
 	loading = false,

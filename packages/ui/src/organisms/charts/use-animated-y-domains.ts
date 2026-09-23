@@ -117,7 +117,6 @@ export interface UseAnimatedYDomainsOptions {
 	skeletonByAxis: Record<string, YDomain>;
 	targetByAxis: Record<string, YDomain>;
 	onSettled?: () => void;
-	/** When true, tweens y-domains on target changes while the chart is in the ready phase (e.g. brush zoom). */
 	tweenOnTargetChange?: boolean;
 }
 

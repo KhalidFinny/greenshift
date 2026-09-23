@@ -24,11 +24,9 @@ import { useRef, useState } from "react";
 import { formatRupiah, formatShortDate } from "../lib/format";
 import type { VendorProjectCardData } from "../lib/types";
 
-/** The vendor's own bid on this tender, or null when it has not bid yet. */
 export interface MyProposal {
 	id: number;
 	amount: number;
-	/** The PDF already filed on this bid, if any. */
 	documentName: string | null;
 	documentUrl: string | null;
 }
@@ -38,7 +36,6 @@ const MAX_PDF_BYTES = 10 * 1024 * 1024;
 
 interface SubmitProposalDialogProps {
 	project: VendorProjectCardData;
-	/** A bid already on file switches the dialog into revise mode. */
 	myProposal: MyProposal | null;
 	onSubmit: (
 		data: {
@@ -56,7 +53,6 @@ interface SubmitProposalDialogProps {
 	) => Promise<unknown>;
 	isOpen: boolean;
 	onOpenChange: (open: boolean) => void;
-	/** Opens the blueprint over this dialog, so a bidder checks the case without losing the draft. */
 	onViewBlueprint: () => void;
 }
 
@@ -70,8 +66,7 @@ function formatNumber(value: string): string {
 const TEXTAREA_CLASS =
 	"w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 
-/** The one place a bid is placed or revised: placing and revising are the same act on the same tender, so one dialog serves both.
- * The API's duplicate rule never has to answer a second submission. */
+/** The one place a bid is placed or revised: placing and revising are the same act, so one dialog serves both. */
 export function SubmitProposalDialog({
 	project,
 	myProposal,
@@ -86,8 +81,7 @@ export function SubmitProposalDialog({
 		project.tenderDeadlineAt !== "" &&
 		new Date(project.tenderDeadlineAt).getTime() <= Date.now();
 
-	/* The PDF is held outside the form: a file is not a field, and the upload is a second request
-	   against the proposal's id, sent after the bid itself lands. */
+	/* The PDF is held outside the form: a file is not a field, and the upload is a second request after the bid lands. */
 	const [file, setFile] = useState<File | null>(null);
 	const [fileError, setFileError] = useState<string | null>(null);
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -124,8 +118,7 @@ export function SubmitProposalDialog({
 			const amount = Number(value.amount.replace(/\D/g, ""));
 			if (!Number.isFinite(amount) || amount <= 0) return;
 
-			// The revise path carries the amount alone, since that is what a live open-bid ranking is
-			// ranked on; the filed document stays unless a replacement is chosen.
+			// The revise path carries the amount alone: that is what the open-bid ranking is ranked on.
 			if (myProposal) {
 				await onRevise({ proposalId: myProposal.id, amount }, file);
 				onOpenChange(false);
@@ -350,8 +343,7 @@ export function SubmitProposalDialog({
 								</p>
 							) : null}
 
-							{/* One input for both states, so the picker keeps a single accessible name: the label is
-							    what a pointer sees, the input what the keyboard reaches. */}
+							{/* One input for both states, so the picker keeps a single accessible name. */}
 							<div className="space-y-2 border-t border-border pt-4">
 								<Label htmlFor="proposal-pdf" className="text-sm">
 									{revising

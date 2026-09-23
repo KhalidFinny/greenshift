@@ -33,7 +33,6 @@ export function VendorProjectsPage() {
 	const recommended = filteredProjects.filter((p) => isTopMatch(p.matchmaking));
 	const saved = filteredProjects.filter((p) => p.isSaved);
 
-	// Each tab is its own list, so each pages the rows it renders.
 	const allPage = usePagedRows(filteredProjects);
 	const recommendedPage = usePagedRows(recommended);
 	const savedPage = usePagedRows(saved);

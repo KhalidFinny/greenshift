@@ -24,7 +24,6 @@ interface BlueprintCardProps {
 	showHeader?: boolean;
 }
 
-/** The stage the document reached, in the words a bidder reads it under. */
 const STATUS_LABEL: Record<string, string> = {
 	validated: "Validated",
 	published: "Validated and published",
@@ -39,8 +38,7 @@ function Figure({ label, value }: { label: string; value: string }) {
 	);
 }
 
-/** The Green Project Blueprint as the bidder on a tender reads it: the funding case, the emission targets the project was cleared on, and the three scenarios behind the projections.
- * It travels with the tender, so a vendor bids against the same case the company filed rather than a scope of work alone. */
+/** The blueprint as the bidder reads it: it travels with the tender, so a vendor bids against the case the company filed. */
 export function BlueprintCard({
 	blueprint,
 	loading = false,

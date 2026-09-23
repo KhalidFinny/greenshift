@@ -93,7 +93,6 @@ import { apiRoutes } from "@greenshift/api/contracts";
 import type { AuthUser } from "../auth/types";
 import { request } from "./http";
 
-/** Defined params as a query string ("?role=admin&limit=50"); undefined entries dropped. */
 function query(params?: Record<string, string | number | undefined>) {
 	const search = new URLSearchParams();
 	for (const [key, value] of Object.entries(params ?? {})) {
@@ -103,7 +102,6 @@ function query(params?: Record<string, string | number | undefined>) {
 	return encoded ? `?${encoded}` : "";
 }
 
-/** Typed client for the single API: paths, methods and bodies come from @greenshift/api. */
 export const api = {
 	auth: {
 		login: (email: string, password: string) =>
@@ -158,7 +156,6 @@ export const api = {
 					body: JSON.stringify(body satisfies CompanyVerificationBody),
 				},
 			),
-		/** Multipart: the certificate is a file, not a JSON body. */
 		uploadVerificationDocument: (slot: CompanyDocumentSlot, file: File) => {
 			const body = new FormData();
 			body.set("file", file);
@@ -197,7 +194,6 @@ export const api = {
 			request<BusinessMatchmakingListResponse>(
 				apiRoutes.businessMatchmaking.path + query(params),
 			),
-		/** Re-runs the matching model over the verified vendor pool. */
 		runMatching: (projectId: number) =>
 			request<BusinessMatchingRunResponse>(
 				apiRoutes.businessMatchmakingMatching.path.replace(
@@ -272,7 +268,6 @@ export const api = {
 				apiRoutes.businessReadNotification.path.replace(":id", String(id)),
 				{ method: apiRoutes.businessReadNotification.method },
 			),
-		/** The whole feed: registered after the `:id` route, so paths cannot clash. */
 		readAllNotifications: () =>
 			request<{ read: number }>(apiRoutes.businessNotifications.path, {
 				method: apiRoutes.businessReadNotification.method,
@@ -284,7 +279,6 @@ export const api = {
 					encodeURIComponent(draftId),
 				),
 			),
-		/** Multipart: the shared request helper leaves the boundary to the browser. */
 		uploadDocument: (draftId: string, file: File, slot: string) => {
 			const body = new FormData();
 			body.set("file", file);
@@ -328,7 +322,6 @@ export const api = {
 			request<BusinessRiskResponse>(
 				apiRoutes.businessProjectRisk.path.replace(":id", String(id)),
 			),
-		/** The project's Green Project Blueprint, or null until verification writes it. */
 		blueprint: (id: number) =>
 			request<BusinessProjectBlueprintResponse>(
 				apiRoutes.businessProjectBlueprint.path.replace(":id", String(id)),
@@ -344,13 +337,11 @@ export const api = {
 				apiRoutes.businessStartLvv.path.replace(":id", String(id)),
 				{ method: apiRoutes.businessStartLvv.method },
 			),
-		/** The wizard's assessment, answered with Eleanor's reading of it. */
 		riskInsight: (body: BusinessRiskInsightRequest) =>
 			request<BusinessRiskInsightResponse>(apiRoutes.businessRiskInsight.path, {
 				method: apiRoutes.businessRiskInsight.method,
 				body: JSON.stringify(body satisfies BusinessRiskInsightRequest),
 			}),
-		/** The review step's opening reading, written from the figures entered so far. */
 		projectReading: (body: BusinessProjectReadingRequest) =>
 			request<BusinessProjectReadingResponse>(
 				apiRoutes.businessProjectReading.path,
@@ -368,7 +359,6 @@ export const api = {
 					body: JSON.stringify(body satisfies BusinessForecastRequest),
 				},
 			),
-		/** Eleanor's reading of that forecast, written from the same figures. */
 		forecastReading: (body: BusinessForecastRequest) =>
 			request<BusinessForecastReadingResponse>(
 				apiRoutes.businessProjectForecastReading.path,
@@ -381,7 +371,7 @@ export const api = {
 			request<BusinessDocumentsResponse>(
 				apiRoutes.businessProjectDocuments.path.replace(":id", String(id)),
 			),
-		/** The download endpoint is a plain link, so only its path is needed. */
+		/** No request(): the download is a plain link, so only its path is needed. */
 		downloadPath: (id: number, docId: string) =>
 			apiRoutes.businessDownloadDocument.path
 				.replace(":id", String(id))
@@ -406,7 +396,6 @@ export const api = {
 					} satisfies VerifyUserBody),
 				},
 			),
-		/** The pack an administrator's verdict is about, with the scan's reading. */
 		userVerification: (id: number) =>
 			request<{ verification: AdminCompanyVerification }>(
 				apiRoutes.adminUserVerification.path.replace(":id", String(id)),
@@ -518,7 +507,6 @@ export const api = {
 				method: apiRoutes.vendorSaveProfile.method,
 				body: JSON.stringify(body satisfies VendorProfileBody),
 			}),
-		/** Multipart: the ESCO or ISO certificate is a file, not a JSON body. */
 		uploadCertificate: (file: File) => {
 			const body = new FormData();
 			body.set("file", file);
@@ -538,7 +526,6 @@ export const api = {
 			request<{ proposal: ProposalDetail }>(
 				apiRoutes.vendorProposalDetail.path.replace(":id", String(id)),
 			),
-		/** Multipart: the bid and its required proposal document are one filing, written as one row. */
 		submitProposal: (fields: ProposalDraftBody, file: File) => {
 			const body = new FormData();
 			body.set("tenderId", String(fields.tenderId));
@@ -574,7 +561,6 @@ export const api = {
 				apiRoutes.vendorWithdrawProposal.path.replace(":id", String(id)),
 				{ method: apiRoutes.vendorWithdrawProposal.method },
 			),
-		/** Multipart: the shared request helper leaves the boundary to the browser. */
 		uploadProposalDocument: (id: number, file: File) => {
 			const body = new FormData();
 			body.set("file", file);
@@ -592,7 +578,6 @@ export const api = {
 				apiRoutes.vendorReadNotification.path.replace(":id", String(id)),
 				{ method: apiRoutes.vendorReadNotification.method },
 			),
-		/** The whole feed: registered after the `:id` route, so paths cannot clash. */
 		readAllNotifications: () =>
 			request<{ read: number }>(apiRoutes.vendorNotifications.path, {
 				method: apiRoutes.vendorReadNotification.method,
@@ -631,7 +616,6 @@ export const api = {
 				apiRoutes.vendorDeletePortfolioItem.path.replace(":id", String(id)),
 				{ method: apiRoutes.vendorDeletePortfolioItem.method },
 			),
-		/** Multipart: the shared request helper leaves the boundary to the browser. */
 		uploadPortfolioDocument: (id: number, file: File) => {
 			const body = new FormData();
 			body.set("file", file);
@@ -734,13 +718,11 @@ export const api = {
 				apiRoutes.brokerReadNotification.path.replace(":id", String(id)),
 				{ method: apiRoutes.brokerReadNotification.method },
 			),
-		/** The whole feed: registered after the `:id` route, so paths cannot clash. */
 		readAllNotifications: () =>
 			request<{ read: number }>(apiRoutes.brokerNotifications.path, {
 				method: apiRoutes.brokerReadNotification.method,
 			}),
 	},
-	/** Read-only platform probes (`GET /api/health`), used by the admin console. */
 	system: {
 		health: () => request<HealthResponse>(apiRoutes.health.path),
 	},

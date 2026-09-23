@@ -1,6 +1,3 @@
-/* Vendor ranking for one project: availability, the model's scores, and the route
- * that opens the tender. Only the direct route names a vendor; bids decide the rest. */
-
 import {
 	faCircleCheck,
 	faGavel,
@@ -51,7 +48,6 @@ const ROUTE_ICONS = {
 	direct: faHandshake,
 } as const satisfies Record<BusinessMatchmakingMethod, unknown>;
 
-/** Every cell carries this, so a row has room to be read rather than scanned. */
 const CELL = "px-6 py-5";
 
 export function MatchmakingDetail({ projectId }: { projectId: string }) {
@@ -73,8 +69,7 @@ export function MatchmakingDetail({ projectId }: { projectId: string }) {
 	}
 
 	if (detailQuery.isError || !detailQuery.data) {
-		// Missing project vs failed request: the first is the route's own answer, the second worth
-		// retrying.
+		// A 404 is the route's own answer; anything else is worth retrying.
 		const missing =
 			detailQuery.error instanceof ApiError && detailQuery.error.status === 404;
 		return (
@@ -104,8 +99,7 @@ export function MatchmakingDetail({ projectId }: { projectId: string }) {
 	return <VendorRanking detail={detailQuery.data} projectId={projectId} />;
 }
 
-/** Its own component so the columns are built under the same hooks every render:
- * a hook below the loading return would change hook order once the query lands. */
+/** Its own component so the columns keep hook order: a hook below the loading return would change it once the query lands. */
 function VendorRanking({
 	detail,
 	projectId,
@@ -143,7 +137,6 @@ function VendorRanking({
 	const route = method ?? detail.selectedMethod ?? tender?.method ?? null;
 	// Once bidding closes the terms are frozen: the bids were made against them.
 	const shaping = tender === null || tender.status === "open";
-	// The vendor the project went with once its tender is awarded; before that, none.
 	const winnerName = tender?.awardedVendorName ?? null;
 	// The direct route is the only one that names a vendor up front; it runs without competing bids.
 	const direct = route === "direct";
@@ -151,23 +144,18 @@ function VendorRanking({
 		recommendedVendors.find(
 			(vendor) => vendor.id === (vendorId ?? detail.selectedVendorId),
 		) ?? null;
-	// What the panel shows: the vendor the reader picked, else the project's own vendor.
 	const readVendor =
 		recommendedVendors.find(
 			(vendor) => vendor.id === reading || vendor.name === winnerName,
 		) ?? null;
-	// Vendors are only bidding once a route has been chosen and offers are in.
 	const bidding = (tender?.bidCount ?? 0) > 0;
-	// The tender opens on a chosen route; direct must have named its vendor first.
 	const canOpen =
 		route !== null && (route !== "direct" || namedVendor !== null);
-	// What the route has produced so far, in one line the strip can carry.
 	const vendorOutcome =
 		winnerName ??
 		(direct ? (namedVendor?.name ?? "Not named yet") : null) ??
 		(tender === null ? "Not chosen yet" : "Waiting on the bids");
 
-	/** Selecting the vendor already being read puts it back down again. */
 	function toggleRead(vendorId: number) {
 		setReading((current) =>
 			current === vendorId || (current === null && readVendor?.id === vendorId)
@@ -187,13 +175,11 @@ function VendorRanking({
 	function chooseRoute(nextMethod: BusinessMatchmakingMethod) {
 		setMethod(nextMethod);
 		if (!shaping) return;
-		// Open and closed routes open the tender by their own rule; direct names its vendor first.
 		if (nextMethod === "direct" && namedVendor === null) return;
 		void saveTerms(nextMethod);
 	}
 
-	/** The terms as the route picker and the deadline field have them. The vendor is
-	 * sent only for the direct route, the one that names one. */
+	/** The vendor is sent only for the direct route, the one that names one. */
 	function saveTerms(
 		nextMethod: BusinessMatchmakingMethod | null = route,
 		vendor: BusinessRecommendedVendor | null = namedVendor,
@@ -211,8 +197,6 @@ function VendorRanking({
 		);
 	}
 
-	/** Choosing the route opens the tender and lands on the phase it starts, so the
-	 * company sees the window running rather than a button that changed. */
 	async function openTender() {
 		const opened = await saveTerms();
 		if (!opened) return;
@@ -326,8 +310,6 @@ function VendorRanking({
 				id: "act",
 				header: "",
 				meta: { className: cn(CELL, "w-40 text-right"), headClassName: CELL },
-				// The open and closed routes invite their pool by their own rule, so
-				// naming a vendor here is the direct route's act alone.
 				cell: ({ row }) =>
 					direct ? (
 						<Button
@@ -337,7 +319,6 @@ function VendorRanking({
 								row.original.id === namedVendor?.id ? "default" : "outline"
 							}
 							onClick={(event) => {
-								// Naming the vendor is its own act, not the row's selection.
 								event.stopPropagation();
 								nameVendor(row.original);
 							}}
@@ -380,7 +361,6 @@ function VendorRanking({
 			>
 				<div className="mt-4 flex flex-wrap items-end justify-between gap-x-8 gap-y-5 border-t border-border pt-4">
 					<ProjectFacts detail={detail} />
-					{/* The window is a fact about the tender, so it sits with the project's facts. */}
 					{shaping && (
 						<div className="space-y-3">
 							<label
@@ -415,8 +395,6 @@ function VendorRanking({
 									{recommendedVendors.length} scored, {detail.shortlistSize}{" "}
 									shortlisted
 								</p>
-								{/* The bidding list is its own page, reached from the table, and
-								    only once vendors are actually bidding on the open tender. */}
 								{bidding && (
 									<Button asChild>
 										<Link
@@ -451,8 +429,6 @@ function VendorRanking({
 								columns={columns}
 								data={recommendedVendors}
 								getRowId={(vendor) => String(vendor.id)}
-								/* The ranking is what the page is for, so it leads with the five
-								   strongest vendors; the rest are a page away. */
 								pageSize={5}
 								onRowClick={(vendor) => toggleRead(vendor.id)}
 								rowClassName={(vendor) =>
@@ -532,8 +508,7 @@ function VendorRanking({
 										: "Open the tender"}
 								</Button>
 							)}
-							{/* A closed tender with nothing in has no table button, so the way to its page stays
-							    here. */}
+							{/* A closed tender with no bids has no table button, so the way to its page stays here. */}
 							{!shaping && (
 								<Button variant="outline" asChild>
 									<Link
@@ -553,7 +528,6 @@ function VendorRanking({
 							)}
 						</div>
 
-						{/* What the choices above add up to. */}
 						<div className="grid gap-x-6 gap-y-3 border-t border-border pt-4 sm:grid-cols-4">
 							{[
 								{
@@ -612,7 +586,6 @@ function VendorRanking({
 	);
 }
 
-/** The vendor being read: its record, then the five criteria behind its score. */
 function SelectedVendorPanel({
 	vendor,
 }: {

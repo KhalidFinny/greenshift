@@ -33,8 +33,7 @@ interface VendorProjectCardProps {
 	variant?: "default" | "recommended";
 }
 
-/** One criterion: name and score on one line, the score as a bar under them, and what it measures in one sentence.
- * A row rather than a boxed card, since five boxed cards made this dialog a column. */
+/** A row rather than a boxed card: five boxed cards made this dialog a column. */
 function MatchBreakdownRow({
 	label,
 	score,
@@ -65,7 +64,6 @@ function MatchBreakdownRow({
 	);
 }
 
-/** Only rendered when the model has scored the project for this vendor. */
 function MatchmakingDialog({
 	matchmaking: mm,
 	projectTitle,
@@ -98,7 +96,6 @@ function MatchmakingDialog({
 					</DialogDescription>
 				</DialogHeader>
 
-				{/* The reading sits beside the breakdown: the score is what the dialog is opened for, and the criteria are read against it. */}
 				<div className="grid gap-6 pt-2 md:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
 					<div className="flex flex-col justify-center gap-6 rounded-xl bg-[#03442C] p-4 text-white">
 						<div>

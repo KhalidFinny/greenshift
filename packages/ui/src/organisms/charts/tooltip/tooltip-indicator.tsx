@@ -21,26 +21,16 @@ export interface TooltipIndicatorProps {
 	x: number;
 	height: number;
 	visible: boolean;
-	/** Indicator width: pixels or preset. Ignored when `span` is set. */
 	width?: IndicatorWidth;
-	/** Columns/days to span, current point centered; requires `columnWidth`. */
 	span?: number;
-	/** Width of a single column/day in pixels. Required when using `span`. */
 	columnWidth?: number;
-	/** Primary color at edges (10% and 90%) */
 	colorEdge?: string;
-	/** Secondary color at center (50%) */
 	colorMid?: string;
-	/** Vertical fade: both ends, top, bottom, or none (solid). */
 	fadeEdges?: IndicatorFadeEdges | boolean;
-	/** Fade zone size as a percentage of indicator height. Default: 10 */
 	fadeLength?: number;
-	/** Animate position with a spring. Default: true */
 	animate?: boolean;
 	gradientId?: string;
-	/** Per-chart override; falls back to `ChartConfigProvider.tooltipSpring`. */
 	springConfig?: SpringConfig;
-	/** SVG stroke dash pattern. When set, renders a dashed stroke instead of a solid fill. */
 	strokeDasharray?: string;
 }
 

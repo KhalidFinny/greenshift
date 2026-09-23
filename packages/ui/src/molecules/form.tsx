@@ -31,15 +31,13 @@ function toMessage(error: unknown): string | null {
 	return String(error);
 }
 
-/** Puts a dot after every third digit from the right. */
 const THOUSANDS = /\B(?=(\d{3})+(?!\d))/g;
 
 function groupDigits(digits: string): string {
 	return digits.replace(THOUSANDS, ".");
 }
 
-/** A numeric entry in the app's Indonesian convention, the one `parseIdNumber`
- * reads: dots group in threes, a comma opens the decimals, four decimals max. */
+/** The Indonesian convention `parseIdNumber` reads: dots group in threes, a comma opens the decimals, four decimals max. */
 function regroupNumber(raw: string): string {
 	const cleaned = raw.replace(/[^0-9.,]/g, "");
 	if (!cleaned) return "";
@@ -57,7 +55,6 @@ function regroupNumber(raw: string): string {
 	}
 
 	if (cleaned.includes(".")) {
-		// Already grouped by this function: nothing to change.
 		if (/^\d{1,3}(\.\d{3})+$/.test(cleaned)) return cleaned;
 
 		const dot = cleaned.indexOf(".");
@@ -66,7 +63,6 @@ function regroupNumber(raw: string): string {
 		const oneDot = dot === cleaned.lastIndexOf(".");
 		if (oneDot && whole.length <= 2 && decimals.length <= 2) {
 			const grouped = groupDigits(whole);
-			// A trailing dot becomes the comma that opens the decimals.
 			if (cleaned.endsWith(".")) return `${grouped},`;
 			return decimals ? `${grouped},${decimals}` : grouped;
 		}
@@ -76,8 +72,7 @@ function regroupNumber(raw: string): string {
 	return groupDigits(cleaned);
 }
 
-/** Where the caret belongs after regrouping: after the same digit as before,
- * counted ignoring the dots the field inserted, so mid-number typing holds. */
+/** Where the caret belongs after regrouping: after the same digit as before, ignoring the dots the field inserted. */
 function caretAfterRegrouping(
 	raw: string,
 	grouped: string,
@@ -96,7 +91,6 @@ function caretAfterRegrouping(
 	return grouped.length;
 }
 
-/** The description or error under a control; one element so placement never varies. */
 function FieldMessages({
 	id,
 	description,
@@ -123,7 +117,6 @@ function FieldMessages({
 	return null;
 }
 
-/** The label plus message stack every control in this bundle wraps itself in. */
 function FieldShell({
 	id,
 	label,
@@ -162,7 +155,6 @@ export interface TextFieldProps
 	description?: string;
 }
 
-/** Text input bound to the nearest TanStack Form field. */
 function TextField({ label, description, id, ...props }: TextFieldProps) {
 	const field = useFieldContext<string>();
 	const error = toMessage(field.state.meta.errors[0]);
@@ -187,7 +179,6 @@ function TextField({ label, description, id, ...props }: TextFieldProps) {
 	);
 }
 
-/** Password input bound to the nearest TanStack Form field. */
 function PasswordField(props: Omit<TextFieldProps, "type">) {
 	return <TextField type="password" {...props} />;
 }
@@ -199,18 +190,13 @@ export interface NumberFieldProps
 	> {
 	label: string;
 	description?: string;
-	/** Static marker before the input, such as `Rp`. */
 	prefix?: string;
-	/** Static unit after the input, such as `MWh/year`. */
 	unit?: string;
-	/** Minimum allowed value (passed to the input as an HTML attribute). */
 	min?: number;
-	/** Maximum allowed value (passed to the input as an HTML attribute). */
 	max?: number;
 }
 
-/** Numeric input bound to the nearest field: the value is the grouped string on
- * screen (callers parse it at the edge), and the unit sits outside the input. */
+/** Bound to the nearest field: the value is the grouped string on screen, callers parse it at the edge. */
 function NumberField({
 	label,
 	description,
@@ -226,11 +212,9 @@ function NumberField({
 	const field = useFieldContext<string>();
 	const error = toMessage(field.state.meta.errors[0]);
 	const inputRef = useRef<HTMLInputElement | null>(null);
-	/* Where the caret belongs once the regrouped value has been committed. */
 	const caretRef = useRef<number | null>(null);
 
-	// A re-render drops the caret to the end of a controlled value, so the
-	// position worked out on the keystroke is restored before the browser paints.
+	// A re-render drops the caret to the end of a controlled value, so it is restored before the browser paints.
 	useLayoutEffect(() => {
 		const caret = caretRef.current;
 		if (caret === null) return;
@@ -309,7 +293,6 @@ export interface TextareaFieldProps
 	description?: string;
 }
 
-/** Multi-line input bound to the nearest field. */
 function TextareaField({
 	label,
 	description,
@@ -355,15 +338,12 @@ export interface SelectFieldProps {
 	label: string;
 	description?: string;
 	placeholder?: string;
-	/** Plain strings double as both value and label. */
 	options: readonly (SelectFieldOption | string)[];
-	/** Defaults to the field name, which is what the label points at. */
 	id?: string;
 	disabled?: boolean;
 	className?: string;
 }
 
-/** Single-choice select bound to the nearest field. */
 function SelectField({
 	label,
 	description,
@@ -420,8 +400,7 @@ export interface CheckboxFieldProps
 	description?: string;
 }
 
-/** Boolean consent box bound to the nearest field. The label is the click target,
- * so the whole sentence is what the user aims at, not the 16px box. */
+/** The label is the click target, so the whole sentence is aimed at, not the 16px box. */
 function CheckboxField({
 	label,
 	description,
@@ -455,7 +434,6 @@ function CheckboxField({
 	);
 }
 
-/** Submit button wired to the nearest TanStack Form. */
 function SubmitButton({
 	children,
 	...props
@@ -495,8 +473,7 @@ export const { useAppForm, withForm } = createFormHook({
 	formComponents: { SubmitButton },
 });
 
-// Role packages import only from `@greenshift/ui`, so the reactive store reader
-// the wizard needs is re-exported here rather than reached for directly.
+// Role packages import only from `@greenshift/ui`, so `useStore` is re-exported here.
 export { useStore };
 
 export { fieldContext, formContext, useFieldContext, useFormContext };

@@ -1,6 +1,3 @@
-/* A project the company already owns, opened from My Projects: its record, not the
- * wizard's confirmation. Below the header sits the summary the review step showed. */
-
 import { ApiError, api } from "@greenshift/core";
 import { Button, cn, EmptyState, ShimmerBlock } from "@greenshift/ui";
 import { useQuery } from "@tanstack/react-query";
@@ -64,7 +61,6 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
 		);
 	}
 
-	// The record is the page: full width, laid out in columns rather than one narrow stack.
 	return (
 		<div className="space-y-8">
 			<div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
@@ -87,8 +83,6 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
 								: ""}
 						</p>
 					</div>
-					{/* What the project is and what it costs, as the submission recorded
-					    them: the summary below reads the money in full. */}
 					<div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
 						<span>
 							{project.location ?? "Location not filled in"}

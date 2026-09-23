@@ -1,5 +1,4 @@
-/* Eleanor's reading for the assessment the wizard derived; the figures travel because the wizard
- * has no project row. An assessment the API sent already carries its reading and asks for none. */
+/* Eleanor's reading for the assessment the wizard derived; the figures travel because the wizard has no project row. */
 
 import {
 	type AnalystReadingMode,
@@ -9,7 +8,6 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import type { ProjectRiskResult } from "./project-risk";
 
-/** What the reading is about: any figure that would change it. */
 function insightKey(risk: ProjectRiskResult): string {
 	return [
 		risk.score,
@@ -21,9 +19,7 @@ function insightKey(risk: ProjectRiskResult): string {
 
 export interface RiskInsightState {
 	insight: BusinessRiskInsight | null;
-	/** True while the reading is being written for the current figures. */
 	loading: boolean;
-	/** True when the endpoint could not answer; the tips below still stand. */
 	failed: boolean;
 }
 
@@ -52,8 +48,7 @@ export function useRiskInsight(
 			});
 			return insight;
 		},
-		// The wizard's figures are stable while the review step is open, and the
-		// endpoint caches per assessment, so a reading is fetched once per score.
+		// The figures are stable while the review step is open and the endpoint caches per assessment, so one fetch per score.
 		enabled: risk !== null && stored === null,
 		staleTime: Number.POSITIVE_INFINITY,
 		retry: false,

@@ -43,8 +43,7 @@ export function MyProjects() {
 	});
 	const projects = projectsQuery.data ?? [];
 
-	/** Downloads the project's first document that has a download URL; the file sits
-	 * behind the API, so a project with nothing ready says so instead. */
+	/** Downloads the project's first document that has a URL; one with nothing ready says so instead. */
 	async function downloadFirstDocument(projectId: number) {
 		try {
 			const { documents } = await api.business.documents(projectId);
@@ -62,8 +61,7 @@ export function MyProjects() {
 		}
 	}
 
-	/** Options come off the loaded rows in list order, so a select can only offer
-	 * a status or sector some project actually has. */
+	/** Options come off the loaded rows, so a select only offers a status or sector a project has. */
 	const statusOptions = useMemo(
 		() => [...new Set(projects.map((project) => project.status))],
 		[projects],
@@ -93,8 +91,7 @@ export function MyProjects() {
 				id: "project",
 				accessorFn: (project) => project.name,
 				header: "Project",
-				// Below `md` the Submitted and CAPEX columns fold into this cell, so it
-				// may wrap rather than widen the table past its container.
+				// Below md the Submitted and CAPEX columns fold into this cell, so it wraps instead of widening the table.
 				meta: { className: "max-md:whitespace-normal max-md:wrap-anywhere" },
 				cell: ({ row }) => (
 					<>
@@ -144,8 +141,7 @@ export function MyProjects() {
 				id: "actions",
 				header: "Actions",
 				cell: ({ row }) => (
-					// Stacked below `md`: three 44px targets in a column leave the other
-					// columns room to read at 390px.
+					// Stacked below md: three 44px targets in a column leave the other columns room to read at 390px.
 					<div className="flex flex-wrap items-center gap-2 max-md:flex-col">
 						<Button
 							variant="outline"
@@ -180,8 +176,6 @@ export function MyProjects() {
 
 	return (
 		<div className="space-y-6">
-			{/* The filters and the primary action are page controls, so they sit on the
-			    background; the card holds only the table. */}
 			<div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
 				<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
 					<Select

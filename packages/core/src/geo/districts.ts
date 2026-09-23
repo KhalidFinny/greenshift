@@ -1,14 +1,11 @@
-/* District vocabulary for every surface that asks where something is. The CSVs
- * ship with the app (public/kecamatan): no key, works offline. */
+/* District CSVs ship with the app (public/kecamatan): no key, works offline. */
 
-/** Where the CSVs are served from. */
 export const DISTRICT_CSV = "/kecamatan/";
 
 export function titleCase(s: string): string {
 	return s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-/* CSV texts -> "Kecamatan, Kabupaten/Kota, Provinsi" labels. */
 export function buildDistrictLabels(
 	dText: string,
 	rText: string,

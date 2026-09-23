@@ -30,7 +30,6 @@ const SECTIONS = [
 	{ value: "security", icon: faLock, label: "Security" },
 ] as const;
 
-/** Verification state as a chip, readable without opening a section. */
 const STATUS_META: Record<string, { label: string; className: string }> = {
 	VERIFIED: { label: "Verified", className: "bg-emerald-700 text-white" },
 	VERIFYING: { label: "Verifying", className: "bg-amber-700 text-white" },

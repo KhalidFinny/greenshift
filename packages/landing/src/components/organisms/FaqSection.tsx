@@ -29,8 +29,6 @@ export default function FaqSection() {
 					</p>
 				</header>
 
-				{/* Centred as one block: the two columns read as a single list, inset from
-				    the page margins so they no longer touch where they stack on a phone. */}
 				<div className="mx-auto mt-16 grid max-w-5xl gap-x-16 gap-y-10 lg:grid-cols-2">
 					<Accordion
 						type="single"

@@ -1,5 +1,4 @@
-/* The ROI forecast for the project summary: the same engine that generates the Green Project
- * Blueprint answers the review step and the project page, keyed by the figures. */
+/* The same engine that generates the Green Project Blueprint answers the review step and the project page, keyed by the figures. */
 
 import type { RoiForecast } from "@greenshift/core";
 import { api } from "@greenshift/core";
@@ -7,7 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import type { ProjectFunding } from "./project-funding";
 
 export interface RoiForecastState {
-	/** Null while the figures are not complete enough for a forecast. */
 	forecast: RoiForecast | null;
 	loading: boolean;
 	failed: boolean;
@@ -27,8 +25,7 @@ export function useRoiForecast(funding: ProjectFunding): RoiForecastState {
 			const { forecast } = await api.business.projectForecast(funding);
 			return forecast;
 		},
-		// The summary does not edit these figures, so one forecast per set of
-		// figures is all this asks for.
+		// The summary does not edit these figures, so one forecast per set of figures is enough.
 		staleTime: Number.POSITIVE_INFINITY,
 		retry: false,
 	});

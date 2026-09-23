@@ -14,13 +14,9 @@ import {
 } from "@greenshift/ui";
 
 interface ChartsRowProps {
-	/** Projects submitted per month over the trailing year. */
 	activityData: Array<{ label: string; value: number }>;
-	/** Tonnes of CO2e the MRV reports measured. */
 	carbonReduction: number;
-	/** Tonnes of CO2e the submitted projects target in total. */
 	carbonTarget: number;
-	/** Data still in flight: same two cards, shimmering plots and figures. */
 	loading?: boolean;
 }
 
@@ -30,7 +26,6 @@ export function ChartsRow({
 	carbonTarget,
 	loading = false,
 }: ChartsRowProps) {
-	// The ring saturates at the project target; the figures below stay exact.
 	const achieved = Math.min(carbonReduction, carbonTarget);
 	const carbonData = [
 		{
@@ -48,7 +43,6 @@ export function ChartsRow({
 	];
 	const share =
 		carbonTarget > 0 ? Math.round((carbonReduction / carbonTarget) * 100) : 0;
-	// Row labels describe what is measured, so they stay real text while loading.
 	const carbonStats = [
 		{
 			label: "CO₂e reduced",

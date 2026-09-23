@@ -33,7 +33,6 @@ const CARBON_SERIES = "Carbon abated (tCO₂e)";
 interface PortfolioFact {
 	label: string;
 	value: string;
-	/** Set only on the filed document, which the reader opens. */
 	documentUrl?: string | null;
 }
 

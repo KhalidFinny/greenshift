@@ -37,7 +37,6 @@ export function AdminDashboard() {
 		queryKey: ["admin", "projects", "kanban"],
 		queryFn: () => api.admin.projects({ limit: 50 }),
 	});
-	// The probe is optional: without it the status card reports unknown rather than taking the whole console down.
 	const healthQuery = useQuery({
 		queryKey: ["admin", "health"],
 		queryFn: () => api.system.health(),
@@ -78,7 +77,6 @@ export function AdminDashboard() {
 		);
 	}
 
-	// Cached data survives a refetch, so each card shimmers its own values instead of the whole console blanking out.
 	const loading =
 		statsQuery.isPending ||
 		analyticsQuery.isPending ||

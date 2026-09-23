@@ -26,23 +26,17 @@ import { PaginationBar } from "../molecules/pagination-bar";
 export interface DataTableProps<TData, TValue = unknown> {
 	columns: ColumnDef<TData, TValue>[];
 	data: TData[];
-	/** Stable row id. Defaults to the row index. */
 	getRowId?: (originalRow: TData, index: number) => string;
-	/** Accessible name for the table element. */
 	ariaLabel?: string;
 	className?: string;
 	initialSorting?: SortingState;
-	/** Rows per page; every table pages. The footer is hidden while the rows fit one page. */
 	pageSize?: number;
-	/** When set, renders a search input bound to the global filter. */
 	searchPlaceholder?: string;
 	emptyMessage?: string;
 	onRowClick?: (row: TData) => void;
-	/** Per-row classes, for a table that marks one row as picked or current. */
 	rowClassName?: (row: TData) => string | undefined;
 }
 
-/** Optional per-column presentational metadata. */
 export interface DataTableColumnMeta {
 	className?: string;
 	headClassName?: string;
@@ -162,8 +156,7 @@ export function DataTable<TData, TValue = unknown>({
 						<TableRow>
 							<TableCell
 								colSpan={columns.length}
-								// The message wraps instead of widening the table, so a long
-								// filter-aware message cannot reintroduce sideways drag on a phone.
+								// Wraps instead of widening the table, so a long message cannot introduce sideways drag on a phone.
 								className="h-24 text-center whitespace-normal text-muted-foreground"
 							>
 								{emptyMessage}

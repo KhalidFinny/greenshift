@@ -8,7 +8,6 @@ interface MetricCardProps {
 	sub: string;
 	icon: IconDefinition;
 	subTone?: "muted" | "positive" | "destructive";
-	/** Data still in flight: same card, shimmering value and sub-line. */
 	loading?: boolean;
 }
 
@@ -29,7 +28,6 @@ export function MetricCard({
 	subTone = "muted",
 	loading = false,
 }: MetricCardProps) {
-	// One frame, two leaf states: the label and icon are static, so only the fetched numbers shimmer.
 	return (
 		<Card>
 			<CardContent className="space-y-6">

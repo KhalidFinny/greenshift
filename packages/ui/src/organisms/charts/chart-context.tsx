@@ -77,38 +77,30 @@ export interface LineConfig {
 	dataKey: string;
 	stroke: string;
 	strokeWidth: number;
-	/** Scale group id (Recharts `yAxisId`). Default: `"left"`. */
 	yAxisId?: string | number;
 }
 
-/** Hover/selection state: every field changes on mouse movement. Lives in its own
- * context so cold consumers (Grid, YAxis, PatternArea, …) skip re-renders on hover. */
+/** Every field changes on mouse movement; its own context so cold consumers skip hover re-renders. */
 export interface ChartHoverContextValue {
 	tooltipData: TooltipData | null;
 	setTooltipData: Dispatch<SetStateAction<TooltipData | null>>;
 
-	// Present only when useChartInteraction is used.
 	selection?: ChartSelection | null;
 	clearSelection?: () => void;
 
-	// Present only in BarChart.
 	hoveredBarIndex?: number | null;
 	setHoveredBarIndex?: (index: number | null) => void;
 
-	// Present only in CandlestickChart.
 	hoveredCandleIndex?: number | null;
 	setHoveredCandleIndex?: (index: number | null) => void;
 }
 
 export interface ChartContextValue extends ChartHoverContextValue {
 	data: Record<string, unknown>[];
-	/** Decimated subset for SVG path rendering; equals `data` when no decimation is needed. */
 	renderData: Record<string, unknown>[];
 
 	xScale: ScaleTime<number, number>;
-	/** Primary (left) y-scale: alias for `yScales[DEFAULT_Y_AXIS_ID]`. */
 	yScale: ScaleLinear<number, number>;
-	/** Per-axis y-scales keyed by `yAxisId`. */
 	yScales: Record<string, ScaleLinear<number, number>>;
 
 	width: number;
@@ -121,72 +113,48 @@ export interface ChartContextValue extends ChartHoverContextValue {
 
 	containerRef: RefObject<HTMLDivElement | null>;
 
-	// Extracted from children.
 	lines: LineConfig[];
 
-	/** {@link ReferenceArea} bands: drives y-axis label colors in range. */
 	referenceAreas: ReferenceAreaConfig[];
 
-	// Loading / lifecycle (LineChart).
 	chartPhase: ChartPhase;
 	chartStatus: ChartStatus;
-	/** Centered label while `chartPhase` shows loading chrome. */
 	loadingLabel?: string;
-	/** Y-domain tween duration when transitioning loading ↔ ready (ms). */
 	yDomainTweenDuration: number;
-	/** Nice’d y-domains per axis from skeleton data (placeholder). */
 	yDomainSkeletonByAxis: Record<string, YDomain>;
-	/** Nice’d y-domains per axis from the current target data. */
 	yDomainTargetByAxis: Record<string, YDomain>;
 
 	isLoaded: boolean;
 	animationDuration: number;
-	/** CSS easing for clip-reveal / line draw (cartesian charts). */
 	animationEasing?: string;
-	/** Motion enter transition (spring or tween): drives clip reveal when spring. */
 	enterTransition?: Transition;
-	/** Increments when enter animation should replay. */
 	revealEpoch?: number;
-	/** Fired when a one-shot loading pulse (exit / enter) completes. */
 	notifyLoadingPulseComplete?: () => void;
 
 	xAccessor: (d: Record<string, unknown>) => Date;
 
-	// Pre-computed date labels for ticker animation
 	dateLabels: string[];
 
-	/** Active brush zoom range: when set, axis ticks align to visible data rows. */
 	xDomain?: [Date, Date];
-	/** Full dataset length when brush zoom is enabled (for zoom vs full-range detection). */
 	xDomainSlotCount?: number;
 
-	// Present only in BarChart.
 	barScale?: ScaleBand<string>;
 	bandWidth?: number;
 	barXAccessor?: (d: Record<string, unknown>) => string;
 	orientation?: "vertical" | "horizontal";
 	stacked?: boolean;
 	stackOffsets?: Map<number, Map<string, number>>;
-	/** Squares variant: snap tooltip to top square and size ring dots. */
 	squareSnap?: { squareGap: number; groupGap?: number; fit?: boolean };
 
-	// ComposedChart + SeriesBar only.
-	/** `SeriesBar` dataKeys in tree order, for grouped columns at each x */
 	composedBarDataKeys?: string[];
-	/** Target bar width in px (Recharts `barSize` style). */
 	composedBarSize?: number;
 	composedMaxBarSize?: number;
-	/** Gap between grouped `SeriesBar` columns in px. */
 	composedBarGap?: number;
-	/** When true, `SeriesBar` segments stack in child order at each x. */
 	composedStacked?: boolean;
 	composedStackOffsets?: Map<number, Map<string, number>>;
-	/** Vertical gap in px between stacked `SeriesBar` segments. Default: 0 */
 	composedStackGap?: number;
 }
 
-/** Stable slice of the chart context: data, scales, dimensions, animation state,
- * layout config. Subscribers via `useChartStable()` skip re-renders on hover. */
 export type ChartStableContextValue = Omit<
 	ChartContextValue,
 	keyof ChartHoverContextValue
@@ -195,8 +163,7 @@ export type ChartStableContextValue = Omit<
 const ChartStableContext = createContext<ChartStableContextValue | null>(null);
 const ChartHoverContext = createContext<ChartHoverContextValue | null>(null);
 
-/** Splits `value` into a stable slice and a volatile hover slice, each memoized on
- * its own fields, so changing `tooltipData` does not bust the stable slice. */
+/** Splits `value` into stable and hover slices, each memoized on its own fields, so hover changes don't bust the stable slice. */
 export function ChartProvider({
 	children,
 	value,
@@ -329,8 +296,6 @@ export function ChartProvider({
 	);
 }
 
-/** Stable slice: data, scales, dimensions, animation state, layout config. Prefer
- * this in cold consumers like axes, grid, pattern fills; skips re-renders on hover. */
 export function useChartStable(): ChartStableContextValue {
 	const context = useContext(ChartStableContext);
 	if (!context) {
@@ -342,7 +307,6 @@ export function useChartStable(): ChartStableContextValue {
 	return context;
 }
 
-/** Y-scale for a series axis (`yAxisId` on Line / Area / YAxis). */
 export function useYScale(
 	yAxisId?: string | number,
 ): ScaleLinear<number, number> {
@@ -352,8 +316,6 @@ export function useYScale(
 	return yScales[id] ?? yScale;
 }
 
-/** Hover slice: tooltipData, selection, hovered bar / candle indices. Subscribers
- * re-render on every mouse move; use only when the component reads hover state. */
 export function useChartHover(): ChartHoverContextValue {
 	const context = useContext(ChartHoverContext);
 	if (!context) {
@@ -365,8 +327,6 @@ export function useChartHover(): ChartHoverContextValue {
 	return context;
 }
 
-/** Merged stable + hover context; re-renders on every hover. Prefer
- * `useChartStable()` or `useChartHover()` for hot consumers that need one slice. */
 export function useChart(): ChartContextValue {
 	const stable = useChartStable();
 	const hover = useChartHover();

@@ -15,11 +15,9 @@ import type { EnergyForecast } from "../lib/types";
 
 interface EnergyForecastCardProps {
 	forecasts: EnergyForecast[];
-	/** Forecasts still in flight: same card frame, shimmering rows. */
 	loading?: boolean;
 }
 
-/** Accuracy metrics are optional, so the line only shows what the model reported. */
 function modelAccuracy(forecast: EnergyForecast): string | null {
 	const parts: string[] = [];
 	if (typeof forecast.metrics?.r2 === "number") {
@@ -31,7 +29,6 @@ function modelAccuracy(forecast: EnergyForecast): string | null {
 	return parts.length > 0 ? parts.join(" · ") : null;
 }
 
-/** What the predictive model expects the site to consume and save over the coming periods; forward looking, so it sits beside the reported actuals rather than replacing them. */
 export function EnergyForecastCard({
 	forecasts,
 	loading = false,

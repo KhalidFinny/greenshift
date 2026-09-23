@@ -18,26 +18,17 @@ export interface TooltipBoxProps {
 	offset?: number;
 	className?: string;
 	children: React.ReactNode;
-	/** Override left position (bypasses internal calculation) */
 	left?: number | ReturnType<typeof useSpring>;
-	/** Override top position (bypasses internal calculation) */
 	top?: number | ReturnType<typeof useSpring>;
-	/** Force flip direction (for custom positioning) */
 	flipped?: boolean;
-	/** Per-chart override; falls back to `ChartConfigProvider.tooltipBoxSpring`. */
 	springConfig?: SpringConfig;
-	/** Animate panel position with a spring. Default: true */
 	animate?: boolean;
-	/** Fade/scale the panel on show. Default: true */
 	entrance?: boolean;
 	panelStyle?: React.CSSProperties;
-	/** Tooltip panel background (CSS variable or color value). Default:
-	 * `var(--chart-tooltip-background)`. */
 	backgroundColor?: string;
 }
 
-// Inner-only-on-visible so `useSpring` initializes at the cursor's actual x/y, not (0, 0), on first
-// hover.
+// Inner-only-on-visible so `useSpring` initializes at the cursor's actual x/y, not (0, 0), on first hover.
 export function TooltipBox(props: TooltipBoxProps) {
 	const [mounted, setMounted] = useState(false);
 

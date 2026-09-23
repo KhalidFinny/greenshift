@@ -1,15 +1,12 @@
 import { ShimmerBlock } from "@greenshift/ui";
 
 interface TableSkeletonProps {
-	/** The real column labels, so the loading frame matches the table it replaces. */
 	headers: string[];
-	/** Mirrors the table's search field, which only some tables carry. */
 	search?: boolean;
 	rows?: number;
 }
 
-/** Loading frame for a `DataTable`: same search field, header row, and column count as the table it stands in for, with shimmering cells where the rows go.
- * The headers are passed in rather than guessed, so the skeleton stays aligned with the real columns. */
+/** Loading frame for a `DataTable`: the headers are passed in rather than guessed, so it stays aligned with the real columns. */
 export function TableSkeleton({
 	headers,
 	search = false,

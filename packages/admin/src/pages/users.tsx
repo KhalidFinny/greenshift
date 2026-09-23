@@ -37,7 +37,6 @@ const ROLE_OPTIONS = [
 	"admin",
 ] as const;
 
-/** Column labels for the loading frame, in table order. */
 const USER_HEADERS = [
 	"User",
 	"Role",
@@ -47,7 +46,6 @@ const USER_HEADERS = [
 	"Actions",
 ];
 
-/** The state as the roster reads it, so a pending company is not simply "no". */
 const STATE_LABEL: Record<string, string> = {
 	NOT_VERIFIED: "Not verified",
 	NEEDS_RESCAN: "Clearer scan asked for",
@@ -87,7 +85,6 @@ const userColumns = (
 		header: "Company",
 		meta: { className: "max-w-64" },
 		cell: ({ row }) => {
-			// A company carries a sector, a vendor a service category: the same fact about two kinds of organization.
 			const category =
 				row.original.industrySector ?? row.original.serviceCategory;
 			const detail = [category, row.original.address]

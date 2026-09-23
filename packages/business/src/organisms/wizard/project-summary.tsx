@@ -1,5 +1,4 @@
-/* The project summary: the financial case, the files and the risk assessment, written
- * once and read by the review step and the record. `context` says which framing. */
+/* The project summary, written once and read by both the review step and the record. */
 
 import { faCircleCheck, faEye } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -43,10 +42,8 @@ import {
 	ToneChip,
 } from "./risk-assessment";
 
-/** The Step 2 figures, as the submission filed them and as the form holds them. */
 export type { ProjectFunding };
 
-/** What the project is, in the words the reading is written from. */
 export interface SummaryProject {
 	namaProyek: string;
 	lokasi: string;
@@ -57,24 +54,21 @@ export interface SummaryProject {
 export interface SummaryDocumentRow {
 	id: string;
 	label: string;
-	/** Absent when nothing was uploaded into the slot. */
 	name?: string;
-	/** Where the stored file is read from, when the surface can serve it. */
 	downloadUrl?: string;
 }
 
 export interface ProjectSummaryProps {
 	project: SummaryProject;
 	funding: ProjectFunding;
-	/** The project's own files: what a bidder reads with the tender. */
+	/** These files reach the bidder with the tender. */
 	vendorDocs: SummaryDocumentRow[];
-	/** The Step 3 scope of work, which the tender is bid against. */
+	/** The tender is bid against this scope. */
 	scope: { requirements: string[]; deliverables: string[] };
 	risk: ProjectRiskResult | null;
 	context: "review" | "record";
 }
 
-/** The money figures as numbers, for the charts and the ratios. */
 interface PlanFigures {
 	capex: number | null;
 	tenor: number | null;
@@ -82,16 +76,11 @@ interface PlanFigures {
 	revenue: number | null;
 }
 
-/** What the figures say when read against each other: arithmetic over the two steps, so
- * the summary states a relationship rather than repeating a number the user typed. */
+/** Derived from the two steps, so the summary states a relationship, not a repeated number. */
 interface PlanReadings {
-	/** CAPEX over the tenor: what the loan asks for each year. */
 	annualRepayment: number | null;
-	/** The saving as a share of that repayment. */
 	coveragePct: number | null;
-	/** CAPEX over the annual saving: years to recover the capital. */
 	paybackYears: number | null;
-	/** The saving as a share of annual revenue. */
 	savingOfRevenuePct: number | null;
 }
 
@@ -116,7 +105,6 @@ function readPlan(figures: PlanFigures): PlanReadings {
 	};
 }
 
-/** The chart the summary leans on: the three annual figures against the capital, in rupiah. */
 function ComparisonChart({ figures }: { figures: PlanFigures }) {
 	const bars = [
 		{ label: "CAPEX", value: figures.capex },
@@ -144,7 +132,6 @@ function ComparisonChart({ figures }: { figures: PlanFigures }) {
 	);
 }
 
-/** The saving against the repayment it has to cover, the ratio the funding case turns on. */
 function CoverageMeter({ readings }: { readings: PlanReadings }) {
 	const { coveragePct, annualRepayment, paybackYears } = readings;
 	if (coveragePct === null || annualRepayment === null) {
@@ -193,7 +180,6 @@ function CoverageMeter({ readings }: { readings: PlanReadings }) {
 	);
 }
 
-/** The reading the review step opens with, in a panel that fills its column. */
 function ReadingPanel({ state }: { state: RiskInsightState }) {
 	return (
 		<EleanorNote className="h-full" state={state} tips={[]} maxParagraphs={3} />
@@ -221,8 +207,6 @@ function Figure({
 	);
 }
 
-/** One case as a column of the report: its name, the share of the plan it assumes, what
- * that produces, and the assumptions behind it: the two never come apart. */
 function ScenarioColumn({
 	scenario,
 	first,
@@ -271,8 +255,6 @@ function ScenarioColumn({
 	);
 }
 
-/** What each case gets back, in today's money, as a share of the capital: the hundred
- * per cent mark is the capital repaid, the line the funding case turns on. */
 function RecoveryChart({ forecast }: { forecast: RoiForecast }) {
 	const bars = forecast.scenarios.map((scenario) => ({
 		label: scenario.label,
@@ -290,7 +272,6 @@ function RecoveryChart({ forecast }: { forecast: RoiForecast }) {
 	);
 }
 
-/** How long each case takes to hand the capital back, against the tenor. */
 function PaybackChart({ forecast }: { forecast: RoiForecast }) {
 	const bars = forecast.scenarios.flatMap((scenario) =>
 		scenario.paybackYears === null
@@ -315,8 +296,7 @@ function PaybackChart({ forecast }: { forecast: RoiForecast }) {
 	);
 }
 
-/** The ROI forecast, from the Step 2 figures by the same engine that generates the
- * blueprint. Eleanor reads the cases first and the numbers follow her. */
+/** The same engine generates the Blueprint's cases, so the two never disagree. */
 function RoiForecastPanel({
 	state,
 	reading,
@@ -402,7 +382,6 @@ function RoiForecastPanel({
 	);
 }
 
-/** How A reads the project and its figures back: the reading on one side, the charts behind it. */
 function SummarySection({
 	funding,
 	readings,
@@ -437,7 +416,6 @@ function SummarySection({
 	);
 }
 
-/** The tick appears only when a file is really there, and the state is spelled out beside it. */
 function DocumentState({ name }: { name?: string }) {
 	if (!name) {
 		return (
@@ -458,10 +436,8 @@ function DocumentState({ name }: { name?: string }) {
 	);
 }
 
-/** A checklist as a progress line and the rows behind it. */
 export function DocumentGroup({
 	title,
-	/** What a missing row tells the reader to do about it. */
 	missing,
 	rows,
 }: {
@@ -533,7 +509,6 @@ export function DocumentGroup({
 	);
 }
 
-/** B2: the risk number on one side, Eleanor's reading on the other, the assessment a click away. */
 function RiskPair({
 	risk,
 	insight,
@@ -546,7 +521,6 @@ function RiskPair({
 	const ranked = [...risk.breakdown].sort((a, b) => b.pct - a.pct);
 
 	return (
-		/* Half and half: the number and its areas on one side, her reading on the other. */
 		<div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
 			<div className="space-y-4 lg:pr-8">
 				<p className="flex items-baseline gap-1.5">
@@ -578,7 +552,6 @@ function RiskPair({
 	);
 }
 
-/** One area's heading, with the sentence that says where the figures came from. */
 function AreaHeading({ title, subtitle }: { title: string; subtitle: string }) {
 	return (
 		<div className="border-b border-border pb-3">
@@ -588,8 +561,6 @@ function AreaHeading({ title, subtitle }: { title: string; subtitle: string }) {
 	);
 }
 
-/** The two Step 3 lists, in the words a bidder reads them under: each its own labelled
- * group, so a reader can tell requirements from deliverables. */
 function ScopeLists({ scope }: { scope: ProjectSummaryProps["scope"] }) {
 	const groups = [
 		{
@@ -642,7 +613,6 @@ export function ProjectSummary({
 	const review = context === "review";
 	const [isRiskOpen, setIsRiskOpen] = useState(false);
 
-	/* Two readings of the same assessment: the panel holds two sentences, the detail the note. */
 	const brief = useRiskInsight(risk, "brief");
 	const full = useRiskInsight(risk, "full");
 	const reading = useProjectReading({ ...project, ...funding });
@@ -748,7 +718,6 @@ export function ProjectSummary({
 						</Dialog>
 					</>
 				) : (
-					/* The record carries the whole assessment rather than a door to it. */
 					<RiskAssessmentBody insight={full} risk={risk} />
 				)}
 			</section>

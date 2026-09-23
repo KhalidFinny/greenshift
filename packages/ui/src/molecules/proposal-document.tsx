@@ -9,8 +9,7 @@ import { useState } from "react";
 import { Button } from "../atoms/button";
 import { cn } from "../lib/utils";
 
-/** A mark drawn on a proposal: coordinates are fractions of the page, never
- * pixels, so a mark drawn on one screen reads the same on the other. */
+/** A mark drawn on a proposal: coordinates are fractions of the page, never pixels. */
 export type ProposalMarkKind = "highlight" | "circle";
 
 export interface ProposalAnnotation {
@@ -22,31 +21,24 @@ export interface ProposalAnnotation {
 	h: number;
 }
 
-/** What the reader is holding: one of the two marks, or the eraser. */
 type MarkTool = ProposalMarkKind | "erase";
 
-/** The document both sides read: deliberately not the API's shape, so each
- * surface maps its own bid onto it and the page renders identically everywhere. */
+/** The document both sides read: deliberately not the API's shape, so each surface maps its own bid onto it. */
 export interface ProposalDocumentData {
-	/** What the work is, so the page names the thing being bid on. */
 	title: string;
 	vendorName: string;
-	/** ISO date the bid was submitted, or null. */
 	submittedAt: string | null;
 	amount: number;
 	operationalCost: number | null;
 	projectedRoi: number | null;
-	/** Months of warranty offered. */
 	warrantyPeriod: number | null;
 	technicalSpec: string | null;
 	revisionCount: number;
 }
 
-/** Fixed width on purpose: marks are fractions of this box, so a reflowing page
- * would put a mark on a different line for the other side. Narrow screens scroll. */
+/** Fixed width on purpose: marks are fractions of this box, so a reflowing page would put a mark on a different line for the other side. */
 const PAGE_WIDTH = 720;
 
-/** What the reader can hold, in the order the toolbar offers them. */
 const TOOLS: Array<{ id: MarkTool; label: string; icon: typeof faCircle }> = [
 	{ id: "highlight", label: "Highlight", icon: faHighlighter },
 	{ id: "circle", label: "Circle", icon: faCircle },
@@ -75,7 +67,6 @@ function submitted(value: string | null): string {
 			});
 }
 
-/** One figure of the bid, as a row of the document's own table. */
 function FigureRow({ label, value }: { label: string; value: string }) {
 	return (
 		<div className="flex items-baseline justify-between gap-6 border-b border-neutral-200 py-2.5">
@@ -87,8 +78,6 @@ function FigureRow({ label, value }: { label: string; value: string }) {
 	);
 }
 
-/** The marks over the page, plus the pointer layer when the reader may draw; the
- * page underneath never moves, so a mark lands where it was drawn. */
 function MarkLayer({
 	marks,
 	pending,
@@ -115,7 +104,6 @@ function MarkLayer({
 					: "pointer-events-none",
 			)}
 			onPointerDown={(event) => {
-				// The eraser's own guard lives in the tool, so no box starts while it is held.
 				if (!editable) return;
 				event.currentTarget.setPointerCapture(event.pointerId);
 				const box = event.currentTarget.getBoundingClientRect();
@@ -161,8 +149,6 @@ function MarkLayer({
 	);
 }
 
-/** One vendor's proposal. Read-only when `onMarksChange` is absent (the vendor's
- * copy); marks are handed back in the page's own fractions, so callers store them. */
 export function AnnotatedProposal({
 	proposal,
 	marks,
@@ -182,7 +168,6 @@ export function AnnotatedProposal({
 	const editable = onMarksChange !== undefined;
 
 	function beginDraw(start: { x: number; y: number }) {
-		// The eraser never starts a box: it takes marks back instead.
 		if (tool === "erase") return;
 		setPending({ kind: tool, start, current: start });
 	}
@@ -200,7 +185,6 @@ export function AnnotatedProposal({
 		});
 	}
 
-	/** The box the two corners describe, clamped to the page. */
 	function boxOf(drag: {
 		start: { x: number; y: number };
 		current: { x: number; y: number };

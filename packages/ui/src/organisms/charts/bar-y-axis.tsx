@@ -7,9 +7,7 @@ import { cn } from "#/lib/utils";
 import { useChart, useChartStable } from "./chart-context";
 
 export interface BarYAxisProps {
-	/** Whether to show all labels or skip some for dense data. Default: true */
 	showAllLabels?: boolean;
-	/** Maximum number of labels to show. Default: 20 */
 	maxLabels?: number;
 }
 

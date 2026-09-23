@@ -4,7 +4,6 @@ import { ApiError } from "./errors";
 type ErrorBody = { error?: { code?: string; message?: string } } | null;
 type CsrfBody = { csrfToken?: string } | null;
 
-/** RequestInit plus the toast opt-out used by the typed client. */
 export type RequestOptions = RequestInit & { silent?: boolean };
 
 const REQUEST_TIMEOUT_MS = 2 * 60 * 1000;
@@ -55,8 +54,7 @@ async function fetchCsrfToken(signal?: AbortSignal): Promise<string | null> {
 	}
 }
 
-/** Shared fetch helper for the single same-origin API: throws ApiError with the
- * API's message on non-2xx, and a 504 one past REQUEST_TIMEOUT_MS. */
+/** Throws ApiError with the API's message on non-2xx, and a 504 past REQUEST_TIMEOUT_MS. */
 export async function request<T>(
 	path: string,
 	init?: RequestOptions,
@@ -67,8 +65,7 @@ export async function request<T>(
 	try {
 		const method = (init?.method ?? "GET").toUpperCase();
 		const headers = new Headers(init?.headers);
-		// FormData keeps the browser's multipart boundary, so skip the JSON
-		// default for it.
+		// FormData sets its own multipart boundary, so the JSON default must not override it.
 		const isFormData =
 			typeof FormData !== "undefined" && init?.body instanceof FormData;
 		if (!isFormData && !headers.has("Content-Type") && !SAFE_METHODS[method]) {
@@ -88,15 +85,13 @@ export async function request<T>(
 		if (!res.ok) {
 			const body = (await res.json().catch(() => null)) as ErrorBody;
 			const message = errorMessageFor(res.status, body);
-			// 428 step-up has its own confirmation dialog; a toast beside it is
-			// noise.
+			// 428 step-up has its own confirmation dialog, so a toast beside it is noise.
 			if (res.status !== 428 && shouldToast(method, init)) {
 				publishToast({ tone: "error", message });
 			}
 			throw new ApiError(res.status, message);
 		}
-		// Mutations carry the toast copy in the body; reads stay silent because
-		// their states live in the page.
+		// Mutations carry the toast copy in the body; reads stay silent.
 		const body = (await res.json()) as T & { message?: string };
 		if (shouldToast(method, init) && body.message) {
 			publishToast({ tone: "success", message: body.message });

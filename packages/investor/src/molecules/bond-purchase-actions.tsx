@@ -25,19 +25,15 @@ interface BondPurchaseActionsProps {
 	};
 }
 
-/** How long we wait for a deep link to hand off before assuming it failed. */
 const LAUNCH_TIMEOUT_MS = 1500;
 
-/** Copy text to the clipboard, with a legacy fallback for non-secure contexts. */
 async function copyText(value: string): Promise<boolean> {
 	try {
 		if (navigator.clipboard?.writeText) {
 			await navigator.clipboard.writeText(value);
 			return true;
 		}
-	} catch {
-		// Permission denied or insecure context: fall through to execCommand.
-	}
+	} catch {}
 
 	try {
 		const area = document.createElement("textarea");
@@ -55,8 +51,7 @@ async function copyText(value: string): Promise<boolean> {
 	}
 }
 
-/** Best-effort Android launch: fires the URL scheme, then watches for the page being
- * backgrounded. True when the hand-off happened; false sends the caller to Play. */
+/** Fires the URL scheme, then watches for the page being backgrounded; false sends the caller to Play. */
 function launchApp(
 	scheme: string,
 	timeoutMs = LAUNCH_TIMEOUT_MS,
@@ -81,8 +76,7 @@ function launchApp(
 			window.removeEventListener("pagehide", onPageHide);
 		};
 
-		// Background tabs throttle timers; a backgrounded page is the success case,
-		// handled by the listeners above.
+		// Background tabs throttle timers; a backgrounded page is the success case, handled by the listeners above.
 		const timer = window.setTimeout(() => finish(false), timeoutMs);
 
 		document.addEventListener("visibilitychange", onHidden);
@@ -105,8 +99,6 @@ function openPlay(platform: PartnerApp) {
 	window.open(platform.playUrl, "_blank", "noopener,noreferrer");
 }
 
-/** The "buy bond" hand-off: the Android deep link first, else the Play listing,
- * plus a "Copy Code" that works in any broker app. */
 export function BondPurchaseActions({ project }: BondPurchaseActionsProps) {
 	const code = bondCodeFor(project);
 	const [launch, setLaunch] = useState<LaunchState>("idle");

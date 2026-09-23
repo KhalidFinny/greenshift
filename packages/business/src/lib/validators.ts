@@ -1,5 +1,4 @@
-/* Per-step validation. validateStep1 returns error keys and strings that match
- * the dashboard's Step 1 validate() exactly (ADR-003). */
+/** Per-step validation; validateStep1's keys and strings match the dashboard's Step 1 validate() exactly. */
 
 export interface Step1Values {
 	namaProyek: string;
@@ -38,8 +37,7 @@ export function validateStep1(v: Step1Values): Record<string, string> {
 	return e;
 }
 
-/* ADR-004.1-3 + 004.5: CAPEX + tenor + penghematan, financial profile, >= 1 file;
- * same pattern as Step 1 (aria-invalid + inline message). */
+/* CAPEX + tenor + penghematan, financial profile, >= 1 file; same pattern as Step 1 (aria-invalid + inline message). */
 export interface Step2Values {
 	capex: number | null;
 	tenor: number | null;

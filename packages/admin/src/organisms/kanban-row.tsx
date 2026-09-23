@@ -32,7 +32,6 @@ const STATUS_LABELS: Record<string, string> = {
 
 interface KanbanRowProps {
 	projects: AdminProject[];
-	/** Data still in flight: same columns, shimmering cards. */
 	loading?: boolean;
 }
 
@@ -59,7 +58,6 @@ export function KanbanRow({ projects, loading = false }: KanbanRowProps) {
 						{columns.map((col) => (
 							<div key={col.status} className="w-64 shrink-0">
 								<div className="flex items-center gap-2">
-									{/* Stage names are fixed by the lifecycle, so they stay real. */}
 									<span className="text-base font-medium">{col.label}</span>
 									{loading ? (
 										<ShimmerBlock className="h-8 w-12 rounded-md" />

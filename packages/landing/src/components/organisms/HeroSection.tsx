@@ -5,8 +5,7 @@ import { useParallax } from "../../hooks/useParallax";
 import FloatingPill from "../atoms/FloatingPill";
 import DashboardShowcase from "../molecules/DashboardShowcase";
 
-// The hero cannot reflow: its layers are absolutely positioned on a 1920x950 design
-// canvas (`--u`), so canvas text is floored at 0.875rem to stay above the 14px floor.
+// The hero is one 1920x950 canvas (`--u`), so canvas text is floored at 0.875rem to stay above the 14px floor.
 export default function HeroSection() {
 	const yBg = useParallax(0.08);
 	const yDashboard = useParallax(0.12, 60);
@@ -43,8 +42,6 @@ export default function HeroSection() {
 					willChange: "transform",
 				}}
 			>
-				{/* Oversized and pulled above the container so the downward nudge
-				    cannot expose the section background at the top edge. */}
 				<img
 					src="/green-2.webp"
 					alt=""
@@ -135,8 +132,7 @@ export default function HeroSection() {
 					deliver in one measurable and transparent ecosystem.
 				</p>
 
-				{/* The gutter and height are floored: the canvas scales them with `--u`, but
-				    below the 1920px canvas the 14px text floor would leave the label touching the border. */}
+				{/* Floored: below the 1920px canvas the 14px text floor would leave the label touching the border. */}
 				<nav
 					className="pointer-events-auto mt-12 flex flex-col items-center gap-5 sm:flex-row sm:gap-14 lg:mt-[calc(var(--u)*52)] lg:gap-[max(3.5rem,calc(var(--u)*64))]"
 					aria-label="Hero actions"

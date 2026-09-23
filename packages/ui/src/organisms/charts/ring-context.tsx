@@ -33,9 +33,7 @@ export const defaultRingColors = [
 export interface RingData {
 	label: string;
 	value: number;
-	/** Maximum value (determines progress percentage) */
 	maxValue: number;
-	/** Optional color override - falls back to palette */
 	color?: string;
 }
 
@@ -69,7 +67,6 @@ export interface RingStableContextValue {
 	startAngle: number;
 	endAngle: number;
 
-	/** Studio geometry scrub: skip Motion path morphing, use plain SVG paths. Default: false */
 	geometryScrubbing: boolean;
 }
 

@@ -30,7 +30,7 @@ interface CompanyProfileFormProps {
 	}) => void;
 }
 
-/** Company profile form. Only the fields the API stores on the vendor profile are editable; location matters because proximity is part of the matchmaking score. */
+/** Location matters: proximity is part of the matchmaking score. */
 export function CompanyProfileForm({
 	companyName: initialCompanyName,
 	description: initialDescription,
@@ -47,7 +47,6 @@ export function CompanyProfileForm({
 	const [location, setLocation] = useState(initialLocation ?? "");
 	const [tdp, setTdp] = useState(initialTdp ?? "");
 
-	// The profile arrives asynchronously; adopt it once it lands.
 	useEffect(() => {
 		if (initialCompanyName !== undefined) setCompanyName(initialCompanyName);
 	}, [initialCompanyName]);

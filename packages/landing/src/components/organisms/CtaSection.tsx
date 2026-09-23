@@ -32,8 +32,7 @@ export default function CtaSection() {
 							</Link>
 							<p className="text-base text-white">
 								Need help?{" "}
-								{/* One unbreakable run: a wrap after the `@` would split the
-								    anchor into two boxes and make the hit area look wrong. */}
+								{/* One unbreakable run: a wrap after the `@` would split the anchor into two boxes. */}
 								<a
 									href="mailto:contact@greenshift.com"
 									className="whitespace-nowrap font-semibold text-white underline underline-offset-2 hover:text-[#D5ED9F]"

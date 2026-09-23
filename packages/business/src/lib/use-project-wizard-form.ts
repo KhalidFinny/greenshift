@@ -1,7 +1,6 @@
 import { useAppForm } from "@greenshift/ui";
 
-/** The wizard's field values: numbers stay as typed, Indonesian grouping and all, and convert at
- * the payload edge; `timeline` starts on a real quarter so it passes its own rule. */
+/** Numbers stay as typed, Indonesian grouping and all, and convert at the payload edge; timeline starts on a real quarter so it passes its own rule. */
 export const WIZARD_VALUES = {
 	namaProyek: "",
 	lokasi: "",
@@ -28,7 +27,6 @@ export const WIZARD_VALUES = {
 export type WizardValues = typeof WIZARD_VALUES;
 export type WizardFieldName = keyof WizardValues;
 
-/** Step 1 fields, in the order the step renders them. */
 export const STEP1_FIELDS = [
 	"namaProyek",
 	"lokasi",
@@ -42,7 +40,6 @@ export const STEP1_FIELDS = [
 	"ringkasan",
 ] as const satisfies readonly WizardFieldName[];
 
-/** Step 2 fields, in the order the step renders them. */
 export const STEP2_FIELDS = [
 	"capex",
 	"tenor",
@@ -51,18 +48,15 @@ export const STEP2_FIELDS = [
 	"jaminan",
 ] as const satisfies readonly WizardFieldName[];
 
-/** Step 3 fields, in the order the step renders them. */
 export const STEP3_FIELDS = [
 	"requirements",
 	"deliverables",
 ] as const satisfies readonly WizardFieldName[];
 
-/** One form for the whole wizard, three data steps plus the two review declarations, so a resume
- * seeds every step at once and the step views read the same values the shell does. */
+/** One form for the whole wizard, so a resume seeds every step at once and the step views read the same values the shell does. */
 export function useProjectWizardForm() {
 	return useAppForm({ defaultValues: { ...WIZARD_VALUES } });
 }
 
-/** The form instance the step views render against; `ReturnType` is deliberate, since TanStack's
- * app-form type is generic over fifteen parameters and this alias names the shape once. */
+/** ReturnType is deliberate: TanStack's app-form type is generic over fifteen parameters, so this alias names the shape once. */
 export type WizardForm = ReturnType<typeof useProjectWizardForm>;

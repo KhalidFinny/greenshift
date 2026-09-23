@@ -70,7 +70,6 @@ const SECTION_HEADERS = [
 	},
 ] as const;
 
-/** "Laporan-2024.pdf" -> "PDF": the chip says what kind of file it is. */
 function fileKind(name: string): string {
 	const dot = name.lastIndexOf(".");
 	return dot <= 0 || dot === name.length - 1
@@ -78,8 +77,7 @@ function fileKind(name: string): string {
 		: name.slice(dot + 1).toUpperCase();
 }
 
-/** A step block's heading: the rule under it is the boundary between blocks A, B and C,
- * and its letter is what the score panel names when it points back at those fields. */
+/** The letter is what the score panel names when it points back at these fields. */
 function SectionHeader({
 	letter,
 	title,
@@ -99,8 +97,6 @@ function SectionHeader({
 	);
 }
 
-/** The documents attached to the draft. Empty, the picker is the whole block; once a file
- * is in, the list is the state and adding another is its own action. */
 function FinancialDocuments({
 	files,
 	onFiles,
@@ -113,10 +109,8 @@ function FinancialDocuments({
 	fileError?: string;
 }) {
 	const fileRef = useRef<HTMLInputElement | null>(null);
-	/* The attachments are user-supplied and unbounded, so they page like every other record list. */
 	const paged = usePagedRows(files);
-	/* One input for both states, so the picker keeps a single accessible name. Out of the
-	   tab order: a focus stop on an invisible control is a trap rather than a path. */
+	/* Out of the tab order: a focus stop on an invisible control is a trap, not a path. */
 	const input = (
 		<input
 			ref={fileRef}
@@ -228,8 +222,6 @@ function FinancialDocuments({
 	);
 }
 
-/** The score is derived from the figures above, so it stays absent until they are in: this
- * says which ones are still open instead of showing a stand-in number. */
 function MissingInputs({
 	capex,
 	tenor,
@@ -271,7 +263,6 @@ function MissingInputs({
 	);
 }
 
-/** Everything the panel draws, derived once from the live figures. */
 interface ScoreReadout {
 	total: number;
 	rating: string;
@@ -284,7 +275,6 @@ interface ScoreReadout {
 	docsTotal: number;
 }
 
-/** The figures behind the score, one row per fact. */
 function FactsTable({
 	annualRepayment,
 	coverage,
@@ -320,7 +310,6 @@ function FactsTable({
 	);
 }
 
-/** The score as a dial, its two parts on their own rings. */
 function ScoreDial({ readout }: { readout: ScoreReadout }) {
 	const { total, rating, next } = readout;
 	const rings = [
@@ -403,8 +392,7 @@ function ScoreDial({ readout }: { readout: ScoreReadout }) {
 	);
 }
 
-/** The score panel: the model runs once with no documents counted, so the document part is
- * what the attachments added and the two parts add up to the number on screen. */
+/** The model runs once with no documents counted, so the document part is what they added. */
 function CreditScoringPanel({
 	score,
 	capex,
@@ -474,7 +462,6 @@ export function Step2View({
 
 	return (
 		<div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-			{/* One block per heading, each ruled off and set well apart from the next. */}
 			<div className="min-w-0 space-y-10">
 				<section className="space-y-4">
 					<SectionHeader {...SECTION_HEADERS[0]} />
@@ -582,7 +569,6 @@ export function Step2View({
 				</section>
 			</div>
 
-			{/* The panel moves with the figures it reads, so it stays in view while they are filled in. */}
 			<aside className="min-w-0 xl:sticky xl:top-24">
 				<Card>
 					<CardHeader>

@@ -1,6 +1,3 @@
-/* What both matchmaking pages show: project facts, the scoring model, one vendor's
- * criteria, the tender-state labels. Shared so the two pages read the same figures. */
-
 import {
 	faBuilding,
 	faCalendarDays,
@@ -35,8 +32,6 @@ export function defaultDeadline(): string {
 	);
 }
 
-/** How long is left of the bidding window, as a duration a sentence can take:
- * "13 days", "4 hours", "38 minutes", or "passed". */
 export function timeLeftLabel(deadlineAt: string | null): string {
 	if (!deadlineAt) return "open-ended";
 	const diff = new Date(deadlineAt).getTime() - Date.now();
@@ -47,7 +42,6 @@ export function timeLeftLabel(deadlineAt: string | null): string {
 	return `${Math.floor(hours / 24)} days`;
 }
 
-/** The same duration as a phrase: "13 days left", "the deadline has passed". */
 export function deadlinePhrase(deadlineAt: string | null): string {
 	const left = timeLeftLabel(deadlineAt);
 	return left === "passed" ? "the deadline has passed" : `${left} left`;
@@ -103,7 +97,6 @@ export function stageSummary(
 		: "This tender is closed.";
 }
 
-/** The project's own facts, as one quiet line of labels and values. */
 export function ProjectFacts({
 	detail,
 }: {
@@ -148,7 +141,6 @@ export function ProjectFacts({
 	);
 }
 
-/** The tender's life as four points, with the one it is at marked. */
 export function StageBand({
 	index,
 	summary,
@@ -210,8 +202,6 @@ export function StageBand({
 	);
 }
 
-/** The scoring model as a table: what each criterion is worth, and how this
- * project's vendor pool scores on it. */
 export function CriteriaPanel({ factors }: { factors: BusinessMatchFactor[] }) {
 	return (
 		<dl className="space-y-3">
@@ -249,7 +239,6 @@ export function CriteriaPanel({ factors }: { factors: BusinessMatchFactor[] }) {
 	);
 }
 
-/** The weights panel both pages show, with the pool's readings. */
 export function ModelCard({
 	factors,
 	children,
@@ -275,8 +264,6 @@ export function ModelCard({
 	);
 }
 
-/** One vendor's reading on each criterion, as a bar list: the same five criteria,
- * at that vendor's numbers rather than the pool's. */
 export function VendorCriteria({
 	vendor,
 }: {

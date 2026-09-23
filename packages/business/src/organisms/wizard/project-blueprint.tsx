@@ -1,5 +1,4 @@
-/* The Green Project Blueprint as its company reads it: the document verification
- * produces. The chart plots each case's `recoveryRp` series; the page does no arithmetic. */
+/* The Green Project Blueprint as its company reads it; the page does no arithmetic. */
 
 import { faFileShield } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -31,7 +30,6 @@ const STATUS_LABEL: Record<string, string> = {
 	rejected: "Rejected by the auditor",
 };
 
-/** The stage's tone: live stages amber, cleared ones emerald. */
 const STATUS_PILL: Record<string, string> = {
 	draft: "bg-muted text-muted-foreground",
 	audit: "bg-amber-50 text-amber-700",
@@ -40,7 +38,6 @@ const STATUS_PILL: Record<string, string> = {
 	rejected: "bg-red-50 text-red-700",
 };
 
-/** One figure of the document, label above value. */
 function Figure({ label, value }: { label: string; value: string }) {
 	return (
 		<div className="rounded-lg border border-border px-4 py-3">
@@ -66,8 +63,6 @@ function Row({
 	);
 }
 
-/** The projection: what each case recovered by the end of each year, against the
- * capital spent at year zero. Where a line crosses zero is that case's payback. */
 function ProjectionChart({ blueprint }: { blueprint: ProjectBlueprintView }) {
 	const points = Math.max(
 		...blueprint.scenarios.map((scenario) => scenario.recoveryRp.length),
@@ -105,7 +100,6 @@ function ProjectionChart({ blueprint }: { blueprint: ProjectBlueprintView }) {
 	);
 }
 
-/** What the project promises to cut, against the baseline it was measured on. */
 function EmissionChart({ blueprint }: { blueprint: ProjectBlueprintView }) {
 	const targets = blueprint.emissionTargets;
 	if (!targets) return null;
@@ -136,7 +130,6 @@ function EmissionChart({ blueprint }: { blueprint: ProjectBlueprintView }) {
 	);
 }
 
-/** The three cases as the document's own table. */
 function CasesTable({ blueprint }: { blueprint: ProjectBlueprintView }) {
 	if (blueprint.scenarios.length === 0) return null;
 
@@ -201,7 +194,6 @@ export function ProjectBlueprintSection({
 	blueprint,
 	loading,
 }: {
-	/** Null while the project has no blueprint: it is written at verification. */
 	blueprint: ProjectBlueprintView | null;
 	loading: boolean;
 }) {

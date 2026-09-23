@@ -33,8 +33,6 @@ const VENDOR_FILTERS = [
 	{ value: "unchosen", label: "No vendor yet" },
 ] as const;
 
-/** Past matchmaking: bidding closed means the route is chosen and the terms are
- * frozen, so the proposals are the page with the work left in it. */
 function decided(project: BusinessMatchmakingProject): boolean {
 	return (
 		project.tenderStatus === "evaluation" ||
@@ -76,14 +74,12 @@ export function MatchmakingList() {
 		() => [
 			{
 				id: "project",
-				// The vendor is part of the search, so typing a company name finds its project.
 				accessorFn: (project) =>
 					`${project.name} ${project.location ?? ""} ${project.sector ?? ""} ${
 						project.awardedVendor ?? ""
 					}`,
 				header: "Project",
-				// The chosen vendor and, below `md`, the Submitted and CAPEX columns fold
-				// into this cell, so it may wrap rather than widen the table past its container.
+				// The chosen vendor and the columns hidden below md fold into this cell, so it wraps instead of widening the table.
 				meta: { className: "max-md:whitespace-normal max-md:wrap-anywhere" },
 				cell: ({ row }) => (
 					<>
@@ -152,11 +148,9 @@ export function MatchmakingList() {
 				id: "actions",
 				header: "Actions",
 				cell: ({ row }) => (
-					// Below `md` the button is its icon alone behind a 44px target: the label
-					// would squeeze the project cell, and the aria-label keeps it nameable.
+					// Below md the button is icon-only behind a 44px target; the aria-label keeps it nameable.
 					<div className="flex flex-wrap items-center gap-2">
 						{decided(row.original) ? (
-							// Past bidding, matchmaking is settled: the page that matters holds the proposals.
 							<Button
 								variant="outline"
 								asChild
@@ -191,10 +185,6 @@ export function MatchmakingList() {
 
 	return (
 		<div className="space-y-6">
-			{/* No page title: the shell names the section, and the table is the page. */}
-
-			{/* The filters are page controls, so they sit on the background; the card holds only the
-			    table. */}
 			<div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
 				<Select
 					value={statusFilter}

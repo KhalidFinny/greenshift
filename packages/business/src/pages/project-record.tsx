@@ -1,6 +1,3 @@
-/* One project's record: the summary the company filed, the blueprint it became, and
- * the verification step it still owes. Registration happens at Sistem Registri. */
-
 import {
 	faClock,
 	faHandshake,
@@ -17,7 +14,6 @@ import {
 } from "../organisms/wizard/project-summary";
 import { REQUIRED_DOCS } from "../organisms/wizard/step-1";
 
-/** The two stages the project passes through after submit, in order. */
 const STAGES = [
 	{
 		icon: faShieldHalved,
@@ -31,11 +27,9 @@ const STAGES = [
 	},
 ] as const;
 
-/** How far each stored status is along that path: the stages already behind it.
- * Keyed by the enum, not the pill label; an unknown status reads as fresh. */
+/** Keyed by the stored enum, not the pill label; an unknown status reads as fresh. */
 const STAGES_PASSED: Record<string, number> = {
 	draft: 0,
-	// On record and waiting on the company, so verification has not started either way.
 	registry: 0,
 	assessment: 0,
 	tendering: 1,
@@ -54,13 +48,11 @@ function stageState(
 	return index === passed ? "in progress" : "waiting";
 }
 
-/** Whether verification has cleared the project, which is what opens vendor
- * matchmaking: a route offered earlier would lead to an empty screen. */
+/** Verification is what opens vendor matchmaking; the route offered earlier would lead to an empty screen. */
 export function isMatchmakingOpen(status: string): boolean {
 	return (STAGES_PASSED[status] ?? 0) >= 1;
 }
 
-/** What the verification step is waiting on, in the stored status's own words. */
 function verificationState(
 	status: string,
 	registered: boolean | undefined,
@@ -89,8 +81,7 @@ function verificationState(
 	}
 }
 
-/* The verification reminder, on the page in every state so the step is never a page
-   to remember. Registration happens at Sistem Registri, so the page reads it back. */
+/* On the page in every state so the step is never a page to remember. */
 function VerificationSection({
 	projectId,
 	status,
@@ -100,8 +91,7 @@ function VerificationSection({
 }) {
 	const queryClient = useQueryClient();
 
-	// Asked only while the project waits on it: once verification is under way, the registry adds
-	// nothing.
+	// Asked only while the project waits on it: once verification is under way the registry adds nothing.
 	const registry = useQuery({
 		queryKey: ["business", "registry", projectId],
 		enabled: status === "registry",
@@ -111,8 +101,7 @@ function VerificationSection({
 
 	const state = verificationState(status, registry.data);
 
-	/* The registry read is a live call to another system, so the line says what it is
-	   waiting for instead of claiming the project is unregistered. */
+	/* A live call to another system: the line says what it waits for instead of claiming the project is unregistered. */
 	const label =
 		status === "registry" && registry.isPending
 			? "Checking Sistem Registri…"
@@ -239,7 +228,6 @@ export function ProjectRecord({ projectId }: { projectId: string }) {
 		);
 	}
 
-	/* The stored files, read back under the slot each was uploaded into. */
 	const stored = Object.fromEntries(
 		(documentsQuery.data ?? []).map(
 			(document) => [document.slot, document] as const,
@@ -263,8 +251,6 @@ export function ProjectRecord({ projectId }: { projectId: string }) {
 
 	return (
 		<div className="space-y-10">
-			{/* Two columns once there is room: the summary filed on one side, the document
-			    it became and the step that follows on the other. Stacked below `xl`. */}
 			<div className="grid gap-10 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] xl:items-start">
 				<ProjectSummary
 					context="record"

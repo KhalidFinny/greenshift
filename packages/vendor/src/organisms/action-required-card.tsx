@@ -35,7 +35,6 @@ interface ActionRequiredCardProps {
 	negotiations: NegotiationRequest[];
 	projects: VendorProjectCardData[];
 	leaderboard: { rank: number; isCurrentVendor: boolean }[];
-	/** Inbox still in flight: same card, tabs and rows shimmer. */
 	loading?: boolean;
 }
 
@@ -153,7 +152,6 @@ export function ActionRequiredCard({
 		low: allItems.filter((i) => i.urgency === "low").length,
 	};
 
-	// One row frame; each slot is a real action or a shimmer.
 	const rows: (ActionItem | null)[] = loading
 		? Array.from({ length: 4 }, () => null)
 		: paged.pageRows;

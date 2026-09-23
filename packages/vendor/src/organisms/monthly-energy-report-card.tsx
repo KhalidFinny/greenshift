@@ -15,7 +15,6 @@ import type { MonthlyEnergyReport } from "../lib/types";
 
 interface MonthlyEnergyReportCardProps {
 	reports: MonthlyEnergyReport[];
-	/** Reports still in flight: same card frame, shimmering rows. */
 	loading?: boolean;
 }
 

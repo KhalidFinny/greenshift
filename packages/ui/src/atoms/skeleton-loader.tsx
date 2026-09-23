@@ -1,7 +1,5 @@
 import { cn } from "../lib/utils";
 
-/** One shimmering placeholder block. Exported so route-level skeletons mirror
- * their real page layout instead of a generic stack. */
 export function ShimmerBlock({ className }: { className?: string }) {
 	return (
 		<div
@@ -18,8 +16,6 @@ export function ShimmerBlock({ className }: { className?: string }) {
 	);
 }
 
-/** Content-area skeleton shown while a route loads: the app shell (sidebar +
- * header) stays rendered, only the content shimmers. */
 export function ContentSkeleton() {
 	return (
 		<div className="space-y-6">

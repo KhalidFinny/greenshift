@@ -15,9 +15,7 @@ import {
 import { useRingHover, useRingStable } from "./ring-context";
 
 export interface RingCenterProps {
-	/** Label shown below the value. Default: "Total" when not hovering */
 	defaultLabel?: string;
-	/** Format options for NumberFlow. Default: standard notation */
 	formatOptions?: ChartStatFlowFormat;
 	children?: (props: {
 		value: number;
@@ -26,16 +24,13 @@ export interface RingCenterProps {
 		data: { label: string; value: number; maxValue: number; color?: string };
 	}) => ReactNode;
 	className?: string;
-	/** Class name for the value text. Scales with center size via container queries. */
 	valueClassName?: string;
-	/** Class name for the label text. Scales with center size via container queries. */
 	labelClassName?: string;
 	prefix?: string;
 	suffix?: string;
 }
 
-/** Renders as pure HTML, not inside SVG foreignObject: avoids Safari WebKit #23113 mispositioning.
- * RingChart overlays it with CSS Grid stacking. */
+/** Renders as pure HTML, not inside SVG foreignObject: avoids Safari WebKit #23113 mispositioning. */
 export function RingCenter({
 	defaultLabel = "Total",
 	formatOptions = defaultChartStatFlowFormat,
@@ -53,7 +48,6 @@ export function RingCenter({
 	const displayValue = hoveredData ? hoveredData.value : totalValue;
 	const displayLabel = hoveredData ? hoveredData.label : defaultLabel;
 
-	// Padding so text doesn't touch the inner ring
 	const centerSize = baseInnerRadius * 2 - 16;
 
 	if (children && hoveredData) {

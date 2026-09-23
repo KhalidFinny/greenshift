@@ -17,18 +17,13 @@ import {
 	LOADING_LABEL_EXIT_S,
 } from "./line-loading-timing";
 
-/** Sweep loading visuals: a soft diagonal shimmer band loops across a self-contained
- * skeleton silhouette painted via an SVG mask; `loadingStyle="sweep"` uses it. */
-
 // biome-ignore lint/suspicious/noExplicitAny: d3 curve factory type
 type CurveFactory = any;
 
-/** One shimmer sweep, in seconds. */
 const DEFAULT_SWEEP_DURATION_S = 2;
 /** Sweep travel in objectBoundingBox space: off the left edge to off the right. */
 const SWEEP_START_X = -1;
 const SWEEP_END_X = 2;
-/** Diagonal tilt of the shimmer band, in degrees. */
 const SWEEP_ANGLE_DEG = 25;
 const HEIGHT_MIN_PCT = 20;
 const HEIGHT_MAX_PCT = 80;
@@ -40,19 +35,15 @@ const DEFAULT_BAR_FILL_OPACITY = 0.45;
 const LINE_STROKE_OPACITY = 0.55;
 const AREA_FILL_TOP_OPACITY = 0.18;
 const AREA_FILL_BOTTOM_OPACITY = 0.02;
-/** Bar width as a fraction of its band (the rest is the inter-bar gap). */
 const DEFAULT_BAR_FRACTION = 0.7;
 
-// Heights come from a deterministic hash of (index, seed), never `Math.random()`,
-// so server and client first renders agree (no hydration mismatch).
+// Heights come from a deterministic hash of (index, seed), never `Math.random()`, so server and client first renders agree.
 
-/** Cheap deterministic hash to a fractional part in [0, 1). */
 function hashFract(n: number): number {
 	const x = Math.sin(n) * 43_758.5453;
 	return x - Math.floor(x);
 }
 
-/** Deterministic heights (percentages of the available height) for a seed. */
 export function getSkeletonHeights(
 	count: number,
 	seed = 0,
@@ -66,14 +57,12 @@ export function getSkeletonHeights(
 	);
 }
 
-/** Deterministic up/down (±1) per bar for the "center" baseline. */
 function getSkeletonSigns(count: number, seed = 0): number[] {
 	return Array.from({ length: count }, (_, i) =>
 		hashFract((i + 1) * 78.233 + seed) < 0.5 ? -1 : 1,
 	);
 }
 
-/** Bell-curve opacity stops (sin squared) for the shimmer band's soft edges. */
 function generateEasedGradientStops(
 	steps = 17,
 	minOpacity = 0.05,
@@ -109,8 +98,7 @@ function LoadingSweepMask({
 	const handleUpdate = useCallback(
 		(latest: { x?: number }) => {
 			const xValue = typeof latest.x === "number" ? latest.x : SWEEP_START_X;
-			// Re-roll once the band has cleared the visible area (crossed past 1),
-			// so the silhouette never changes shape under the user's eye.
+			// Re-roll once the band has cleared the visible area, so the silhouette never changes shape under the user's eye.
 			if (xValue >= 1 && lastXRef.current < 1) {
 				onSweepComplete();
 			}
@@ -165,15 +153,9 @@ function LoadingSweepMask({
 }
 
 export interface LineLoadingSweepProps {
-	/** Curve factory from the host `<Line>` / `<Area>`, so the silhouette matches
-	 * the chart's interpolation (step, smooth, linear, …). */
 	curve: CurveFactory;
-	/** Fill the silhouette as an area (for `<Area>`); otherwise stroke only. */
 	withArea?: boolean;
-	/** Loading phase: `"loop"`, `"exit"` (loading → ready) or `"enter"` (ready → loading);
-	 * exit/enter fade the silhouette then signal the chart to continue its reveal. */
 	mode?: "loop" | "exit" | "enter";
-	/** Fired when an exit/enter transition finishes, to advance the chart phase. */
 	onTransitionComplete?: () => void;
 	stroke?: string;
 	strokeOpacity?: number;
@@ -182,8 +164,6 @@ export interface LineLoadingSweepProps {
 	durationSeconds?: number;
 }
 
-/** Placeholder line/area silhouette with the shimmer sweeping across it, re-randomizing
- * between passes. Reads inner dimensions from chart context. */
 export function LineLoadingSweep({
 	curve,
 	withArea = false,
@@ -202,8 +182,7 @@ export function LineLoadingSweep({
 	const isLoop = mode === "loop";
 
 	const [tick, setTick] = useState(0);
-	// Re-randomize only while looping; hold the silhouette steady through a
-	// transition so it fades out (or in) as one piece.
+	// Hold the silhouette steady through a transition so it fades as one piece.
 	const onSweepComplete = useCallback(() => {
 		if (isLoop) {
 			setTick((prev) => prev + 1);
@@ -214,8 +193,7 @@ export function LineLoadingSweep({
 		[pointCount, tick],
 	);
 
-	// With reduced motion there is no fade to await, so signal the handoff
-	// immediately or the phase machine would stall mid-transition.
+	// With reduced motion there is no fade to await: signal the handoff immediately or the phase machine stalls.
 	useEffect(() => {
 		if (reduceMotion && !isLoop) {
 			onTransitionComplete?.();
@@ -308,8 +286,6 @@ export function LineLoadingSweep({
 		);
 	}
 
-	// Transition: fade the swept silhouette out (exit) or in (enter), then hand
-	// off to the chart so it can reveal the real series.
 	return (
 		<>
 			{defs}
@@ -384,22 +360,14 @@ function SkeletonBars({
 export interface BarLoadingSkeletonProps {
 	innerWidth: number;
 	innerHeight: number;
-	/** Number of skeleton bars. Default: 12 */
 	barCount?: number;
-	/** Bar fill color. Default: `var(--foreground)` */
 	fill?: string;
-	/** Bar fill opacity. Default: 0.45 */
 	fillOpacity?: number;
-	/** Bars rise from the bottom or diverge from the vertical center. Default: `"bottom"` */
 	baseline?: "bottom" | "center";
-	/** Bar width as a fraction of its band (0–1). Default: 0.7 */
 	barFraction?: number;
-	/** One shimmer sweep, in seconds. Default: 2 */
 	durationSeconds?: number;
 }
 
-/** Skeleton bars masked by the shimmer sweep, re-randomizing between passes. Rendered
- * in the chart's inner coordinate space, so a `BarChart` drops it inside its group. */
 export function BarLoadingSkeleton({
 	innerWidth,
 	innerHeight,

@@ -31,7 +31,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 
-/** When the company record was last written, from the API's own stamp. */
 function savedLabel(updatedAt: string | null): string | null {
 	if (!updatedAt) return null;
 	return new Date(updatedAt).toLocaleDateString("en-GB", {
@@ -41,8 +40,7 @@ function savedLabel(updatedAt: string | null): string | null {
 	});
 }
 
-/** The company record behind every project the account submits. The sign-in email
- * is the account's identity and is not editable here; the picture is, above it. */
+/** The sign-in email is the account's identity and is not editable here; the picture is. */
 export function CompanySettingsPage() {
 	const { user } = useAuth();
 

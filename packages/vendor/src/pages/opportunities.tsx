@@ -24,7 +24,6 @@ type ProcurementFilter =
 	| "CLOSED_BIDDING"
 	| "DIRECT_SELECTION";
 
-/** Card frames rendered while the tender list is still in flight. */
 const LOADING_SLOTS = Array.from({ length: 6 }, () => null);
 
 export function VendorOpportunitiesPage() {
@@ -65,7 +64,6 @@ export function VendorOpportunitiesPage() {
 	);
 	const saved = availableProjects.filter((p) => p.isSaved);
 
-	// Each tab is its own list, so each pages the rows it renders.
 	const availablePage = usePagedRows(availableProjects);
 	const recommendedPage = usePagedRows(recommended);
 	const savedPage = usePagedRows(saved);

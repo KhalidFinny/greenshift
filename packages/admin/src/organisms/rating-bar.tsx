@@ -1,7 +1,6 @@
 import { cn } from "@greenshift/ui";
 
-// Rating on a fixed 0–5 scale so the proportion is visible: 4.6 reads as 92%.
-// Color tier: >=4.5 strong, >=4.0 middling, below destructive.
+// Rating on a fixed 0–5 scale: >=4.5 strong, >=4.0 middling, below destructive.
 export function RatingBar({
 	rating,
 	className,

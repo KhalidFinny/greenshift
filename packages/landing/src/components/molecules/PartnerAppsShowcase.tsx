@@ -1,7 +1,6 @@
 import { PARTNER_APPS } from "@greenshift/core";
 
-/** The partner apps a bond is issued and held in: the money is handled outside
- * GreenShift, and the logos are the ones the partners publish on their store listings. */
+/** The money is handled outside GreenShift; the logos are the ones the partners publish. */
 export default function PartnerAppsShowcase() {
 	return (
 		<figure className="m-0">

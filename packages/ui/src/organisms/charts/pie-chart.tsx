@@ -30,30 +30,19 @@ export const DEFAULT_HOVER_OFFSET = 10;
 
 export interface PieChartProps {
 	data: PieData[];
-	/** Chart size in pixels. If not provided, uses parent container size */
 	size?: number;
-	/** Inner radius for donut charts. Default: 0 (solid pie) */
 	innerRadius?: number;
-	/** Padding angle between slices in radians. Default: 0 */
 	padAngle?: number;
-	/** Corner radius for rounded slice edges. Default: 0 */
 	cornerRadius?: number;
-	/** Start angle in radians. Default: -PI/2 (top) */
 	startAngle?: number;
-	/** End angle in radians. Default: 3*PI/2 (full circle from top) */
 	endAngle?: number;
 	className?: string;
 	hoveredIndex?: number | null;
 	onHoverChange?: (index: number | null) => void;
-	/** Hover offset in px for slice hover effects; also sets the padding that stops slices clipping.
-	 * Default: 10 */
 	hoverOffset?: number;
 	children: ReactNode;
 	enterTransition?: Transition;
-	/** Scales slice stagger delays (1 = default). */
 	enterStaggerScale?: number;
-	/** High-frequency geometry updates (studio NumberField scrub): plain SVG paths instead of Motion
-	 * `d` / spring hover morphing. */
 	geometryScrubbing?: boolean;
 }
 

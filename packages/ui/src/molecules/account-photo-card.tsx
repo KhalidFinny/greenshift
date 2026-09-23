@@ -7,8 +7,6 @@ import { AccountAvatar } from "./account-avatar";
 
 const ACCEPT = avatarLimits.mimeTypes.join(",");
 
-/** The account picture, editable. Files are checked against the API's own limits
- * before anything is sent; the router is invalidated so the shell avatar updates. */
 export function AccountPhotoCard({ user }: { user: AuthUser }) {
 	const router = useRouter();
 	const inputRef = useRef<HTMLInputElement>(null);

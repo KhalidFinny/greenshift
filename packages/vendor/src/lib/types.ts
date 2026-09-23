@@ -12,25 +12,21 @@ export interface CompanyVerificationDetails {
 	certifications: string[];
 	nib?: string;
 	npwp?: string;
-	/** Company registration number, filed with the NPWP. */
 	tdp?: string;
-	/** The ESCO or ISO certificate on file, and what the scan read off it. */
 	certificateName?: string;
 	certificateUrl?: string;
 	certificateScan?: CompanyDocumentScan | null;
-	/** Why an administrator turned the profile down. */
 	rejectionReason?: string;
 	verifiedAt?: string;
 }
 
-/** Matching model output for one project. Scores are 0-100 and `projectRisk` is inverted, so higher is always better; the criterion wording lives in `lib/matchmaking.ts`. */
+/** Scores are 0-100 and `projectRisk` is inverted, so higher is always better. */
 export interface MatchmakingBreakdown {
 	technicalFit: number;
 	relevantExperience: number;
 	historicalPerformance: number;
 	priceAndValue: number;
 	projectRisk: number;
-	/** Weighted total across the five criteria. */
 	overallMatch: number;
 	/** Position among the vendors scored for this project, 1 = best. */
 	rank: number;
@@ -61,14 +57,13 @@ export type ProposalStatus =
 	| "CLOSED";
 
 export interface CostBreakdown {
-	/** The submitted amount. This is the only cost figure the API guarantees. */
+	/** The only cost figure the API guarantees. */
 	totalPrice: number;
-	/** Reported separately by the vendor; null when the API has no value. */
 	operationalCost: number | null;
 }
 
 export interface ExpectedImpact {
-	/** Null when the API has no value. Never defaulted to a plausible figure. */
+	/** Null when the API has no value, never a plausible default. */
 	projectedRoiPercent: number | null;
 }
 
@@ -77,19 +72,18 @@ export interface StructuredProposal {
 	tenderId: string;
 	projectId: string;
 	projectTitle: string;
-	/** The client company, from the proposal detail. Empty when the API has none. */
+	/** Empty in the list shape; only the detail endpoint carries it. */
 	companyName: string;
 	procurementMethod: ProcurementMethod;
 	status: ProposalStatus;
-	/** Detail-endpoint fields. Null until the detail is fetched, or when absent. */
+	/** Detail-only: null until the detail is fetched. */
 	technicalSpec: string | null;
 	projectedRoi: number | null;
 	warrantyPeriod: number | null;
 	costBreakdown: CostBreakdown;
 	expectedImpact: ExpectedImpact;
-	/** The filed proposal PDF, as the vendor named it. Null when none is filed. */
+	/** Null when no PDF is filed. */
 	documentName: string | null;
-	/** Where the filed document is served from, or null when none is filed. */
 	documentUrl: string | null;
 	submittedAt?: string;
 	revisionCount: number;
@@ -116,7 +110,7 @@ export interface NegotiationRequest {
 	requestedTimelineMonths?: number;
 	requestedFields: string[]; // e.g. ["Price", "Warranty"]
 	companyNote: string;
-	/** Where the company marked the proposal, in the proposal page's fractions. */
+	/** Coordinates in the proposal page's fractions. */
 	annotations: ProposalAnnotation[];
 	vendorResponseNote?: string;
 	vendorRevisedPrice?: number;
@@ -167,8 +161,7 @@ export interface MonthlyEnergyReport {
 	submittedAt: string;
 }
 
-/** One predictive-analytics period: expected consumption and savings with the accuracy metrics it was scored on.
- * Periods run forward from the last reported month, so they are directly comparable with the actuals above. */
+/** Periods run forward from the last reported month, so they compare with the actuals above. */
 export interface EnergyForecast {
 	id: string;
 	period: string; // e.g. "2026-10"
@@ -196,7 +189,7 @@ export interface ActiveVendorProject {
 	status: "IN_PROGRESS" | "COMMISSIONING" | "COMPLETED";
 	milestones: ProjectMilestone[];
 	monthlyReports: MonthlyEnergyReport[];
-	/** Predictive periods, newest first. Empty when the model has not run. */
+	/** Newest first. Empty when the model has not run. */
 	forecasts: EnergyForecast[];
 	expectedEnergySavingsPercent: number;
 	actualEnergySavingsPercent?: number;
@@ -204,13 +197,12 @@ export interface ActiveVendorProject {
 	actualCarbonReductionTons?: number;
 }
 
-/** Where the delivery of an awarded project stands, read from its milestone schedule. */
+/** Derived from the milestone schedule, not stored. */
 export type PortfolioProjectStatus =
 	| "IN_PROGRESS"
 	| "COMMISSIONING"
 	| "COMPLETED";
 
-/** Display copy for the delivery states, which are defined here, so both the card and the detail page read one vocabulary. */
 export const PORTFOLIO_STATUS_LABEL: Record<PortfolioProjectStatus, string> = {
 	IN_PROGRESS: "In progress",
 	COMMISSIONING: "Commissioning",
@@ -225,7 +217,6 @@ export interface VendorPortfolioItem {
 	location: string;
 	description: string;
 	projectValue: number;
-	/** Null when the record has no figure. Never defaulted to a plausible one. */
 	durationMonths: number | null;
 	servicesProvided: string;
 	/** Two quantities share this record type: an awarded project reports kWh/yr saved, a vendor-authored one a percentage the vendor entered. */
@@ -234,27 +225,22 @@ export interface VendorPortfolioItem {
 	carbonReductionTons: number | null;
 	completionYear: number | null;
 	documentName?: string;
-	/** Where the filed document is served from, or null when none is filed. */
 	documentUrl: string | null;
 	/* Delivery fields below are carried by an awarded project only: a record the vendor authored by hand has no schedule behind it. */
 	status?: PortfolioProjectStatus;
-	/** When the winning bid was filed. */
 	bidSubmittedAt?: string | null;
-	/** Start date of the first milestone in the schedule. */
 	workStartedAt?: string | null;
-	/** Due date of the last milestone in the schedule. */
 	targetCompletionAt?: string | null;
-	/** The last milestone's due date, set only once every milestone is approved or completed. */
+	/** Set only once every milestone is signed off; the last milestone's due date. */
 	completedAt?: string | null;
 	milestonesApproved?: number;
 	milestonesTotal?: number;
-	/** The most recent MRV period reported, e.g. "2026-08". */
 	latestReportPeriod?: string | null;
-	/** kWh summed over every reported period; null when nothing is reported. */
+	/** Summed over every reported period; null when none is reported. */
 	reportedEnergySavedKwh?: number | null;
-	/** tCO₂e summed over every reported period; null when nothing is reported. */
+	/** Summed over every reported period; null when none is reported. */
 	reportedCarbonAbatedTons?: number | null;
-	/** Reported MRV periods, oldest first, as the detail chart reads them. Empty when none is reported. */
+	/** Oldest first, as the detail chart reads them. */
 	monthlyReports?: MonthlyEnergyReport[];
 }
 
@@ -288,26 +274,23 @@ export interface VendorProjectCardData {
 	location: string;
 	estimatedValue: number;
 	clientBudget: number;
-	/** Tonnes of CO2e the project targets; null when the company has not set one. */
+	/** Null when the company has not set one. */
 	carbonReductionTargetTons: number | null;
 	procurementMethod: ProcurementMethod;
-	/** The tender a bid is filed against. Null when the project has no tender. */
 	tenderId: number | null;
 	tenderDeadlineAt: string;
-	/** Null until the matching model has scored this project for the vendor. */
+	/** Null until the matching model has scored this project. */
 	matchmaking: MatchmakingBreakdown | null;
 	priority?: Priority;
 	isSaved?: boolean;
 	/** For DIRECT_SELECTION: only the invited vendor can see this project */
 	invitedVendorId?: string;
 	description: string;
-	/** Assessed risk score; null when the project has not been assessed. */
 	riskScore: number | null;
 	technicalRequirements: string[];
 	deliverables: string[];
 }
 
-/** One of the three scenarios the blueprint's financial projections carry. */
 export interface BlueprintScenario {
 	key: "conservative" | "base" | "optimistic";
 	label: string;
@@ -320,7 +303,6 @@ export interface BlueprintScenario {
 	paybackYears: number | null;
 }
 
-/** How the project is funded: the bond the blueprint hands to the partner. */
 export interface BlueprintFunding {
 	instrument: string;
 	capexRp: number;
@@ -330,7 +312,6 @@ export interface BlueprintFunding {
 	collateral: string | null;
 }
 
-/** What the project promises to cut, against the measured baseline. */
 export interface BlueprintEmissions {
 	baselineTco2: number;
 	targetPct: number;
@@ -338,7 +319,7 @@ export interface BlueprintEmissions {
 	energySavingKwh: number;
 }
 
-/** The Green Project Blueprint a bidder reads while the tender is open: the projections LVV GRK cleared, the funding structure behind them, and the emission targets the project was verified on. */
+/** The blueprint a bidder reads while the tender is open. */
 export interface VendorBlueprint {
 	status: string;
 	validatedAt: string | null;

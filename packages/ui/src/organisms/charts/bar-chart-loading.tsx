@@ -7,13 +7,10 @@ const EMPTY_DATA: Record<string, unknown>[] = [];
 
 export interface BarChartLoadingProps {
 	margin?: Partial<Margin>;
-	/** Aspect ratio as "width / height". Default: "2 / 1" */
 	aspectRatio?: string;
 	className?: string;
 }
 
-/** Turnkey loading skeleton for bar charts, a thin shortcut for
- * `<BarChart status="loading" />`; swap in a real `<BarChart>` once data resolves. */
 export function BarChartLoading({
 	margin,
 	aspectRatio = "2 / 1",

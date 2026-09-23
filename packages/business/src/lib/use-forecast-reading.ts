@@ -1,5 +1,4 @@
-/* Eleanor's reading of the ROI forecast, asked for separately so the arithmetic scenarios land at
- * once instead of waiting on the prose; keyed by the figures, so an edit asks a new question. */
+/* Eleanor's reading of the ROI forecast, asked separately so the arithmetic scenarios land at once; keyed by the figures. */
 
 import { api } from "@greenshift/core";
 import { useQuery } from "@tanstack/react-query";
@@ -7,8 +6,7 @@ import type { ProjectFunding } from "./project-funding";
 import type { RiskInsightState } from "./use-risk-insight";
 
 export function useForecastReading(funding: ProjectFunding): RiskInsightState {
-	// The engine's own rule for a computable forecast: a capital, a tenor and a
-	// saving. Below that there is nothing to read, and the panel says so itself.
+	// The engine's own rule for a computable forecast: a capital, a tenor and a saving.
 	const computable =
 		funding.capexRp !== null &&
 		funding.capexRp > 0 &&
@@ -31,8 +29,7 @@ export function useForecastReading(funding: ProjectFunding): RiskInsightState {
 			return reading;
 		},
 		enabled: computable,
-		// The summary does not edit these figures, so one reading per set of
-		// figures is all this asks for.
+		// The summary does not edit these figures, so one reading per set of figures is enough.
 		staleTime: Number.POSITIVE_INFINITY,
 		retry: false,
 	});

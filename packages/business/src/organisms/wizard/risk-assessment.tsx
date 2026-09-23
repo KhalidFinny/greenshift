@@ -1,5 +1,4 @@
-/* How an assessment is presented: the tone chips, the two readings the figures support,
- * Eleanor's note, and the bodies the detail view can take. Shared by both surfaces. */
+/* How an assessment is presented: the chips, the readings, the note and the bodies. */
 
 import { faCircleCheck } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -13,16 +12,14 @@ import type {
 } from "../../lib/project-risk";
 import type { RiskInsightState } from "../../lib/use-risk-insight";
 
-/* Status colour is semantic, never decorative (DESIGN.md): emerald positive,
- * amber attention, red negative. Each chip carries its word as well. */
+/* Status colour is semantic, never decorative (DESIGN.md): each chip carries its word as well. */
 export const TONE_CHIP: Record<string, string> = {
 	Low: "bg-emerald-100 text-emerald-700 border-emerald-200",
 	Medium: "bg-amber-100 text-amber-700 border-amber-200",
 	High: "bg-red-100 text-red-700 border-red-200",
 };
 
-/* The dial carries the level by colour alone, so it repeats the chip's hue and
- * the chip's word sits beside it. */
+/* The dial carries the level by colour alone, so the chip's word sits beside it. */
 export const LEVEL_ARC: Record<ProjectRiskLevel, string> = {
 	Low: "var(--color-emerald-600)",
 	Medium: "var(--color-amber-600)",
@@ -37,7 +34,6 @@ export function ToneChip({ tone }: { tone: ProjectRiskTone }) {
 	);
 }
 
-/** The risk dial: the level's arc, with the score in the middle. */
 export function RiskDial({
 	score,
 	level,
@@ -76,7 +72,6 @@ export function RiskDial({
 	);
 }
 
-/** One area as a row: its reading beside its share of the scale. */
 export function AreaRow({ row }: { row: ProjectRiskBreakdown }) {
 	return (
 		<div className="space-y-1.5">
@@ -106,14 +101,12 @@ export function AreaRow({ row }: { row: ProjectRiskBreakdown }) {
 	);
 }
 
-/** "A", "A and B", "A, B and C": a list the way a reader expects to see one. */
 function listLabels(labels: string[]): string {
 	if (labels.length <= 1) return labels[0] ?? "";
 	return `${labels.slice(0, -1).join(", ")} and ${labels[labels.length - 1]}`;
 }
 
-/** What the four area readings add up to: an unscored area is named as unscored rather
- * than counted as low risk. */
+/** An unscored area is named as unscored, never counted as low risk. */
 export function areaReading(ranked: ProjectRiskBreakdown[]): string {
 	const scored = ranked.filter((row) => row.tone !== null);
 	const unscored = ranked.filter((row) => row.tone === null);
@@ -146,7 +139,6 @@ export function areaReading(ranked: ProjectRiskBreakdown[]): string {
 	return sentences.join(" ");
 }
 
-/** What the tone of each reading means for the submission, not a repeat of the labels. */
 export function meaningReading(risk: ProjectRiskResult): string {
 	const high = risk.breakdown
 		.filter((row) => row.tone === "High")
@@ -177,8 +169,6 @@ export function meaningReading(risk: ProjectRiskResult): string {
 	return sentences.join(" ");
 }
 
-/** Eleanor's half of a risk view: her reading of the assessment, then the work that moves
- * it. Both halves are capped by the caller, since a summary wants only the opening. */
 export function EleanorNote({
 	state,
 	tips,
@@ -187,7 +177,7 @@ export function EleanorNote({
 	className,
 }: {
 	state: RiskInsightState;
-	/** The model's own mitigations. Eleanor's prose is never the only advice. */
+	/** The model's own mitigations: the prose is never the only advice. */
 	tips: string[];
 	maxParagraphs?: number;
 	maxTips?: number;
@@ -260,7 +250,6 @@ export function EleanorNote({
 	);
 }
 
-/** Who wrote the reading, in the analyst's own terms. */
 function sourceLabel(insight: BusinessRiskInsight | null): string {
 	if (insight === null) return "";
 	return insight.source === "ai"
@@ -268,7 +257,6 @@ function sourceLabel(insight: BusinessRiskInsight | null): string {
 		: "Composed from the assessment";
 }
 
-/** The assessment as a report: the figures and their readings, with Eleanor's note closing it. */
 function ReportBody({
 	risk,
 	state,
@@ -324,8 +312,7 @@ function ReportBody({
 	);
 }
 
-/** The assessment as the detail view draws it. `insight` is only passed when the caller
- * already holds a reading: an assessment the API returned carries its own. */
+/** Only passed when the caller holds a reading; an API-returned risk carries its own. */
 export function RiskAssessmentBody({
 	risk,
 	insight,

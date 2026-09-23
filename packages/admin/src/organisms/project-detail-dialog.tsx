@@ -41,7 +41,6 @@ import { useStepUpAction } from "../lib/use-step-up-action";
 import { StepUpDialog } from "./step-up-dialog";
 import { TableSkeleton } from "./table-skeleton";
 
-/** Column labels for the audit-trail loading frame, in table order. */
 const AUDIT_HEADERS = ["Time", "Action", "User"];
 
 const idr = new Intl.NumberFormat("en-US", {
@@ -225,7 +224,6 @@ export function ProjectDetailDialog({
 					</div>
 				</DialogHeader>
 
-				{/* The project is already in hand, so its facts and lifecycle render real; only the blueprint and audit-trail sections shimmer. */}
 				<div className="flex-1 divide-y divide-border overflow-y-auto px-6">
 					{actionError && (
 						<p className="py-5 text-base text-destructive">{actionError}</p>

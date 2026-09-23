@@ -9,18 +9,12 @@ export interface TooltipDotProps {
 	y: number;
 	visible: boolean;
 	color: string;
-	/** Half of width/height for dots; half-extent for ring squares. Default: 5 */
 	size?: number;
 	strokeColor?: string;
 	strokeWidth?: number;
-	/** Dot fill or transparent ring around the hovered mark. Default: "dot" */
 	variant?: "dot" | "ring";
-	/** Ring corner radius as a fraction of side length (0 = square, 0.5 = circle); same semantics as
-	 * bar square radius. */
 	cornerRadiusFraction?: number;
-	/** Per-chart override; falls back to `ChartConfigProvider.tooltipSpring`. */
 	springConfig?: SpringConfig;
-	/** Animate position with a spring. Default: true */
 	animate?: boolean;
 }
 

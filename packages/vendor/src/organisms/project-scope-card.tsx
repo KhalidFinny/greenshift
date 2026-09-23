@@ -9,7 +9,6 @@ import type { VendorProjectCardData } from "../lib/types";
 
 interface ProjectScopeCardProps {
 	project?: VendorProjectCardData;
-	/** Tender still in flight: same card, shimmering copy. */
 	loading?: boolean;
 }
 

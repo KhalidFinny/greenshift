@@ -2,42 +2,35 @@ import { formatId } from "./number-format";
 
 /** Status pill colours, keyed by the pill label the API returns. */
 export const STATUS_PILL: Record<string, string> = {
-	// The verification step's two labels (the registry registration that opens it and
-	// the LVV verification itself) both carry the stage's amber.
+	// The verification step's two labels both carry the stage's amber.
 	"Register for LVV": "bg-amber-50 text-amber-700",
 	"Awaiting LVV verification": "bg-amber-50 text-amber-700",
 	Matchmaking: "bg-blue-50 text-blue-700",
 	Verified: "bg-emerald-50 text-emerald-700",
 };
 
-/** "12 Sep 2026" from an ISO timestamp, or an honest blank. */
 export function formatSubmittedAt(iso: string | null): string {
 	if (!iso) return "Not submitted";
 	return new Date(iso).toLocaleDateString("en-GB", { dateStyle: "medium" });
 }
 
-/** Rupiah, or an honest blank. */
 export function formatRupiah(value: number | null): string {
 	return value === null ? "Not filled in" : `Rp ${formatId(value)}`;
 }
 
-/** Years to a figure's own precision, or an honest blank. */
 export function formatYears(value: number | null): string {
 	return value === null ? "Not filled in" : `${formatId(value, 1)} years`;
 }
 
-/** A whole per cent, or an honest blank. */
 export function formatPercent(value: number | null): string {
 	return value === null ? "Not filled in" : `${formatId(Math.round(value))}%`;
 }
 
-/** Tonnes of CO2e for a year, to one decimal. */
 export function formatTonnes(value: number): string {
 	return `${formatId(value, 1)} tCO₂`;
 }
 
-/** Chart-axis rupiah ("Rp 4,2 M" rather than ten digits); the sign is kept because the projection
- * lines run below zero before the capital is recovered. */
+/** Chart-axis rupiah ("Rp 4,2 M"); the sign is kept because the projection lines run below zero. */
 export function formatCompactRupiah(value: number): string {
 	const sign = value < 0 ? "-" : "";
 	const abs = Math.abs(value);
@@ -53,14 +46,12 @@ export function formatCompactRupiah(value: number): string {
 	return `${sign}Rp ${formatId(abs)}`;
 }
 
-/** The fields the folded phone line reads. */
 export interface FoldableRow {
 	submittedAt: string | null;
 	capexRp: number | null;
 }
 
-/** Submitted and CAPEX as one line; below `md` their columns are hidden, so this line carries the
- * labels their headers can no longer show. */
+/** Submitted and CAPEX as one line; below md their columns are hidden, so this carries the labels their headers no longer show. */
 export function foldedDetail(row: FoldableRow): string {
 	return [
 		row.submittedAt

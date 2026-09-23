@@ -23,16 +23,13 @@ import {
 import { cn } from "#/lib/utils";
 import { Button } from "../atoms/button";
 
-/** Toasts persist in sessionStorage: login/register/logout navigate with
- * window.location.assign, which would otherwise wipe an in-memory toast. */
+/** Toasts persist in sessionStorage: login/register/logout navigate with window.location.assign, which would wipe an in-memory toast. */
 const STORAGE_KEY = TOAST_STORAGE_KEY;
 
 interface ToastItem extends ToastMessage {
 	id: number;
 	tone: ToastTone;
-	/** Epoch ms when the toast should dismiss itself. */
 	expiresAt: number;
-	/** Restored after a page load: skips the slide-in so it reads as continuous. */
 	animateIn?: boolean;
 }
 
@@ -148,11 +145,8 @@ function ToastCard({
 	);
 }
 
-/** Global toast surface: mount once at the app root. It subscribes to the core
- * toast bus (every API mutation outcome) and persists toasts to sessionStorage. */
 export function ToastProvider({ children }: { children: ReactNode }) {
-	// Server and first client render must match: start empty and rehydrate in an
-	// effect, or a stored toast the server never sent trips hydration.
+	// Start empty and rehydrate in an effect, or a stored toast the server never sent trips hydration.
 	const [items, setItems] = useState<ToastItem[]>([]);
 	const itemsRef = useRef<ToastItem[]>([]);
 	itemsRef.current = items;
@@ -172,7 +166,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 	}, []);
 
 	useEffect(() => {
-		// Rehydrate after mount: keep unexpired toasts and schedule their remaining lifetime.
 		const stored = readStored();
 		const valid = stored.filter((item) => item.expiresAt > Date.now());
 		itemsRef.current = valid;
@@ -216,8 +209,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 			{children}
 			<div
 				aria-live="polite"
-				// The shell header owns the top-right 56-80px strip (bell, profile),
-				// so the stack sits below it rather than hiding and blocking them.
+				// The shell header owns the top-right strip (bell, profile), so the stack sits below it.
 				className="pointer-events-none fixed top-20 right-0 z-[100] flex flex-col items-end gap-2 px-4"
 			>
 				{items.map((item) => (
@@ -232,7 +224,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 	);
 }
 
-/** Imperative toast for component-level events (CSV export, etc.). */
 export function useToast() {
 	return { toast: publishToast };
 }

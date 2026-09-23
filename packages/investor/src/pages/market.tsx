@@ -18,7 +18,6 @@ type BondTab = "verified" | "on_progress";
 
 interface ListingGridProps {
 	listings: BondListing[];
-	/** Data still in flight: the same two-column grid, shimmering cards. */
 	loading: boolean;
 	tab: BondTab;
 	onSwitchTab: (tab: BondTab) => void;
@@ -30,7 +29,6 @@ function ListingGrid({
 	tab,
 	onSwitchTab,
 }: ListingGridProps) {
-	// The tab already narrowed the source, so the hook pages the filtered rows.
 	const {
 		pageRows,
 		pageIndex,
@@ -116,7 +114,6 @@ export function BondsPage() {
 
 	return (
 		<main className="pb-20">
-			{/* Sticky command bar: back button stays reachable while the list scrolls. */}
 			<div className="sticky top-0 z-30 border-b border-border/70 bg-background">
 				<div className="page-wrap mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
 					<Link to="/">

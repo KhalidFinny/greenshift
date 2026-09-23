@@ -7,7 +7,6 @@ export default function Footer() {
 	const isHome = useIsHome();
 	const year = new Date().getFullYear();
 
-	// Role pages have no footer; the landing keeps it even when logged in.
 	if (user && !isHome) return null;
 
 	return (

@@ -25,9 +25,7 @@ import type { OpenBidLeaderboardEntry } from "../lib/types";
 interface OpenBidLeaderboardProps {
 	leaderboard: OpenBidLeaderboardEntry[];
 	projectTitle: string;
-	/** Client company, when the surface that renders the board knows it. */
 	projectClient?: string;
-	/** Tender deadline as the leaderboard endpoint reports it. */
 	deadlineAt?: string | null;
 	onRevise: (newPrice: number) => void;
 }

@@ -25,8 +25,7 @@ describe("creditScore", () => {
 		).toEqual({ score: null, rating: null });
 	});
 	test("mid debt-service proxy lands in the BBB+ band", () => {
-		// capex 1B / tenor 10 -> annual debt 100M; saving 60M -> 60 pts;
-		// docs 1/2 -> 50 pts. 60*0.7 + 50*0.3 = 57 -> BBB+.
+		// capex 1B / tenor 10 -> 100M annual debt; saving 60M -> 60 pts, docs 1/2 -> 50 pts; 60*0.7 + 50*0.3 = 57 -> BBB+.
 		const r = creditScore({
 			capex: 1_000_000_000,
 			tenor: 10,
@@ -75,8 +74,7 @@ describe("creditScore", () => {
 });
 
 describe("rating bands", () => {
-	// The panel reads the score as "N more to the next band", so the boundary
-	// between two bands is what decides that sentence.
+	// The panel reads the score as "N more to the next band", so the band boundary decides that sentence.
 	test("a score one point under a band still points at it", () => {
 		expect(nextRatingBand(84)).toEqual({ rating: "AAA", min: 85 });
 		expect(ratingForScore(84)).toBe("AA");

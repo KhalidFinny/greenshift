@@ -4,7 +4,6 @@ export interface SquareColumnLayout {
 	positions: number[];
 	columnHeight: number;
 	squareSize: number;
-	/** Effective gap between squares (may differ when fit mode redistributes) */
 	gap: number;
 }
 
@@ -12,7 +11,6 @@ export interface SquareColumnInput {
 	barLengthPx: number;
 	squareSize: number;
 	gap: number;
-	/** When true, redistribute gap so column height matches barLengthPx exactly */
 	fit?: boolean;
 }
 

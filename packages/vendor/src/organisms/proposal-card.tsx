@@ -49,7 +49,6 @@ export function ProposalCard({ proposal, loading = false }: ProposalCardProps) {
 				</div>
 			</CardHeader>
 
-			{/* Only figures the API actually reports. Nothing estimated. */}
 			<CardContent className="flex flex-wrap items-center gap-x-8 gap-y-2 text-sm">
 				{loading ? (
 					<ShimmerBlock className="h-4 w-64 rounded" />

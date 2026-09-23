@@ -32,9 +32,7 @@ export const defaultPieColors = [
 export interface PieData {
 	label: string;
 	value: number;
-	/** Optional color override - falls back to palette */
 	color?: string;
-	/** Optional fill override for patterns/gradients (e.g., "url(#patternId)") */
 	fill?: string;
 }
 
@@ -78,10 +76,8 @@ export interface PieStableContextValue {
 
 	getFill: (index: number) => string;
 
-	/** Studio geometry scrub: skip Motion path morphing, use plain SVG paths. Default: false */
 	geometryScrubbing: boolean;
 
-	/** Precomputed slice paths during geometry scrub (one per arc). */
 	scrubSlicePaths: readonly string[] | null;
 }
 

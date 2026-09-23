@@ -8,7 +8,6 @@ import { formatDateTime } from "../lib/format";
 import { ExportMenu } from "../molecules/export-menu";
 import { TableSkeleton } from "../organisms/table-skeleton";
 
-/** Column labels for the loading frame, in table order. */
 const LOG_HEADERS = ["Time", "Action", "User", "Entity", "Detail"];
 
 const logColumns: ColumnDef<AuditLogEntry>[] = [

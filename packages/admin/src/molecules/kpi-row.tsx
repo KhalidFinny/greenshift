@@ -18,11 +18,8 @@ interface KpiRowProps {
 	totalProjects: number;
 	projectValue: number;
 	totalBonds: number;
-	/** Tonnes of CO2e measured by the MRV reports on file. */
 	co2Reduction: number;
-	/** Tonnes of CO2e the submitted projects target in total. */
 	co2Target: number;
-	/** Data still in flight: same four cards, shimmering values. */
 	loading?: boolean;
 }
 
@@ -38,7 +35,6 @@ export function KpiRow({
 }: KpiRowProps) {
 	const co2Share =
 		co2Target > 0 ? Math.round((co2Reduction / co2Target) * 100) : 0;
-	// Labels and icons are static, so they stay real text while loading.
 	const cards = [
 		{
 			label: "Total Organizations",

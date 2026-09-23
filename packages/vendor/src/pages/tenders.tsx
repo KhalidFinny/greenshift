@@ -36,7 +36,6 @@ export function VendorTendersPage() {
 		(proposal) => proposal.procurementMethod === "CLOSED_BIDDING",
 	);
 
-	// Each tab is its own list, so each pages the rows it renders.
 	const sealedBidsPage = usePagedRows(sealedBids);
 	const proposalsPage = usePagedRows(proposals);
 	const negotiationsPage = usePagedRows(negotiations);

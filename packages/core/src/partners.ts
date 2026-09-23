@@ -1,20 +1,13 @@
-/** The partner apps a bond is issued and held in: GreenShift settles nothing
- * itself, so the catalog and the landing hand the trade to these apps. */
+/** The partner apps a bond is issued and held in: GreenShift settles nothing itself. */
 
 export interface PartnerApp {
-	/** Stable key, used in deep links and copy payloads. */
 	key: string;
 	name: string;
-	/** Company operating the app: shown as trust context. */
 	publisher: string;
-	/** Why an investor would pick this platform over the other. */
 	note: string;
-	/** Google Play listing. Always reachable, so it is the fallback target. */
 	playUrl: string;
-	/** The app's icon, as the store publishes it. */
 	logoUrl: string;
-	/** Best-effort scheme, unverified against the store listings; a wrong or
-	 * absent app just falls back to Play. Null skips the launch attempt. */
+	/** Best-effort scheme; a wrong or absent app falls back to Play, null skips the attempt. */
 	deepLinkScheme: string | null;
 }
 

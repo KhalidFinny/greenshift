@@ -2,9 +2,6 @@ import { Button, ShimmerBlock } from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
-/** The shared shape of every vendor detail page: a back control, one brand band with the record's identity and headline figures, then a reading column with a sticky action rail. */
-
-/** Destinations a detail page can return to. Typed so a typo cannot ship. */
 type DetailBackTarget =
 	| "/vendor/opportunities"
 	| "/vendor/deals"
@@ -18,11 +15,8 @@ interface DetailStat {
 }
 
 interface DetailHeroProps {
-	/** Status chips that qualify the record. Shimmered while loading. */
 	badges?: ReactNode;
-	/** The record's name. Shimmered while loading. */
 	title?: string;
-	/** Client, location, and other identity facts shown inline after the title. */
 	meta?: ReactNode;
 	/** Labels are static per page, so they render even while values shimmer. */
 	stats: DetailStat[];
@@ -94,7 +88,6 @@ interface DetailShellProps {
 	backLabel: string;
 	hero: ReactNode;
 	children: ReactNode;
-	/** Sticky action rail. Omit for a record with nothing to act on. */
 	aside?: ReactNode;
 }
 

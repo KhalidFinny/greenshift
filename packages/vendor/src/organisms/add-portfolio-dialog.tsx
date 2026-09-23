@@ -55,7 +55,7 @@ export function AddPortfolioDialog({ onAdd }: AddPortfolioDialogProps) {
 			location,
 			description,
 			projectValue: Number(projectValue) || 0,
-			// Every figure is left empty when the vendor did not enter one; a plausible number would be our estimate in their record.
+			// Left empty when the vendor entered nothing; a plausible number would be our estimate.
 			durationMonths: durationMonths ? Number(durationMonths) : null,
 			servicesProvided: "",
 			energySavingKwh: null,
@@ -66,7 +66,6 @@ export function AddPortfolioDialog({ onAdd }: AddPortfolioDialogProps) {
 				? Number(carbonReductionTons)
 				: null,
 			completionYear: completionYear ? Number(completionYear) : null,
-			// The record's id and its document both come from the server.
 			documentUrl: null,
 		};
 

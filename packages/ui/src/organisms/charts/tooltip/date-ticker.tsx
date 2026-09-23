@@ -41,7 +41,6 @@ const DateTickerInner = memo(function DateTickerInner({
 		});
 	}, [labels]);
 
-	// Month segments: one entry per consecutive run (Jan → Feb → …), keyed by start index
 	const monthSegments = useMemo(() => {
 		const segments: { month: string; key: string; startIndex: number }[] = [];
 

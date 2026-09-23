@@ -1,5 +1,4 @@
-/* Step 1: the project profile, its current energy situation, targets, overview and the
- * document trio, with the donut and risk preview in the rail. The shell owns the draft. */
+/* Step 1, with the donut and risk preview in the rail; the shell owns the draft. */
 
 import {
 	faCloudArrowUp,
@@ -31,8 +30,7 @@ import type { ProjectRiskTone, Step1RiskTones } from "../../lib/project-risk";
 import type { WizardForm } from "../../lib/use-project-wizard-form";
 import { step1Validator } from "../../lib/wizard-rules";
 
-/** The Step 1 checklist. Its slots are also what a resumed file is matched against, and
- * its count is the `docsTotal` the risk model reads. */
+/** The ids match a resumed file's slots; the count is the risk model's docsTotal. */
 export const REQUIRED_DOCS = [
 	{
 		id: "tagihan",
@@ -51,7 +49,6 @@ const SEKTOR_OPTIONS = [
 	"Agriculture",
 ];
 
-/* Rolling quarter options (12 = 3 years from Jan of current year). */
 function buildQuarterOptions(now: Date = new Date()): string[] {
 	const out: string[] = [];
 	for (let y = now.getFullYear(); y < now.getFullYear() + 3; y += 1) {
@@ -60,7 +57,6 @@ function buildQuarterOptions(now: Date = new Date()): string[] {
 	return out;
 }
 
-/** The badge tone for a risk row. Null is "not filled in", not a tone. */
 function riskVariant(tone: ProjectRiskTone) {
 	switch (tone) {
 		case "Low":
@@ -76,9 +72,7 @@ function riskVariant(tone: ProjectRiskTone) {
 
 export interface Step1ViewProps {
 	form: WizardForm;
-	/** The three tones the risk model reads, derived by the shell from these fields. */
 	tones: Step1RiskTones;
-	/** Slot to file name, which is also how many of the three are in. */
 	uploaded: Record<string, string>;
 	onUpload: (id: string, file: File | undefined) => void;
 	onRemove: (id: string) => void;
@@ -96,8 +90,7 @@ export function Step1View({
 
 	const docsDone = REQUIRED_DOCS.filter((doc) => uploaded[doc.id]).length;
 
-	/* The donut reflects the target the user typed: with none set it shows nothing
-	   achieved, rather than a stand-in figure that would read as the project's own number. */
+	/* With no target set the donut shows nothing achieved, never a stand-in figure. */
 	const targetNum = parseIdNumber(values.targetPct);
 	const targetValid = targetNum !== null && targetNum >= 0 && targetNum <= 100;
 	const donutPct = targetValid ? targetNum : 0;

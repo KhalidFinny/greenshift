@@ -17,8 +17,7 @@ export function scopeLines(value: string): string[] {
 		.filter((line) => line.length > 0);
 }
 
-/** The bridge from the form's typed strings to `validators.ts` numbers and counts; the shell and
- * the field components both go through here, so one rule set is the only source of messages. */
+/** The bridge from the form's typed strings to validators.ts numbers and counts, so one rule set is the only source of messages. */
 export function step1Values(values: WizardValues): Step1Values {
 	return {
 		namaProyek: values.namaProyek,
@@ -48,14 +47,12 @@ export function step2Values(
 	};
 }
 
-/** One field's message from Step 1's rule set, read against live form state, so the field reports
- * the same sentence the step gate does. */
+/** One field's message from Step 1's rule set, read against live form state so it matches the step gate. */
 export function step1Validator(form: WizardForm, key: keyof Step1Values) {
 	return () => validateStep1(step1Values(form.state.values))[key];
 }
 
-/** One field's message from Step 2's rule set. The `files` rule belongs to the upload zone, so a
- * text field must not fail over a missing file and the count is treated as satisfied here. */
+/** Step 2's rule set; the files rule belongs to the upload zone, so the count is treated as satisfied here. */
 export function step2Validator(form: WizardForm, key: keyof Step2Values) {
 	return () => validateStep2(step2Values(form.state.values, 1))[key];
 }
@@ -67,7 +64,6 @@ export function step3Values(values: WizardValues): Step3Values {
 	};
 }
 
-/** One field's message from Step 3's rule set. */
 export function step3Validator(form: WizardForm, key: keyof Step3Values) {
 	return () => validateStep3(step3Values(form.state.values))[key];
 }

@@ -1,5 +1,4 @@
-/* The draft's wire format: the autosave blocks, the resume values and the file lists. Kept out of
- * the views so the field names the API expects appear in exactly one file. */
+/** The draft's wire format, kept out of the views so the field names the API expects appear in one file. */
 
 import type {
 	BusinessDraftDocument,
@@ -12,25 +11,19 @@ import type { DraftResume } from "./use-business-draft";
 import { WIZARD_VALUES, type WizardValues } from "./use-project-wizard-form";
 import { scopeLines } from "./wizard-rules";
 
-/** A file the wizard lists: the draft document reduced to what a row shows. */
 export interface WizardFile {
-	/** Draft document id, which is what a removal names. */
 	id: string;
 	name: string;
-	/** Null when the stored row carries no size. */
 	sizeBytes: number | null;
 }
 
-/** One checklist's stored files, keyed by the slot each fills. */
 export interface SlotFiles {
 	names: Record<string, string>;
 	ids: Record<string, string>;
 }
 
 export interface WizardFiles {
-	/** Step 2's files, in the order `step2.fileIds` holds them. */
 	step2: WizardFile[];
-	/** Every file by the slot it fills, for the checklist steps. */
 	bySlot: Map<string, WizardFile>;
 }
 
@@ -44,8 +37,7 @@ function formatField(value: number): string {
 	return formatId(value, Number.isInteger(value) ? 0 : 2);
 }
 
-/** The Step 1 block in the API's wire names; every key of the step is present, and a blank string
- * or unparseable number goes as `null`, which the server's partial merge reads as cleared. */
+/** Every key of the step is present; a blank string or unparseable number goes as null, which the server's partial merge reads as cleared. */
 export function step1Patch(values: WizardValues): BusinessStep1Patch {
 	return {
 		namaProyek: orNull(values.namaProyek),
@@ -76,7 +68,6 @@ export function step2Patch(
 	};
 }
 
-/** The Step 3 block: each textarea becomes the list of the lines it holds. */
 export function step3Patch(values: WizardValues): BusinessStep3Patch {
 	return {
 		requirements: scopeLines(values.requirements),
@@ -84,8 +75,7 @@ export function step3Patch(values: WizardValues): BusinessStep3Patch {
 	};
 }
 
-/** The stored draft in the form's shape; numbers return through `formatField`, so the value shown
- * is the one the user typed. */
+/** The stored draft in the form's shape; numbers return through formatField, so the value shown is the one the user typed. */
 export function resumeValues(resume: DraftResume): WizardValues {
 	const step1 = resume.step1 ?? {};
 	const step2 = resume.step2 ?? {};
@@ -114,8 +104,7 @@ export function resumeValues(resume: DraftResume): WizardValues {
 	};
 }
 
-/** The draft's files as the steps list them: the blocks hold ids only, so names and sizes come
- * from the document list. Steps 1/3 keep the last upload per slot; Step 2 is read by id. */
+/** The blocks hold ids only, so names and sizes come from the document list; Steps 1/3 keep the last upload per slot, Step 2 is read by id. */
 export function resumeFiles(
 	documents: BusinessDraftDocument[],
 	step2FileIds: string[],
@@ -141,7 +130,6 @@ export function resumeFiles(
 	};
 }
 
-/** One checklist's slice of the resumed files, in the shape its step holds. */
 export function slotFiles(
 	bySlot: Map<string, WizardFile>,
 	slots: readonly string[],

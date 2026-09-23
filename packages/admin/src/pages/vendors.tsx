@@ -37,7 +37,6 @@ import {
 } from "../organisms/vendor-detail-dialog";
 import { VendorPerformanceDialog } from "../organisms/vendor-performance-dialog";
 
-/** Column labels for the loading frame, in table order. */
 const VENDOR_HEADERS = [
 	"Vendor",
 	"Certifications",
@@ -191,7 +190,6 @@ export function AdminVendors() {
 		);
 	}
 
-	// Cached vendors survive a refetch, so each part shimmers only its own values.
 	const loading = vendorsQuery.isPending;
 	const vendors = vendorsQuery.data?.vendors ?? [];
 	const totalVendors = vendors.length;

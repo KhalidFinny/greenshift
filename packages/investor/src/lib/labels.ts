@@ -1,8 +1,6 @@
-/** Badge variants accepted by the ui Badge component. */
 export type StatusTone = "default" | "secondary" | "destructive" | "outline";
 
-/** Table/status badge sizing used across admin: enlarged from the DS default so
- * status chips read at the same size as table text. */
+/** Status chip sizing, enlarged from the DS default so chips read at the same size as table text. */
 export const STATUS_BADGE_CLASS = "!h-8 rounded-md px-3 text-base";
 
 export const INVEST_STATUS_LABEL: Record<string, string> = {
@@ -29,7 +27,6 @@ export const PAYMENT_STATUS_TONE: Record<string, StatusTone> = {
 	failed: "destructive",
 };
 
-/** Risk label + badge tone from the explainable project readiness score. */
 export function riskMeta(score: number | null | undefined): {
 	label: string;
 	tone: StatusTone;

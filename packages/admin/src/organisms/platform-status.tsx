@@ -15,7 +15,6 @@ import {
 	ShimmerBlock,
 } from "@greenshift/ui";
 
-/** Bindings the production Worker reports on, in report order. */
 const CHECKS: Array<{ key: string; label: string; icon: typeof faDatabase }> = [
 	{ key: "d1", label: "D1 Database", icon: faDatabase },
 	{ key: "kv", label: "KV Namespace", icon: faHardDrive },
@@ -23,13 +22,10 @@ const CHECKS: Array<{ key: string; label: string; icon: typeof faDatabase }> = [
 ];
 
 interface PlatformStatusCardProps {
-	/** Result of `GET /api/health`, probed by the Worker on each load. */
 	health: HealthResponse | undefined;
-	/** Data still in flight: same card, shimmering probe results. */
 	loading?: boolean;
 }
 
-/** Live binding probes of the deployed Worker: no synthetic uptime figures. */
 export function PlatformStatusCard({
 	health,
 	loading = false,

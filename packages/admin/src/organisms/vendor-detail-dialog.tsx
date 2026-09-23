@@ -26,7 +26,6 @@ interface VendorDetailDialogProps {
 	onOpenChange: (open: boolean) => void;
 }
 
-/** What the profile still has to file before a verdict can be given. */
 export function missingVendorPackItems(vendor: AdminVendor): string[] {
 	const missing: string[] = [];
 	if (!vendor.npwp) missing.push("NPWP");

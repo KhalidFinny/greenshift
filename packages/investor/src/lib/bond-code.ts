@@ -1,5 +1,4 @@
-/** Broker-facing bond code: the API returns the registered code verbatim, and an
- * unissued bond falls back to a value derived from the project, never random. */
+/** The API returns the registered code verbatim; an unissued bond falls back to a value derived from the project, never random. */
 export function bondCodeFor(project: {
 	id: number;
 	bondCode?: string | null;
@@ -8,8 +7,7 @@ export function bondCodeFor(project: {
 	return `GS-BND-${String(project.id).padStart(4, "0")}`;
 }
 
-/** "Copy Code" payload: the code plus name and issuer, because it is pasted into
- * the broker app's search field. Coupon terms stay in the partner app. */
+/** "Copy Code" payload: the code plus name and issuer, because it is pasted into the broker app's search field. */
 export function bondSearchPayload(project: {
 	id: number;
 	title: string;

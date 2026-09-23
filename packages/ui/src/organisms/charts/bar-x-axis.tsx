@@ -7,11 +7,8 @@ import { cn } from "#/lib/utils";
 import { useChart, useChartStable } from "./chart-context";
 
 export interface BarXAxisProps {
-	/** Width of the date ticker box for fade calculation. Default: 50 */
 	tickerHalfWidth?: number;
-	/** Whether to show all labels or skip some for dense data. Default: false */
 	showAllLabels?: boolean;
-	/** Maximum number of labels to show. Default: 12 */
 	maxLabels?: number;
 }
 
@@ -43,7 +40,6 @@ function BarXAxisLabel({
 		}
 	}
 
-	// Zero-width container approach for perfect centering
 	return (
 		<div
 			className="absolute"

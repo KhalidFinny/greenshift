@@ -23,12 +23,10 @@ export interface PatternPresetOptions {
 	radius?: number;
 	complement?: boolean;
 	fill?: string;
-	/** Dot grid only: when false, render hollow dots (stroke only). Default: true */
 	dotFill?: boolean;
 	tileBackground?: string;
 }
 
-/** Circle presets render with @visx/pattern `PatternCircles`. */
 export function isCirclePattern(preset: PatternPresetId): boolean {
 	return preset === "circles" || preset === "dots";
 }
@@ -107,7 +105,6 @@ function renderPatternCircles(
 	);
 }
 
-/** Renders a @visx/pattern definition node for the given preset. */
 export function renderPatternPreset(
 	preset: PatternPresetId,
 	id: string,

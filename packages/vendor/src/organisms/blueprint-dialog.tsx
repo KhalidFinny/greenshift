@@ -15,7 +15,7 @@ interface BlueprintDialogProps {
 	loading?: boolean;
 }
 
-/** The blueprint on its own, so a bidder reads the case the tender was cleared on without losing a half-written bid. */
+/** Opens over the bid dialog, so a bidder reads the case without losing a draft. */
 export function BlueprintDialog({
 	blueprint,
 	isOpen,

@@ -1,5 +1,3 @@
-/** A timestamp as a feed reads it ("2 hours ago"). Shared by the role surfaces,
- * so the same event is not dated two different ways in two packages. */
 export function relativeTime(iso: string, now = Date.now()): string {
 	const elapsed = now - Date.parse(iso);
 	if (!Number.isFinite(elapsed) || elapsed < 0) return "just now";

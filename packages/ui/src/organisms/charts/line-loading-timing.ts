@@ -2,7 +2,6 @@ export const LINE_LOADING_PULSE_CYCLE_S = 2.2;
 
 export const LINE_LOADING_LOOP_PAUSE_MS = 280;
 
-/** Loading label exit on loading → ready (seconds). */
 export const LOADING_LABEL_EXIT_S = 0.45;
 
 export const LOADING_LABEL_EXIT_Y_PX = 30;

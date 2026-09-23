@@ -26,7 +26,6 @@ export function formatNumber(value: number | null | undefined): string {
 	return number.format(value);
 }
 
-/** Emission values in tonnes of CO₂e, e.g. "49.8 tCO₂e". */
 export function formatTonnes(value: number | null | undefined): string {
 	if (typeof value !== "number" || !Number.isFinite(value)) return "-";
 	return `${new Intl.NumberFormat("en-US", {
@@ -41,7 +40,6 @@ export function formatDate(iso: string | null | undefined): string {
 	return date.format(parsed);
 }
 
-/** Short month label from a YYYY-MM key, e.g. "May 26". */
 export function monthLabel(key: string): string {
 	const [year, monthIndex] = key.split("-").map(Number);
 	if (!year || monthIndex === undefined || monthIndex < 1 || monthIndex > 12) {
@@ -51,12 +49,10 @@ export function monthLabel(key: string): string {
 	return `${name} ${String(year).slice(2)}`;
 }
 
-/** Quarter key of a date, e.g. "2026-Q3". */
 export function quarterKey(date: Date): string {
 	return `${date.getFullYear()}-Q${Math.floor(date.getMonth() / 3) + 1}`;
 }
 
-/** Short label from a "YYYY-Qn" key, e.g. "Q3 26". */
 export function quarterLabel(key: string | null | undefined): string {
 	const match = /^(\d{4})-Q([1-4])$/.exec(key ?? "");
 	if (!match) return key ?? "-";

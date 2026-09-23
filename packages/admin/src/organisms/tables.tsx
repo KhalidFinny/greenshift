@@ -14,7 +14,6 @@ import { formatDateTime } from "../lib/format";
 import { BLUEPRINT_META } from "../lib/labels";
 import { TableSkeleton } from "./table-skeleton";
 
-/** Column labels for the loading frame, in table order. */
 const ACCOUNT_HEADERS = [
 	"User",
 	"Role",
@@ -159,7 +158,6 @@ const blueprintColumns: ColumnDef<AdminBlueprint>[] = [
 interface AccountsTableProps {
 	users: AdminUser[];
 	limit?: number;
-	/** Data still in flight: same card and columns, shimmering rows. */
 	loading?: boolean;
 }
 
@@ -197,7 +195,6 @@ export function AccountsTable({
 interface BlueprintsTableProps {
 	blueprints: AdminBlueprint[];
 	limit?: number;
-	/** Data still in flight: same card and columns, shimmering rows. */
 	loading?: boolean;
 }
 

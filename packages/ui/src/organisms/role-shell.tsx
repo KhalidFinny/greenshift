@@ -39,14 +39,12 @@ interface RoleShellProps {
 	showHeaderTitle?: boolean;
 }
 
-/** Only these roles have a notification feed; the others get no bell at all. */
 const ROLES_WITH_FEED: Record<string, true> = {
 	vendor: true,
 	broker: true,
 	business: true,
 };
 
-/** How many the hub lists. Deeper history belongs on a notifications page. */
 const HUB_LIMIT = 20;
 
 interface ShellNotification {
@@ -163,8 +161,7 @@ export function RoleShell({
 		queryKey: ["shell-notifications", role],
 		enabled: hasFeed,
 		staleTime: 60 * 1000,
-		// Events the company waits on are written after the request that causes
-		// them, so the feed polls rather than loading only on mount.
+		// Events are written after the request that causes them, so the feed polls rather than loading on mount.
 		refetchInterval: 10 * 1000,
 		queryFn: async (): Promise<ShellNotification[]> => {
 			if (role === "vendor") {
@@ -213,8 +210,7 @@ export function RoleShell({
 	const notifications = notificationsQuery.data ?? [];
 	const unreadCount = notifications.filter((n) => !n.read).length;
 
-	/** Reading is a write, so the hub marks as it goes and patches the cached list
-	 * first: the badge clears as the request leaves, not on the next poll. */
+	/** Reading is a write: the cached list is patched first, so the badge clears as the request leaves. */
 	const queryClient = useQueryClient();
 	const notificationsKey = ["shell-notifications", role];
 
@@ -257,7 +253,6 @@ export function RoleShell({
 			);
 	}
 
-	// Settings replaces the old standalone profile page; only some roles have one.
 	const settingsPath =
 		role === "vendor"
 			? "/vendor/settings"
@@ -267,11 +262,9 @@ export function RoleShell({
 					? "/business/settings"
 					: null;
 
-	// The sidebar stays ONE element at every width: a duplicate would give two
-	// elements the same view-transition name and break the page transition.
+	// The sidebar stays one element at every width: a duplicate would repeat the view-transition name.
 	const [sidebarOpen, setSidebarOpen] = useState(false);
 
-	// Navigating closes it: the drawer covers the page the user just chose.
 	useEffect(() => {
 		setSidebarOpen(false);
 	}, [activePath]);
@@ -287,8 +280,6 @@ export function RoleShell({
 
 	return (
 		<div className="fixed inset-0 flex w-full overflow-hidden overscroll-none">
-			{/* Dimming layer for the mobile drawer, below `lg`: the only way to dismiss the sidebar by
-			    tapping outside it. */}
 			{sidebarOpen ? (
 				<button
 					type="button"
@@ -301,7 +292,6 @@ export function RoleShell({
 				id="shell-sidebar"
 				data-shell-sidebar
 				className={cn(
-					// Off-canvas below `lg`, docked beside the content from `lg` up.
 					"fixed inset-y-0 left-0 z-50 flex h-dvh w-64 shrink-0 flex-col overflow-hidden border-r border-border bg-white text-sidebar-foreground transition-transform duration-200 ease-out",
 					"lg:sticky lg:top-0 lg:z-auto lg:translate-x-0 lg:self-start lg:transition-none",
 					sidebarOpen ? "translate-x-0" : "-translate-x-full",
@@ -352,8 +342,7 @@ export function RoleShell({
 			<main className="flex min-w-0 flex-1 flex-col overflow-hidden">
 				<header
 					data-shell-header
-					/* Above the wizard's sticky bar (z-20) so it cannot cut the panels
-					   off; still under the mobile sidebar (z-40). */
+					/* Above the wizard's sticky bar (z-20) and under the mobile sidebar (z-40). */
 					className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-border bg-background px-3 py-2 sm:gap-3 sm:px-6 sm:py-4"
 				>
 					<div className="flex min-w-0 items-center gap-1 sm:gap-2">
@@ -377,8 +366,6 @@ export function RoleShell({
 						)}
 					</div>
 					<div className="flex items-center gap-3">
-						{/* Only roles with a real feed get the bell; for the rest it would be a control with nothing
-						    behind it. */}
 						{hasFeed ? (
 							<div ref={notifRef} className="relative">
 								<button
@@ -511,7 +498,6 @@ export function RoleShell({
 													const rowClass =
 														"block w-full p-3 text-left no-underline transition-colors hover:bg-muted/50";
 
-													// Opening an item is what reads it: the row marks itself read and follows its link.
 													return (
 														<li key={item.id}>
 															{item.link ? (
@@ -570,8 +556,6 @@ export function RoleShell({
 									className="size-8"
 									fallbackClassName="bg-foreground/10 font-semibold text-foreground"
 								/>
-								{/* The person, then the organization they act as; an account
-								    with no organization shows the name alone. */}
 								<span className="hidden min-w-0 flex-col text-left sm:flex">
 									<span className="max-w-40 truncate text-base font-medium leading-tight text-foreground">
 										{name || "Pengguna"}

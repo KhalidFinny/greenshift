@@ -16,7 +16,6 @@ interface BidLeaderboardProps {
 		currentPrice: number;
 		isCurrentVendor: boolean;
 	}>;
-	/** Ranking still in flight: same list frame, shimmering rows. */
 	loading?: boolean;
 }
 
@@ -26,7 +25,6 @@ export function BidLeaderboard({
 }: BidLeaderboardProps) {
 	const paged = usePagedRows(leaderboard);
 
-	// One list frame; each row is either a ranked bid or a shimmer.
 	const rows: (BidLeaderboardProps["leaderboard"][number] | null)[] = loading
 		? Array.from({ length: 4 }, () => null)
 		: paged.pageRows;

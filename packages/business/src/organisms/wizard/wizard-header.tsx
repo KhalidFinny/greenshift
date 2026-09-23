@@ -1,5 +1,4 @@
-/* The wizard's chrome for the active step: the sticky bar with the step strip, the
- * autosave line and the actions, then the step's purpose and the invalid-field banner. */
+/* The wizard's chrome for the active step: the sticky bar with the step strip. */
 
 import { Button, cn } from "@greenshift/ui";
 import type { SaveState } from "../../lib/use-business-draft";
@@ -28,7 +27,6 @@ const STEPS = [
 	"Review & Submit",
 ];
 
-/* One line of orientation for the step the user is on, on the page rather than the bar. */
 const STEP_SUBTITLES = [
 	"Base energy data and the goal of the project. Step 1 of 4.",
 	"The funding need and the repayment capacity. Step 2 of 4.",
@@ -36,7 +34,6 @@ const STEP_SUBTITLES = [
 	"Check the summary and file the project. Step 4 of 4.",
 ];
 
-/** The autosave line, empty until the first save is about to happen. */
 function saveLabel(state: SaveState, loading: boolean): string {
 	if (loading) return "Opening your draft…";
 	switch (state) {
@@ -56,9 +53,7 @@ export interface WizardHeaderProps {
 	saveState: SaveState;
 	loading: boolean;
 	submitting: boolean;
-	/** Both declarations ticked, so the last step may submit. */
 	canSubmit: boolean;
-	/** A completed step, which is the only kind the strip lets the user open. */
 	onStep: (step: number) => void;
 	onBack: () => void;
 	onNext: () => void;
@@ -80,8 +75,6 @@ export function WizardHeader({
 
 	return (
 		<>
-			{/* The wizard's own header, and the only sticky element: the strip and the
-			    actions share a row while they fit, and wrap when they do not. */}
 			<header className="sticky top-0 z-20 -mx-4 border-b border-border bg-background px-4 py-2 sm:-mx-6 sm:px-6">
 				<div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:gap-x-4">
 					<ol
@@ -96,8 +89,6 @@ export function WizardHeader({
 									key={step}
 									className={cn(
 										"relative flex min-w-0 items-center gap-1.5",
-										// A segment in the gap to the next step, at the circles' centre line,
-										// rather than one rail behind all of them; its insets match the gap either side.
 										i < STEPS.length - 1 &&
 											"after:absolute after:top-1/2 after:left-[calc(100%+2px)] after:h-px after:w-2 after:-translate-y-1/2 after:bg-border sm:after:left-[calc(100%+4px)] sm:after:w-3",
 									)}
@@ -176,7 +167,6 @@ export function WizardHeader({
 				</div>
 			</header>
 
-			{/* The bar carries the step's name, so the page carries its purpose. */}
 			<p className="text-sm text-muted-foreground">
 				{STEP_SUBTITLES[activeStep]}
 			</p>

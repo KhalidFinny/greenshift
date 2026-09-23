@@ -13,7 +13,6 @@ interface KpiItem {
 
 interface VendorKpiRowProps {
 	items: KpiItem[];
-	/** Data still in flight: same cards, shimmering leaves. */
 	loading?: boolean;
 }
 

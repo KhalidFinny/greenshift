@@ -1,5 +1,4 @@
-/* Step 3: the scope of work the tender is bid against. Both lists are open-ended, one
- * entry per line; the matching model reads the technical requirements. */
+/* The scope of work the tender is bid against; the matching model reads the requirements. */
 
 import type { WizardForm } from "../../lib/use-project-wizard-form";
 import { step3Validator } from "../../lib/wizard-rules";

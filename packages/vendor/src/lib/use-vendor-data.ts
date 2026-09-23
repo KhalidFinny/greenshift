@@ -42,8 +42,7 @@ const EMPTY_LEADERBOARD: LeaderboardView = {
 	myRank: null,
 };
 
-/** Everything the vendor dashboard renders comes from `/api/vendor/*`; bookmarks are local UI state with no endpoint.
- * The detail endpoint is read only when a screen names a project, since the market list is enough for the cards. */
+/** Everything comes from `/api/vendor/*`; bookmarks are local UI state with no endpoint. */
 export function useVendorData(options: { projectId?: string } = {}) {
 	const queryClient = useQueryClient();
 	const projectId = options.projectId;
@@ -92,8 +91,7 @@ export function useVendorData(options: { projectId?: string } = {}) {
 		staleTime: REFRESH_FAST,
 	});
 
-	/* A ranking belongs to one tender: a screen that names a project reads that project's own tender, others read the default.
-	   `null` means the project's tender is not known yet, and holds the read back rather than ranking another tender under this heading. */
+	/* A ranking belongs to one tender: `null` means the tender is not known yet, so the read is held back. */
 	const scopedTenderId = useMemo(() => {
 		if (projectId === undefined || projectId === "") return undefined;
 		const project = (marketProjectsData?.projects ?? []).find(
@@ -146,7 +144,6 @@ export function useVendorData(options: { projectId?: string } = {}) {
 			.filter((p): p is ActiveVendorProject => p !== null);
 	}, [myProjects]);
 
-	// Portfolio = awarded projects from the API plus references the vendor authored in the portfolio tab.
 	const apiPortfolio: VendorPortfolioItem[] = useMemo(() => {
 		return myProjects
 			.map(mapToPortfolioItem)
@@ -175,7 +172,7 @@ export function useVendorData(options: { projectId?: string } = {}) {
 		return detail ? mapBlueprint(detail) : null;
 	}, [projectDetailData]);
 
-	/** The tender the route names, when the capped market list does not carry it. */
+	/** Fills in a tender the capped market list does not carry. */
 	const projectDetailCard: VendorProjectCardData | null = useMemo(() => {
 		const detail = projectDetailData?.project;
 		return detail ? mapProjectDetailToCardData(detail) : null;
@@ -251,8 +248,7 @@ export function useVendorData(options: { projectId?: string } = {}) {
 			file?: File | null;
 		}) => {
 			await api.vendor.respondNegotiation(input.id, input.body);
-			// A revision is a revised offer, so the file goes with the figures: otherwise
-			// the client reads a case that no longer matches the numbers.
+			// A revision is a revised offer, so the file must go with the figures.
 			if (input.file) {
 				await api.vendor.uploadProposalDocument(input.proposalId, input.file);
 			}
@@ -264,7 +260,6 @@ export function useVendorData(options: { projectId?: string } = {}) {
 		},
 	});
 
-	// Revising an open bid rewrites the amount on the proposal, and replaces its document when a new one is chosen.
 	const { mutateAsync: reviseBid } = useMutation({
 		mutationFn: async (input: {
 			proposalId: number;
@@ -284,8 +279,7 @@ export function useVendorData(options: { projectId?: string } = {}) {
 		},
 	});
 
-	// Both awaitable: the bid dialog closes only on a filed bid, so a rejection keeps the vendor's entry in front of them.
-	// The document travels in the same request as the bid, so a bid cannot exist without the case it is made on.
+	// The document travels in the same request as the bid, so a bid cannot exist without its case.
 	const { mutateAsync: submitProposal } = useMutation({
 		mutationFn: (input: {
 			fields: {
@@ -374,7 +368,7 @@ export function useVendorData(options: { projectId?: string } = {}) {
 			queryClient.invalidateQueries({ queryKey: ["vendor", "profile"] }),
 	});
 
-	/** The legal identity a vendor is verified against; saves onto the same profile, so NIB or NPWP can be added without touching the rest of the record. */
+	/** Saves onto the shared profile, so NIB or NPWP can be added without touching the rest. */
 	const { mutate: saveVerificationDetails } = useMutation({
 		mutationFn: (body: { nib: string; npwp: string; tdp?: string }) =>
 			api.vendor.saveProfile({
@@ -387,7 +381,6 @@ export function useVendorData(options: { projectId?: string } = {}) {
 			queryClient.invalidateQueries({ queryKey: ["vendor", "profile"] }),
 	});
 
-	/** The ESCO or ISO certificate the profile is verified against. */
 	const { mutate: uploadCertificate, isPending: uploadingCertificate } =
 		useMutation({
 			mutationFn: (file: File) => api.vendor.uploadCertificate(file),
@@ -457,7 +450,7 @@ export function useVendorData(options: { projectId?: string } = {}) {
 		});
 	};
 
-	/** Creates the record, then files the chosen document on it; either request failing rejects, so the caller can hold its dialog open. */
+	/** Two requests: either failing rejects, so the caller can hold its dialog open. */
 	const addPortfolioItem = async (
 		item: VendorPortfolioItem,
 		file: File | null,

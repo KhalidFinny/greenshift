@@ -1,7 +1,6 @@
 import Panel from "../atoms/Panel";
 
-/** The hero screenshot: the submission wizard's first step, the screen a company
- * actually starts on, rather than a dashboard that only exists once a project runs. */
+/** The hero screenshot: the submission wizard's first step, not a dashboard that only exists once a project runs. */
 export default function DashboardShowcase() {
 	return (
 		<figure className="relative w-[80%] max-w-[1000px] m-0 lg:w-[calc(var(--u)*1000)] lg:max-w-none">

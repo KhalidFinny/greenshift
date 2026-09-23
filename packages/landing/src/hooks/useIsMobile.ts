@@ -9,11 +9,7 @@ function subscribe(onChange: () => void) {
 	return () => query.removeEventListener("change", onChange);
 }
 
-/**
- * True on a phone-sized viewport. `initial` is the server's user-agent verdict, so
- * the first paint is already the right composition; after hydration the live
- * media query takes over, which is what makes a resize or a rotation reflow.
- */
+/** True on a phone-sized viewport; `initial` is the server's user-agent verdict, so the first paint is already right. */
 export function useIsMobile(initial = false): boolean {
 	return useSyncExternalStore(
 		subscribe,

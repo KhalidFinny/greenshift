@@ -1,5 +1,4 @@
-/* The pack an administrator's verdict is about: the filed identity, both certificates and what the scan read off each,
- * and the reason required on a refusal, since that reason is what the company reads and corrects. */
+/* A refusal needs its reason: that reason is what the company reads and corrects. */
 
 import type {
 	AdminCompanyVerification,
@@ -25,7 +24,6 @@ import { useState } from "react";
 import { useStepUpAction } from "../lib/use-step-up-action";
 import { StepUpDialog } from "./step-up-dialog";
 
-/** The state as the reviewer reads it. */
 const STATE_LABEL: Record<string, string> = {
 	NOT_VERIFIED: "Nothing filed",
 	NEEDS_RESCAN: "Clearer scan asked for",
@@ -253,8 +251,7 @@ export function CompanyVerificationDialog({
 				)}
 			</DialogContent>
 
-			{/* The verdict is a step-up action: the prompt has to be mounted for the
-			    pending call to resume once the password is confirmed. */}
+			{/* Step-up: the prompt has to be mounted for the pending call to resume once the password is confirmed. */}
 			<StepUpDialog
 				isOpen={verify.stepUpOpen}
 				onClose={verify.closeStepUp}

@@ -11,20 +11,14 @@ export interface ChartRevealClipProps {
 	height: number;
 	targetWidth: number;
 	enterTransition?: Transition;
-	/** Bumps when motion settings change to replay the reveal. */
 	revealEpoch: number;
-	/** Extra inset around the clip rect so edge glyphs are not cut off. */
 	padding?: number;
-	/** When false, clip stays at full width (no grow animation). */
 	animating?: boolean;
-	/** Reveal grows 0 → full; conceal shrinks full → 0 (ready → loading). */
 	mode?: ChartRevealClipMode;
-	/** Called when a conceal animation finishes. */
 	onComplete?: () => void;
 }
 
-/** Left-to-right clip reveal for cartesian series: clip width grows 0 → full.
- * scaleX is avoided because it reveals from the center. */
+/** scaleX is avoided because it reveals from the center. */
 export function ChartRevealClip({
 	clipPathId,
 	height,
@@ -54,8 +48,7 @@ export function ChartRevealClip({
 	}
 
 	if (mode === "conceal") {
-		// Mirror the LTR reveal: advance the clip's left edge rightward while width
-		// shrinks (same geometry as `LineLoadingPulseStroke` exit half-cycle).
+		// Mirror the LTR reveal: the same geometry as `LineLoadingPulseStroke`'s exit half-cycle.
 		const rightEdge = -padding + paddedWidth;
 
 		return (

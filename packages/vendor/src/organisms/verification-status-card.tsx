@@ -24,9 +24,7 @@ import type { CompanyVerificationDetails } from "../lib/types";
 
 interface VerificationStatusCardProps {
 	verification: CompanyVerificationDetails;
-	/** Saves the legal identity the administrator verifies against. */
 	onSave: (nib: string, npwp: string) => void;
-	/** Files the ESCO or ISO certificate. */
 	onUploadCertificate: (file: File) => void;
 	uploading: boolean;
 }

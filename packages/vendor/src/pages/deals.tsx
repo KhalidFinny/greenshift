@@ -42,13 +42,12 @@ export function VendorDealsPage() {
 	const navigate = useNavigate();
 	const [stage, setStage] = useState<Stage>("live");
 
-	// One proposal per tender, so we can tell which one the standings belong to.
+	// One proposal per tender, so the standings belong to a single bid.
 	const openBiddingProposals = proposals.filter(
 		(p) =>
 			p.procurementMethod === "OPEN_BIDDING" && p.status === "UNDER_EVALUATION",
 	);
 
-	// Each stage is its own list, so each pages the rows it renders.
 	const openBiddingPage = usePagedRows(openBiddingProposals);
 	const proposalsPage = usePagedRows(proposals);
 	const negotiationsPage = usePagedRows(negotiations);
@@ -114,14 +113,12 @@ export function VendorDealsPage() {
 					</Link>
 				</div>
 
-				{/* The active stage's meaning, stated once rather than under every tab. */}
 				{activeStage ? (
 					<p className="mt-3 text-sm text-muted-foreground">
 						{activeStage.blurb}
 					</p>
 				) : null}
 
-				{/* Standings render only for the tender the leaderboard endpoint actually reports on. */}
 				<TabsContent value="live" className="mt-6 space-y-4">
 					{!isLoading && openBiddingProposals.length === 0 ? (
 						<EmptyState
@@ -281,7 +278,6 @@ export function VendorDealsPage() {
 					)}
 				</TabsContent>
 
-				{/* Selecting a project opens its own page rather than nesting a detail view inside this tab. */}
 				<TabsContent value="execution" className="mt-6 space-y-4">
 					{!isLoading && activeProjects.length === 0 ? (
 						<EmptyState

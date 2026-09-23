@@ -33,7 +33,7 @@ import type {
 	VendorProjectCardData,
 } from "./types";
 
-/** A calendar month in milliseconds, for the delivery duration the milestone schedule implies. */
+/** Average month (30.44 days), for the duration the schedule implies. */
 const MONTH_MS = 1000 * 60 * 60 * 24 * 30.44;
 
 export function mapVerificationStatus(
@@ -93,10 +93,7 @@ export function mapProjectToCardData(
 	};
 }
 
-/**
- * The same card data, built from the detail endpoint. The market list is capped,
- * so a deep link to a tender past the cap has no list row to render.
- */
+/** Same card data from the detail endpoint: a deep link past the capped market list has no list row. */
 export function mapProjectDetailToCardData(
 	detail: VendorProjectDetail,
 ): VendorProjectCardData {
@@ -125,7 +122,6 @@ export function mapProjectDetailToCardData(
 export function mapToActiveProject(
 	myProject: VendorMyProject,
 ): ActiveVendorProject | null {
-	// Only projects whose proposal was accepted are in delivery.
 	if (!isAwardedProposal(myProject.proposal.status)) {
 		return null;
 	}
@@ -167,7 +163,7 @@ export function mapToActiveProject(
 		agreedBudget: proposal.amount,
 		overallProgressPercent: progress,
 		currentMilestoneTitle: current?.title ?? "Not started",
-		// No due date and no submission time means the date is genuinely unknown; today's date would invent a commitment.
+		// No due date and no submission time means unknown; today's date would invent a commitment.
 		deadlineDate:
 			milestones[milestones.length - 1]?.dueDate ??
 			proposal.submittedAt ??
@@ -189,7 +185,6 @@ export function mapToActiveProject(
 	};
 }
 
-/** An awarded project as a track-record entry: every figure comes from the award record or the project itself. */
 export function mapToPortfolioItem(
 	myProject: VendorMyProject,
 ): VendorPortfolioItem | null {
@@ -203,7 +198,7 @@ export function mapToPortfolioItem(
 	// The API sends the periods newest first; the detail chart reads them oldest first.
 	const periods = [...reports].sort((a, b) => a.period.localeCompare(b.period));
 
-	// The same schedule read as the active-project view, with the project's own status overriding it once the company has closed it out.
+	// The project's own status overrides progress once the company has closed it out.
 	const progress =
 		milestones.length > 0
 			? Math.round(
@@ -259,7 +254,7 @@ export function mapToPortfolioItem(
 		clientName: project.companyName ?? "",
 		projectType: project.industrySector ?? "",
 		location: project.location ?? "",
-		// The award record carries no written description; the vendor's own portfolio entry is the only place that has one.
+		// The award record carries no description; only a vendor-authored entry has one.
 		description: "",
 		projectValue: myProject.proposal.amount,
 		durationMonths,
@@ -287,7 +282,7 @@ export function mapToPortfolioItem(
 	};
 }
 
-/** List-row shape: only what the proposals list endpoint returns, with the detail-only figures left null rather than filled with plausible constants. */
+/** List-row shape: detail-only figures stay null rather than plausible constants. */
 export function mapToStructuredProposal(
 	proposal: ProposalSummary,
 ): StructuredProposal {
@@ -312,7 +307,7 @@ export function mapToStructuredProposal(
 	};
 }
 
-/** Full record from `GET /api/vendor/proposals/:id`, straight from the API. */
+/** Full record from `GET /api/vendor/proposals/:id`. */
 export function mapProposalDetail(detail: ProposalDetail): StructuredProposal {
 	return {
 		id: String(detail.id),
@@ -365,7 +360,6 @@ export function derivePerformanceMetrics(
 			)
 		: 0;
 
-	// MRV: measured savings and carbon against the project targets the API exposes on each awarded project.
 	const reports = awarded.flatMap((p) => p.monthlyReports ?? []);
 	const baseline = reports.reduce(
 		(sum, report) => sum + (report.baselineConsumption ?? 0),
@@ -428,7 +422,6 @@ function mapProcurementMethod(method?: string | null): ProcurementMethod {
 	}
 }
 
-/** DB proposal status -> UI status vocabulary. */
 const PROPOSAL_STATUS: Record<string, StructuredProposal["status"]> = {
 	submitted: "SUBMITTED",
 	reviewed: "UNDER_EVALUATION",
@@ -443,7 +436,6 @@ export function mapProposalStatus(
 	return PROPOSAL_STATUS[status.toLowerCase()] ?? "DRAFT";
 }
 
-/** A proposal counts as awarded in either vocabulary. */
 export function isAwardedProposal(status: string): boolean {
 	const normalized = status.toLowerCase();
 	return normalized === "accepted" || normalized === "agreed";
@@ -463,7 +455,6 @@ export function mapNotification(row: ApiNotification): VendorNotification {
 		category: NOTIFICATION_CATEGORY[row.type.toLowerCase()] ?? "System",
 		title: row.title,
 		message: row.body ?? "",
-		// Dated the way the feed reads it, from the one shared implementation.
 		timestamp: relativeTime(row.createdAt),
 		isRead: row.read,
 		linkUrl: row.link ?? "/vendor",
@@ -578,7 +569,7 @@ export function mapMonthlyReport(row: ApiMonthlyReport): MonthlyEnergyReport {
 	};
 }
 
-/** Predictive periods the model projected for a project, newest first. */
+/** Projected periods, newest first. */
 export function mapEnergyForecast(row: ApiEnergyForecast): EnergyForecast {
 	return {
 		id: `${row.periodStart ?? "unknown"}-${row.periodEnd ?? "unknown"}`,
@@ -590,7 +581,7 @@ export function mapEnergyForecast(row: ApiEnergyForecast): EnergyForecast {
 	};
 }
 
-/** The blueprint a bidder reads on the procurement detail. The API only sends it once LVV GRK has validated it, so a blueprint here is verified; the status travels so the card can name the stage it reached. */
+/** The API only sends this once LVV GRK has validated it, so a blueprint here is verified. */
 export function mapBlueprint(blueprint: ProjectBlueprintView): VendorBlueprint {
 	return {
 		status: blueprint.status,

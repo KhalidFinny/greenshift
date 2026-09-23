@@ -109,7 +109,6 @@ export function isClipExcludedComponent(child: ReactElement): boolean {
 	return CLIP_EXCLUDED_COMPONENT_NAMES.has(componentName);
 }
 
-/** SVG layer lists from chart shells need stable keys when rendered as arrays. */
 export function renderKeyedChartLayers(children: ReactElement[]) {
 	return children.map((child, index) =>
 		cloneElement(child, { key: child.key ?? `chart-layer-${index}` }),

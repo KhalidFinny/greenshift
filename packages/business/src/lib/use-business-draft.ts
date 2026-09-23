@@ -11,8 +11,7 @@ import {
 } from "@greenshift/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-/** The wizard's draft: identity, autosave and submission. The id lives in `localStorage` so a
- * refresh resumes the same draft; autosave stays off until the resume has seeded the form. */
+/** The id lives in localStorage so a refresh resumes the same draft; autosave stays off until the resume has seeded the form. */
 
 const DRAFT_KEY = "greenshift.business.draftId";
 const AUTOSAVE_DELAY_MS = 800;
@@ -23,7 +22,6 @@ const SAVE_RETRY_MS = 3000;
 /** `setTimeout`'s handle is a number in the browser and an object under SSR. */
 type TimerHandle = ReturnType<typeof setTimeout>;
 
-/** The body of one autosave: the step being edited plus that step's block. */
 export type DraftStepBody = {
 	step: 1 | 2 | 3 | 4;
 	step1?: Step1Patch;
@@ -31,11 +29,9 @@ export type DraftStepBody = {
 	step3?: Step3Patch;
 };
 
-/** What the last autosave did. `idle` means nothing has been sent yet. */
 export type SaveState = "idle" | "saving" | "saved" | "failed";
 
-/** Only the fields the user has touched; a key present as `null` means the field was cleared,
- * which is how the server reads it too. */
+/** Only touched fields; a key present as null means the field was cleared, which is how the server reads it too. */
 export type Step1Patch = BusinessStep1Patch;
 export type Step2Patch = BusinessStep2Patch;
 export type Step3Patch = BusinessStep3Patch;
@@ -44,21 +40,16 @@ export interface DraftResume {
 	step1: Step1Patch | null;
 	step2: Step2Patch | null;
 	step3: Step3Patch | null;
-	/** The draft's files, which its blocks reference only by id. */
 	documents: BusinessDraftDocument[];
 	step: number | null;
 }
 
 export interface UseBusinessDraftResult {
-	/** True until the stored draft has been read (or found absent). */
 	loading: boolean;
 	saveState: SaveState;
-	/** Persists the current step's block, debounced. */
 	saveStep: (body: DraftStepBody) => void;
-	/** Uploads one wizard file, returning its document id or null on failure. */
 	uploadDocument: (file: File, slot: string) => Promise<string | null>;
 	removeDocument: (docId: string) => Promise<void>;
-	/** Submits the draft. Resolves to the created project, or null on failure. */
 	submit: (body: {
 		step1: BusinessStep1;
 		step2: BusinessStep2;
@@ -86,16 +77,13 @@ export function useBusinessDraft(
 	const [saveState, setSaveState] = useState<SaveState>("idle");
 	const [submitting, setSubmitting] = useState(false);
 
-	/** Guards autosave against writing the form back before it is seeded. */
 	const resumed = useRef(false);
 	const timer = useRef<TimerHandle | undefined>(undefined);
 	const pending = useRef<DraftStepBody | null>(null);
-	/** The last payload the server accepted, so an unchanged one is not resent. */
 	const written = useRef<string | null>(null);
 	const attempts = useRef(0);
 	const retry = useRef<TimerHandle | undefined>(undefined);
-	// The resume callback is called once; keeping it in a ref means an inline
-	// callback from the caller does not restart the load effect every render.
+	// Kept in a ref so an inline callback from the caller does not restart the load effect every render.
 	const onResumeRef = useRef(onResume);
 	onResumeRef.current = onResume;
 
@@ -106,8 +94,7 @@ export function useBusinessDraft(
 		if (!stored) window.localStorage.setItem(DRAFT_KEY, id);
 		setDraftId(id);
 
-		/** Hands the stored draft to the caller's resume callback. A failed read means a new project,
-		 * not an error; a callback that throws is a seeding bug, so autosave stays off. */
+		/** A failed read means a new project, not an error; a callback that throws is a seeding bug, so autosave stays off. */
 		async function resume(id: string): Promise<void> {
 			let storedDraft: DraftResume | null = null;
 			try {
@@ -119,19 +106,15 @@ export function useBusinessDraft(
 					documents,
 					step: draft.step,
 				};
-			} catch {
-				// No stored draft: carry on with an empty form.
-			}
+			} catch {}
 			if (cancelled) return;
 			if (storedDraft) onResumeRef.current(storedDraft);
-			// Armed either way: with nothing stored, the empty form is the truth.
 			resumed.current = true;
 		}
 
 		void resume(id)
 			.catch((error) => {
-				// `resumed` is still false, so this costs the session's autosave
-				// rather than the stored draft.
+				// resumed is still false, so this costs the session's autosave rather than the stored draft.
 				console.error("[draft] resume failed, autosave stays off", error);
 			})
 			.finally(() => {
@@ -150,8 +133,7 @@ export function useBusinessDraft(
 		async (body: DraftStepBody) => {
 			if (!draftId) return;
 			const payload = JSON.stringify(body);
-			// The debounce still lands on payloads the server already has; resending them
-			// only spends the mutation budget the retry below needs.
+			// The debounce lands on payloads the server already has; resending them spends the mutation budget the retry needs.
 			if (payload === written.current) return;
 			setSaveState("saving");
 			try {
@@ -160,8 +142,7 @@ export function useBusinessDraft(
 				attempts.current = 0;
 				setSaveState("saved");
 			} catch {
-				// A silent failure is worse than no autosave: the user stops
-				// worrying about a draft that is not being written.
+				// A silent failure is worse than no autosave: the user stops worrying about a draft that is not being written.
 				setSaveState("failed");
 				attempts.current += 1;
 				if (attempts.current <= SAVE_RETRIES) {
@@ -226,7 +207,6 @@ export function useBusinessDraft(
 	const submit = useCallback<UseBusinessDraftResult["submit"]>(
 		async (body) => {
 			if (!draftId) return null;
-			// Any pending autosave is discarded: submit carries the whole draft.
 			clearTimeout(timer.current);
 			pending.current = null;
 

@@ -7,7 +7,6 @@ import type { VendorProjectCardData } from "../lib/types";
 
 interface RecommendedProjectsPreviewProps {
 	projects: VendorProjectCardData[];
-	/** Data still in flight: same rail, shimmering cards. */
 	loading?: boolean;
 }
 
@@ -32,7 +31,6 @@ export function RecommendedProjectsPreview({
 		);
 	}
 
-	// One rail of card frames; each slot is either a real tender or a shimmer.
 	const slots: (VendorProjectCardData | null)[] = loading
 		? Array.from({ length: 4 }, () => null)
 		: displayProjects;
@@ -58,7 +56,7 @@ export function RecommendedProjectsPreview({
 				<div className="flex gap-4 overflow-x-auto pb-4 scrollbar-none">
 					{slots.map((proj, i) => {
 						const frameClass =
-							// The fixed width is the carousel's point: a card is deliberately narrower than the track so the next one peeks in.
+							// Deliberately narrower than the track, so the next card peeks in.
 							"flex w-[320px] shrink-0 flex-col rounded-xl border border-border bg-card p-5 transition-all";
 
 						const body = (

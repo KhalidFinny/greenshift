@@ -1,5 +1,4 @@
-/* The wizard's last step: the review the user submits on. The summary is the same
- * `ProjectSummary` the project page renders; only the declarations belong to the wizard. */
+/* The summary is the shared ProjectSummary; only the declarations belong to the wizard. */
 
 import { parseIdNumber } from "../../lib/number-format";
 import type { ProjectFunding } from "../../lib/project-funding";
@@ -7,7 +6,7 @@ import type { ProjectRiskResult } from "../../lib/project-risk";
 import type { WizardForm } from "../../lib/use-project-wizard-form";
 import { ProjectSummary, type SummaryDocumentRow } from "./project-summary";
 
-/* The two statements submit is gated on, in the order the form holds them. */
+/* Submit is gated on both, in the order the form holds them. */
 const DECLARATIONS = [
 	{
 		field: "consent",
@@ -64,8 +63,7 @@ function fundingFrom(step2: Step2Summary): ProjectFunding {
 export function ReviewView(props: ReviewViewProps) {
 	const { form, step1, step2, step3, step1Docs, risk } = props;
 
-	/* The project's own documents: what the money figures were read from, and what a
-	   bidder reads with the tender. The LVV's pack is filed at Sistem Registri. */
+	/* The project's own documents; the LVV's pack is filed at Sistem Registri. */
 	const step1Rows: SummaryDocumentRow[] = step1Docs.map((doc) => ({
 		id: doc.id,
 		label: doc.label,
@@ -119,7 +117,6 @@ export function ReviewView(props: ReviewViewProps) {
 					))}
 				</ol>
 
-				{/* What pressing Submit does, in the order it happens. */}
 				<div className="rounded-xl border border-border bg-muted/50 px-5 py-4">
 					<p className="text-sm font-semibold">What happens after you submit</p>
 					<p className="mt-1.5 text-sm leading-6">

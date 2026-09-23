@@ -49,7 +49,6 @@ export function VendorTenderDetailPage({ tenderId }: { tenderId?: string }) {
 		);
 	}
 
-	// Only figures the API reports. Anything absent says so instead of guessing.
 	const notReported = "Not reported";
 
 	return (

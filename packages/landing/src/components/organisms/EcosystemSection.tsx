@@ -53,7 +53,6 @@ const actors = [
 ];
 
 const RADIUS = 210;
-/** Orbit box: the ring plus the label gutter around it, in design px. */
 const ORBIT = RADIUS * 2 + 120;
 const DEGREES_PER_SEC = 72 / 6; // 6s per node, 30s per full cycle
 const RESUME_DELAY = 8000;
@@ -158,8 +157,7 @@ export default function EcosystemSection() {
 			className="relative overflow-hidden bg-white"
 		>
 			<div className="page-wrap relative z-10 py-24">
-				{/* Wide enough for the headline to hold one line at 36px: it measures
-				    854px in DM Sans Bold, which `max-w-2xl` (672px) split in two. */}
+				{/* max-w-4xl: the headline measures 854px in DM Sans Bold, which `max-w-2xl` (672px) split in two. */}
 				<header className="mb-16 max-w-4xl">
 					<p className="text-sm font-bold uppercase tracking-[0.2em] text-[#03442C]">
 						Ecosystem
@@ -174,8 +172,6 @@ export default function EcosystemSection() {
 						isVisible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
 					}`}
 				>
-					{/* Left: circular ecosystem. `--o` is one design pixel of the orbit, capped
-					    at a real pixel, so the ring shrinks with its column instead of overflowing. */}
 					<div className="hidden lg:flex lg:justify-center [container-type:inline-size]">
 						<div
 							className="relative"

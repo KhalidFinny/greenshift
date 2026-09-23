@@ -13,7 +13,6 @@ function preloadStepImages() {
 	}
 }
 
-/** The frame every step's visual sits in, so the panel matches the screenshots. */
 function StepVisualFrame({ step }: { step: (typeof steps)[number] }) {
 	if (step.visual.kind === "partners") {
 		return <PartnerAppsShowcase />;

@@ -51,44 +51,28 @@ import {
 	wrapSingleYScale,
 } from "./y-axis-scales";
 
-/** Skeleton bars to show when `status="loading"` and `data` is empty. */
 const FALLBACK_LOADING_BARS = 12;
 
 export type BarOrientation = "vertical" | "horizontal";
 
 export interface BarChartProps {
 	data: Record<string, unknown>[];
-	/** Key in data for the categorical axis. Default: "name" */
 	xDataKey?: string;
 	margin?: Partial<Margin>;
-	/** Animation duration in milliseconds. Default: 1100 */
 	animationDuration?: number;
 	animationEasing?: string;
 	enterTransition?: Transition;
-	/** Signature of motion URL state: triggers enter replay when it changes. */
 	revealSignature?: string;
-	/** Aspect ratio as "width / height". Default: "2 / 1" */
 	aspectRatio?: string;
 	className?: string;
-	/** Gap between bar groups as a fraction of band width (0-1). Default: 0.2 */
 	barGap?: number;
-	/** Fixed bar width in pixels. If not set, bars auto-size to fill the band. */
 	barWidth?: number;
-	/** Bar chart orientation. Default: "vertical" */
 	orientation?: BarOrientation;
-	/** Whether to stack bars instead of grouping them. Default: false */
 	stacked?: boolean;
-	/** Gap between stacked bar segments in pixels. Default: 0 */
 	stackGap?: number;
-	/** When set, tooltip Y positions snap to the top square center (shape variant). */
 	squareSnap?: { squareGap: number; groupGap?: number; fit?: boolean };
-	/** Child components (Bar, Grid, ChartTooltip, etc.). Optional: omit for a
-	 * pure `status="loading"` skeleton. */
 	children?: ReactNode;
-	/** Reports reveal lifecycle for OG screenshots and loading orchestration. */
 	onPhaseChange?: (phase: ChartPhase) => void;
-	/** Fetch / display status. When `"loading"`, a shimmer skeleton replaces the
-	 * bars (no chart data required). Default: `"ready"`. */
 	status?: ChartStatus;
 }
 
@@ -103,8 +87,7 @@ function extractBarConfigs(children: ReactNode): LineConfig[] {
 			name?: string;
 			__isBarDepthLayer?: boolean;
 		};
-		// Bar-depth surface layers carry a `dataKey` to pair with a Bar but are not
-		// series: skip them so they don't inflate the series count.
+		// Bar-depth surface layers carry a `dataKey` but are not series: skip so they don't inflate the series count.
 		if (childType.__isBarDepthLayer) {
 			return;
 		}
@@ -350,8 +333,6 @@ const ChartCore = memo(function ChartCore({
 	useEffect(() => {
 		setRevealEpoch((n) => n + 1);
 		setIsLoaded(false);
-		// While loading, hold the skeleton (no reveal, no interaction). When
-		// status flips to "ready" this effect re-runs and plays the grow reveal.
 		if (status === "loading") {
 			return;
 		}
@@ -624,7 +605,6 @@ const ChartCore = memo(function ChartCore({
 						renderKeyedChartLayers(preOverlayChildren)
 					)}
 
-					{/* Markers rendered last so they're on top for interaction */}
 					{renderKeyedChartLayers(postOverlayChildren)}
 				</g>
 			</svg>

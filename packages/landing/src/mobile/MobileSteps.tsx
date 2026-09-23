@@ -1,11 +1,7 @@
 import PartnerAppsShowcase from "../components/molecules/PartnerAppsShowcase";
 import { howItWorksSteps, landingFacts } from "../content/landing";
 
-/**
- * The phone version of How It Works: a vertical timeline where every step's copy
- * and screen are on the page at once. The desktop stepper is click-to-switch, and
- * a phone should not have to tap four times to read four steps.
- */
+/** Phone How It Works: every step's copy and screen on the page at once, no tapping through. */
 export default function MobileSteps() {
 	return (
 		<>

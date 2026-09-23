@@ -47,7 +47,6 @@ export function formatShortDate(iso: string | null | undefined): string {
 	return new Date(iso).toLocaleDateString("en-US", { dateStyle: "medium" });
 }
 
-/** Emission values in tonnes of CO₂e, e.g. "49.8 tCO₂e". */
 export function formatTonnes(value: number | null | undefined): string {
 	if (typeof value !== "number" || !Number.isFinite(value)) return "-";
 	return `${new Intl.NumberFormat("en-US", {
@@ -55,7 +54,6 @@ export function formatTonnes(value: number | null | undefined): string {
 	}).format(value)} tCO₂e`;
 }
 
-/** A plain count with thousands separators, e.g. "63,000". */
 export function formatCount(value: number | null | undefined): string {
 	if (typeof value !== "number" || !Number.isFinite(value)) return "-";
 	return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(

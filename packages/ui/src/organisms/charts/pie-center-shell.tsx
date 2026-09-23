@@ -14,19 +14,13 @@ import {
 const SHELL_HOVER_OFFSET = 10;
 
 export type PieCenterShellProps = Omit<PieCenterProps, "children"> & {
-	/** Value shown with NumberFlow (same role as pie total when not hovering) */
 	centerValue: number;
-	/** Square reference size for pie context (matches `PieChart` `size`) */
 	contextSize: number;
-	/** Inner radius in px: must be > 0 so `PieCenter` renders */
 	innerRadiusPx: number;
-	/** When true (default), first paint uses `0` then updates next frame so NumberFlow runs an
-	 * entrance transition; later updates animate as usual. */
+	/** First paint uses `0` then updates next frame so NumberFlow runs an entrance transition. */
 	animateEntrance?: boolean;
 };
 
-/** Renders {@link PieCenter} with a minimal {@link PieProvider}: same center layout as a donut pie
- * without slices or a full {@link PieChart}. */
 export function PieCenterShell({
 	centerValue,
 	contextSize,

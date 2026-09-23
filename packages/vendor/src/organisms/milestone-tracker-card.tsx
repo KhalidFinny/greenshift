@@ -36,7 +36,6 @@ interface MilestoneTrackerCardProps {
 		evidenceItem: EvidenceFile,
 		notes: string,
 	) => void;
-	/** Milestones still in flight: same card frames, shimmering contents. */
 	loading?: boolean;
 }
 

@@ -1,6 +1,6 @@
 import type { MatchmakingBreakdown } from "./types";
 
-/** What each criterion of the matching model measures. Static copy, not data: the criteria are fixed by the model, so the API carries only the scores. */
+/** Static copy: the criteria are fixed by the model, so the API carries only scores. */
 export const MATCH_CRITERIA: ReadonlyArray<{
 	key: Exclude<keyof MatchmakingBreakdown, "rank" | "overallMatch">;
 	label: string;
@@ -38,7 +38,6 @@ export const MATCH_CRITERIA: ReadonlyArray<{
 	},
 ];
 
-/** Strength band for a weighted total, so the UI never has to invent a verdict. */
 export function matchStrength(total: number): {
 	label: string;
 	className: string;
@@ -52,7 +51,6 @@ export function matchStrength(total: number): {
 	return { label: "Fair fit", className: "bg-muted text-foreground" };
 }
 
-/** True when the model ranked this vendor first for the project, among the vendors it scored. */
 export function isTopMatch(matchmaking: MatchmakingBreakdown | null): boolean {
 	return matchmaking !== null && matchmaking.rank === 1;
 }

@@ -1,5 +1,4 @@
-/* Ambient types for bun:test (bun provides the runtime; this keeps
- * `bun run typecheck` green without adding dependencies). */
+/* Ambient types for bun:test, so typecheck stays green without adding dependencies. */
 declare module "bun:test" {
 	export function describe(name: string, fn: () => void): void;
 	export function test(name: string, fn: () => void): void;

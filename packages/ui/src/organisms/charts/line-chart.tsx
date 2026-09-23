@@ -17,14 +17,10 @@ export interface LineSeries {
 }
 
 export interface LineChartProps {
-	/** One per point, shared by every series. */
 	labels: string[];
 	series: LineSeries[];
-	/** A horizontal mark the lines are read against, e.g. the capital. */
 	reference?: { value: number; label: string };
-	/** Formats every value shown (y axis ticks and the reference label). */
 	formatValue: (value: number) => string;
-	/** Chart height in pixels; the width follows the container. Default 280. */
 	height?: number;
 	ariaLabel: string;
 }
@@ -74,7 +70,6 @@ function collectValues(
 	return values;
 }
 
-/** Raw extent, rounded outward to tick-friendly bounds. */
 function resolveYDomain(values: number[]): [number, number] {
 	let min = Number.POSITIVE_INFINITY;
 	let max = Number.NEGATIVE_INFINITY;
@@ -90,7 +85,6 @@ function resolveYDomain(values: number[]): [number, number] {
 		return [0, 1];
 	}
 	// A flat series has no span to scale: give it room instead of a degenerate axis.
-	// Min/max bracket zero on their own whenever the range crosses it.
 	if (min === max) {
 		const padding = min === 0 ? 1 : Math.abs(min) * 0.1;
 		return niceYDomain([min - padding, max + padding]);
@@ -98,7 +92,6 @@ function resolveYDomain(values: number[]): [number, number] {
 	return niceYDomain([min, max]);
 }
 
-/** Reserve enough left gutter for the widest formatted tick label. */
 function resolveGutter(tickLabels: string[]): number {
 	let longest = 0;
 	for (const label of tickLabels) {

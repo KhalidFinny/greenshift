@@ -41,28 +41,18 @@ function generateRingArcPath(
 
 export interface RingChartProps {
 	data: RingData[];
-	/** Chart size in pixels. If not provided, uses parent container size */
 	size?: number;
-	/** Stroke width of each ring. Default: 12 */
 	strokeWidth?: number;
-	/** Gap between rings. Default: 6 */
 	ringGap?: number;
-	/** Inner radius of the innermost ring. Default: 60 */
 	baseInnerRadius?: number;
-	/** Animation duration in milliseconds. Default: 1100 */
 	animationDuration?: number;
 	className?: string;
 	hoveredIndex?: number | null;
 	onHoverChange?: (index: number | null) => void;
-	/** Start angle in radians. Default: -PI/2 (top) */
 	startAngle?: number;
-	/** End angle in radians. Default: 3*PI/2 (full circle) */
 	endAngle?: number;
 	enterTransition?: Transition;
-	/** Scales ring stagger delays (1 = default). */
 	enterStaggerScale?: number;
-	/** High-frequency geometry updates (studio NumberField scrub): plain SVG paths instead of Motion
-	 * `d` morphing. */
 	geometryScrubbing?: boolean;
 	children: ReactNode;
 }
@@ -158,7 +148,6 @@ const RingChartCore = memo(function RingChartCore({
 	const size = Math.min(width, height);
 	const center = size / 2;
 
-	// Scale everything so the outermost ring fits the available radius with padding
 	const ringCount = data.length;
 	const padding = 8;
 	const availableRadius = center - padding;

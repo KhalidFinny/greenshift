@@ -1,19 +1,4 @@
-/* The company's own verification: the screen that stands in front of the whole
- * business surface.
- *
- * It is one job in one place, because an unverified account can reach nothing
- * else: confirm the company's details, file the two certificates behind its
- * legal identity, and submit the pack. The pack is read by the document scan,
- * which is what decides: a certificate that reads as the document it claims to
- * be, naming this company, verifies the account on the spot. A certificate the
- * scan cannot read is asked for again, and after the rescan budget is spent the
- * account goes to an administrator with the same reading in front of them.
- *
- * What the scan establishes is stated plainly on the page, because the
- * difference matters: it checks that the certificate names this company and
- * carries the numbers filed here. It does not prove the entity exists; only the
- * registry can say that.
- */
+/* An unverified account can reach nothing else, so this screen holds the details and the two certificates the document scan reads; one it cannot read is asked for again. */
 
 import {
 	faCircleCheck,
@@ -55,7 +40,6 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 
-/** The state as the company reads it: what it means, and what happens next. */
 const STATE_READING: Record<
 	CompanyVerification["status"],
 	{ title: string; body: string }
@@ -91,7 +75,6 @@ const STATE_TONE: Record<CompanyVerification["status"], string> = {
 	VERIFIED: "bg-emerald-50 text-emerald-700 border-emerald-300",
 };
 
-/** One certificate slot: what is filed, what the scan read, and the controls. */
 function DocumentSlot({
 	document,
 	busy,
@@ -209,9 +192,7 @@ export function CompanyVerificationPage() {
 	});
 	const verification = verificationQuery.data ?? null;
 
-	/* The fields start from the account's own record and are the company's to
-	   correct. They are seeded once, so a refetch after a save does not fight the
-	   reader's typing. */
+	/* Seeded once from the account record, so a refetch after a save does not fight the reader's typing. */
 	const [form, setForm] = useState<{
 		companyName: string;
 		industrySector: string;
@@ -258,8 +239,7 @@ export function CompanyVerificationPage() {
 
 	const submit = useMutation({
 		mutationFn: async () => {
-			// One press does the whole job: the details are saved first, so what the
-			// scan compares against is what the company just confirmed.
+			// The details are saved first, so the scan compares against what the company just confirmed.
 			await api.business.saveVerification(values);
 			return api.business.submitVerification();
 		},
@@ -305,10 +285,7 @@ export function CompanyVerificationPage() {
 	}
 
 	const reading = STATE_READING[verification.status];
-	/* What is still missing, read from the live form and the filed files rather
-	   than from the server's copy: the numbers are saved by the same press that
-	   submits, so a list built from the stored row would keep asking for what the
-	   reader has already typed. */
+	/* Read from the live form, not the server's copy: the same press saves the details, so the stored row would still ask for them. */
 	const pendingMissing = [
 		...(values.companyName.trim() ? [] : ["Company name"]),
 		...(values.industrySector ? [] : ["Industry sector"]),

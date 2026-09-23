@@ -1,5 +1,4 @@
-/* ADR-004.4: the credit score is derived, not stored. Score 0-100 from a debt-service proxy
- * (annual saving / (CAPEX / tenor), capped) plus document completeness; empty input -> null. */
+/* ADR-004.4: derived, not stored. Score 0-100 from the debt-service proxy plus document completeness; empty input -> null. */
 export interface CreditScoreInput {
 	capex: number | null;
 	tenor: number | null;
@@ -13,13 +12,11 @@ export interface CreditScoreResult {
 	rating: string | null;
 }
 
-/** Each half's weight; the wizard panel draws the score as these two parts. */
 export const SCORE_WEIGHTS = { funding: 70, documents: 30 } as const;
 
 /** The two files the document share is measured against; submit only needs one. */
 export const STEP2_DOC_TARGET = 2;
 
-/** Rating bands low to high; `min` is the first score in the band. */
 const RATING_BANDS = [
 	{ rating: "B", min: 0 },
 	{ rating: "BB", min: 35 },
@@ -42,7 +39,6 @@ export function ratingForScore(score: number): string {
 	return RATING_BANDS[ratingBandIndex(score)].rating;
 }
 
-/** The next band up, or null when the score is already in the top band. */
 export function nextRatingBand(
 	score: number,
 ): { rating: string; min: number } | null {
