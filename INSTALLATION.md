@@ -111,7 +111,7 @@ Change or remove these credentials before a deployment is shared publicly.
 - Role packages (`packages/<role>`) import only from `@greenshift/core`, `@greenshift/ui` and `@tanstack/*`,
   and never from another role package. The boundaries are documented in
   [TECHNICAL_DOCUMENTATION.md § 2](TECHNICAL_DOCUMENTATION.md#2-monorepo-and-package-boundaries).
-- UI work follows [agent.md](agent.md): shared `@greenshift/ui` components used as-is, design tokens instead
+- UI work uses the shared `@greenshift/ui` components as-is, design tokens instead
   of literal colours, Font Awesome icons.
 - Semantic HTML and the shared utilities are mandatory; do not re-implement something that already exists in
   `@greenshift/ui` or `@greenshift/core`.

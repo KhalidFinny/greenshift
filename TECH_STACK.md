@@ -23,7 +23,7 @@ document reading plus the analyst narrative run through Workers AI.
 | Tailwind CSS | 4.3 | Utility-first styling (`@tailwindcss/vite`). |
 | shadcn | 4.14 | CLI that generated the component sources in `packages/ui`. |
 | radix-ui | 1.6 | The primitive set the components are built on: dialog, dropdown, select, tabs, tooltip and the rest. |
-| Font Awesome | 7.3 | The icon set the UI guidelines call for (`agent.md`). |
+| Font Awesome | 7.3 | The icon set the UI uses on product surfaces. |
 | lucide-react | 1.34 | Icons inside the shadcn primitives and a few landing sections. |
 | @visx/* | 4.0 | Chart scales, grids, groups, shapes and patterns (`packages/ui/src/organisms/charts`). |
 | Motion | 13.4 | Chart and UI animation (`motion/react`). |

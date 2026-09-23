@@ -516,6 +516,6 @@ uses:
   in `packages/business/src/lib/validators.ts` and reaches them through
   `packages/business/src/lib/wizard-rules.ts` only.
 
-Design-system rules (see `agent.md`) still apply: use the shared components as-is, keep text at the system
+Design-system rules still apply: use the shared components as-is, keep text at the system
 sizes, use the design tokens, and never import one role package from another.
 

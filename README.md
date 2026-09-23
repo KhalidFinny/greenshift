@@ -72,9 +72,6 @@ Full instructions (role-scoped dev servers, the database workflow, deployment, t
 | [docs/BROKERROLE.md](docs/BROKERROLE.md) | Broker role specification: responsibilities, financial boundary, document and reporting flows. |
 | [docs/VENDORROLE.md](docs/VENDORROLE.md) | Vendor role specification: participation rules, tender and proposal lifecycle, delivery obligations. |
 | [docs/GLOSSARY-ajukan-proyek.md](docs/GLOSSARY-ajukan-proyek.md) | The submission wizard step by step, with the Indonesian labels it was written in. |
-| [DESIGN.md](DESIGN.md) | Design direction: palette, type, motif. |
-| [CLAUDE.md](CLAUDE.md) | Project context for coding agents: stack, layout, roles, auth, seed accounts. |
-| [agent.md](agent.md) | UI rules for the design system: components, typography, icons, layout, tokens. |
 
 ## Repository layout
 
