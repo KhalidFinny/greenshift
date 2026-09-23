@@ -1,7 +1,8 @@
-import { and, asc, desc, eq, isNotNull } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import type { GreenShiftDb } from "../../../db";
 import {
 	auditLogs,
+	blueprints,
 	brokerAssignments,
 	brokerProfiles,
 	projects,
@@ -129,4 +130,22 @@ export async function recordAudit(
 	entry: typeof auditLogs.$inferInsert,
 ): Promise<void> {
 	await db.insert(auditLogs).values(entry);
+}
+
+/** A project is verified once its blueprint has been validated or published. */
+export async function findProjectVerified(
+	db: GreenShiftDb,
+	projectId: number,
+): Promise<boolean> {
+	const [row] = await db
+		.select({ id: blueprints.id })
+		.from(blueprints)
+		.where(
+			and(
+				eq(blueprints.projectId, projectId),
+				inArray(blueprints.status, ["validated", "published"]),
+			),
+		)
+		.limit(1);
+	return row !== undefined;
 }

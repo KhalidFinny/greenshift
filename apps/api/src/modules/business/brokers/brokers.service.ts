@@ -47,14 +47,16 @@ export async function readProjectBroker(
 	);
 	if (!project) return { outcome: "not_found" };
 
-	const [assignment, tender] = await Promise.all([
+	const [assignment, tender, verified] = await Promise.all([
 		repository.findProjectAssignment(db, projectId, companyId),
 		repository.findProjectTender(db, projectId, companyId),
+		repository.findProjectVerified(db, projectId),
 	]);
 
 	return {
 		outcome: "ok",
 		ready:
+			verified ||
 			VERIFIED_PROJECT_STATUSES.includes(project.status) ||
 			(tender?.status === "awarded" && tender.awardedProposalId !== null),
 		assignment: assignment ? toAssignment(assignment) : null,
@@ -88,11 +90,13 @@ export async function assignBroker(
 	);
 	if (!project) return { outcome: "not_found" };
 
-	const [tender, existing] = await Promise.all([
+	const [tender, existing, verified] = await Promise.all([
 		repository.findProjectTender(db, projectId, companyId),
 		repository.findProjectAssignment(db, projectId, companyId),
+		repository.findProjectVerified(db, projectId),
 	]);
 	if (
+		!verified &&
 		!VERIFIED_PROJECT_STATUSES.includes(project.status) &&
 		(!tender ||
 			tender.status !== "awarded" ||

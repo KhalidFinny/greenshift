@@ -95,12 +95,7 @@ export function MatchmakingDetail({ projectId }: { projectId: string }) {
 		);
 	}
 
-	return (
-		<div className="space-y-6">
-			<VendorRanking detail={detailQuery.data} projectId={projectId} />
-			<ChooseBrokerCard projectId={Number(projectId)} />
-		</div>
-	);
+	return <VendorRanking detail={detailQuery.data} projectId={projectId} />;
 }
 
 function VendorRanking({
@@ -518,6 +513,8 @@ function VendorRanking({
 								</p>
 							)}
 						</div>
+
+						<ChooseBrokerCard projectId={Number(projectId)} />
 
 						<div className="grid gap-x-6 gap-y-3 border-t border-border pt-4 sm:grid-cols-4">
 							{[
