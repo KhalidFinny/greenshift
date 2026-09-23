@@ -41,18 +41,22 @@ bunx wrangler d1 execute greenshift-db --local --file=scripts/seed.sql
 The seed is destructive: it resets every table it owns before inserting. Never point it at a deployed
 database.
 
-Seeded logins, password `12345678` (the login form takes the username or the full email):
+Seeded logins, password `12345678` (the login form takes the username or the full email). The deployed site
+at `https://greenshift.fiinnyy.my.id` carries the same accounts.
 
-| Username | Role |
-|---|---|
-| `business1` | business |
-| `vendor1` | vendor |
-| `broker1` | broker |
-| `admin1` | admin |
+| Username | Role | Use it to test |
+|---|---|---|
+| `business1` … `business10` | company | Wizard, matchmaking, tenders, awards. Each company runs one open and one awarded round. |
+| `vendor1` … `vendor10` | vendor | Open tenders, bids and revisions, delivery. `vendor1` carries work at every stage. |
+| `broker1` … `broker5` | broker | Assignments at every lifecycle stage, document requests, monitoring reports. |
+| `admin1` | admin | Verification, blueprint publishing, payouts, anomalies, audit trail. |
 
-The same seed writes `business1` to `business10`, `vendor1` to `vendor10` and `broker1` to `broker5`, plus
-`investor1`, which exists only so the investment fixtures have a user to join on: the platform has no
-investor surface.
+`investor1` exists only so the investment fixtures have a user to join on: the platform has no investor
+surface, and the account lands on the bond catalog at `/bonds`.
+
+To test the verification flow itself, register a new account: it starts unverified, and a company cannot
+reach the rest of `/business` until its document pack has been cleared. Change or remove these credentials
+before a deployment is shared publicly.
 
 Full instructions (role-scoped dev servers, the database workflow, deployment, troubleshooting) are in
 [INSTALLATION.md](INSTALLATION.md).

@@ -52,27 +52,29 @@ bun run dev:auth       # login/auth work          (port 3008)
   a role that does not exist.
 - `VITE_SCOPE=landing` serves only the public site; every other route redirects to `/`.
 
-## Login
+## Login and test accounts
 
-All passwords are `12345678`. You may type the username or the full email. The accounts are rows in the local
-D1 database, so load the seed once (see [Database setup](#database-setup)) after the dev server has created
-that database.
+Every seeded account uses the password `12345678`, and the login form takes either
+the username or the full email (`business1` or `business1@greenshift.dev`). The
+accounts are rows in the D1 database, so load the seed once (see
+[Database setup](#database-setup)) after the dev server has created that database.
+The deployed database carries the same accounts.
 
-| Username | Email | Role |
-|---|---|---|
-| `business1` | `business1@greenshift.dev` | business |
-| `vendor1` | `vendor1@greenshift.dev` | vendor |
-| `broker1` | `broker1@greenshift.dev` | broker |
-| `admin1` | `admin1@greenshift.dev` | admin |
+| Username | Email | Role | Use it to test |
+|---|---|---|---|
+| `business1` … `business10` | `business1@greenshift.dev` … | company | The company side: submission wizard, matchmaking, tenders, awards. Each company runs two procurement rounds, one open and taking bids and one awarded. `business1` is PT Green Nusantara (Malang), `business2` is PT Sinar Abadi Textile (Bandung) if you want a named one. |
+| `vendor1` … `vendor10` | `vendor1@greenshift.dev` … | vendor | The vendor side: open tenders, bids and revisions, delivery. `vendor1` (EcoTech Solutions) carries deals at every stage, including awarded projects with milestones and MRV periods. |
+| `broker1` … `broker5` | `broker1@greenshift.dev` … | broker | The broker side: assignments at every lifecycle stage, client document requests in each state, monthly monitoring reports. |
+| `admin1` | `admin1@greenshift.dev` | admin | Account and vendor verification, blueprint publishing, ROI payouts, the anomaly console, the audit trail. |
+| `investor1` | `investor1@greenshift.dev` | investor | Nothing: the platform has no investor surface. The row exists so the investment and ROI fixtures have a user to join on, and the account lands on the public bond catalog at `/bonds`. |
 
-The seed writes ten companies (`business1` to `business10`), ten vendors (`vendor1` to `vendor10`), five
-brokers (`broker1` to `broker5`) and `admin1`. `investor1` exists only as the user the investment and ROI
-fixtures join on: the platform has no investor surface, and an investor account lands on the public bond
-catalog at `/bonds`.
+The seeded companies and vendors are already verified, so every role surface opens
+without going through the verification step. To exercise that step instead,
+register a new account: it starts unverified, and a company account cannot reach
+the rest of `/business` until the document scan (or an administrator) has cleared
+its pack.
 
-The seeded companies are verified and the seeded `broker1` is a verified broker with assignments in every
-lifecycle stage. A broker registered from scratch is unverified and sees the verification gate until an
-administrator approves the profile.
+Change or remove these credentials before a deployment is shared publicly.
 
 ## Project conventions
 
