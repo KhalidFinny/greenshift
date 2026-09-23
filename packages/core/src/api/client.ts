@@ -144,12 +144,10 @@ export const api = {
 			request<{ avatarKey: null }>(apiRoutes.accountAvatarDelete.path, {
 				method: apiRoutes.accountAvatarDelete.method,
 			}),
-		/** Picture URL keyed on the stored object, so a replacement is not served from cache. */
 		avatarPath: (key: string) =>
 			`${apiRoutes.accountAvatar.path}?v=${encodeURIComponent(key)}`,
 	},
 	business: {
-		/** The one endpoint set an unverified company can reach: the work that gets it verified. */
 		verification: () =>
 			request<CompanyVerificationResponse>(apiRoutes.businessVerification.path),
 		saveVerification: (body: CompanyVerificationBody) =>
@@ -181,7 +179,6 @@ export const api = {
 				apiRoutes.businessSubmitVerification.path,
 				{ method: apiRoutes.businessSubmitVerification.method },
 			),
-		/** Autosave: silent so typing does not fire a toast per save; the server merges the patch. */
 		saveDraft: (draftId: string, body: BusinessDraftBody) =>
 			request<BusinessDraftResponse>(
 				apiRoutes.businessDraft.path.replace(
@@ -318,7 +315,6 @@ export const api = {
 			request<BusinessProjectsResponse>(
 				apiRoutes.businessProjects.path + query(params),
 			),
-		/** The verified brokers a company may pick from. */
 		brokers: () =>
 			request<BusinessBrokersResponse>(apiRoutes.businessBrokers.path),
 		projectBroker: (projectId: number) =>
@@ -345,12 +341,10 @@ export const api = {
 			request<BusinessProjectBlueprintResponse>(
 				apiRoutes.businessProjectBlueprint.path.replace(":id", String(id)),
 			),
-		/** What Sistem Registri answers: registered or not, which tells the page a company did it there, not here. */
 		registry: (id: number) =>
 			request<BusinessProjectRegistryResponse>(
 				apiRoutes.businessProjectRegistry.path.replace(":id", String(id)),
 			),
-		/** Marks the project registered at the registry and its LVV body appointed, which starts verification. */
 		startLvv: (id: number) =>
 			request<BusinessProjectResponse>(
 				apiRoutes.businessStartLvv.path.replace(":id", String(id)),
@@ -369,7 +363,6 @@ export const api = {
 					body: JSON.stringify(body satisfies BusinessProjectReadingRequest),
 				},
 			),
-		/** The ROI forecast for the figures entered so far: the same engine the blueprint is generated with. */
 		projectForecast: (body: BusinessForecastRequest) =>
 			request<BusinessForecastResponse>(
 				apiRoutes.businessProjectForecast.path,
@@ -390,7 +383,6 @@ export const api = {
 			request<BusinessDocumentsResponse>(
 				apiRoutes.businessProjectDocuments.path.replace(":id", String(id)),
 			),
-		/** No request(): the download is a plain link, so only its path is needed. */
 		downloadPath: (id: number, docId: string) =>
 			apiRoutes.businessDownloadDocument.path
 				.replace(":id", String(id))

@@ -47,7 +47,6 @@ export const apiRoutes = {
 		method: "PATCH",
 		path: "/api/admin/vendors/:id/verify",
 	},
-	/** The certificate the vendor filed, as the reviewer reads it. */
 	adminVendorCertificate: {
 		method: "GET",
 		path: "/api/admin/vendors/:id/certificate",
@@ -111,7 +110,6 @@ export const apiRoutes = {
 	},
 	vendorProfile: { method: "GET", path: "/api/vendor/profile" },
 	vendorSaveProfile: { method: "PUT", path: "/api/vendor/profile" },
-	/** Multipart: the ESCO or ISO certificate is a file, not a JSON body. */
 	vendorCertificate: {
 		method: "POST",
 		path: "/api/vendor/profile/certificate",
@@ -134,7 +132,6 @@ export const apiRoutes = {
 		method: "DELETE",
 		path: "/api/vendor/proposals/:id",
 	},
-	/** Multipart: the proposal document is a file, not a JSON body. */
 	vendorProposalDocument: {
 		method: "POST",
 		path: "/api/vendor/proposals/:id/document",
@@ -166,7 +163,6 @@ export const apiRoutes = {
 		method: "DELETE",
 		path: "/api/vendor/portfolio/:id",
 	},
-	/** Multipart: the supporting document is a file, not a JSON body. */
 	vendorPortfolioDocument: {
 		method: "POST",
 		path: "/api/vendor/portfolio/:id/document",
@@ -180,8 +176,6 @@ export const apiRoutes = {
 		path: "/api/vendor/milestones/:id/evidence",
 	},
 	health: { method: "GET", path: "/api/health" },
-
-	// Mounted before the router's verification gate: an unverified company must reach these.
 	businessVerification: {
 		method: "GET",
 		path: "/api/business/verification",
@@ -190,7 +184,6 @@ export const apiRoutes = {
 		method: "PUT",
 		path: "/api/business/verification",
 	},
-	/** Multipart: the certificate is a file, not a JSON body. */
 	businessVerificationDocument: {
 		method: "POST",
 		path: "/api/business/verification/documents/:slot",
@@ -220,7 +213,6 @@ export const apiRoutes = {
 		method: "DELETE",
 		path: "/api/business/drafts/:draftId/documents/:docId",
 	},
-	// An action, not a plain collection POST: it consumes a draft and scores the project.
 	businessSubmit: { method: "POST", path: "/api/business/projects/submit" },
 	businessProfile: { method: "GET", path: "/api/business/profile" },
 	businessSaveProfile: { method: "PUT", path: "/api/business/profile" },
@@ -249,7 +241,6 @@ export const apiRoutes = {
 		method: "POST",
 		path: "/api/business/procurement/:projectId/proposals/:proposalId/review",
 	},
-	/** The bid's own PDF, as the company evaluating the tender reads it. */
 	businessBidDocument: {
 		method: "GET",
 		path: "/api/business/procurement/:projectId/proposals/:proposalId/document",
@@ -263,7 +254,6 @@ export const apiRoutes = {
 		path: "/api/business/notifications/:id",
 	},
 	businessProjects: { method: "GET", path: "/api/business/projects" },
-	/** The verified brokers a company can choose from; verified only. */
 	businessBrokers: { method: "GET", path: "/api/business/brokers" },
 	businessProjectBroker: {
 		method: "GET",
@@ -319,7 +309,6 @@ export const apiRoutes = {
 	},
 } as const;
 
-/** Read-only binding probes behind `GET /api/health`. */
 export interface HealthResponse {
 	status: "ok" | "degraded";
 	checks: Record<string, { status: "ok" | "error" }>;

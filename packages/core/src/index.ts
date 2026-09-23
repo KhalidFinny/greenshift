@@ -1,4 +1,3 @@
-// Role packages may import only from core, so the API contract's shapes and lists are re-exported here.
 export type {
 	AdminCompanyVerification,
 	AnalystReadingMode,

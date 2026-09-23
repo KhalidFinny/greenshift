@@ -20,11 +20,7 @@ import { riskRoutes } from "./risk/risk.routes";
 import { verificationRoutes } from "./verification/verification.routes";
 
 export const businessRoutes = new Hono<ApiEnv>();
-
-// `requireJsonBody` is absent here: the document upload is multipart, which that guard rejects.
 businessRoutes.use("*", requireSession, requireRole("business"), requireCsrf);
-
-// Route order matters: verification mounts first so an unverified account can reach it.
 businessRoutes.route("/", verificationRoutes);
 businessRoutes.use("*", requireVerifiedCompany);
 

@@ -1,5 +1,3 @@
-/* The company's broker choice: the pool it picks from, and the broker that received the project. */
-
 import { faScaleBalanced } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { api, type BusinessBrokerOption } from "@greenshift/core";
@@ -66,18 +64,14 @@ export function ChooseBrokerCard({ projectId }: { projectId: number }) {
 		staleTime: 60 * 1000,
 	});
 
-	const awarded = brokerQuery.data?.awarded === true;
+	const ready = brokerQuery.data?.ready === true;
 	const assignment = brokerQuery.data?.assignment ?? null;
-
-	// The pool is asked for only when a choice is actually open.
 	const poolQuery = useQuery({
 		queryKey: ["business", "brokers"],
-		enabled: awarded && assignment === null,
+		enabled: ready && assignment === null,
 		queryFn: async () => (await api.business.brokers()).brokers,
 		staleTime: 5 * 60 * 1000,
 	});
-
-	// The client publishes the endpoint's own message, so the card only refreshes the read.
 	const choose = useMutation({
 		mutationFn: (brokerId: number) =>
 			api.business.assignBroker(projectId, brokerId),
@@ -116,9 +110,10 @@ export function ChooseBrokerCard({ projectId }: { projectId: number }) {
 							</Button>
 						}
 					/>
-				) : !awarded ? (
+				) : !ready ? (
 					<p className="text-sm text-muted-foreground">
-						The broker can be chosen once this project's tender is awarded.
+						The broker can be chosen once this project is verified after
+						matchmaking.
 					</p>
 				) : assignment ? (
 					<div className="space-y-3">
@@ -140,8 +135,8 @@ export function ChooseBrokerCard({ projectId }: { projectId: number }) {
 				) : (
 					<div className="space-y-4">
 						<p className="text-sm text-muted-foreground">
-							This project's tender is awarded. Choose the verified broker that
-							receives it.
+							This project is verified. Choose the verified broker that receives
+							it.
 						</p>
 						{poolQuery.isPending ? (
 							<div className="space-y-3" aria-busy>

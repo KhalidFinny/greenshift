@@ -1,5 +1,3 @@
-// Choosing the broker that carries an awarded project: the pool, the read-back, and the write.
-
 import type {
 	BusinessBrokerOption,
 	BusinessProjectBroker,
@@ -9,7 +7,6 @@ import { insertNotification } from "../notifications/notifications.repository";
 import * as projectsRepository from "../projects/projects.repository";
 import * as repository from "./brokers.repository";
 
-/** The verified brokers a company can pick, read straight off their profiles. */
 export async function listBrokerOptions(
 	db: GreenShiftDb,
 ): Promise<BusinessBrokerOption[]> {
@@ -19,10 +16,12 @@ export async function listBrokerOptions(
 export type ProjectBrokerResult =
 	| {
 			outcome: "ok";
-			awarded: boolean;
+			ready: boolean;
 			assignment: BusinessProjectBroker | null;
 	  }
 	| { outcome: "not_found" };
+
+const VERIFIED_PROJECT_STATUSES = ["funding", "registry", "monitoring"];
 
 function toAssignment(
 	row: repository.ProjectAssignmentRow,
@@ -55,7 +54,9 @@ export async function readProjectBroker(
 
 	return {
 		outcome: "ok",
-		awarded: tender?.status === "awarded" && tender.awardedProposalId !== null,
+		ready:
+			VERIFIED_PROJECT_STATUSES.includes(project.status) ||
+			(tender?.status === "awarded" && tender.awardedProposalId !== null),
 		assignment: assignment ? toAssignment(assignment) : null,
 	};
 }
@@ -91,17 +92,14 @@ export async function assignBroker(
 		repository.findProjectTender(db, projectId, companyId),
 		repository.findProjectAssignment(db, projectId, companyId),
 	]);
-
-	// The award is what hands the project over, so there is nothing to assign before it.
 	if (
-		!tender ||
-		tender.status !== "awarded" ||
-		tender.awardedProposalId === null
+		!VERIFIED_PROJECT_STATUSES.includes(project.status) &&
+		(!tender ||
+			tender.status !== "awarded" ||
+			tender.awardedProposalId === null)
 	) {
 		return { outcome: "not_awarded" };
 	}
-
-	// One broker per project: the row that exists is the one the broker surface already reads.
 	if (existing) {
 		return {
 			outcome: "already_assigned",

@@ -1,5 +1,3 @@
-// The company's broker choice: the pool, the project's current assignment, and the write.
-
 import { Hono } from "hono";
 import { createFactory } from "hono/factory";
 import type { BusinessAssignBrokerBody } from "../../../contracts";

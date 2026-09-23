@@ -69,7 +69,6 @@ export function MatchmakingDetail({ projectId }: { projectId: string }) {
 	}
 
 	if (detailQuery.isError || !detailQuery.data) {
-		// A 404 is the route's own answer; anything else is worth retrying.
 		const missing =
 			detailQuery.error instanceof ApiError && detailQuery.error.status === 404;
 		return (
@@ -99,7 +98,6 @@ export function MatchmakingDetail({ projectId }: { projectId: string }) {
 	return <VendorRanking detail={detailQuery.data} projectId={projectId} />;
 }
 
-/** Its own component so the columns keep hook order: a hook below the loading return would change it once the query lands. */
 function VendorRanking({
 	detail,
 	projectId,
@@ -125,7 +123,6 @@ function VendorRanking({
 			});
 			return true;
 		} catch {
-			// The shared client already reported the failure as a toast.
 			return false;
 		} finally {
 			setBusy(false);
@@ -135,10 +132,8 @@ function VendorRanking({
 	const { recommendedVendors, matchFactors } = detail;
 	const tender = detail.tender;
 	const route = method ?? detail.selectedMethod ?? tender?.method ?? null;
-	// Once bidding closes the terms are frozen: the bids were made against them.
 	const shaping = tender === null || tender.status === "open";
 	const winnerName = tender?.awardedVendorName ?? null;
-	// The direct route is the only one that names a vendor up front; it runs without competing bids.
 	const direct = route === "direct";
 	const namedVendor =
 		recommendedVendors.find(
@@ -164,7 +159,6 @@ function VendorRanking({
 		);
 	}
 
-	/** The direct route names the vendor it appoints. It is not an award. */
 	function nameVendor(vendor: BusinessRecommendedVendor) {
 		setVendorId(vendor.id);
 		setReading(vendor.id);
@@ -179,7 +173,6 @@ function VendorRanking({
 		void saveTerms(nextMethod);
 	}
 
-	/** The vendor is sent only for the direct route, the one that names one. */
 	function saveTerms(
 		nextMethod: BusinessMatchmakingMethod | null = route,
 		vendor: BusinessRecommendedVendor | null = namedVendor,
@@ -216,7 +209,6 @@ function VendorRanking({
 					<button
 						type="button"
 						onClick={(event) => {
-							// The row's own click would put it straight back down.
 							event.stopPropagation();
 							toggleRead(row.original.id);
 						}}
@@ -329,7 +321,6 @@ function VendorRanking({
 					) : null,
 			},
 		],
-		// The row actions close over the on-screen terms, so the columns rebuild when those change.
 		[
 			deadline,
 			detail.selectedVendorId,
@@ -503,7 +494,7 @@ function VendorRanking({
 										: "Open the tender"}
 								</Button>
 							)}
-							{/* A closed tender with no bids has no table button, so the way to its page stays here. */}
+							{}
 							{!shaping && (
 								<Button variant="outline" asChild>
 									<Link

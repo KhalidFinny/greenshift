@@ -223,10 +223,8 @@ function CreateDocumentRequestModal({
 	);
 }
 
-/** A stage of the walk; DECLINED is the exit, not a stage. */
 type LifecycleStage = Exclude<BrokerProjectWorkflowStatus, "DECLINED">;
 
-/** The lifecycle in the order the broker walks it; DECLINED leaves it. */
 const LIFECYCLE_STAGES: LifecycleStage[] = [
 	"ASSIGNED",
 	"DOCUMENT_COLLECTION",
@@ -237,7 +235,6 @@ const LIFECYCLE_STAGES: LifecycleStage[] = [
 	"COMPLETED",
 ];
 
-/** What the system does at each stage, so the list reads as work, not theory. */
 const STAGE_NEEDS: Record<LifecycleStage, string> = {
 	ASSIGNED:
 		"Your decision: accept it, ask the company for information, or decline.",
@@ -252,10 +249,8 @@ const STAGE_NEEDS: Record<LifecycleStage, string> = {
 	COMPLETED: "The file is closed; nothing is left to record.",
 };
 
-/** A stage a move can land on; ASSIGNED starts the walk and DECLINED leaves it. */
 type MoveTarget = Exclude<BrokerProjectWorkflowStatus, "ASSIGNED" | "DECLINED">;
 
-/** Every move the lifecycle accepts, each with the one-line reason for taking it. */
 const MOVES: { status: MoveTarget; reason: string }[] = [
 	{
 		status: "DOCUMENT_COLLECTION",
@@ -283,7 +278,6 @@ const MOVES: { status: MoveTarget; reason: string }[] = [
 	},
 ];
 
-/** A stage with no move states where the assignment stands, in one line. */
 function standingNote(status: BrokerProjectWorkflowStatus): string {
 	switch (status) {
 		case "ASSIGNED":
@@ -309,25 +303,16 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 		updateBondStatus,
 		updateWorkflowStatus,
 	} = useBrokerData();
-
-	// The route param is the source of truth when the page is mounted as a
-	// route; the prop stays supported for direct embedding.
 	const { id } = useParams({ strict: false }) as { id?: string };
 	const targetId = projectId ?? id;
 	const project = targetId
 		? projects.find((p) => p.id === targetId)
 		: projects[0];
-
-	// These hooks page the rows the cards already filtered; they run before the
-	// not-found return so the hook order stays fixed.
 	const projectDocs = project
 		? documentRequests.filter((d) => d.projectId === project.id)
 		: [];
 	const projectDocumentsPage = usePagedRows(project?.documents ?? []);
 	const projectDocsPage = usePagedRows(projectDocs);
-
-	// The assignment list arrives asynchronously; without a project there is
-	// nothing to render yet (or the id is not assigned to this broker).
 	if (!project) {
 		return (
 			<div className="space-y-6">
@@ -374,7 +359,6 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 	);
 	const latestReport = projectReports[0];
 	const nextStatuses = nextWorkflowStatuses(project.workflowStatus);
-	// DECLINED never entered the walk, so it has no step to count.
 	const currentStageIndex = LIFECYCLE_STAGES.findIndex(
 		(stage) => stage === project.workflowStatus,
 	);
@@ -382,7 +366,6 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 		currentStageIndex >= 0
 			? `${workflowLabel(project.workflowStatus)}, step ${currentStageIndex + 1} of ${LIFECYCLE_STAGES.length}`
 			: standingNote(project.workflowStatus);
-	// The forward move leads; a one-step correction follows it.
 	const moves = MOVES.filter((move) => nextStatuses.includes(move.status))
 		.map((move) => ({
 			...move,

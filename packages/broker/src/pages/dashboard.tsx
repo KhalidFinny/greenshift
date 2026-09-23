@@ -70,8 +70,6 @@ export function BrokerDashboard() {
 			/>
 		);
 	}
-
-	// Labels and icons are static, so they stay real text while the figures load.
 	const kpiItems = [
 		{
 			label: "Assigned Projects",

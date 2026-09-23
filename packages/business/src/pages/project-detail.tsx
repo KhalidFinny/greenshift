@@ -22,7 +22,6 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
 	});
 
 	if (projectQuery.isError) {
-		// Missing project vs failed request: the first is the route's own answer, the second retryable.
 		const missing =
 			projectQuery.error instanceof ApiError &&
 			projectQuery.error.status === 404;
@@ -117,7 +116,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
 
 			<ChooseBrokerCard projectId={id} />
 
-			{/* Matchmaking opens with verification, so the route is offered once it clears. */}
+			{}
 			{isMatchmakingOpen(project.status) ? (
 				<div className="flex flex-wrap items-center gap-3">
 					<Button variant="outline" asChild>

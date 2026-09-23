@@ -11,7 +11,6 @@ import { Link } from "@tanstack/react-router";
 import { workflowLabel } from "../lib/lifecycle";
 import type { BrokerAssignedProject } from "../lib/types";
 
-/** Destinations a stage's work lands on. Typed so a typo cannot ship. */
 type StageSurface =
 	| "/broker/projects"
 	| "/broker/document-requests"
@@ -19,11 +18,9 @@ type StageSurface =
 
 interface Stage {
 	status: BrokerAssignedProject["workflowStatus"];
-	/** Where that work happens; a stage with no work left carries none. */
 	surface?: { to: StageSurface; label: string };
 }
 
-/** The lifecycle as the broker walks it, in order. DECLINED is the exit, not a stage. */
 const STAGES: Stage[] = [
 	{
 		status: "ASSIGNED",
@@ -53,9 +50,7 @@ const STAGES: Stage[] = [
 ];
 
 interface BrokerLifecycleCardProps {
-	/** This broker's assignments; the counts are read off their workflow stage. */
 	projects: BrokerAssignedProject[];
-	/** Data still in flight: the stage list is static, so only the counts shimmer. */
 	loading?: boolean;
 }
 

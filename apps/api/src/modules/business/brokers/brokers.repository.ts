@@ -1,5 +1,3 @@
-// The broker pool a company picks from, and the assignment it writes into.
-
 import { and, asc, desc, eq, isNotNull } from "drizzle-orm";
 import type { GreenShiftDb } from "../../../db";
 import {
@@ -20,7 +18,6 @@ export type BrokerOptionRow = {
 	address: string | null;
 };
 
-/** Verified brokers only: an unverified firm cannot be handed a project (§6). */
 export async function listVerifiedBrokers(
 	db: GreenShiftDb,
 ): Promise<BrokerOptionRow[]> {
@@ -39,7 +36,6 @@ export async function listVerifiedBrokers(
 		.orderBy(asc(brokerProfiles.companyName));
 }
 
-/** One verified broker, so an assignment can never name a stranger or an unverified firm. */
 export async function findVerifiedBroker(db: GreenShiftDb, brokerId: number) {
 	const [row] = await db
 		.select({ id: users.id, firmName: brokerProfiles.companyName })
@@ -59,7 +55,6 @@ export async function findVerifiedBroker(db: GreenShiftDb, brokerId: number) {
 
 export type ProjectAssignmentRow = {
 	brokerId: number;
-	/** The firm's profile name, or the broker account's own name when no profile is stored. */
 	firmName: string | null;
 	accountName: string;
 	status: string;
@@ -67,7 +62,6 @@ export type ProjectAssignmentRow = {
 	declineReason: string | null;
 };
 
-/** The project's assignment, scoped through the project so a foreign row is absent. */
 export async function findProjectAssignment(
 	db: GreenShiftDb,
 	projectId: number,
@@ -101,7 +95,6 @@ export async function findProjectAssignment(
 	return row ?? null;
 }
 
-/** One project's tender, read for the award state the broker choice depends on. */
 export async function findProjectTender(
 	db: GreenShiftDb,
 	projectId: number,
