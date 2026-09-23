@@ -1,10 +1,6 @@
 import { Hono } from "hono";
 import { createFactory } from "hono/factory";
-import type {
-	BrokerDocumentRequest,
-	BrokerDocumentRequestBody,
-	BrokerDocumentReviewBody,
-} from "../../../contracts";
+import type { BrokerDocumentRequestBody } from "../../../contracts";
 import { createDb } from "../../../db";
 import { type DocumentCategory, documentCategories } from "../../../db/schema";
 import type { ApiEnv } from "../../../env";
@@ -16,52 +12,21 @@ import {
 } from "../../../lib/format";
 import { mutationRateLimit } from "../../../lib/mutation-limit";
 import { apiError, apiNotFound, apiSuccess } from "../../../lib/response";
+import { documentReviewRoutes } from "./document-review.routes";
 import {
-	type DocumentRequestRow,
 	listDocumentRequests,
 	loadDocumentContext,
+	toDocumentRequest,
 } from "./documents.repository";
-import {
-	createDocumentRequest,
-	reviewDocumentRequest,
-} from "./documents.service";
+import { createDocumentRequest } from "./documents.service";
 
 const factory = createFactory<ApiEnv>();
 const requestLimit = mutationRateLimit("broker", "document-request");
-const reviewLimit = mutationRateLimit("broker", "document-review");
 
 export const documentRoutes = new Hono<ApiEnv>();
 
 const MAX_PERIOD = 100;
 
-function toDocumentRequest(
-	row: DocumentRequestRow,
-	projectTitle: string,
-	companyName: string,
-): BrokerDocumentRequest {
-	return {
-		id: row.id,
-		projectId: row.projectId,
-		projectTitle,
-		companyName,
-		category: row.category,
-		documentTypeName: row.documentTypeName,
-		requiredPeriod: row.requiredPeriod,
-		reason: row.reason,
-		deadlineDate: row.deadlineDate
-			? row.deadlineDate.toISOString().slice(0, 10)
-			: null,
-		additionalNotes: row.additionalNotes,
-		status: row.status,
-		submittedFileName: row.submittedFileName,
-		submittedFileUrl: row.submittedFileUrl,
-		submittedAt: row.submittedAt?.toISOString() ?? null,
-		rejectionReason: row.rejectionReason,
-		reviewedAt: row.reviewedAt?.toISOString() ?? null,
-	};
-}
-
-// ── document requests (§15-§19) ───────────────────────────
 documentRoutes.get(
 	"/document-requests",
 	...factory.createHandlers(async (c) => {
@@ -156,55 +121,4 @@ documentRoutes.post(
 	}),
 );
 
-documentRoutes.patch(
-	"/document-requests/:id",
-	reviewLimit,
-	...factory.createHandlers(async (c) => {
-		const id = Number(c.req.param("id"));
-		const body = (await c.req
-			.json()
-			.catch(() => null)) as Partial<BrokerDocumentReviewBody> | null;
-		const action = body?.action;
-		if (
-			!Number.isInteger(id) ||
-			id <= 0 ||
-			(action !== "START_REVIEW" &&
-				action !== "APPROVE" &&
-				action !== "REJECT") ||
-			invalidOptionalText(body?.reason, MAX_TEXT)
-		) {
-			return apiError(c, "VALIDATION");
-		}
-
-		const db = createDb(c.env.DB);
-		const result = await reviewDocumentRequest(db, {
-			brokerId: c.get("user").id,
-			id,
-			action,
-			reason: body?.reason,
-		});
-		if (result.outcome === "not_found") {
-			return apiNotFound(c, "Document request");
-		}
-		if (result.outcome === "conflict") {
-			return apiError(c, "CONFLICT", result.message);
-		}
-		if (result.outcome === "invalid") {
-			return apiError(c, "VALIDATION", result.message);
-		}
-
-		const context = await loadDocumentContext(db, [result.request]);
-		const entry = context.get(result.request.id);
-		return apiSuccess(
-			c,
-			{
-				request: toDocumentRequest(
-					result.request,
-					entry?.projectTitle ?? "Project",
-					entry?.companyName ?? "Company",
-				),
-			},
-			"Changes saved successfully",
-		);
-	}),
-);
+documentRoutes.route("/", documentReviewRoutes);

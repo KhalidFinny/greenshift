@@ -1,4 +1,5 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
+import type { BrokerDocumentRequest } from "../../../contracts";
 import type { GreenShiftDb } from "../../../db";
 import {
 	brokerAssignments,
@@ -10,6 +11,33 @@ import {
 
 export type DocumentRequestRow = typeof documentRequests.$inferSelect;
 export type BrokerAssignmentRow = typeof brokerAssignments.$inferSelect;
+
+export function toDocumentRequest(
+	row: DocumentRequestRow,
+	projectTitle: string,
+	companyName: string,
+): BrokerDocumentRequest {
+	return {
+		id: row.id,
+		projectId: row.projectId,
+		projectTitle,
+		companyName,
+		category: row.category,
+		documentTypeName: row.documentTypeName,
+		requiredPeriod: row.requiredPeriod,
+		reason: row.reason,
+		deadlineDate: row.deadlineDate
+			? row.deadlineDate.toISOString().slice(0, 10)
+			: null,
+		additionalNotes: row.additionalNotes,
+		status: row.status,
+		submittedFileName: row.submittedFileName,
+		submittedFileUrl: row.submittedFileUrl,
+		submittedAt: row.submittedAt?.toISOString() ?? null,
+		rejectionReason: row.rejectionReason,
+		reviewedAt: row.reviewedAt?.toISOString() ?? null,
+	};
+}
 
 export interface DocumentContext {
 	projectTitle: string;

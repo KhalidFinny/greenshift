@@ -1,6 +1,34 @@
 import { and, desc, eq } from "drizzle-orm";
+import type { VendorPortfolioItem } from "../../../contracts";
+import { apiRoutes } from "../../../contracts";
 import type { GreenShiftDb } from "../../../db";
 import { vendorPortfolioItems } from "../../../db/schema";
+
+export function toPortfolioItem(
+	row: typeof vendorPortfolioItems.$inferSelect,
+): VendorPortfolioItem {
+	return {
+		id: row.id,
+		projectName: row.projectName,
+		clientName: row.clientName,
+		projectType: row.projectType,
+		location: row.location,
+		description: row.description,
+		projectValue: row.projectValue,
+		durationMonths: row.durationMonths,
+		servicesProvided: row.servicesProvided,
+		energySavingPercent: row.energySavingPercent,
+		carbonReductionTons: row.carbonReductionTons,
+		completionYear: row.completionYear,
+		documentName: row.documentName,
+		documentUrl: row.documentKey
+			? apiRoutes.vendorPortfolioDocumentFile.path.replace(
+					":id",
+					String(row.id),
+				)
+			: null,
+	};
+}
 
 export async function listPortfolioItems(db: GreenShiftDb, vendorId: number) {
 	return db
@@ -45,7 +73,6 @@ export async function findPortfolioItem(
 	return row ?? null;
 }
 
-/** Files a document on a record the vendor owns. */
 export async function setPortfolioDocument(
 	db: GreenShiftDb,
 	id: number,
