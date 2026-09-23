@@ -133,8 +133,7 @@ export function ChooseBrokerCard({ projectId }: { projectId: number }) {
 						</p>
 						{assignment.declineReason ? (
 							<p className="rounded-lg border border-amber-600/30 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-								The broker declined this assignment:{" "}
-								{assignment.declineReason}
+								The broker declined this assignment: {assignment.declineReason}
 							</p>
 						) : null}
 					</div>

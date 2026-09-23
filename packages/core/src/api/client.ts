@@ -25,9 +25,9 @@ import type {
 	BrokerProfile,
 	BrokerProfileBody,
 	BrokerProjectStatusBody,
-	BusinessAwardBody,
 	BusinessAssignBrokerBody,
 	BusinessAssignBrokerResponse,
+	BusinessAwardBody,
 	BusinessBidReviewBody,
 	BusinessBrokersResponse,
 	BusinessDocumentResponse,
@@ -323,17 +323,11 @@ export const api = {
 			request<BusinessBrokersResponse>(apiRoutes.businessBrokers.path),
 		projectBroker: (projectId: number) =>
 			request<BusinessProjectBrokerResponse>(
-				apiRoutes.businessProjectBroker.path.replace(
-					":id",
-					String(projectId),
-				),
+				apiRoutes.businessProjectBroker.path.replace(":id", String(projectId)),
 			),
 		assignBroker: (projectId: number, brokerId: number) =>
 			request<BusinessAssignBrokerResponse>(
-				apiRoutes.businessAssignBroker.path.replace(
-					":id",
-					String(projectId),
-				),
+				apiRoutes.businessAssignBroker.path.replace(":id", String(projectId)),
 				{
 					method: apiRoutes.businessAssignBroker.method,
 					body: JSON.stringify({ brokerId } satisfies BusinessAssignBrokerBody),

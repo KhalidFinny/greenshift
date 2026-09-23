@@ -17,7 +17,11 @@ export async function listBrokerOptions(
 }
 
 export type ProjectBrokerResult =
-	| { outcome: "ok"; awarded: boolean; assignment: BusinessProjectBroker | null }
+	| {
+			outcome: "ok";
+			awarded: boolean;
+			assignment: BusinessProjectBroker | null;
+	  }
 	| { outcome: "not_found" };
 
 function toAssignment(
