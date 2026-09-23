@@ -2,8 +2,8 @@ import { formatId } from "./number-format";
 
 /** Status pill colours, keyed by the pill label the API returns. */
 export const STATUS_PILL: Record<string, string> = {
-	// The verification step's two labels — the registry registration that opens it and the LVV
-	// verification itself — both carry the stage's amber.
+	// The verification step's two labels (the registry registration that opens it and
+	// the LVV verification itself) both carry the stage's amber.
 	"Register for LVV": "bg-amber-50 text-amber-700",
 	"Awaiting LVV verification": "bg-amber-50 text-amber-700",
 	Matchmaking: "bg-blue-50 text-blue-700",

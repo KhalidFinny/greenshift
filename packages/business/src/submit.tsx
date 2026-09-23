@@ -35,7 +35,7 @@ export function BusinessSubmit() {
 	const { toast } = useToast();
 	const navigate = useNavigate();
 
-	/* ADR-006: shell state — the active step, and whether Save and continue was pressed. */
+	/* ADR-006: shell state (the active step, and whether Save and continue was pressed). */
 	const [activeStep, setActiveStep] = useState(0);
 	/* Save and continue re-runs the step's rules with their messages on; step 2 also asks its document
 	 * count. */
@@ -51,7 +51,7 @@ export function BusinessSubmit() {
 	const finFileIds = useMemo(() => finFiles.map((file) => file.id), [finFiles]);
 
 	/* Draft persistence: a stored draft seeds every step in one reset before autosave
-	   arms. Stored files are seeded too — an empty list would detach every upload. */
+	   arms. Stored files are seeded too: an empty list would detach every upload. */
 	const readyToSave = useRef(false);
 	const draft = useBusinessDraft((resume) => {
 		// `useForm` re-applies the caller's blank `defaultValues` while the form is

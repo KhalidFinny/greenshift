@@ -37,7 +37,7 @@ company account is `NOT_VERIFIED`, and the business surface is closed to it:
 routes) and `requireVerifiedCompany` in the business route's `beforeLoad` (every
 screen except `/business/verification`). The company confirms its details, files
 its legal identity numbers and the two certificates behind them, and submits the
-pack — one screen, one job, with the list of what is still missing on it.
+pack: one screen, one job, with the list of what is still missing on it.
 
 **The pack is scanned, and the scan is the verdict.** On submit, each
 certificate is converted to text (`AI.toMarkdown`) and a model reads two things

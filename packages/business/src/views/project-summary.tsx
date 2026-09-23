@@ -216,7 +216,7 @@ function Figure({
 }
 
 /** One case as a column of the report: its name, the share of the plan it assumes, what
- * that produces, and the assumptions behind it — the two never come apart. */
+ * that produces, and the assumptions behind it: the two never come apart. */
 function ScenarioColumn({
 	scenario,
 	first,
