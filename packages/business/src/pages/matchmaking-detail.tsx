@@ -95,7 +95,12 @@ export function MatchmakingDetail({ projectId }: { projectId: string }) {
 		);
 	}
 
-	return <VendorRanking detail={detailQuery.data} projectId={projectId} />;
+	return (
+		<div className="space-y-6">
+			<VendorRanking detail={detailQuery.data} projectId={projectId} />
+			<ChooseBrokerCard projectId={Number(projectId)} />
+		</div>
+	);
 }
 
 function VendorRanking({
@@ -552,7 +557,12 @@ function VendorRanking({
 				</div>
 
 				<div className="min-w-0 space-y-6">
-					<SelectedVendorPanel vendor={readVendor} />
+					<SelectedVendorPanel
+						vendor={readVendor}
+						onChoose={
+							shaping && readVendor ? () => nameVendor(readVendor) : undefined
+						}
+					/>
 					{recommendedVendors.length > 0 && (
 						<ModelCard factors={matchFactors}>
 							<Button
@@ -574,8 +584,10 @@ function VendorRanking({
 
 function SelectedVendorPanel({
 	vendor,
+	onChoose,
 }: {
 	vendor: BusinessRecommendedVendor | null;
+	onChoose?: () => void;
 }) {
 	return (
 		<Card>
@@ -611,6 +623,11 @@ function SelectedVendorPanel({
 								<VendorCriteria vendor={vendor} />
 							</div>
 						</div>
+						{onChoose ? (
+							<Button type="button" className="w-full" onClick={onChoose}>
+								Choose this vendor
+							</Button>
+						) : null}
 					</>
 				)}
 			</CardContent>
