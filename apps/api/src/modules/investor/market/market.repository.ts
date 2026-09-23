@@ -3,7 +3,7 @@ import type { GreenShiftDb } from "../../../db";
 import {
 	blueprints,
 	brokerAssignments,
-	investments,
+	emissionReports,
 	projects,
 	users,
 } from "../../../db/schema";
@@ -29,14 +29,27 @@ export async function listPublishedBlueprints(db: GreenShiftDb) {
 		.orderBy(desc(blueprints.id));
 }
 
-export async function listFundedByProject(db: GreenShiftDb) {
+/**
+ * What the MRV periods add up to, per project: the tonnes the verified reports
+ * account for, how many periods there are, the latest of them, and whether any
+ * period deviated from its baseline.
+ *
+ * This is the figure the public listing reports. The money a project raised
+ * belongs to the SCF partner, so the marketplace's own number is the emission
+ * reduction it can stand behind.
+ */
+export async function listEmissionMonitoring(db: GreenShiftDb) {
 	return db
 		.select({
-			projectId: investments.projectId,
-			funded: sql<number>`coalesce(sum(case when ${investments.status} = 'active' then ${investments.amount} else 0 end), 0)`,
+			projectId: emissionReports.projectId,
+			verifiedTco2: sql<number>`coalesce(sum(${emissionReports.emissionReduction}), 0)`,
+			periods: sql<number>`count(*)`,
+			latestPeriod: sql<number | null>`max(${emissionReports.periodStart})`,
+			anomalyFlagged: sql<number>`max(case when ${emissionReports.anomalyFlagged} then 1 else 0 end)`,
 		})
-		.from(investments)
-		.groupBy(investments.projectId);
+		.from(emissionReports)
+		.where(isNotNull(emissionReports.emissionReduction))
+		.groupBy(emissionReports.projectId);
 }
 
 /**

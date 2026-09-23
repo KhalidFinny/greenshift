@@ -29,7 +29,7 @@ const faqs = [
 	{
 		question: "How do I monitor a project after it is funded?",
 		answer:
-			"Access a real-time dashboard to track project performance, investment returns, and carbon emission reduction impact. All data is available in one place.",
+			"GreenShift reports what the project actually cuts: measured energy saving and carbon reduction, period by period, checked against the baseline it was verified on. The bond itself is issued and held by a licensed securities partner, so the investment is followed in their app.",
 	},
 	{
 		question: "Who is involved in the GreenShift ecosystem?",
@@ -42,7 +42,7 @@ export default function FaqSection() {
 	return (
 		<section id="faq" className="bg-white">
 			<div className="page-wrap py-28">
-				<header className="max-w-2xl">
+				<header className="mx-auto max-w-2xl text-center">
 					<p className="text-base font-bold uppercase tracking-[0.2em] text-[#03442C]">
 						FAQ
 					</p>
@@ -61,7 +61,10 @@ export default function FaqSection() {
 					</p>
 				</header>
 
-				<div className="mt-16 grid gap-x-16 lg:grid-cols-2">
+				{/* Centred as one block: the two columns read as a single list, so the
+				    pair is inset from the page margins instead of spread edge to edge,
+				    and the two lists no longer touch where they stack on a phone. */}
+				<div className="mx-auto mt-16 grid max-w-5xl gap-x-16 gap-y-10 lg:grid-cols-2">
 					<Accordion
 						type="single"
 						collapsible

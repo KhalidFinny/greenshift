@@ -1,12 +1,17 @@
-import { faArrowLeft, faCircleInfo } from "@fortawesome/free-solid-svg-icons";
+import { faCircleInfo } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import type { BondListing } from "@greenshift/api/contracts";
-import { api } from "@greenshift/core";
-import { Button, cn, EmptyState } from "@greenshift/ui";
+import { api, PRIMARY_PARTNER } from "@greenshift/core";
+import {
+	Button,
+	cn,
+	EmptyState,
+	PaginationBar,
+	usePagedRows,
+} from "@greenshift/ui";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { PRIMARY_BROKER } from "../lib/broker-platforms";
 import { BondCard, BondCardSkeleton } from "../organisms/market-card";
 
 type BondTab = "verified" | "on_progress";
@@ -25,6 +30,17 @@ function ListingGrid({
 	tab,
 	onSwitchTab,
 }: ListingGridProps) {
+	// The tab already narrowed the source, so the hook pages the filtered rows.
+	const {
+		pageRows,
+		pageIndex,
+		pageSize,
+		pageCount,
+		total,
+		setPageIndex,
+		setPageSize,
+	} = usePagedRows(listings);
+
 	if (loading) {
 		return (
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -39,17 +55,17 @@ function ListingGrid({
 		return tab === "verified" ? (
 			<EmptyState
 				title="No verified bonds listed"
-				description="No bond has cleared verification and broker placement yet, so there is nothing to buy. Bonds still under review sit on the In Progress tab."
+				description="No project has cleared validation and partner issuance yet, so there is nothing to monitor here. Projects still under review sit on the In Progress tab."
 				action={
 					<Button variant="outline" onClick={() => onSwitchTab("on_progress")}>
-						View bonds in progress
+						View projects in progress
 					</Button>
 				}
 			/>
 		) : (
 			<EmptyState
-				title="No bonds under review"
-				description="Every listed bond has cleared verification, so nothing is waiting on review. Buyable bonds sit on the Verified tab."
+				title="No projects under review"
+				description="Every listed project has cleared validation, so nothing is waiting on review. Issued bonds sit on the Verified tab."
 				action={
 					<Button variant="outline" onClick={() => onSwitchTab("verified")}>
 						View verified bonds
@@ -60,10 +76,21 @@ function ListingGrid({
 	}
 
 	return (
-		<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-			{listings.map((listing) => (
-				<BondCard key={listing.id} listing={listing} />
-			))}
+		<div className="space-y-4">
+			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+				{pageRows.map((listing) => (
+					<BondCard key={listing.id} listing={listing} />
+				))}
+			</div>
+			<PaginationBar
+				label="Bond listings"
+				pageIndex={pageIndex}
+				pageSize={pageSize}
+				pageCount={pageCount}
+				total={total}
+				onPageIndexChange={setPageIndex}
+				onPageSizeChange={setPageSize}
+			/>
 		</div>
 	);
 }
@@ -94,7 +121,6 @@ export function BondsPage() {
 				<div className="page-wrap mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
 					<Link to="/">
 						<Button variant="outline" size="lg">
-							<FontAwesomeIcon icon={faArrowLeft} />
 							Back to Home
 						</Button>
 					</Link>
@@ -111,6 +137,11 @@ export function BondsPage() {
 					<h1 className="text-3xl font-semibold leading-tight sm:text-4xl">
 						Green Bonds
 					</h1>
+					<p className="mt-3 text-base leading-relaxed text-muted-foreground">
+						Every project GreenShift has taken to an issued bond, with the
+						emission reductions it has measured and verified. The bond itself is
+						issued and held by a licensed securities partner.
+					</p>
 				</header>
 
 				<div className="mt-6 flex max-w-3xl items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4">
@@ -120,10 +151,10 @@ export function BondsPage() {
 					/>
 					<p className="text-sm leading-relaxed text-muted-foreground">
 						<span className="font-medium text-foreground">
-							{PRIMARY_BROKER.name}
+							{PRIMARY_PARTNER.name}
 						</span>{" "}
-						{PRIMARY_BROKER.note} The buy button opens the broker app; if it is
-						not installed we redirect you to Google Play, and you can always
+						{PRIMARY_PARTNER.note} The buy button opens the partner app; if it
+						is not installed we redirect you to Google Play, and you can always
 						copy the bond code to search manually.
 					</p>
 				</div>

@@ -1,17 +1,21 @@
 import type {
+	BusinessBidNegotiation,
 	BusinessMatchmakingMethod,
 	BusinessProcurementBid,
 	BusinessTender,
 	BusinessTenderStatus,
+	ProposalAnnotation,
 } from "../../../contracts";
+import { apiRoutes } from "../../../contracts";
 import type { GreenShiftDb } from "../../../db";
-import type { proposals, tenders } from "../../../db/schema";
+import type { negotiations, proposals, tenders } from "../../../db/schema";
 import { maxNegotiationIterations } from "../../../db/schema";
-import { scoreBids } from "../matchmaking/bid-score.service";
+import { readAnnotations } from "../../../lib/annotations";
 import * as repository from "./procurement.repository";
 
 type TenderRow = typeof tenders.$inferSelect;
 type ProposalRow = typeof proposals.$inferSelect;
+type NegotiationRow = typeof negotiations.$inferSelect;
 
 /** A tender runs for at most this long; a deadline further out is a typo. */
 const MAX_TENDER_DAYS = 90;
@@ -38,13 +42,29 @@ export function toTender(
 	};
 }
 
+function toNegotiation(row: NegotiationRow): BusinessBidNegotiation {
+	return {
+		id: row.id,
+		iterationNumber: row.iterationNumber,
+		status: row.status,
+		companyNote: row.companyNote,
+		annotations: readAnnotations(row.annotations),
+		requestedFields: (row.requestedFields as string[] | null) ?? [],
+		vendorRevisedPrice: row.vendorRevisedPrice,
+		vendorRevisedWarrantyYears: row.vendorRevisedWarrantyYears,
+		vendorResponseNote: row.vendorResponseNote,
+		respondedAt: iso(row.respondedAt),
+		createdAt: row.createdAt.toISOString(),
+	};
+}
+
 function toBid(
 	proposal: ProposalRow,
 	vendorName: string,
+	projectId: number,
+	negotiations: NegotiationRow[],
 ): BusinessProcurementBid {
 	return {
-		// Filled in by the read, which sees every bid on the tender at once.
-		score: null,
 		id: proposal.id,
 		vendorId: proposal.vendorId,
 		vendorName,
@@ -56,6 +76,13 @@ function toBid(
 		status: proposal.status,
 		revisionCount: proposal.revisionCount ?? 0,
 		submittedAt: iso(proposal.submittedAt),
+		documentName: proposal.documentName,
+		documentUrl: proposal.documentKey
+			? apiRoutes.businessBidDocument.path
+					.replace(":projectId", String(projectId))
+					.replace(":proposalId", String(proposal.id))
+			: null,
+		negotiations: negotiations.map(toNegotiation),
 	};
 }
 
@@ -130,9 +157,26 @@ export async function readTender(
 	if (!tender) return null;
 
 	const rows = await repository.listTenderBids(db, tender.id);
-	const bids = scoreBids(
-		rows.map((row) => toBid(row.proposal, row.vendorName)),
-	).map((scored) => ({ ...scored.bid, score: scored.score }));
+	const threads = await repository.listNegotiationsForProposals(
+		db,
+		rows.map((row) => row.proposal.id),
+	);
+	// Grouped once here rather than queried per bid: the screen reads one tender,
+	// and a per-row query would be one round trip per vendor.
+	const byProposal = new Map<number, NegotiationRow[]>();
+	for (const row of threads) {
+		const thread = byProposal.get(row.proposalId) ?? [];
+		thread.push(row);
+		byProposal.set(row.proposalId, thread);
+	}
+	const bids = rows.map((row) =>
+		toBid(
+			row.proposal,
+			row.vendorName,
+			projectId,
+			byProposal.get(row.proposal.id) ?? [],
+		),
+	);
 	const awarded =
 		bids.find((bid) => bid.id === tender.awardedProposalId) ?? null;
 
@@ -171,12 +215,19 @@ export type AwardResult =
 	| { outcome: "ok"; tender: TenderRow; proposal: ProposalRow }
 	| { outcome: "not_found" }
 	| { outcome: "already_awarded" }
-	| { outcome: "tender_open" };
+	| { outcome: "tender_open" }
+	| { outcome: "revision_open" };
 
 /**
  * Awards the tender to one bid. Appointment and contract are separate steps in
  * this flow, so the losing bids are marked rejected while the winner stays
  * `accepted` for the contract to be approved next.
+ *
+ * A bid is only a bid once every revision round on it is done: awarding one the
+ * vendor is still revising would accept terms neither side has settled, so it
+ * is refused until the vendor answers or the company rejects the bid. Deciding
+ * the tender closes the rounds either way: `AGREED` on the winner, `LOCKED` on
+ * every bid it turned down.
  */
 export async function awardBid(
 	db: GreenShiftDb,
@@ -192,12 +243,17 @@ export async function awardBid(
 	const bid = await repository.findBid(db, tender.id, proposalId);
 	if (!bid) return { outcome: "not_found" };
 
+	const pending = await repository.findPendingNegotiation(db, proposalId);
+	if (pending) return { outcome: "revision_open" };
+
 	const others = await repository.listTenderBids(db, tender.id);
 	for (const row of others) {
 		if (row.proposal.id === proposalId) continue;
 		await repository.setProposalStatus(db, row.proposal.id, "rejected");
+		await repository.closeNegotiations(db, row.proposal.id, "LOCKED");
 	}
 	await repository.setProposalStatus(db, proposalId, "accepted");
+	await repository.closeNegotiations(db, proposalId, "AGREED");
 
 	const updated = await repository.updateTenderStatus(
 		db,
@@ -217,21 +273,32 @@ export type ReviewResult =
 	| { outcome: "ok"; proposal: ProposalRow; iteration: number | null }
 	| { outcome: "not_found" }
 	| { outcome: "revision_note_required" }
-	| { outcome: "revision_limit_reached" };
+	| { outcome: "revision_limit_reached" }
+	| { outcome: "revision_pending" };
 
 /**
- * The company's verdict on one bid: accept it, or ask for a revision. Asking
- * opens a negotiation iteration carrying the company's note, which is what the
- * vendor's Revisi & Negosiasi tab reads; the vendor answers it and the revision
- * count only advances when they resubmit. The 3-iteration cap is the same
- * constant the vendor's update path enforces.
+ * The company's verdict on one bid: ask for a revision, or reject it. Accepting
+ * is not a separate act: it is the award, which accepts the winning bid and
+ * rejects the rest, so there is one place the company decides who carries the
+ * work rather than two that can disagree.
+ *
+ * Asking for a revision opens a negotiation iteration carrying the company's
+ * note and the marks it drew on the proposal, which is what the vendor's
+ * Revisi & Negosiasi tab reads; the vendor answers it and the revision count
+ * only advances when they resubmit. The 3-iteration cap is the same constant
+ * the vendor's update path enforces, and a round that is still open blocks the
+ * next verdict: the bid is mid-revision until the vendor answers it.
  */
 export async function reviewBid(
 	db: GreenShiftDb,
 	companyId: number,
 	projectId: number,
 	proposalId: number,
-	review: { decision: "accept" | "revision" | "reject"; note: string | null },
+	review: {
+		decision: "revision" | "reject";
+		note: string | null;
+		annotations: ProposalAnnotation[];
+	},
 ): Promise<ReviewResult> {
 	const tender = await repository.findCompanyTender(db, companyId, projectId);
 	if (!tender) return { outcome: "not_found" };
@@ -239,25 +306,15 @@ export async function reviewBid(
 	const bid = await repository.findBid(db, tender.id, proposalId);
 	if (!bid) return { outcome: "not_found" };
 
-	if (review.decision === "accept") {
-		const updated = await repository.setProposalStatus(
-			db,
-			proposalId,
-			"accepted",
-		);
-		return {
-			outcome: "ok",
-			proposal: updated ?? bid.proposal,
-			iteration: null,
-		};
-	}
-
 	if (review.decision === "reject") {
 		const updated = await repository.setProposalStatus(
 			db,
 			proposalId,
 			"rejected",
 		);
+		// The bid is decided, so its rounds close with it: nothing on a rejected
+		// bid is waiting on the vendor any more.
+		await repository.closeNegotiations(db, proposalId, "LOCKED");
 		return {
 			outcome: "ok",
 			proposal: updated ?? bid.proposal,
@@ -266,6 +323,10 @@ export async function reviewBid(
 	}
 
 	if (!review.note?.trim()) return { outcome: "revision_note_required" };
+
+	if (await repository.findPendingNegotiation(db, proposalId)) {
+		return { outcome: "revision_pending" };
+	}
 
 	const iterations = await repository.countNegotiations(db, proposalId);
 	if (iterations >= maxNegotiationIterations) {
@@ -276,6 +337,7 @@ export async function reviewBid(
 		proposalId,
 		iterationNumber: iterations + 1,
 		companyNote: review.note.trim(),
+		annotations: review.annotations,
 	});
 	const updated = await repository.setProposalStatus(
 		db,

@@ -4,6 +4,7 @@ import type { ProposalUpdateBody } from "../../../contracts";
 import { createDb } from "../../../db";
 import type { ApiEnv } from "../../../env";
 import { invalidNumber } from "../../../lib/format";
+import { requireJsonBody } from "../../../lib/http";
 import { mutationRateLimit } from "../../../lib/mutation-limit";
 import { apiError, apiNotFound, apiSuccess } from "../../../lib/response";
 import { MAX_SPEC_LENGTH, MAX_WARRANTY_MONTHS } from "../vendor.shared";
@@ -18,6 +19,7 @@ const MAX_NOTE_LENGTH = 2000;
 proposalUpdateRoutes.patch(
 	"/proposals/:id",
 	mutationRateLimit("vendor", "proposal"),
+	requireJsonBody,
 	...factory.createHandlers(async (c) => {
 		const id = Number(c.req.param("id"));
 		if (!Number.isInteger(id) || id <= 0) {

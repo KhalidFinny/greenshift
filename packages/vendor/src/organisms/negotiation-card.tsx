@@ -1,6 +1,9 @@
-import { faLock } from "@fortawesome/free-solid-svg-icons";
+import { faFileLines, faLock } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import type { ProposalDetail } from "@greenshift/api/contracts";
+import { api } from "@greenshift/core";
 import {
+	AnnotatedProposal,
 	Badge,
 	Button,
 	Card,
@@ -9,12 +12,16 @@ import {
 	CardTitle,
 	Dialog,
 	DialogContent,
+	DialogDescription,
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
 	Input,
 	Label,
+	type ProposalDocumentData,
+	ShimmerBlock,
 } from "@greenshift/ui";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { formatRupiah } from "../lib/format";
 import type { NegotiationRequest } from "../lib/types";
@@ -98,73 +105,124 @@ function RespondNegotiationDialog({
 					{negotiation.maxIterations})
 				</Button>
 			</DialogTrigger>
-			<DialogContent className="max-w-xl">
+			<DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
 				<DialogHeader>
 					<DialogTitle>
 						Structured Negotiation Response (Revision{" "}
 						{negotiation.iterationNumber} of {negotiation.maxIterations})
 					</DialogTitle>
+					<DialogDescription className="text-base">
+						{negotiation.projectTitle} · {negotiation.companyName}
+					</DialogDescription>
 				</DialogHeader>
 
-				<form onSubmit={handleSubmit} className="space-y-4 pt-2 text-sm">
-					<div className="space-y-2 rounded-lg border border-border bg-muted/40 p-3">
-						<p className="font-semibold text-foreground">
-							Client Revision Requests ({negotiation.companyName})
-						</p>
-						<ul className="list-disc space-y-1 pl-5 text-muted-foreground">
-							{negotiation.requestedFields.map((field) => (
-								<li key={field}>{field}</li>
-							))}
-						</ul>
-						<p className="pt-1 text-sm italic text-muted-foreground">
-							"{negotiation.companyNote}"
-						</p>
+				{/* What was asked, beside what the vendor answers: the request is
+				    read while the counter-offer is written, rather than scrolled
+				    past above it. */}
+				<form
+					onSubmit={handleSubmit}
+					className="grid gap-6 pt-2 text-sm md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
+				>
+					<div className="space-y-4">
+						<div className="space-y-2 rounded-xl border border-border bg-muted/40 p-4">
+							<p className="font-semibold text-foreground">
+								What {negotiation.companyName} asked for
+							</p>
+							<ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+								{negotiation.requestedFields.map((field) => (
+									<li key={field}>{field}</li>
+								))}
+							</ul>
+							<p className="border-t border-border pt-3 leading-6">
+								"{negotiation.companyNote}"
+							</p>
+						</div>
+
+						<div className="space-y-2 rounded-xl border border-border p-4">
+							<p className="font-semibold text-foreground">
+								What the ask comes to
+							</p>
+							<dl className="space-y-1.5 text-muted-foreground">
+								{negotiation.requestedPriceReduction !== undefined ? (
+									<div className="flex items-baseline justify-between gap-3">
+										<dt>Price reduction asked</dt>
+										<dd className="font-medium tabular-nums text-foreground">
+											{formatRupiah(negotiation.requestedPriceReduction)}
+										</dd>
+									</div>
+								) : null}
+								{negotiation.requestedWarrantyYears !== undefined ? (
+									<div className="flex items-baseline justify-between gap-3">
+										<dt>Warranty asked</dt>
+										<dd className="font-medium tabular-nums text-foreground">
+											{negotiation.requestedWarrantyYears} years
+										</dd>
+									</div>
+								) : null}
+								{negotiation.requestedTimelineMonths !== undefined ? (
+									<div className="flex items-baseline justify-between gap-3">
+										<dt>Timeline asked</dt>
+										<dd className="font-medium tabular-nums text-foreground">
+											{negotiation.requestedTimelineMonths} months
+										</dd>
+									</div>
+								) : null}
+								<div className="flex items-baseline justify-between gap-3">
+									<dt>Revision round</dt>
+									<dd className="font-medium tabular-nums text-foreground">
+										{negotiation.iterationNumber} of {negotiation.maxIterations}
+									</dd>
+								</div>
+							</dl>
+						</div>
 					</div>
 
-					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+					<div className="space-y-4">
+						<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+							<div className="space-y-1.5">
+								<Label htmlFor="rev-price" className="text-sm font-semibold">
+									Revised Vendor Price (IDR)
+								</Label>
+								<Input
+									id="rev-price"
+									type="number"
+									value={revisedPrice}
+									placeholder="Your revised price"
+									onChange={(e) => setRevisedPrice(e.target.value)}
+									required
+								/>
+							</div>
+							<div className="space-y-1.5">
+								<Label htmlFor="rev-warranty" className="text-sm font-semibold">
+									Revised Warranty Period (Years)
+								</Label>
+								<Input
+									id="rev-warranty"
+									type="number"
+									value={revisedWarranty}
+									placeholder="Your revised warranty"
+									onChange={(e) => setRevisedWarranty(e.target.value)}
+									required
+								/>
+							</div>
+						</div>
+
 						<div className="space-y-1.5">
-							<Label htmlFor="rev-price" className="text-sm font-semibold">
-								Revised Vendor Price (IDR)
+							<Label htmlFor="rev-note" className="text-sm font-semibold">
+								Vendor Justification Notes
 							</Label>
-							<Input
-								id="rev-price"
-								type="number"
-								value={revisedPrice}
-								placeholder="Your revised price"
-								onChange={(e) => setRevisedPrice(e.target.value)}
-								required
+							<textarea
+								id="rev-note"
+								rows={6}
+								className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+								value={note}
+								onChange={(e) => setNote(e.target.value)}
+								placeholder="What the revised price and warranty cover, and why they changed"
 							/>
 						</div>
-						<div className="space-y-1.5">
-							<Label htmlFor="rev-warranty" className="text-sm font-semibold">
-								Revised Warranty Period (Years)
-							</Label>
-							<Input
-								id="rev-warranty"
-								type="number"
-								value={revisedWarranty}
-								placeholder="Your revised warranty"
-								onChange={(e) => setRevisedWarranty(e.target.value)}
-								required
-							/>
-						</div>
 					</div>
 
-					<div className="space-y-1.5">
-						<Label htmlFor="rev-note" className="text-sm font-semibold">
-							Vendor Justification Notes
-						</Label>
-						<textarea
-							id="rev-note"
-							rows={3}
-							className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-							value={note}
-							onChange={(e) => setNote(e.target.value)}
-							placeholder="What the revised price and warranty cover, and why they changed"
-						/>
-					</div>
-
-					<div className="flex justify-end gap-2 border-t border-border pt-2">
+					<div className="flex justify-end gap-2 border-t border-border pt-4 md:col-span-2">
 						<Button
 							type="button"
 							variant="outline"
@@ -185,14 +243,97 @@ function RespondNegotiationDialog({
 	);
 }
 
+/**
+ * The proposal as the client marked it. The marks were drawn in the proposal
+ * page's own coordinates, so they land on the same lines here as they did on the
+ * client's screen — which is the whole point of sending them.
+ */
+function MarkedProposalDialog({
+	negotiation,
+}: {
+	negotiation: NegotiationRequest;
+}) {
+	const [open, setOpen] = useState(false);
+
+	const proposalQuery = useQuery({
+		queryKey: ["vendor", "proposal", negotiation.proposalId],
+		enabled: open,
+		queryFn: async () =>
+			(await api.vendor.proposalDetail(Number(negotiation.proposalId)))
+				.proposal,
+	});
+
+	const proposal: ProposalDocumentData | null = proposalQuery.data
+		? toProposalDocument(proposalQuery.data, negotiation.projectTitle)
+		: null;
+
+	return (
+		<Dialog open={open} onOpenChange={setOpen}>
+			<DialogTrigger asChild>
+				<Button size="sm" variant="outline">
+					<FontAwesomeIcon icon={faFileLines} aria-hidden />
+					{`See the ${negotiation.annotations.length} mark${
+						negotiation.annotations.length === 1 ? "" : "s"
+					} on your proposal`}
+				</Button>
+			</DialogTrigger>
+			<DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
+				<DialogHeader>
+					<DialogTitle className="text-lg">
+						Where {negotiation.companyName} marked your proposal
+					</DialogTitle>
+					<DialogDescription className="text-base">
+						Revision {negotiation.iterationNumber}: “{negotiation.companyNote}”
+					</DialogDescription>
+				</DialogHeader>
+				{proposalQuery.isPending ? (
+					<ShimmerBlock className="h-72 w-full rounded-xl" />
+				) : proposal === null ? (
+					<p className="text-sm text-muted-foreground">
+						This proposal could not be read back.
+					</p>
+				) : (
+					<AnnotatedProposal
+						proposal={proposal}
+						marks={negotiation.annotations}
+					/>
+				)}
+			</DialogContent>
+		</Dialog>
+	);
+}
+
+/** The vendor's own bid, as the document the client marked. */
+function toProposalDocument(
+	detail: ProposalDetail,
+	fallbackTitle: string,
+): ProposalDocumentData {
+	return {
+		title: detail.project?.title ?? detail.projectTitle ?? fallbackTitle,
+		vendorName: detail.vendorCompanyName ?? "Your firm",
+		submittedAt: detail.submittedAt,
+		amount: detail.amount,
+		operationalCost: detail.operationalCost,
+		projectedRoi: detail.projectedRoi,
+		warrantyPeriod: detail.warrantyPeriod,
+		technicalSpec: detail.technicalSpec,
+		revisionCount: detail.revisionCount,
+	};
+}
+
 export function NegotiationCard({
 	negotiation,
 	onSubmitResponse,
 }: NegotiationCardProps) {
 	const status = STATUS_META[negotiation.status];
-	const isLocked =
-		negotiation.status === "LOCKED" ||
-		negotiation.iterationNumber > negotiation.maxIterations;
+	/* The round is the vendor's to answer only while it is open and inside the
+	   limit. An answered round waits on the client, and an agreed or locked one
+	   is closed: a response control on any of those could only be refused. */
+	const awaitingVendor =
+		negotiation.status === "PENDING_VENDOR_RESPONSE" &&
+		negotiation.iterationNumber <= negotiation.maxIterations;
+	const closedByLimit = negotiation.iterationNumber > negotiation.maxIterations;
+	const lapsed = negotiation.status === "LOCKED" || closedByLimit;
 
 	return (
 		<Card>
@@ -214,21 +355,22 @@ export function NegotiationCard({
 						Client: {negotiation.companyName}
 					</p>
 				</div>
-				{/* Locked negotiations cannot be answered, so the control is not
-				    rendered at all: the reason is stated in the card body instead. */}
-				{isLocked ? null : (
+				{/* Nothing left to answer, so the control is not rendered at all and
+				    the card body says why. */}
+				{awaitingVendor ? (
 					<RespondNegotiationDialog
 						negotiation={negotiation}
 						onSubmitResponse={onSubmitResponse}
 					/>
-				)}
+				) : null}
 			</CardHeader>
 			<CardContent className="space-y-4 text-sm">
-				{isLocked ? (
+				{lapsed ? (
 					<div className="flex items-center gap-2 rounded-lg border border-amber-600/30 bg-amber-50 p-3 text-amber-700">
 						<FontAwesomeIcon icon={faLock} />
-						This negotiation reached the maximum of {negotiation.maxIterations}{" "}
-						revisions and is now locked.
+						{closedByLimit
+							? `This negotiation reached the maximum of ${negotiation.maxIterations} revisions and is now locked.`
+							: "This negotiation is closed: the tender it belonged to has been decided."}
 					</div>
 				) : null}
 
@@ -246,6 +388,11 @@ export function NegotiationCard({
 					<p className="italic text-muted-foreground">
 						"{negotiation.companyNote}"
 					</p>
+					{negotiation.annotations.length > 0 ? (
+						<div className="pt-1">
+							<MarkedProposalDialog negotiation={negotiation} />
+						</div>
+					) : null}
 				</div>
 
 				{negotiation.vendorResponseNote && (

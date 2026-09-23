@@ -29,3 +29,21 @@ export async function markNotificationRead(
 		.returning({ id: notifications.id });
 	return updated !== undefined;
 }
+
+/**
+ * Mark every notification of one account read, so a feed that has been read can
+ * be cleared in one move rather than one row at a time. Answers with how many
+ * rows it changed, which is 0 when there was nothing unread.
+ */
+export async function markAllNotificationsRead(
+	db: GreenShiftDb,
+	userId: number,
+): Promise<number> {
+	const rows = await db
+		.update(notifications)
+		.set({ read: true })
+		.where(and(eq(notifications.userId, userId), eq(notifications.read, false)))
+		.returning({ id: notifications.id });
+
+	return rows.length;
+}

@@ -14,6 +14,8 @@ import {
 	CardHeader,
 	CardTitle,
 	EmptyState,
+	PaginationBar,
+	usePagedRows,
 } from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
 
@@ -43,6 +45,8 @@ export function BrokerDashboard() {
 	const pendingDocs = documentRequests.filter(
 		(d) => d.status === "SUBMITTED" || d.status === "UNDER_REVIEW",
 	);
+	const pendingDocsPage = usePagedRows(pendingDocs);
+	const notificationsPage = usePagedRows(notifications);
 
 	return (
 		<div className="space-y-6">
@@ -224,7 +228,7 @@ export function BrokerDashboard() {
 								description="Client companies have not uploaded anything for review yet. Requests you raise from Document Requests appear here once a client submits a file."
 							/>
 						) : (
-							pendingDocs.map((doc) => (
+							pendingDocsPage.pageRows.map((doc) => (
 								<div
 									key={doc.id}
 									className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 space-y-2"
@@ -253,6 +257,15 @@ export function BrokerDashboard() {
 								</div>
 							))
 						)}
+						<PaginationBar
+							label="Documents awaiting review"
+							pageIndex={pendingDocsPage.pageIndex}
+							pageSize={pendingDocsPage.pageSize}
+							pageCount={pendingDocsPage.pageCount}
+							total={pendingDocsPage.total}
+							onPageIndexChange={pendingDocsPage.setPageIndex}
+							onPageSizeChange={pendingDocsPage.setPageSize}
+						/>
 
 						<Link to="/broker/document-requests" className="block pt-2">
 							<Button variant="outline" size="sm" className="w-full">
@@ -281,7 +294,7 @@ export function BrokerDashboard() {
 								description="Assignment decisions, client uploads, and review outcomes on your projects will appear here as they happen."
 							/>
 						) : (
-							notifications.map((notification) => (
+							notificationsPage.pageRows.map((notification) => (
 								<div
 									key={notification.id}
 									className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 ${
@@ -324,6 +337,15 @@ export function BrokerDashboard() {
 								</div>
 							))
 						)}
+						<PaginationBar
+							label="Notifications"
+							pageIndex={notificationsPage.pageIndex}
+							pageSize={notificationsPage.pageSize}
+							pageCount={notificationsPage.pageCount}
+							total={notificationsPage.total}
+							onPageIndexChange={notificationsPage.setPageIndex}
+							onPageSizeChange={notificationsPage.setPageSize}
+						/>
 					</CardContent>
 				</Card>
 			</div>

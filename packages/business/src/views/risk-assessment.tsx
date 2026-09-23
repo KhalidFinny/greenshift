@@ -229,8 +229,9 @@ export function EleanorNote({
 			)}
 			{failed && (
 				<p className="mt-2 text-sm text-muted-foreground">
-					The written reading is unavailable right now. The tips below come from
-					the scoring model and still stand.
+					{shownTips.length > 0
+						? "The written reading is unavailable right now. The tips below come from the scoring model and still stand."
+						: "The written reading is unavailable right now. Every figure it would be written from is unchanged."}
 				</p>
 			)}
 			{paragraphs.length > 0 && (

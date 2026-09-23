@@ -1,0 +1,1 @@
+ALTER TABLE `vendor_portfolio_items` DROP COLUMN `status`;

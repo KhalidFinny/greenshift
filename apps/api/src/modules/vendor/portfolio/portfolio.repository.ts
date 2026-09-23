@@ -25,6 +25,51 @@ export async function insertPortfolioItem(
 	return inserted;
 }
 
+/** One of the vendor's own records, or null when the id is not theirs. */
+export async function findPortfolioItem(
+	db: GreenShiftDb,
+	id: number,
+	vendorId: number,
+) {
+	const [row] = await db
+		.select()
+		.from(vendorPortfolioItems)
+		.where(
+			and(
+				eq(vendorPortfolioItems.id, id),
+				eq(vendorPortfolioItems.vendorId, vendorId),
+			),
+		)
+		.limit(1);
+
+	return row ?? null;
+}
+
+/** Files a document on a record the vendor owns. */
+export async function setPortfolioDocument(
+	db: GreenShiftDb,
+	id: number,
+	vendorId: number,
+	values: {
+		documentName: string;
+		documentKey: string;
+		documentType: string | null;
+	},
+) {
+	const [row] = await db
+		.update(vendorPortfolioItems)
+		.set(values)
+		.where(
+			and(
+				eq(vendorPortfolioItems.id, id),
+				eq(vendorPortfolioItems.vendorId, vendorId),
+			),
+		)
+		.returning();
+
+	return row ?? null;
+}
+
 export async function deletePortfolioItem(
 	db: GreenShiftDb,
 	id: number,
@@ -38,7 +83,10 @@ export async function deletePortfolioItem(
 				eq(vendorPortfolioItems.vendorId, vendorId),
 			),
 		)
-		.returning({ id: vendorPortfolioItems.id });
+		.returning({
+			id: vendorPortfolioItems.id,
+			documentKey: vendorPortfolioItems.documentKey,
+		});
 
 	return deleted;
 }

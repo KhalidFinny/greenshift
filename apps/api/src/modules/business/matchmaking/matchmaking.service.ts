@@ -14,8 +14,8 @@ import { parseLimit } from "../../../lib/format";
 import { pillStatus } from "../business.shared";
 import * as procurement from "../procurement/procurement.service";
 import * as projectsRepository from "../projects/projects.repository";
-import { MATCH_CRITERIA, separatingCriteria } from "./matching.service";
 import * as repository from "./matchmaking.repository";
+import { MATCH_CRITERIA, separatingCriteria } from "./scoring";
 
 type ProjectRow = typeof projects.$inferSelect;
 type ScoreRow = typeof vendorMatchScores.$inferSelect;

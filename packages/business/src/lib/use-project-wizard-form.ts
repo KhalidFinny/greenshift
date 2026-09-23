@@ -25,6 +25,11 @@ export const WIZARD_VALUES = {
 	saving: "",
 	pendapatan: "",
 	jaminan: "",
+	/* Step 3 holds two open-ended lists. Each is one entry per line, because the
+	   number of requirements a project has is the project's own, not a fixed
+	   set of fields. */
+	requirements: "",
+	deliverables: "",
 	consent: false,
 	declaration: false,
 };
@@ -53,6 +58,12 @@ export const STEP2_FIELDS = [
 	"saving",
 	"pendapatan",
 	"jaminan",
+] as const satisfies readonly WizardFieldName[];
+
+/** Step 3 fields, in the order the step renders them. */
+export const STEP3_FIELDS = [
+	"requirements",
+	"deliverables",
 ] as const satisfies readonly WizardFieldName[];
 
 /**

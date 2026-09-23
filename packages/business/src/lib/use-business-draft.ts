@@ -6,6 +6,7 @@ import {
 	type BusinessStep2,
 	type BusinessStep2Patch,
 	type BusinessStep3,
+	type BusinessStep3Patch,
 	type BusinessSubmittedProject,
 } from "@greenshift/core";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -30,10 +31,10 @@ type TimerHandle = ReturnType<typeof setTimeout>;
 
 /** The body of one autosave: the step being edited plus that step's block. */
 export type DraftStepBody = {
-	step: 1 | 2 | 3;
+	step: 1 | 2 | 3 | 4;
 	step1?: Step1Patch;
 	step2?: Step2Patch;
-	step3?: BusinessStep3;
+	step3?: Step3Patch;
 };
 
 /** What the last autosave did. `idle` means nothing has been sent yet. */
@@ -45,11 +46,12 @@ export type SaveState = "idle" | "saving" | "saved" | "failed";
  */
 export type Step1Patch = BusinessStep1Patch;
 export type Step2Patch = BusinessStep2Patch;
+export type Step3Patch = BusinessStep3Patch;
 
 export interface DraftResume {
 	step1: Step1Patch | null;
 	step2: Step2Patch | null;
-	step3: BusinessStep3 | null;
+	step3: Step3Patch | null;
 	/** The draft's files, which its blocks reference only by id. */
 	documents: BusinessDraftDocument[];
 	step: number | null;

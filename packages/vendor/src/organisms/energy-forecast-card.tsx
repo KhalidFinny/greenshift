@@ -7,7 +7,9 @@ import {
 	CardHeader,
 	CardTitle,
 	EmptyState,
+	PaginationBar,
 	ShimmerBlock,
+	usePagedRows,
 } from "@greenshift/ui";
 import type { EnergyForecast } from "../lib/types";
 
@@ -39,6 +41,7 @@ export function EnergyForecastCard({
 	loading = false,
 }: EnergyForecastCardProps) {
 	const accuracy = forecasts[0] ? modelAccuracy(forecasts[0]) : null;
+	const paged = usePagedRows(forecasts);
 
 	return (
 		<Card>
@@ -80,7 +83,7 @@ export function EnergyForecastCard({
 								<span>Expected Saving (kWh)</span>
 							</div>
 							<div className="divide-y divide-border">
-								{forecasts.map((forecast) => (
+								{paged.pageRows.map((forecast) => (
 									<div
 										key={forecast.id}
 										className="flex items-center justify-between p-4"
@@ -102,6 +105,16 @@ export function EnergyForecastCard({
 						</div>
 					</>
 				)}
+
+				<PaginationBar
+					label="Forecast periods"
+					pageIndex={paged.pageIndex}
+					pageSize={paged.pageSize}
+					pageCount={paged.pageCount}
+					total={paged.total}
+					onPageIndexChange={paged.setPageIndex}
+					onPageSizeChange={paged.setPageSize}
+				/>
 			</CardContent>
 		</Card>
 	);

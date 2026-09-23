@@ -11,6 +11,8 @@ import {
 	CardContent,
 	CardHeader,
 	CardTitle,
+	PaginationBar,
+	usePagedRows,
 } from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
 import { formatRupiah, formatShortDate } from "../lib/format";
@@ -26,6 +28,8 @@ export function ActiveProjectCard({
 	project,
 	onSelect,
 }: ActiveProjectCardProps) {
+	const paged = usePagedRows(project.milestones);
+
 	return (
 		<Card className="overflow-hidden">
 			<CardHeader className="flex flex-row items-center justify-between border-b border-border bg-muted/30 pb-4">
@@ -76,7 +80,7 @@ export function ActiveProjectCard({
 				</div>
 
 				<div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-					{project.milestones.map((ms) => {
+					{paged.pageRows.map((ms) => {
 						const isDone =
 							ms.status === "COMPLETED" || ms.status === "APPROVED";
 						const isInProg =
@@ -114,6 +118,16 @@ export function ActiveProjectCard({
 						);
 					})}
 				</div>
+
+				<PaginationBar
+					label="Milestones"
+					pageIndex={paged.pageIndex}
+					pageSize={paged.pageSize}
+					pageCount={paged.pageCount}
+					total={paged.total}
+					onPageIndexChange={paged.setPageIndex}
+					onPageSizeChange={paged.setPageSize}
+				/>
 
 				<div className="grid grid-cols-2 gap-4 rounded-xl bg-muted p-4 sm:grid-cols-4">
 					<div>

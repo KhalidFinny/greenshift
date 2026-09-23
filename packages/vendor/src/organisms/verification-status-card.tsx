@@ -23,26 +23,20 @@ import type { CompanyVerificationDetails } from "../lib/types";
 
 interface VerificationStatusCardProps {
 	verification: CompanyVerificationDetails;
-	onUpload: (
-		nib: string,
-		npwp: string,
-		legalDocName: string,
-		escoCertName: string,
-	) => void;
+	/** Saves the legal identity the administrator verifies against. */
+	onSave: (nib: string, npwp: string) => void;
 }
 
 export function VerificationStatusCard({
 	verification,
-	onUpload,
+	onSave,
 }: VerificationStatusCardProps) {
 	const [nib, setNib] = useState(verification.nib ?? "");
 	const [npwp, setNpwp] = useState(verification.npwp ?? "");
-	const [legalDoc, setLegalDoc] = useState("");
-	const [escoCert, setEscoCert] = useState("");
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		onUpload(nib, npwp, legalDoc, escoCert);
+		onSave(nib.trim(), npwp.trim());
 	};
 
 	return (
@@ -55,11 +49,11 @@ export function VerificationStatusCard({
 								icon={faShieldAlt}
 								className="text-emerald-700"
 							/>
-							Automatic Document Verification Status
+							Verification Status
 						</span>
 						{verification.status === "VERIFIED" && (
 							<Badge className="gap-1 bg-emerald-700 font-bold text-white">
-								<FontAwesomeIcon icon={faCheckCircle} /> Verified Automatically
+								<FontAwesomeIcon icon={faCheckCircle} /> Verified
 							</Badge>
 						)}
 						{verification.status === "VERIFYING" && (
@@ -82,8 +76,9 @@ export function VerificationStatusCard({
 				</CardHeader>
 				<CardContent className="space-y-4 text-sm">
 					<p className="text-muted-foreground">
-						GreenShift verifies vendors automatically with document extraction.
-						No manual admin approval is required.
+						An administrator verifies your vendor profile from the legal
+						identity on file. Until then you can browse opportunities, but not
+						bid.
 					</p>
 
 					{verification.status === "VERIFIED" && (
@@ -93,11 +88,10 @@ export function VerificationStatusCard({
 									icon={faUserCheck}
 									className="text-emerald-700"
 								/>
-								Your Company Is Fully Verified
+								Your Company Is Verified
 							</div>
 							<p>
-								All legal documents (NIB, NPWP, and ESCO certificate) were
-								validated successfully on{" "}
+								Your profile was verified on{" "}
 								<span className="font-semibold">
 									{formatDate(verification.verifiedAt)}
 								</span>
@@ -115,7 +109,7 @@ export function VerificationStatusCard({
 						className="space-y-4 border-t border-border pt-4"
 					>
 						<h4 className="text-sm font-bold text-foreground">
-							Legal & Industry Verification Documents
+							Legal Identity
 						</h4>
 
 						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -128,7 +122,6 @@ export function VerificationStatusCard({
 									value={nib}
 									onChange={(e) => setNib(e.target.value)}
 									placeholder="Enter the 13-digit NIB..."
-									required
 								/>
 							</div>
 							<div className="space-y-1.5">
@@ -140,35 +133,14 @@ export function VerificationStatusCard({
 									value={npwp}
 									onChange={(e) => setNpwp(e.target.value)}
 									placeholder="Enter the company NPWP..."
-									required
 								/>
 							</div>
 						</div>
 
-						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-							<div className="space-y-1.5">
-								<Label htmlFor="v-legaldoc" className="text-sm font-semibold">
-									Primary Legal Document (PDF/SIUP):
-								</Label>
-								<Input
-									id="v-legaldoc"
-									value={legalDoc}
-									onChange={(e) => setLegalDoc(e.target.value)}
-									placeholder="SIUP_YourCompany.pdf"
-								/>
-							</div>
-							<div className="space-y-1.5">
-								<Label htmlFor="v-esco" className="text-sm font-semibold">
-									ESCO Certificate / Industry License:
-								</Label>
-								<Input
-									id="v-esco"
-									value={escoCert}
-									onChange={(e) => setEscoCert(e.target.value)}
-									placeholder="ESCO_Class_A.pdf"
-								/>
-							</div>
-						</div>
+						<p className="text-muted-foreground">
+							Industry certifications (ESCO, ISO) are listed under
+							Certifications. Document files are not collected in this build.
+						</p>
 
 						<div className="flex justify-end pt-2">
 							<Button
@@ -176,7 +148,7 @@ export function VerificationStatusCard({
 								className="gap-2 bg-[#00712D] text-white hover:bg-[#00712D]/90"
 							>
 								<FontAwesomeIcon icon={faUpload} />
-								Run Automatic Verification
+								Save Legal Identity
 							</Button>
 						</div>
 					</form>

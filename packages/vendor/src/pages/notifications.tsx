@@ -2,10 +2,12 @@ import { faBell } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
 	EmptyState,
+	PaginationBar,
 	Tabs,
 	TabsContent,
 	TabsList,
 	TabsTrigger,
+	usePagedRows,
 } from "@greenshift/ui";
 import type { VendorNotification } from "../lib/types";
 import { useVendorData } from "../lib/use-vendor-data";
@@ -22,6 +24,9 @@ function NotificationList({
 	emptyDescription: string;
 	onMarkRead?: (id: string) => void;
 }) {
+	// The list pages whatever the active tab filtered down to.
+	const paged = usePagedRows(notifications);
+
 	if (notifications.length === 0) {
 		return (
 			<EmptyState
@@ -34,13 +39,22 @@ function NotificationList({
 
 	return (
 		<div className="space-y-3">
-			{notifications.map((n) => (
+			{paged.pageRows.map((n) => (
 				<NotificationItemCard
 					key={n.id}
 					notification={n}
 					onMarkRead={onMarkRead}
 				/>
 			))}
+			<PaginationBar
+				label="Notifications"
+				pageIndex={paged.pageIndex}
+				pageSize={paged.pageSize}
+				pageCount={paged.pageCount}
+				total={paged.total}
+				onPageIndexChange={paged.setPageIndex}
+				onPageSizeChange={paged.setPageSize}
+			/>
 		</div>
 	);
 }
@@ -95,6 +109,7 @@ export function VendorNotificationsPage() {
 						)}
 						emptyTitle="No tender notifications"
 						emptyDescription="Ranking changes and deadline reminders for tenders you have joined appear here."
+						onMarkRead={markNotificationRead}
 					/>
 				</TabsContent>
 
@@ -105,6 +120,7 @@ export function VendorNotificationsPage() {
 						)}
 						emptyTitle="No opportunity notifications"
 						emptyDescription="Updates on open opportunities that match your profile appear here."
+						onMarkRead={markNotificationRead}
 					/>
 				</TabsContent>
 
@@ -115,6 +131,7 @@ export function VendorNotificationsPage() {
 						)}
 						emptyTitle="No negotiation notifications"
 						emptyDescription="Client revision requests and negotiation updates appear here."
+						onMarkRead={markNotificationRead}
 					/>
 				</TabsContent>
 
@@ -125,6 +142,7 @@ export function VendorNotificationsPage() {
 						)}
 						emptyTitle="No system notifications"
 						emptyDescription="Account, verification, and platform messages appear here."
+						onMarkRead={markNotificationRead}
 					/>
 				</TabsContent>
 			</Tabs>

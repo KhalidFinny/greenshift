@@ -3,6 +3,7 @@ import type {
 	VendorMyProjectDetail,
 	VendorProcurementStatusItem,
 } from "../../../contracts";
+import { apiRoutes } from "../../../contracts";
 import type { GreenShiftDb } from "../../../db";
 import { iso } from "../../../lib/format";
 import {
@@ -49,6 +50,13 @@ export async function listMyProjects(
 				amount: proposal.amount,
 				status: proposal.status,
 				revisionCount: proposal.revisionCount ?? 0,
+				documentName: proposal.documentName,
+				documentUrl: proposal.documentKey
+					? apiRoutes.vendorProposalDocumentFile.path.replace(
+							":id",
+							String(proposal.id),
+						)
+					: null,
 				submittedAt: iso(proposal.submittedAt),
 			},
 		});
@@ -142,6 +150,13 @@ export async function getMyProject(
 			warrantyPeriod: row.proposal.warrantyPeriod,
 			status: row.proposal.status,
 			revisionCount: row.proposal.revisionCount ?? 0,
+			documentName: row.proposal.documentName,
+			documentUrl: row.proposal.documentKey
+				? apiRoutes.vendorProposalDocumentFile.path.replace(
+						":id",
+						String(row.proposal.id),
+					)
+				: null,
 			submittedAt: iso(row.proposal.submittedAt),
 			reviewedAt: iso(row.proposal.reviewedAt),
 		},

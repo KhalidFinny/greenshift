@@ -1,6 +1,7 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
 import type { GreenShiftDb } from "../../../db";
 import {
+	type NegotiationStatus,
 	negotiations,
 	projects,
 	proposals,
@@ -204,6 +205,22 @@ export async function countNegotiations(
 	return rows.length;
 }
 
+/**
+ * Every revision round on the given bids, oldest first. Read in one query for
+ * the whole tender: the bidding screen shows each bid's thread beside it.
+ */
+export async function listNegotiationsForProposals(
+	db: GreenShiftDb,
+	proposalIds: number[],
+) {
+	if (proposalIds.length === 0) return [];
+	return db
+		.select()
+		.from(negotiations)
+		.where(inArray(negotiations.proposalId, proposalIds))
+		.orderBy(negotiations.iterationNumber);
+}
+
 /** Opens a revision round, carrying the company's note for the vendor. */
 export async function insertNegotiation(
 	db: GreenShiftDb,
@@ -211,4 +228,44 @@ export async function insertNegotiation(
 ) {
 	const [row] = await db.insert(negotiations).values(values).returning();
 	return row;
+}
+
+/**
+ * The revision round the vendor has not answered yet, if the bid has one. A bid
+ * in this state is not a bid to accept: the round is still open, so its terms
+ * are not settled.
+ */
+export async function findPendingNegotiation(
+	db: GreenShiftDb,
+	proposalId: number,
+) {
+	const [row] = await db
+		.select()
+		.from(negotiations)
+		.where(
+			and(
+				eq(negotiations.proposalId, proposalId),
+				eq(negotiations.status, "PENDING_VENDOR_RESPONSE"),
+			),
+		)
+		.limit(1);
+
+	return row ?? null;
+}
+
+/**
+ * Closes every round on a bid once the bid has been decided: `AGREED` for the
+ * bid the company took, `LOCKED` for one it turned down or rejected. Without
+ * this the rounds stay open forever, and a vendor's screen keeps asking for an
+ * answer to a tender that has already been awarded.
+ */
+export async function closeNegotiations(
+	db: GreenShiftDb,
+	proposalId: number,
+	status: NegotiationStatus,
+) {
+	await db
+		.update(negotiations)
+		.set({ status })
+		.where(eq(negotiations.proposalId, proposalId));
 }

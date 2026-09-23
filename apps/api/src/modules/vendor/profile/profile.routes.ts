@@ -1,10 +1,15 @@
 import { Hono } from "hono";
 import { createFactory } from "hono/factory";
-import type { VendorProfileBody } from "../../../contracts";
+import {
+	type VendorProfileBody,
+	vendorServiceCategories,
+} from "../../../contracts";
 import { createDb } from "../../../db";
 import type { ApiEnv } from "../../../env";
+import { requireJsonBody } from "../../../lib/http";
 import { mutationRateLimit } from "../../../lib/mutation-limit";
 import { apiError, apiSuccess } from "../../../lib/response";
+import type { VendorProfileValues } from "./profile.repository";
 import { getVendorProfile, saveVendorProfile } from "./profile.service";
 
 const factory = createFactory<ApiEnv>();
@@ -13,6 +18,9 @@ export const profileRoutes = new Hono<ApiEnv>();
 
 const MAX_COMPANY_NAME = 200;
 const MAX_PROFILE_DESCRIPTION = 2000;
+const MAX_LOCATION = 300;
+/** NIB and NPWP as they are written on the document; format is not enforced. */
+const LEGAL_ID_RE = /^[\d.\-\s]+$/;
 const MAX_LIST_ITEMS = 50;
 // Worst-case ASCII payload (50×100×2 arrays + description ≈ 12.6KB) stays
 // under the 16KB body cap. Multibyte- or escape-heavy maximal input can still
@@ -36,12 +44,17 @@ profileRoutes.get(
 profileRoutes.put(
 	"/profile",
 	mutationRateLimit("vendor", "profile"),
+	requireJsonBody,
 	...factory.createHandlers(async (c) => {
 		const body = (await c.req
 			.json()
 			.catch(() => null)) as Partial<VendorProfileBody> | null;
 		const companyName = body?.companyName;
 		const description = body?.description;
+		const serviceCategory = body?.serviceCategory;
+		const location = body?.location;
+		const nib = body?.nib;
+		const npwp = body?.npwp;
 		const certifications = body?.certifications;
 		const portfolio = body?.portfolio;
 
@@ -51,14 +64,30 @@ profileRoutes.put(
 			v.every(
 				(item) => typeof item === "string" && item.length <= MAX_ITEM_LENGTH,
 			);
+		/** A field the save may leave out, clear with null, or set. */
+		const isOptionalText = (v: unknown, max: number) =>
+			v === null ||
+			v === undefined ||
+			(typeof v === "string" && v.length <= max);
+		const isLegalId = (v: unknown) =>
+			v === null ||
+			v === undefined ||
+			(typeof v === "string" && LEGAL_ID_RE.test(v));
 
 		if (
 			typeof companyName !== "string" ||
 			companyName.trim().length === 0 ||
 			companyName.length > MAX_COMPANY_NAME ||
-			(description !== undefined &&
-				(typeof description !== "string" ||
-					description.length > MAX_PROFILE_DESCRIPTION)) ||
+			!isOptionalText(description, MAX_PROFILE_DESCRIPTION) ||
+			!isOptionalText(location, MAX_LOCATION) ||
+			!isLegalId(nib) ||
+			!isLegalId(npwp) ||
+			(serviceCategory !== null &&
+				serviceCategory !== undefined &&
+				(typeof serviceCategory !== "string" ||
+					!(vendorServiceCategories as readonly string[]).includes(
+						serviceCategory,
+					))) ||
 			(certifications !== undefined && !isStringArray(certifications)) ||
 			(portfolio !== undefined && !isStringArray(portfolio))
 		) {
@@ -67,11 +96,15 @@ profileRoutes.put(
 
 		const db = createDb(c.env.DB);
 		const userId = c.get("user").id;
-		const values = {
+		const values: VendorProfileValues = {
 			companyName: companyName.trim(),
-			description: description ?? null,
-			certifications: certifications ?? [],
-			portfolio: portfolio ?? [],
+			...(description !== undefined ? { description } : {}),
+			...(serviceCategory !== undefined ? { serviceCategory } : {}),
+			...(location !== undefined ? { location } : {}),
+			...(nib !== undefined ? { nib } : {}),
+			...(npwp !== undefined ? { npwp } : {}),
+			...(certifications !== undefined ? { certifications } : {}),
+			...(portfolio !== undefined ? { portfolio } : {}),
 		};
 
 		const result = await saveVendorProfile(db, userId, values);

@@ -9,10 +9,12 @@ import {
 	Badge,
 	Button,
 	EmptyState,
+	PaginationBar,
 	Tabs,
 	TabsContent,
 	TabsList,
 	TabsTrigger,
+	usePagedRows,
 } from "@greenshift/ui";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
@@ -45,6 +47,12 @@ export function VendorDealsPage() {
 		(p) =>
 			p.procurementMethod === "OPEN_BIDDING" && p.status === "UNDER_EVALUATION",
 	);
+
+	// Each stage is its own list, so each pages the rows it renders.
+	const openBiddingPage = usePagedRows(openBiddingProposals);
+	const proposalsPage = usePagedRows(proposals);
+	const negotiationsPage = usePagedRows(negotiations);
+	const activeProjectsPage = usePagedRows(activeProjects);
 
 	// Real counts drive the stage strip, so the pipeline reads at a glance.
 	const STAGES = [
@@ -130,78 +138,90 @@ export function VendorDealsPage() {
 							}
 						/>
 					) : (
-						<div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
-							{openBiddingProposals.map((prop) => {
-								const hasStandings = leaderboardMeta.tenderId === prop.tenderId;
-								const facts = [
-									prop.submittedAt
-										? `Submitted ${formatShortDate(prop.submittedAt)}`
-										: null,
-									hasStandings && leaderboardMeta.myRank
-										? `Rank ${leaderboardMeta.myRank} of ${leaderboard.length}`
-										: null,
-									hasStandings && leaderboardMeta.deadlineAt
-										? `Closes ${formatShortDate(leaderboardMeta.deadlineAt)}`
-										: null,
-									`${prop.revisionCount} revision${prop.revisionCount === 1 ? "" : "s"}`,
-								].filter(Boolean);
+						<>
+							<div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+								{openBiddingPage.pageRows.map((prop) => {
+									const hasStandings =
+										leaderboardMeta.tenderId === prop.tenderId;
+									const facts = [
+										prop.submittedAt
+											? `Submitted ${formatShortDate(prop.submittedAt)}`
+											: null,
+										hasStandings && leaderboardMeta.myRank
+											? `Rank ${leaderboardMeta.myRank} of ${leaderboard.length}`
+											: null,
+										hasStandings && leaderboardMeta.deadlineAt
+											? `Closes ${formatShortDate(leaderboardMeta.deadlineAt)}`
+											: null,
+										`${prop.revisionCount} revision${prop.revisionCount === 1 ? "" : "s"}`,
+									].filter(Boolean);
 
-								return (
-									<div key={prop.id} className="p-5">
-										<div className="flex flex-wrap items-start justify-between gap-6">
-											<div className="min-w-0 flex-1">
-												<div className="flex flex-wrap items-center gap-3">
-													<Badge
-														className={
-															hasStandings
-																? "bg-emerald-700 text-white"
-																: "bg-muted text-foreground"
-														}
+									return (
+										<div key={prop.id} className="p-5">
+											<div className="flex flex-wrap items-start justify-between gap-6">
+												<div className="min-w-0 flex-1">
+													<div className="flex flex-wrap items-center gap-3">
+														<Badge
+															className={
+																hasStandings
+																	? "bg-emerald-700 text-white"
+																	: "bg-muted text-foreground"
+															}
+														>
+															{hasStandings ? "Live" : "Standings pending"}
+														</Badge>
+														<h4 className="text-base font-semibold text-foreground">
+															{prop.projectTitle}
+														</h4>
+													</div>
+													<p className="mt-2 text-sm text-muted-foreground">
+														{facts.join(" · ")}
+													</p>
+												</div>
+
+												<div className="flex items-center gap-6">
+													<div className="text-right">
+														<p className="text-sm text-muted-foreground">
+															Your bid
+														</p>
+														<p className="text-lg font-bold text-foreground tabular-nums">
+															{formatRupiah(prop.costBreakdown.totalPrice)}
+														</p>
+													</div>
+													<Link
+														to="/vendor/tenders/$id"
+														params={{ id: prop.tenderId }}
 													>
-														{hasStandings ? "Live" : "Standings pending"}
-													</Badge>
-													<h4 className="text-base font-semibold text-foreground">
-														{prop.projectTitle}
-													</h4>
+														<Button variant="outline">View tender</Button>
+													</Link>
 												</div>
-												<p className="mt-2 text-sm text-muted-foreground">
-													{facts.join(" · ")}
-												</p>
 											</div>
 
-											<div className="flex items-center gap-6">
-												<div className="text-right">
-													<p className="text-sm text-muted-foreground">
-														Your bid
-													</p>
-													<p className="text-lg font-bold text-foreground tabular-nums">
-														{formatRupiah(prop.costBreakdown.totalPrice)}
-													</p>
+											{hasStandings ? (
+												<div className="mt-5">
+													<OpenBidLeaderboard
+														leaderboard={leaderboard}
+														projectTitle={prop.projectTitle}
+														projectClient={prop.companyName}
+														deadlineAt={leaderboardMeta.deadlineAt}
+														onRevise={placeOpenBid}
+													/>
 												</div>
-												<Link
-													to="/vendor/tenders/$id"
-													params={{ id: prop.tenderId }}
-												>
-													<Button variant="outline">View tender</Button>
-												</Link>
-											</div>
+											) : null}
 										</div>
-
-										{hasStandings ? (
-											<div className="mt-5">
-												<OpenBidLeaderboard
-													leaderboard={leaderboard}
-													projectTitle={prop.projectTitle}
-													projectClient={prop.companyName}
-													deadlineAt={leaderboardMeta.deadlineAt}
-													onRevise={placeOpenBid}
-												/>
-											</div>
-										) : null}
-									</div>
-								);
-							})}
-						</div>
+									);
+								})}
+							</div>
+							<PaginationBar
+								label="Live bids"
+								pageIndex={openBiddingPage.pageIndex}
+								pageSize={openBiddingPage.pageSize}
+								pageCount={openBiddingPage.pageCount}
+								total={openBiddingPage.total}
+								onPageIndexChange={openBiddingPage.setPageIndex}
+								onPageSizeChange={openBiddingPage.setPageSize}
+							/>
+						</>
 					)}
 				</TabsContent>
 
@@ -218,9 +238,20 @@ export function VendorDealsPage() {
 							}
 						/>
 					) : (
-						proposals.map((prop) => (
-							<ProposalCard key={prop.id} proposal={prop} />
-						))
+						<>
+							{proposalsPage.pageRows.map((prop) => (
+								<ProposalCard key={prop.id} proposal={prop} />
+							))}
+							<PaginationBar
+								label="Proposals"
+								pageIndex={proposalsPage.pageIndex}
+								pageSize={proposalsPage.pageSize}
+								pageCount={proposalsPage.pageCount}
+								total={proposalsPage.total}
+								onPageIndexChange={proposalsPage.setPageIndex}
+								onPageSizeChange={proposalsPage.setPageSize}
+							/>
+						</>
 					)}
 				</TabsContent>
 
@@ -232,13 +263,24 @@ export function VendorDealsPage() {
 							description="When a client wants different terms, their revision request lands here for you to answer."
 						/>
 					) : (
-						negotiations.map((neg) => (
-							<NegotiationCard
-								key={neg.id}
-								negotiation={neg}
-								onSubmitResponse={submitNegotiationResponse}
+						<>
+							{negotiationsPage.pageRows.map((neg) => (
+								<NegotiationCard
+									key={neg.id}
+									negotiation={neg}
+									onSubmitResponse={submitNegotiationResponse}
+								/>
+							))}
+							<PaginationBar
+								label="Negotiations"
+								pageIndex={negotiationsPage.pageIndex}
+								pageSize={negotiationsPage.pageSize}
+								pageCount={negotiationsPage.pageCount}
+								total={negotiationsPage.total}
+								onPageIndexChange={negotiationsPage.setPageIndex}
+								onPageSizeChange={negotiationsPage.setPageSize}
 							/>
-						))
+						</>
 					)}
 				</TabsContent>
 
@@ -257,18 +299,29 @@ export function VendorDealsPage() {
 							}
 						/>
 					) : (
-						activeProjects.map((proj) => (
-							<ActiveProjectCard
-								key={proj.id}
-								project={proj}
-								onSelect={() =>
-									navigate({
-										to: "/vendor/active-projects/$id",
-										params: { id: proj.id },
-									})
-								}
+						<>
+							{activeProjectsPage.pageRows.map((proj) => (
+								<ActiveProjectCard
+									key={proj.id}
+									project={proj}
+									onSelect={() =>
+										navigate({
+											to: "/vendor/active-projects/$id",
+											params: { id: proj.id },
+										})
+									}
+								/>
+							))}
+							<PaginationBar
+								label="Projects in execution"
+								pageIndex={activeProjectsPage.pageIndex}
+								pageSize={activeProjectsPage.pageSize}
+								pageCount={activeProjectsPage.pageCount}
+								total={activeProjectsPage.total}
+								onPageIndexChange={activeProjectsPage.setPageIndex}
+								onPageSizeChange={activeProjectsPage.setPageSize}
 							/>
-						))
+						</>
 					)}
 				</TabsContent>
 			</Tabs>

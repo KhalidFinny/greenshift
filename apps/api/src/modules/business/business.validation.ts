@@ -1,4 +1,13 @@
-import type { BusinessStep1Patch, BusinessStep2Patch } from "../../contracts";
+import type {
+	BusinessStep1Patch,
+	BusinessStep2Patch,
+	BusinessStep3Patch,
+} from "../../contracts";
+import {
+	SCOPE_ITEM_MAX,
+	SCOPE_MAX_ITEMS,
+	scopeEntries,
+} from "./business.shared";
 
 /**
  * The wizard's per-step rules, mirroring the frontend's `validators.ts`.
@@ -150,6 +159,62 @@ export function step2Errors(
 	}
 
 	return errors;
+}
+
+/**
+ * Step 3 rules: the scope of work. Both lists are open-ended, so the rule counts
+ * the entries that carry text rather than reading any one of them, and an empty
+ * list is only an error on submit: a draft is allowed to be incomplete.
+ */
+export function step3Errors(
+	value: BusinessStep3Patch,
+	partial = false,
+): FieldErrors {
+	const errors: FieldErrors = {};
+	const check = checker(partial);
+
+	if (check(value, "requirements")) {
+		const problem = scopeListProblem(
+			value.requirements,
+			"key technical requirement",
+			partial,
+		);
+		if (problem) errors.requirements = problem;
+	}
+	if (check(value, "deliverables")) {
+		const problem = scopeListProblem(
+			value.deliverables,
+			"deliverable",
+			partial,
+		);
+		if (problem) errors.deliverables = problem;
+	}
+
+	return errors;
+}
+
+/** Why a scope list is not usable, or null when it is. */
+function scopeListProblem(
+	value: unknown,
+	noun: string,
+	partial: boolean,
+): string | null {
+	if (!Array.isArray(value)) return `Enter one ${noun} per line.`;
+	if (
+		value.some(
+			(entry) =>
+				typeof entry !== "string" || entry.trim().length > SCOPE_ITEM_MAX,
+		)
+	) {
+		return `Each entry is at most ${SCOPE_ITEM_MAX} characters.`;
+	}
+	if (value.length > SCOPE_MAX_ITEMS) {
+		return `At most ${SCOPE_MAX_ITEMS} entries.`;
+	}
+	if (!partial && scopeEntries(value).length === 0) {
+		return `Add at least one ${noun}.`;
+	}
+	return null;
 }
 
 /** Both declaration flags must be ticked before a draft can be submitted. */

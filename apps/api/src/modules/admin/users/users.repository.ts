@@ -9,7 +9,11 @@ export async function listUsers(
 	limit: number,
 ) {
 	const query = db
-		.select({ user: users, vendorId: vendors.id })
+		.select({
+			user: users,
+			vendorId: vendors.id,
+			vendorServiceCategory: vendors.serviceCategory,
+		})
 		.from(users)
 		.leftJoin(vendors, eq(vendors.userId, users.id))
 		.$dynamic();

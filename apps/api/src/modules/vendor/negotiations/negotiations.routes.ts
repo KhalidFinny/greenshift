@@ -4,6 +4,7 @@ import type { VendorNegotiationResponseBody } from "../../../contracts";
 import { createDb } from "../../../db";
 import type { ApiEnv } from "../../../env";
 import { invalidNumber } from "../../../lib/format";
+import { requireJsonBody } from "../../../lib/http";
 import { mutationRateLimit } from "../../../lib/mutation-limit";
 import { apiError, apiNotFound, apiSuccess } from "../../../lib/response";
 import {
@@ -30,6 +31,7 @@ negotiationRoutes.get(
 negotiationRoutes.post(
 	"/negotiations/:id/response",
 	mutationRateLimit("vendor", "negotiation"),
+	requireJsonBody,
 	...factory.createHandlers(async (c) => {
 		const id = Number(c.req.param("id"));
 		if (!Number.isInteger(id) || id <= 0) {

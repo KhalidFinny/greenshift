@@ -71,7 +71,7 @@ export function VendorTenderDetailPage({ tenderId }: { tenderId?: string }) {
 							</Badge>
 							{proposal?.submittedAt ? (
 								<div className="flex items-center gap-2 rounded-lg bg-white/10 px-3 py-1.5 text-sm font-semibold text-emerald-200">
-									<FontAwesomeIcon icon={faClock} className="text-xs" />
+									<FontAwesomeIcon icon={faClock} className="text-sm" />
 									<span>Submitted {formatShortDate(proposal.submittedAt)}</span>
 								</div>
 							) : null}

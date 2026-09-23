@@ -17,7 +17,6 @@
  */
 
 import {
-	faArrowRight,
 	faCircleCheck,
 	faGavel,
 	faHandshake,
@@ -461,7 +460,6 @@ function VendorRanking({
 											{tender?.bidCount === 1
 												? "See the vendor bidding"
 												: `See the vendors bidding (${tender?.bidCount})`}
-											<FontAwesomeIcon icon={faArrowRight} aria-hidden />
 										</Link>
 									</Button>
 								)}
@@ -487,6 +485,10 @@ function VendorRanking({
 								columns={columns}
 								data={recommendedVendors}
 								getRowId={(vendor) => String(vendor.id)}
+								/* The ranking is what the page is for, so the five
+								   strongest vendors are what it leads with and the rest
+								   are a page away. */
+								pageSize={5}
 								onRowClick={(vendor) => toggleRead(vendor.id)}
 								rowClassName={(vendor) =>
 									vendor.id === readVendor?.id
@@ -563,7 +565,6 @@ function VendorRanking({
 									{tender
 										? "Save and go to the bidding phase"
 										: "Open the tender"}
-									<FontAwesomeIcon icon={faArrowRight} aria-hidden />
 								</Button>
 							)}
 							{/* A closed tender has no table button when nothing came in, so

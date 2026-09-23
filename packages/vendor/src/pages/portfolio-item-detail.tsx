@@ -31,7 +31,13 @@ export function VendorPortfolioItemDetailPage({ itemId }: { itemId?: string }) {
 		);
 	}
 
-	const facts = [
+	const documentUrl = item?.documentUrl ?? null;
+
+	const facts: {
+		label: string;
+		value: string;
+		documentUrl?: string | null;
+	}[] = [
 		{ label: "Client", value: item?.clientName || NOT_RECORDED },
 		{ label: "Location", value: item?.location || NOT_RECORDED },
 		{ label: "Sector", value: item?.projectType || NOT_RECORDED },
@@ -53,7 +59,11 @@ export function VendorPortfolioItemDetailPage({ itemId }: { itemId?: string }) {
 					? String(item.completionYear)
 					: NOT_RECORDED,
 		},
-		{ label: "Document", value: item?.documentName || NOT_RECORDED },
+		{
+			label: "Document",
+			value: documentUrl ? item?.documentName || "Document" : NOT_RECORDED,
+			documentUrl,
+		},
 	];
 
 	return (
@@ -67,9 +77,7 @@ export function VendorPortfolioItemDetailPage({ itemId }: { itemId?: string }) {
 					badges={
 						item ? (
 							<span className="rounded-lg bg-white/10 px-3 py-1.5 text-sm font-semibold text-emerald-200">
-								{item.status === "VERIFIED"
-									? "Verified record"
-									: "Completed work"}
+								Delivered work
 							</span>
 						) : null
 					}
@@ -134,17 +142,30 @@ export function VendorPortfolioItemDetailPage({ itemId }: { itemId?: string }) {
 					)}
 
 					<dl className="grid gap-x-10 gap-y-3 sm:grid-cols-2">
-						{facts.map((fact) => (
-							<div
-								key={fact.label}
-								className="flex items-baseline justify-between gap-4 border-b border-border pb-2"
-							>
-								<dt className="text-muted-foreground">{fact.label}</dt>
-								<dd className="text-right font-medium text-foreground">
-									{fact.value}
-								</dd>
-							</div>
-						))}
+						{facts.map((fact) => {
+							const url = fact.documentUrl;
+							return (
+								<div
+									key={fact.label}
+									className="flex items-baseline justify-between gap-4 border-b border-border pb-2"
+								>
+									<dt className="text-muted-foreground">{fact.label}</dt>
+									<dd className="text-right font-medium text-foreground">
+										{url ? (
+											<button
+												type="button"
+												className="cursor-pointer font-medium text-blue-700 hover:underline"
+												onClick={() => window.open(url, "_blank", "noopener")}
+											>
+												{fact.value}
+											</button>
+										) : (
+											fact.value
+										)}
+									</dd>
+								</div>
+							);
+						})}
 					</dl>
 				</CardContent>
 			</Card>

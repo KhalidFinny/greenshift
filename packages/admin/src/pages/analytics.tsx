@@ -224,17 +224,17 @@ export function AdminAnalytics() {
 	// Bond funding status: the same public bond data surfaced on the
 	// public dashboard, aggregated here for admin without any per-investor rows.
 	const funding: FundingRow[] = stats?.funding ?? [];
-	const topBonds: FundingRow[] = [...funding]
-		.sort((a, b) => (b.funded ?? 0) - (a.funded ?? 0))
-		.slice(0, 6);
+	// Ranked by money raised, highest first: the table pages the whole field
+	// rather than hiding all but the top few.
+	const rankedBonds: FundingRow[] = [...funding].sort(
+		(a, b) => (b.funded ?? 0) - (a.funded ?? 0),
+	);
 
-	const topProjects: AdminProject[] = projects.slice(0, 6);
-
-	const topBondsSections: ExportSection[] = [
+	const bondFundingSections: ExportSection[] = [
 		{
 			title: "Bond Funding Status",
 			headers: ["Bond", "Budget", "Raised", "Progress"],
-			rows: topBonds.map((row) => [
+			rows: rankedBonds.map((row) => [
 				row.title,
 				row.budget ? idr.format(row.budget) : "-",
 				idr.format(row.funded ?? 0),
@@ -243,7 +243,7 @@ export function AdminAnalytics() {
 		},
 	];
 
-	const topProjectsSections: ExportSection[] = [
+	const projectIntelligenceSections: ExportSection[] = [
 		{
 			title: "Project Intelligence",
 			headers: [
@@ -255,7 +255,7 @@ export function AdminAnalytics() {
 				"Risk",
 				"Blueprint",
 			],
-			rows: topProjects.map((row) => [
+			rows: projects.map((row) => [
 				row.title,
 				row.companyName,
 				row.industrySector ?? "-",
@@ -317,7 +317,7 @@ export function AdminAnalytics() {
 					<ExportMenu
 						filename="analytics"
 						title="Analytics"
-						sections={[...topBondsSections, ...topProjectsSections]}
+						sections={[...bondFundingSections, ...projectIntelligenceSections]}
 					/>
 				)}
 			</div>
@@ -425,7 +425,7 @@ export function AdminAnalytics() {
 					<CardContent>
 						{loading ? (
 							<TableSkeleton headers={FUNDING_HEADERS} rows={6} />
-						) : topBonds.length === 0 ? (
+						) : rankedBonds.length === 0 ? (
 							<EmptyState
 								title="No bond funding to report"
 								description="No bond has been issued against a submitted project yet, so there is no funding progress to chart."
@@ -433,7 +433,7 @@ export function AdminAnalytics() {
 						) : (
 							<DataTable
 								columns={fundingColumns}
-								data={topBonds}
+								data={rankedBonds}
 								getRowId={(row) => String(row.id)}
 								ariaLabel="Bond funding status"
 							/>
@@ -448,7 +448,7 @@ export function AdminAnalytics() {
 					<CardContent>
 						{loading ? (
 							<TableSkeleton headers={PROJECT_HEADERS} rows={6} />
-						) : topProjects.length === 0 ? (
+						) : projects.length === 0 ? (
 							<EmptyState
 								title="No projects submitted"
 								description="No company has submitted a project for assessment yet, so there is no risk or blueprint data to rank."
@@ -456,7 +456,7 @@ export function AdminAnalytics() {
 						) : (
 							<DataTable
 								columns={projectColumns}
-								data={topProjects}
+								data={projects}
 								getRowId={(row) => String(row.id)}
 								ariaLabel="Project intelligence"
 							/>

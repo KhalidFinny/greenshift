@@ -7,6 +7,8 @@ import {
 	CardHeader,
 	CardTitle,
 	EmptyState,
+	PaginationBar,
+	usePagedRows,
 } from "@greenshift/ui";
 
 export function CertificationsCard({
@@ -16,6 +18,8 @@ export function CertificationsCard({
 	certifications?: string[];
 	verified?: boolean;
 }) {
+	const paged = usePagedRows(certifications);
+
 	return (
 		<Card>
 			<CardHeader>
@@ -31,7 +35,7 @@ export function CertificationsCard({
 						description="ESCO registration and ISO certificates appear here once they are part of your company profile. Add them with your verification documents."
 					/>
 				)}
-				{certifications.map((cert) => (
+				{paged.pageRows.map((cert) => (
 					<div
 						key={cert}
 						className="flex items-center justify-between rounded-lg border border-border p-3"
@@ -44,6 +48,15 @@ export function CertificationsCard({
 						)}
 					</div>
 				))}
+				<PaginationBar
+					label="Certifications"
+					pageIndex={paged.pageIndex}
+					pageSize={paged.pageSize}
+					pageCount={paged.pageCount}
+					total={paged.total}
+					onPageIndexChange={paged.setPageIndex}
+					onPageSizeChange={paged.setPageSize}
+				/>
 			</CardContent>
 		</Card>
 	);

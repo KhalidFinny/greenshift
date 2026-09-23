@@ -197,7 +197,7 @@ export function PerformanceTrendCard({
 		<Card className="overflow-hidden border border-border bg-card">
 			<CardHeader className="pb-2">
 				<CardTitle className="text-sm md:text-base font-semibold text-foreground">
-					Verified Performance Score
+					Performance Score
 				</CardTitle>
 			</CardHeader>
 			<CardContent className="pt-2 pb-6 px-6">
@@ -206,7 +206,7 @@ export function PerformanceTrendCard({
 				) : (
 					<EmptyState
 						icon={<FontAwesomeIcon icon={faChartLine} />}
-						title="No verified performance history yet"
+						title="No performance history yet"
 						description="A score is recorded each period after a client signs off a milestone, so the trend starts building once your first project is under execution."
 					/>
 				)}

@@ -1,6 +1,7 @@
 export { default as FloatingPill } from "./components/atoms/FloatingPill";
 export { default as Panel } from "./components/atoms/Panel";
 export { default as DashboardShowcase } from "./components/molecules/DashboardShowcase";
+export { default as PartnerAppsShowcase } from "./components/molecules/PartnerAppsShowcase";
 export { default as CtaSection } from "./components/organisms/CtaSection";
 export { default as EcosystemSection } from "./components/organisms/EcosystemSection";
 export { default as FaqSection } from "./components/organisms/FaqSection";

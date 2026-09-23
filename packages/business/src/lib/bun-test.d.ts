@@ -11,6 +11,8 @@ declare module "bun:test" {
 		toHaveLength(length: number): void;
 		toBeNull(): void;
 		toBeFalse(): void;
+		toBeGreaterThan(expected: number): void;
+		toBeLessThan(expected: number): void;
 		not: BunExpect;
 	}
 	export function expect(actual: unknown): BunExpect;

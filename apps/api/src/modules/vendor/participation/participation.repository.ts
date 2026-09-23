@@ -4,6 +4,7 @@ import {
 	emissionReports,
 	energyForecasts,
 	milestoneEvidence,
+	organizationName,
 	projectMilestones,
 	projects,
 	proposalRevisions,
@@ -23,7 +24,7 @@ export async function listVendorProposalRows(
 			proposal: proposals,
 			tender: tenders,
 			project: projects,
-			companyName: users.name,
+			companyName: organizationName,
 		})
 		.from(proposals)
 		.innerJoin(tenders, eq(proposals.tenderId, tenders.id))
@@ -45,7 +46,7 @@ export async function findVendorProjectRow(
 			proposal: proposals,
 			tender: tenders,
 			project: projects,
-			companyName: users.name,
+			companyName: organizationName,
 		})
 		.from(proposals)
 		.innerJoin(tenders, eq(proposals.tenderId, tenders.id))
@@ -129,7 +130,7 @@ export async function listProcurementRows(
 			proposal: proposals,
 			tender: tenders,
 			project: projects,
-			companyName: users.name,
+			companyName: organizationName,
 			latestNote: sql<
 				string | null
 			>`(select note from proposal_revisions pr where pr.proposal_id = proposals.id order by pr.id desc limit 1)`,

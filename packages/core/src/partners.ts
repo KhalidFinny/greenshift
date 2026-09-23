@@ -1,18 +1,19 @@
 /**
- * Broker platform registry for the "buy bond" hand-off.
+ * The partner apps a bond is issued and held in.
  *
- * GreenShift never settles a bond trade itself: bonds are bought through a
- * licensed broker app. Trima+ (Trimegah Sekuritas) is the primary target: it is
- * the only platform here that explicitly sells corporate bonds (including IPO)
- * on mobile, which matches the project-bond issuance scenario. IPOT is kept as
- * the manual search target for investors who already use it.
+ * GreenShift never settles a trade itself: the instrument is issued, sold and
+ * held by a licensed securities partner, and this registry is the hand-off to
+ * those apps. It lives in core because two surfaces point at it: the public
+ * listing, which opens the app to buy, and the landing page, which names the
+ * partners a project is monitored through.
  *
  * Every link below was verified against the official listings:
  *   - Play listing "Trima+", publisher PT. Trimegah Sekuritas Indonesia Tbk
- *   - trimegahsekuritas.com/en/site/product-services/trima
+ *   - Play listing "IPOT", publisher PT Indopremier Sekuritas
+ * The icons are the ones those listings publish.
  */
 
-export interface BrokerPlatform {
+export interface PartnerApp {
 	/** Stable key, used in deep links and copy payloads. */
 	key: string;
 	name: string;
@@ -22,6 +23,8 @@ export interface BrokerPlatform {
 	note: string;
 	/** Google Play listing. Always reachable, so it is the fallback target. */
 	playUrl: string;
+	/** The app's icon, as the store publishes it. */
+	logoUrl: string;
 	/**
 	 * Best-effort Android URL scheme used to open the installed app.
 	 *
@@ -38,27 +41,29 @@ export interface BrokerPlatform {
 	deepLinkScheme: string | null;
 }
 
-export const TRIMA_PLUS: BrokerPlatform = {
+export const TRIMA_PLUS: PartnerApp = {
 	key: "trima-plus",
 	name: "Trima+",
 	publisher: "PT Trimegah Sekuritas Indonesia Tbk",
 	note: "Buy corporate bonds directly from the app, including during the IPO offering period.",
 	playUrl:
 		"https://play.google.com/store/apps/details?id=id.trimegah.tplus.android&hl=id",
+	logoUrl: "/partners/trima-plus.webp",
 	deepLinkScheme: "trimaplus://",
 };
 
-export const IPOT: BrokerPlatform = {
+export const IPOT: PartnerApp = {
 	key: "ipot",
 	name: "IPOT",
 	publisher: "PT Indopremier Sekuritas",
 	note: "An alternative if you already have a securities account at IPOT.",
 	playUrl:
 		"https://play.google.com/store/apps/details?id=com.indopremier.ipot&hl=id",
+	logoUrl: "/partners/ipot.webp",
 	deepLinkScheme: null,
 };
 
 /** Ordered by preference: Trima+ first, it is the only bond-capable target. */
-export const BROKER_PLATFORMS: BrokerPlatform[] = [TRIMA_PLUS, IPOT];
+export const PARTNER_APPS: PartnerApp[] = [TRIMA_PLUS, IPOT];
 
-export const PRIMARY_BROKER = TRIMA_PLUS;
+export const PRIMARY_PARTNER = TRIMA_PLUS;

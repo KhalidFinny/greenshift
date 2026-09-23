@@ -1,6 +1,11 @@
 import { faTrophy } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { EmptyState, ShimmerBlock } from "@greenshift/ui";
+import {
+	EmptyState,
+	PaginationBar,
+	ShimmerBlock,
+	usePagedRows,
+} from "@greenshift/ui";
 import { formatRupiah } from "../lib/format";
 
 interface BidLeaderboardProps {
@@ -19,10 +24,12 @@ export function BidLeaderboard({
 	leaderboard,
 	loading = false,
 }: BidLeaderboardProps) {
+	const paged = usePagedRows(leaderboard);
+
 	// One list frame; each row is either a ranked bid or a shimmer.
 	const rows: (BidLeaderboardProps["leaderboard"][number] | null)[] = loading
 		? Array.from({ length: 4 }, () => null)
-		: leaderboard;
+		: paged.pageRows;
 
 	if (!loading && rows.length === 0) {
 		return (
@@ -49,7 +56,7 @@ export function BidLeaderboard({
 				<h3 className="text-lg font-semibold text-foreground">Live Rankings</h3>
 			</div>
 
-			<div className="max-h-[400px] space-y-2 overflow-y-auto">
+			<div className="space-y-2">
 				{rows.map((entry, i) => (
 					<div
 						key={entry?.rank ?? i}
@@ -96,6 +103,16 @@ export function BidLeaderboard({
 					</div>
 				))}
 			</div>
+
+			<PaginationBar
+				label="Live rankings"
+				pageIndex={paged.pageIndex}
+				pageSize={paged.pageSize}
+				pageCount={paged.pageCount}
+				total={paged.total}
+				onPageIndexChange={paged.setPageIndex}
+				onPageSizeChange={paged.setPageSize}
+			/>
 		</div>
 	);
 }

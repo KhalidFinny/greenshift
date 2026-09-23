@@ -15,6 +15,8 @@ import {
 	CardTitle,
 	EmptyState,
 	Input,
+	PaginationBar,
+	usePagedRows,
 } from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
@@ -39,6 +41,16 @@ export function BrokerMonthlyReportsPage() {
 			r.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
 			r.period.includes(searchQuery),
 	);
+
+	const {
+		pageRows,
+		pageIndex,
+		pageSize,
+		pageCount,
+		total,
+		setPageIndex,
+		setPageSize,
+	} = usePagedRows(filteredReports);
 
 	return (
 		<div className="space-y-6">
@@ -81,7 +93,7 @@ export function BrokerMonthlyReportsPage() {
 						}
 					/>
 				)}
-				{filteredReports.map((report) => (
+				{pageRows.map((report) => (
 					<Card key={report.id} className="overflow-hidden">
 						<CardHeader className="flex flex-row items-center justify-between border-b border-border bg-muted/30 pb-4">
 							<div>
@@ -199,6 +211,15 @@ export function BrokerMonthlyReportsPage() {
 						</CardContent>
 					</Card>
 				))}
+				<PaginationBar
+					label="Monthly reports"
+					pageIndex={pageIndex}
+					pageSize={pageSize}
+					pageCount={pageCount}
+					total={total}
+					onPageIndexChange={setPageIndex}
+					onPageSizeChange={setPageSize}
+				/>
 			</div>
 		</div>
 	);

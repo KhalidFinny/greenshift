@@ -163,7 +163,10 @@ export default function EcosystemSection() {
 			className="relative overflow-hidden bg-white"
 		>
 			<div className="page-wrap relative z-10 py-24">
-				<header className="mb-16 max-w-2xl">
+				{/* Wide enough for the headline to hold one line at its 36px size:
+				    the string measures 854px in DM Sans Bold, which `max-w-2xl`
+				    (672px) split in two. */}
+				<header className="mb-16 max-w-4xl">
 					<p className="text-sm font-bold uppercase tracking-[0.2em] text-[#03442C]">
 						Ecosystem
 					</p>

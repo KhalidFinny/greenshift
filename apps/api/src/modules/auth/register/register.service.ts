@@ -1,4 +1,4 @@
-import type { AuthUser } from "@greenshift/core";
+import type { AuthUser, OrganizationType } from "@greenshift/core";
 import { createDb } from "../../../db";
 import type { Env } from "../../../env";
 import { authUserFrom } from "../../../lib/authz";
@@ -6,21 +6,39 @@ import { hashPassword } from "../../../lib/password";
 import { createSession } from "../../../lib/session";
 import {
 	findUserIdByEmail,
-	insertUser,
+	insertRegisteredAccount,
 	type UserRow,
 } from "./register.repository";
 
 export interface RegisterInput {
+	accountType: OrganizationType;
 	name: string;
 	email: string;
 	password: string;
-	companyName: string;
+	phone: string;
+	organizationName: string;
+	industry: string;
+	address: string;
+	businessInfo: string | null;
+	nib: string | null;
+	npwp: string | null;
 }
 
 export type RegisterResult =
-	| { status: "ok"; user: AuthUser; token: string }
+	| {
+			status: "ok";
+			user: AuthUser;
+			token: string;
+			accountType: OrganizationType;
+	  }
 	| { status: "email-taken" };
 
+/**
+ * Creates the account and the organization it represents, then opens the
+ * session, so one submission leaves a usable account of the chosen type: a
+ * company with its sector on file, a vendor with an unverified profile it can
+ * complete and be verified against.
+ */
 export async function registerUser(
 	env: Env,
 	input: RegisterInput,
@@ -33,13 +51,7 @@ export async function registerUser(
 	const hashedPassword = await hashPassword(input.password);
 	let user: UserRow;
 	try {
-		user = await insertUser(db, {
-			email: input.email,
-			name: input.name,
-			companyName: input.companyName,
-			hashedPassword,
-			role: "business",
-		});
+		user = await insertRegisteredAccount(db, { ...input, hashedPassword });
 	} catch (err) {
 		if (String(err).includes("UNIQUE constraint")) {
 			return { status: "email-taken" };
@@ -49,5 +61,10 @@ export async function registerUser(
 
 	const authUser = authUserFrom(user);
 	const token = await createSession(env, authUser.id);
-	return { status: "ok", user: authUser, token };
+	return {
+		status: "ok",
+		user: authUser,
+		token,
+		accountType: input.accountType,
+	};
 }

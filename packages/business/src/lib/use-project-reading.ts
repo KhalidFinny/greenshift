@@ -1,55 +1,37 @@
 /* Eleanor's reading of the project and its funding case, for the summary the
- * review step opens with.
+ * review step opens with and the one the project's own page shows.
  *
- * The figures travel the other way round from the risk insight: they are sent,
- * because the project does not exist yet for the server to read. The request is
- * keyed by the figures themselves, so an edit that changes them is a different
- * question and an unchanged one is asked once.
+ * The figures travel to the endpoint that composes the reading, because the
+ * wizard has no project row to store one on yet. The request is keyed by the
+ * figures themselves, so the same case is asked for once and an edit that
+ * changes it is a different question.
  */
 
 import { api } from "@greenshift/core";
 import { useQuery } from "@tanstack/react-query";
-import { parseIdNumber } from "./number-format";
+import type { ProjectFunding } from "./project-funding";
 import type { RiskInsightState } from "./use-risk-insight";
 
-/** The Step 1 and Step 2 fields the reading is written from. */
-export interface ProjectReadingInput {
+/** What the project is, on top of the money the reading is written from. */
+export interface ProjectReadingInput extends ProjectFunding {
 	namaProyek: string;
 	lokasi: string;
 	sektor: string;
-	capex: string;
-	tenor: string;
-	saving: string;
-	pendapatan: string;
-	jaminan: string;
-}
-
-/** The figures as the endpoint reads them: numbers where they parse, else null. */
-function readingBody(input: ProjectReadingInput) {
-	return {
-		namaProyek: input.namaProyek,
-		lokasi: input.lokasi,
-		sektor: input.sektor,
-		capexRp: parseIdNumber(input.capex),
-		tenorTahun: parseIdNumber(input.tenor),
-		penghematanRp: parseIdNumber(input.saving),
-		pendapatanRp: parseIdNumber(input.pendapatan),
-		jaminan: input.jaminan.trim() ? input.jaminan : null,
-	};
+	/** Free text, and absent when the company offered no collateral. */
+	jaminan: string | null;
 }
 
 /** The figures the reading is about: any of them changing changes the reading. */
 function readingKey(input: ProjectReadingInput): string {
-	const body = readingBody(input);
 	return [
-		body.namaProyek,
-		body.lokasi,
-		body.sektor,
-		body.capexRp,
-		body.tenorTahun,
-		body.penghematanRp,
-		body.pendapatanRp,
-		body.jaminan,
+		input.namaProyek,
+		input.lokasi,
+		input.sektor,
+		input.capexRp,
+		input.tenorTahun,
+		input.penghematanRp,
+		input.pendapatanRp,
+		input.jaminan,
 	].join("|");
 }
 
@@ -59,10 +41,10 @@ export function useProjectReading(
 	const query = useQuery({
 		queryKey: ["business", "project-reading", readingKey(input)],
 		queryFn: async () => {
-			const { reading } = await api.business.projectReading(readingBody(input));
+			const { reading } = await api.business.projectReading(input);
 			return reading;
 		},
-		// The review step does not edit these fields, so one reading per set of
+		// The summary does not edit these figures, so one reading per set of
 		// figures is all this asks for.
 		staleTime: Number.POSITIVE_INFINITY,
 		retry: false,

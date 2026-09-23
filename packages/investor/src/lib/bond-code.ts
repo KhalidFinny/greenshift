@@ -1,5 +1,3 @@
-import { formatIdr } from "./format";
-
 /**
  * Broker-facing bond code.
  *
@@ -20,34 +18,20 @@ export function bondCodeFor(project: {
  * Plain-text payload for the "Copy Code" button.
  *
  * Investors paste this into the broker app's search field, so it carries the
- * code plus just enough context (name, issuer, coupon) to disambiguate:
- * without turning the clipboard into a data dump.
+ * code plus just enough context (name, issuer) to disambiguate. The coupon is
+ * not included: the terms of the issuance belong to the partner app, which is
+ * where the investor reads them.
  */
 export function bondSearchPayload(project: {
 	id: number;
 	title: string;
 	bondCode?: string | null;
 	companyName?: string | null;
-	blueprint?: { irr?: number };
 }): string {
 	const lines = [
 		`Bond Code: ${bondCodeFor(project)}`,
 		`Name: ${project.title}`,
 	];
 	if (project.companyName) lines.push(`Issuer: ${project.companyName}`);
-	const coupon = project.blueprint?.irr;
-	if (typeof coupon === "number") {
-		lines.push(
-			`Coupon: ${coupon.toLocaleString("en-US", { maximumFractionDigits: 1 })}% p.a.`,
-		);
-	}
 	return lines.join("\n");
-}
-
-/** One-line description of the bond used in the checkout sheet header. */
-export function bondSummaryLine(project: {
-	title: string;
-	budget?: number | null;
-}): string {
-	return `${project.title} · target ${formatIdr(project.budget ?? 0)}`;
 }

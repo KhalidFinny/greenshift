@@ -5,9 +5,9 @@ import {
 	faBriefcase,
 	faChartLine,
 	faChartPie,
+	faCheck,
 	faChevronDown,
 	faChevronUp,
-	faCircleUser,
 	faClipboardList,
 	faFileLines,
 	faGauge,
@@ -23,11 +23,12 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { api } from "@greenshift/core";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useState } from "react";
 import { AccountAvatar } from "../components/account-avatar";
 import { ShimmerBlock } from "../components/loaders/skeleton-loader";
+import { relativeTime } from "../lib/time";
 import { cn } from "../lib/utils";
 import { useRoleShell } from "./use-role-shell";
 
@@ -46,6 +47,9 @@ const ROLES_WITH_FEED: Record<string, true> = {
 	business: true,
 };
 
+/** How many the hub lists. Deeper history belongs on a notifications page. */
+const HUB_LIMIT = 20;
+
 interface ShellNotification {
 	id: number;
 	title: string;
@@ -53,15 +57,6 @@ interface ShellNotification {
 	link: string | null;
 	read: boolean;
 	createdAt: string;
-}
-
-function relativeTime(iso: string): string {
-	const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
-	if (minutes < 1) return "just now";
-	if (minutes < 60) return `${minutes}m ago`;
-	const hours = Math.round(minutes / 60);
-	if (hours < 24) return `${hours}h ago`;
-	return `${Math.round(hours / 24)}d ago`;
 }
 
 function getSidebarIcon(item: { to: string; label: string }) {
@@ -175,7 +170,9 @@ export function RoleShell({
 		refetchInterval: 10 * 1000,
 		queryFn: async (): Promise<ShellNotification[]> => {
 			if (role === "vendor") {
-				const { notifications } = await api.vendor.notifications({ limit: 5 });
+				const { notifications } = await api.vendor.notifications({
+					limit: HUB_LIMIT,
+				});
 				return notifications.map((n) => ({
 					id: n.id,
 					title: n.title,
@@ -187,7 +184,7 @@ export function RoleShell({
 			}
 			if (role === "business") {
 				const { notifications } = await api.business.notifications({
-					limit: 5,
+					limit: HUB_LIMIT,
 				});
 				return notifications.map((n) => ({
 					id: n.id,
@@ -199,7 +196,9 @@ export function RoleShell({
 				}));
 			}
 			if (role === "broker") {
-				const { notifications } = await api.broker.notifications({ limit: 5 });
+				const { notifications } = await api.broker.notifications({
+					limit: HUB_LIMIT,
+				});
 				return notifications.map((n) => ({
 					id: n.id,
 					title: n.title,
@@ -216,6 +215,54 @@ export function RoleShell({
 	const notifications = notificationsQuery.data ?? [];
 	const unreadCount = notifications.filter((n) => !n.read).length;
 
+	/**
+	 * Reading is a write, so the hub marks as it goes: opening an item marks that
+	 * one, and the header's action marks the whole feed. Both patch the cached
+	 * list first, so the badge clears as the request leaves rather than after the
+	 * next poll.
+	 */
+	const queryClient = useQueryClient();
+	const notificationsKey = ["shell-notifications", role];
+
+	function markRead(id: number) {
+		queryClient.setQueryData<ShellNotification[]>(
+			notificationsKey,
+			(previous) =>
+				previous?.map((item) =>
+					item.id === id ? { ...item, read: true } : item,
+				),
+		);
+		const call =
+			role === "vendor"
+				? api.vendor.readNotification
+				: role === "business"
+					? api.business.readNotification
+					: api.broker.readNotification;
+		void call(id)
+			.catch(() => undefined)
+			.finally(() =>
+				queryClient.invalidateQueries({ queryKey: notificationsKey }),
+			);
+	}
+
+	function markAllRead() {
+		queryClient.setQueryData<ShellNotification[]>(
+			notificationsKey,
+			(previous) => previous?.map((item) => ({ ...item, read: true })),
+		);
+		const call =
+			role === "vendor"
+				? api.vendor.readAllNotifications
+				: role === "business"
+					? api.business.readAllNotifications
+					: api.broker.readAllNotifications;
+		void call()
+			.catch(() => undefined)
+			.finally(() =>
+				queryClient.invalidateQueries({ queryKey: notificationsKey }),
+			);
+	}
+
 	// Settings replaces the old standalone profile page, and only exists for the
 	// roles that actually have one.
 	const settingsPath =
@@ -223,7 +270,9 @@ export function RoleShell({
 			? "/vendor/settings"
 			: role === "broker"
 				? "/broker/settings"
-				: null;
+				: role === "business"
+					? "/business/settings"
+					: null;
 
 	// Mobile navigation. The sidebar stays ONE element at every width: below `lg`
 	// it slides in over the content rather than being duplicated into a second
@@ -363,17 +412,34 @@ export function RoleShell({
 
 								{notifMenuOpen ? (
 									<div
-										role="menu"
-										className="absolute right-0 top-full z-50 mt-2 w-[min(20rem,calc(100vw-3rem))] overflow-hidden rounded-xl border border-border bg-white shadow-xl"
+										role="dialog"
+										aria-label="Notifications"
+										className="absolute right-0 top-full z-50 mt-2 w-[min(30rem,calc(100vw-3rem))] overflow-hidden rounded-xl border border-border bg-white shadow-xl"
 									>
-										<div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-3">
-											<span className="text-sm font-semibold text-foreground">
-												Notifications
+										<div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-muted/40 px-4 py-3">
+											<span className="flex items-center gap-2">
+												<span className="text-sm font-semibold text-foreground">
+													Notifications
+												</span>
+												{unreadCount > 0 ? (
+													<span className="rounded-md bg-emerald-700 px-2 py-0.5 text-sm font-semibold text-white">
+														{unreadCount} unread
+													</span>
+												) : null}
 											</span>
 											{unreadCount > 0 ? (
-												<span className="rounded-md bg-emerald-700 px-2 py-0.5 text-sm font-semibold text-white">
-													{unreadCount} unread
-												</span>
+												<button
+													type="button"
+													onClick={markAllRead}
+													className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-semibold text-emerald-700 outline-none transition-colors hover:bg-emerald-50 focus-visible:ring-2 focus-visible:ring-ring"
+												>
+													<FontAwesomeIcon
+														icon={faCheck}
+														className="size-3.5"
+														aria-hidden
+													/>
+													Mark all as read
+												</button>
 											) : null}
 										</div>
 
@@ -382,6 +448,22 @@ export function RoleShell({
 												{Array.from({ length: 3 }).map((_, i) => (
 													<ShimmerBlock key={i} className="h-14 w-full" />
 												))}
+											</div>
+										) : notificationsQuery.isError ? (
+											<div className="px-6 py-8 text-center">
+												<p className="text-sm font-semibold text-foreground">
+													The feed did not load
+												</p>
+												<p className="mt-1 text-sm text-muted-foreground">
+													The notifications endpoint did not answer.
+												</p>
+												<button
+													type="button"
+													onClick={() => void notificationsQuery.refetch()}
+													className="mt-3 rounded-lg border border-border px-3 py-1.5 text-sm font-medium outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+												>
+													Try again
+												</button>
 											</div>
 										) : notifications.length === 0 ? (
 											<div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
@@ -399,50 +481,75 @@ export function RoleShell({
 												</p>
 											</div>
 										) : (
-											<div className="max-h-72 divide-y divide-border overflow-y-auto">
+											<ul className="max-h-[60vh] divide-y divide-border overflow-y-auto">
 												{notifications.map((item) => {
-													const row = (
-														<div className="flex items-start gap-2.5">
+													const content = (
+														<span className="flex items-start gap-2.5">
 															<span
 																aria-hidden="true"
 																className={cn(
-																	"mt-1 size-2 shrink-0 rounded-full",
+																	"mt-1.5 size-2 shrink-0 rounded-full",
 																	item.read ? "bg-border" : "bg-emerald-700",
 																)}
 															/>
-															<div className="min-w-0">
-																<p className="text-sm font-semibold text-foreground">
+															<span className="min-w-0 flex-1">
+																<span
+																	className={cn(
+																		"block text-sm text-foreground",
+																		item.read ? "font-medium" : "font-semibold",
+																	)}
+																>
 																	{item.title}
-																</p>
-																{item.body ? (
-																	<p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
-																		{item.body}
-																	</p>
-																) : null}
-																<span className="mt-1 block text-sm text-muted-foreground">
-																	{relativeTime(item.createdAt)}
 																</span>
-															</div>
-														</div>
+																{item.body ? (
+																	<span className="mt-0.5 line-clamp-3 block text-sm leading-6 text-muted-foreground">
+																		{item.body}
+																	</span>
+																) : null}
+																<span className="mt-1 flex items-center gap-3">
+																	<span className="text-sm text-muted-foreground">
+																		{relativeTime(item.createdAt)}
+																	</span>
+																	{!item.read ? (
+																		<span className="text-sm font-semibold text-emerald-700">
+																			Unread
+																		</span>
+																	) : null}
+																</span>
+															</span>
+														</span>
 													);
 													const rowClass =
-														"block p-3 no-underline transition-colors hover:bg-muted/50";
-													return item.link ? (
-														<a
-															key={item.id}
-															href={item.link}
-															onClick={closeNotifMenu}
-															className={rowClass}
-														>
-															{row}
-														</a>
-													) : (
-														<div key={item.id} className="p-3">
-															{row}
-														</div>
+														"block w-full p-3 text-left no-underline transition-colors hover:bg-muted/50";
+
+													// Opening an item is what reads it: the row marks
+													// itself read and follows its link.
+													return (
+														<li key={item.id}>
+															{item.link ? (
+																<a
+																	href={item.link}
+																	onClick={() => {
+																		markRead(item.id);
+																		closeNotifMenu();
+																	}}
+																	className={rowClass}
+																>
+																	{content}
+																</a>
+															) : (
+																<button
+																	type="button"
+																	onClick={() => markRead(item.id)}
+																	className={rowClass}
+																>
+																	{content}
+																</button>
+															)}
+														</li>
 													);
 												})}
-											</div>
+											</ul>
 										)}
 
 										{role === "vendor" ? (
@@ -475,8 +582,20 @@ export function RoleShell({
 									className="size-8"
 									fallbackClassName="bg-foreground/10 font-semibold text-foreground"
 								/>
-								<span className="hidden max-w-40 truncate text-base font-medium text-foreground sm:block">
-									{name || "Pengguna"}
+								{/* The person, then the organization they are acting as: a
+								    shared screen has to say which entity the reader is in.
+								    An account with no organization (an administrator) shows
+								    the name alone rather than repeating it. */}
+								<span className="hidden min-w-0 flex-col text-left sm:flex">
+									<span className="max-w-40 truncate text-base font-medium leading-tight text-foreground">
+										{name || "Pengguna"}
+									</span>
+									{user?.companyName &&
+									user.companyName !== (name || "Pengguna") ? (
+										<span className="max-w-40 truncate text-sm leading-tight text-muted-foreground">
+											{user.companyName}
+										</span>
+									) : null}
 								</span>
 								<FontAwesomeIcon
 									icon={accountMenuOpen ? faChevronUp : faChevronDown}
@@ -496,10 +615,10 @@ export function RoleShell({
 											className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium text-foreground no-underline transition-colors hover:bg-foreground/5"
 										>
 											<FontAwesomeIcon
-												icon={faCircleUser}
+												icon={faGear}
 												className="size-4 shrink-0"
 											/>
-											Profile
+											Settings
 										</Link>
 									) : null}
 									<button

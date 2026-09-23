@@ -8,6 +8,7 @@ import { parseLimit } from "../../../lib/format";
 import { apiError, apiNotFound, apiSuccess } from "../../../lib/response";
 import {
 	listNotifications,
+	markAllNotificationsRead,
 	markNotificationRead,
 } from "./notifications.repository";
 
@@ -55,5 +56,20 @@ notificationRoutes.patch(
 			return apiNotFound(c, "Notification");
 		}
 		return apiSuccess(c, { ok: true }, "Changes saved successfully");
+	}),
+);
+
+// ── read the whole feed ───────────────────────────────────
+// Registered after the `:id` route so the two cannot shadow each other.
+notificationRoutes.patch(
+	"/notifications",
+	...factory.createHandlers(async (c) => {
+		const db = createDb(c.env.DB);
+		const read = await markAllNotificationsRead(db, c.get("user").id);
+		return apiSuccess(
+			c,
+			{ read },
+			read === 0 ? "Nothing was unread" : "All notifications marked read",
+		);
 	}),
 );

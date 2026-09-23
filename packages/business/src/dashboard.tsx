@@ -140,7 +140,13 @@ export function BusinessDashboard() {
 	const loading = projectsQuery.isPending;
 
 	const total = projects.length;
-	const inReview = projects.filter((p) => p.status === "Review LVV").length;
+	// The verification step is two statuses now: the registry registration that
+	// opens it, and the LVV verification itself. Both read as "in review".
+	const inReview = projects.filter(
+		(p) =>
+			p.status === "Register for LVV" ||
+			p.status === "Awaiting LVV verification",
+	).length;
 	const verified = projects.filter((p) => p.status === "Verified").length;
 	const capex = projects.reduce((s, p) => s + (p.capexRp ?? 0), 0);
 	const verifiedPct = total > 0 ? Math.round((verified / total) * 100) : 0;
@@ -150,7 +156,9 @@ export function BusinessDashboard() {
 	const inReviewThisMonth = inMonth(
 		projects,
 		0,
-		(p) => p.status === "Review LVV",
+		(p) =>
+			p.status === "Register for LVV" ||
+			p.status === "Awaiting LVV verification",
 	).length;
 	const verifiedThisMonth = inMonth(
 		projects,
@@ -413,7 +421,6 @@ export function BusinessDashboard() {
 							data={loading ? [] : filteredRows}
 							getRowId={(p) => String(p.id)}
 							pageSize={10}
-							pageSizeOptions={[5, 10, "all"]}
 							searchPlaceholder="Search projects"
 							emptyMessage={
 								loading

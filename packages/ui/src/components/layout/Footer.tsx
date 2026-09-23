@@ -87,7 +87,9 @@ export default function Footer() {
 
 			<div className="border-t border-white/15">
 				<div className="page-wrap flex flex-col items-center justify-between gap-2 py-6 text-base text-white/80 sm:flex-row">
-					<small>&copy; {year} GreenShift. All rights reserved.</small>
+					{/* A span, not `small`: the element's own 0.8em would put the line
+					    under the 14px floor the rest of the interface holds. */}
+					<span>&copy; {year} GreenShift. All rights reserved.</span>
 					<span>An MRV Platform for Green Financing</span>
 				</div>
 			</div>

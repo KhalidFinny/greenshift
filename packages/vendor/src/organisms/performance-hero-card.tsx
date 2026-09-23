@@ -15,10 +15,10 @@ export function PerformanceHeroCard({
 					<div className="flex items-center justify-between">
 						<div className="space-y-1">
 							<h2 className="text-sm md:text-sm font-semibold text-muted-foreground">
-								Verified Performance Score
+								Performance Score
 							</h2>
 							<p className="text-sm text-muted-foreground">
-								{performanceMetrics.totalCompletedProjects} Verified Projects
+								{performanceMetrics.totalCompletedProjects} Completed Projects
 							</p>
 						</div>
 						<div className="flex items-baseline gap-1">

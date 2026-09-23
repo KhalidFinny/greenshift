@@ -7,6 +7,8 @@ import {
 	CardHeader,
 	CardTitle,
 	EmptyState,
+	PaginationBar,
+	usePagedRows,
 } from "@greenshift/ui";
 
 export function DocumentsVaultCard({
@@ -14,6 +16,8 @@ export function DocumentsVaultCard({
 }: {
 	documents?: string[];
 }) {
+	const paged = usePagedRows(documents);
+
 	return (
 		<Card>
 			<CardHeader>
@@ -27,7 +31,7 @@ export function DocumentsVaultCard({
 						description="Legal and industry documents tied to your vendor profile are listed here for download once they are on file."
 					/>
 				)}
-				{documents.map((doc) => (
+				{paged.pageRows.map((doc) => (
 					<div
 						key={doc}
 						className="flex items-center justify-between rounded-lg border border-border p-3"
@@ -44,6 +48,15 @@ export function DocumentsVaultCard({
 						</Button>
 					</div>
 				))}
+				<PaginationBar
+					label="Documents"
+					pageIndex={paged.pageIndex}
+					pageSize={paged.pageSize}
+					pageCount={paged.pageCount}
+					total={paged.total}
+					onPageIndexChange={paged.setPageIndex}
+					onPageSizeChange={paged.setPageSize}
+				/>
 			</CardContent>
 		</Card>
 	);

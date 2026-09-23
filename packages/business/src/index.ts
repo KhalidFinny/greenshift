@@ -3,5 +3,8 @@ export * from "./matchmaking-bidding";
 export * from "./matchmaking-detail";
 export * from "./matchmaking-list";
 export * from "./my-projects";
+export * from "./project-detail";
+export * from "./project-record";
+export * from "./settings";
 export * from "./submit";
 export * from "./submit-confirmation";

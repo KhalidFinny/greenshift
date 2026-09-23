@@ -2,12 +2,21 @@ import { eq } from "drizzle-orm";
 import type { GreenShiftDb } from "../../../db";
 import { auditLogs, users, vendors } from "../../../db/schema";
 
-/** The validated, normalized profile fields written by the upsert. */
+/**
+ * The profile fields a save may carry. Everything past the company name is
+ * optional and an absent key keeps its stored value: the registration writes the
+ * legal identity, and a later save of the company name from one form must not
+ * clear the rest of the profile.
+ */
 export interface VendorProfileValues {
 	companyName: string;
-	description: string | null;
-	certifications: string[];
-	portfolio: string[];
+	description?: string | null;
+	serviceCategory?: string | null;
+	location?: string | null;
+	nib?: string | null;
+	npwp?: string | null;
+	certifications?: string[];
+	portfolio?: string[];
 }
 
 export async function findVendorProfileRow(db: GreenShiftDb, userId: number) {
@@ -46,7 +55,8 @@ export async function findVendorIdByUser(db: GreenShiftDb, userId: number) {
 }
 
 // Atomic upsert: conflicts on the unique user_id index, so two first-time
-// saves racing cannot create duplicate profiles (single statement).
+// saves racing cannot create duplicate profiles (single statement). On conflict
+// only the keys the save carried are written.
 export async function upsertVendorProfile(
 	db: GreenShiftDb,
 	userId: number,
@@ -57,17 +67,33 @@ export async function upsertVendorProfile(
 		.values({
 			userId,
 			companyName: values.companyName,
-			description: values.description,
-			certifications: values.certifications,
-			portfolio: values.portfolio,
+			description: values.description ?? null,
+			serviceCategory: values.serviceCategory ?? null,
+			location: values.location ?? null,
+			nib: values.nib ?? null,
+			npwp: values.npwp ?? null,
+			certifications: values.certifications ?? [],
+			portfolio: values.portfolio ?? [],
 		})
 		.onConflictDoUpdate({
 			target: vendors.userId,
 			set: {
 				companyName: values.companyName,
-				description: values.description,
-				certifications: values.certifications,
-				portfolio: values.portfolio,
+				...(values.description !== undefined
+					? { description: values.description }
+					: {}),
+				...(values.serviceCategory !== undefined
+					? { serviceCategory: values.serviceCategory }
+					: {}),
+				...(values.location !== undefined ? { location: values.location } : {}),
+				...(values.nib !== undefined ? { nib: values.nib } : {}),
+				...(values.npwp !== undefined ? { npwp: values.npwp } : {}),
+				...(values.certifications !== undefined
+					? { certifications: values.certifications }
+					: {}),
+				...(values.portfolio !== undefined
+					? { portfolio: values.portfolio }
+					: {}),
 			},
 		})
 		.returning({ id: vendors.id });

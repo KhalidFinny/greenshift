@@ -1,5 +1,4 @@
 import {
-	faArrowLeft,
 	faCheckCircle,
 	faClock,
 	faDownload,
@@ -43,7 +42,6 @@ export function BrokerReportDetailPage() {
 			<div className="space-y-4">
 				<Link to="/broker/monthly-reports">
 					<Button variant="ghost" size="sm" className="gap-2">
-						<FontAwesomeIcon icon={faArrowLeft} />
 						Back to Monthly Reports
 					</Button>
 				</Link>
@@ -73,7 +71,6 @@ export function BrokerReportDetailPage() {
 						to="/broker/monthly-reports"
 						className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-2"
 					>
-						<FontAwesomeIcon icon={faArrowLeft} />
 						Back to Monthly Reports
 					</Link>
 					<h1 className="text-2xl font-bold">{report.projectTitle}</h1>

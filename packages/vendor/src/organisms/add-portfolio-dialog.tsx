@@ -10,11 +10,11 @@ import {
 	Input,
 	Label,
 } from "@greenshift/ui";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { VendorPortfolioItem } from "../lib/types";
 
 interface AddPortfolioDialogProps {
-	onAdd: (item: VendorPortfolioItem) => void;
+	onAdd: (item: VendorPortfolioItem, file: File | null) => Promise<void>;
 }
 
 export function AddPortfolioDialog({ onAdd }: AddPortfolioDialogProps) {
@@ -29,28 +29,23 @@ export function AddPortfolioDialog({ onAdd }: AddPortfolioDialogProps) {
 	const [energySavingPercent, setEnergySavingPercent] = useState("20");
 	const [carbonReductionTons, setCarbonReductionTons] = useState("500");
 	const [completionYear, setCompletionYear] = useState("2025");
-	const [documents, setDocuments] = useState<{ name: string; type: string }[]>(
-		[],
-	);
+	const [file, setFile] = useState<File | null>(null);
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const files = e.target.files;
-		if (files) {
-			const newDocs = Array.from(files).map((file) => ({
-				name: file.name,
-				type: file.type,
-			}));
-			setDocuments((prev) => [...prev, ...newDocs]);
-		}
+		setFile(e.target.files?.[0] ?? null);
 	};
 
-	const removeDocument = (index: number) => {
-		setDocuments((prev) => prev.filter((_, i) => i !== index));
+	const removeFile = () => {
+		setFile(null);
+		// Clearing the input lets the same file be chosen again after removal.
+		if (fileInputRef.current) fileInputRef.current.value = "";
 	};
 
-	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		if (!projectName || !clientName) return;
+		if (!projectName || !clientName || isSubmitting) return;
 
 		const newItem: VendorPortfolioItem = {
 			id: `port-${Date.now()}`,
@@ -72,16 +67,25 @@ export function AddPortfolioDialog({ onAdd }: AddPortfolioDialogProps) {
 				? Number(carbonReductionTons)
 				: null,
 			completionYear: completionYear ? Number(completionYear) : null,
-			// A vendor cannot mark their own record verified. That is an admin act.
-			status: "COMPLETED",
-			documentName: documents[0]?.name || undefined,
+			// The record's id and its document both come from the server.
+			documentUrl: null,
 		};
 
-		onAdd(newItem);
+		setIsSubmitting(true);
+		try {
+			await onAdd(newItem, file);
+		} catch {
+			// The shared client already reported the failure as a toast; the
+			// dialog stays open so the vendor can retry.
+			return;
+		} finally {
+			setIsSubmitting(false);
+		}
+
 		setOpen(false);
 		setProjectName("");
 		setClientName("");
-		setDocuments([]);
+		removeFile();
 	};
 
 	return (
@@ -214,69 +218,64 @@ export function AddPortfolioDialog({ onAdd }: AddPortfolioDialogProps) {
 					</div>
 
 					<div className="space-y-2">
-						<Label className="text-sm font-semibold">
-							Supporting Documents
+						<Label htmlFor="p-doc" className="text-sm font-semibold">
+							Supporting Document
 						</Label>
 						<p className="text-sm text-muted-foreground">
 							Upload BAST certificates, photos, inspection reports, or other
 							verification documents.
 						</p>
 						<div className="rounded-lg border-2 border-dashed border-border p-6 text-center transition-colors hover:border-emerald-500/50 hover:bg-emerald-50/50">
+							{/* Visually hidden but focusable: the label is the control a
+							    pointer sees, the input is what the keyboard reaches. */}
 							<input
+								ref={fileInputRef}
 								type="file"
-								id="p-docs"
-								multiple
-								accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-								className="hidden"
+								id="p-doc"
+								accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp"
+								className="peer sr-only"
 								onChange={handleFileChange}
 							/>
-							<label htmlFor="p-docs" className="cursor-pointer">
+							<label
+								htmlFor="p-doc"
+								className="block cursor-pointer rounded-md peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2"
+							>
 								<FontAwesomeIcon
 									icon={faFileUpload}
 									className="mb-2 text-3xl text-muted-foreground"
 								/>
 								<p className="text-sm text-muted-foreground">
-									Click to upload or drag and drop
+									Click to choose a file
 								</p>
 								<p className="mt-1 text-sm text-muted-foreground/70">
-									PDF, JPG, PNG, DOC (Max 10MB each)
+									PDF, Word, PNG, JPG or WebP (max 10 MB)
 								</p>
 							</label>
 						</div>
 
-						{documents.length > 0 && (
-							<div className="space-y-2">
-								<p className="text-sm font-medium text-muted-foreground">
-									{documents.length} file(s) uploaded
-								</p>
-								{documents.map((doc, index) => (
-									<div
-										key={`${doc.name}-${index}`}
-										className="flex items-center justify-between rounded-md bg-muted px-3 py-2"
-									>
-										<div className="flex items-center gap-2">
-											<FontAwesomeIcon
-												icon={faFileUpload}
-												className="text-sm text-emerald-700"
-											/>
-											<span className="text-sm text-foreground truncate max-w-[250px]">
-												{doc.name}
-											</span>
-										</div>
-										<Button
-											type="button"
-											variant="ghost"
-											size="icon-sm"
-											className="text-destructive hover:text-destructive"
-											aria-label={`Remove ${doc.name}`}
-											onClick={() => removeDocument(index)}
-										>
-											<FontAwesomeIcon icon={faX} className="text-sm" />
-										</Button>
-									</div>
-								))}
+						{file ? (
+							<div className="flex items-center justify-between rounded-md bg-muted px-3 py-2">
+								<div className="flex items-center gap-2">
+									<FontAwesomeIcon
+										icon={faFileUpload}
+										className="text-sm text-emerald-700"
+									/>
+									<span className="max-w-[250px] truncate text-sm text-foreground">
+										{file.name}
+									</span>
+								</div>
+								<Button
+									type="button"
+									variant="ghost"
+									size="icon-sm"
+									className="text-destructive hover:text-destructive"
+									aria-label={`Remove ${file.name}`}
+									onClick={removeFile}
+								>
+									<FontAwesomeIcon icon={faX} className="text-sm" />
+								</Button>
 							</div>
-						)}
+						) : null}
 					</div>
 
 					<div className="flex justify-end gap-2 border-t border-border pt-4">
@@ -289,6 +288,7 @@ export function AddPortfolioDialog({ onAdd }: AddPortfolioDialogProps) {
 						</Button>
 						<Button
 							type="submit"
+							disabled={isSubmitting}
 							className="bg-[#00712D] text-white hover:bg-[#00712D]/90"
 						>
 							Save to Track Record

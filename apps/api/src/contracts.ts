@@ -117,6 +117,15 @@ export const apiRoutes = {
 		method: "DELETE",
 		path: "/api/vendor/proposals/:id",
 	},
+	/** Multipart: the proposal document is a file, not a JSON body. */
+	vendorProposalDocument: {
+		method: "POST",
+		path: "/api/vendor/proposals/:id/document",
+	},
+	vendorProposalDocumentFile: {
+		method: "GET",
+		path: "/api/vendor/proposals/:id/document",
+	},
 	vendorNotifications: {
 		method: "GET",
 		path: "/api/vendor/notifications",
@@ -139,6 +148,15 @@ export const apiRoutes = {
 	vendorDeletePortfolioItem: {
 		method: "DELETE",
 		path: "/api/vendor/portfolio/:id",
+	},
+	/** Multipart: the supporting document is a file, not a JSON body. */
+	vendorPortfolioDocument: {
+		method: "POST",
+		path: "/api/vendor/portfolio/:id/document",
+	},
+	vendorPortfolioDocumentFile: {
+		method: "GET",
+		path: "/api/vendor/portfolio/:id/document",
 	},
 	vendorAddMilestoneEvidence: {
 		method: "POST",
@@ -163,6 +181,8 @@ export const apiRoutes = {
 	// Creates a project while consuming a draft and scoring it, so it reads as
 	// an action rather than a plain collection POST.
 	businessSubmit: { method: "POST", path: "/api/business/projects/submit" },
+	businessProfile: { method: "GET", path: "/api/business/profile" },
+	businessSaveProfile: { method: "PUT", path: "/api/business/profile" },
 	businessMatchmaking: { method: "GET", path: "/api/business/matchmaking" },
 	businessMatchmakingDetail: {
 		method: "GET",
@@ -188,6 +208,11 @@ export const apiRoutes = {
 		method: "POST",
 		path: "/api/business/procurement/:projectId/proposals/:proposalId/review",
 	},
+	/** The bid's own PDF, as the company evaluating the tender reads it. */
+	businessBidDocument: {
+		method: "GET",
+		path: "/api/business/procurement/:projectId/proposals/:proposalId/document",
+	},
 	businessNotifications: {
 		method: "GET",
 		path: "/api/business/notifications",
@@ -205,6 +230,18 @@ export const apiRoutes = {
 		method: "GET",
 		path: "/api/business/projects/:id/risk",
 	},
+	businessStartLvv: {
+		method: "POST",
+		path: "/api/business/projects/:id/lvv",
+	},
+	businessProjectBlueprint: {
+		method: "GET",
+		path: "/api/business/projects/:id/blueprint",
+	},
+	businessProjectRegistry: {
+		method: "GET",
+		path: "/api/business/projects/:id/registry",
+	},
 	businessRiskInsight: {
 		method: "POST",
 		path: "/api/business/risk/insight",
@@ -212,6 +249,14 @@ export const apiRoutes = {
 	businessProjectReading: {
 		method: "POST",
 		path: "/api/business/review/reading",
+	},
+	businessProjectForecast: {
+		method: "POST",
+		path: "/api/business/review/forecast",
+	},
+	businessProjectForecastReading: {
+		method: "POST",
+		path: "/api/business/review/forecast/reading",
 	},
 	businessProjectDocuments: {
 		method: "GET",
@@ -235,11 +280,89 @@ export interface LoginBody {
 	password: string;
 }
 
+/**
+ * What a person registers as. They represent the organization, so the account
+ * carries both their own details and the entity's: a company submits projects,
+ * a vendor delivers them.
+ */
+export const organizationTypes = ["company", "vendor"] as const;
+export type OrganizationType = (typeof organizationTypes)[number];
+
+/**
+ * The sectors a company registers under, and the vocabulary projects are
+ * submitted in, so a project's sector can be compared with a company's. The
+ * first four are the carbon-intensive commodities the platform targets first;
+ * the rest cover the industrial base behind them.
+ */
+export const industrySectors = [
+	"Cement",
+	"Iron and steel",
+	"Aluminium",
+	"Fertiliser",
+	"Textile",
+	"Food and beverage",
+	"Chemical",
+	"Pulp and paper",
+	"Machinery",
+	"Automotive",
+	"Commercial buildings",
+	"Public sector",
+	"Agriculture",
+] as const;
+
+/** What a vendor delivers. Read as vendor text by the matchmaking pool. */
+export const vendorServiceCategories = [
+	"ESCO",
+	"Solar PV EPC",
+	"Biomass and bioenergy",
+	"Energy audit",
+	"Boiler and steam systems",
+	"Compressed air systems",
+	"HVAC and chillers",
+	"Waste heat recovery",
+	"Lighting retrofit",
+] as const;
+
+/**
+ * Credential limits shared by login, register and step-up. Kept here rather than
+ * in the auth module so the client can cap its inputs at the same numbers the
+ * server rejects on.
+ */
+export const credentialLimits = { email: 254, password: 128 } as const;
+
+/** Registration field limits, enforced on the server and mirrored by the form. */
+export const registerLimits = {
+	name: 120,
+	phone: 32,
+	organizationName: 200,
+	industry: 120,
+	address: 300,
+	businessInfo: 2000,
+	/** NIB and NPWP as they are written on the document. */
+	legalId: 32,
+} as const;
+
+/**
+ * One registration for both organizations. The account fields are the person's;
+ * the organization fields describe the entity they represent. Vendor-only
+ * fields stay optional: a vendor can add them in settings before verification.
+ */
 export interface RegisterBody {
+	accountType: OrganizationType;
+	/** The representative, not the organization. */
 	name: string;
 	email: string;
 	password: string;
-	companyName: string;
+	phone: string;
+	organizationName: string;
+	/** Company: a sector from `industrySectors`. Vendor: a service category. */
+	industry: string;
+	address: string;
+	/** Vendor only: what the company does, in its own words. */
+	businessInfo?: string;
+	/** Vendor only: legal identity, required before an admin verifies. */
+	nib?: string;
+	npwp?: string;
 }
 
 export interface AuthResponse {
@@ -280,6 +403,179 @@ export interface BlueprintSummary {
 }
 
 /**
+ * The three scenarios the financial engine runs a project through. The names
+ * are the ones the blueprint and every screen read, so a scenario key never
+ * has to be translated.
+ */
+export const forecastScenarioKeys = [
+	"conservative",
+	"base",
+	"optimistic",
+] as const;
+export type ForecastScenarioKey = (typeof forecastScenarioKeys)[number];
+
+/** One scenario's cash-flow assumptions and what they produce. */
+export interface ForecastScenario {
+	key: ForecastScenarioKey;
+	/** What the screen calls it: "Conservative", "Base Case", "Optimistic". */
+	label: string;
+	/** Share of the planned annual saving the scenario assumes, in percent. */
+	savingPct: number;
+	/** Annual energy-price inflation applied to the saving, in percent. */
+	inflationPct: number;
+	/** Annual asset degradation applied to the saving, in percent. */
+	degradationPct: number;
+	/** The saving the scenario starts from, in rupiah per year. */
+	firstYearSavingRp: number;
+	npvRp: number;
+	/** Null when the cash flows never repay the capital at any rate. */
+	irrPct: number | null;
+	/** Years to recover the capital at the first-year saving. */
+	paybackYears: number | null;
+	/**
+	 * The capital as the project recovers it, one entry per year of the
+	 * horizon with the capital itself at index zero: the running total of the
+	 * discounted savings against the money spent, so the series crosses zero in
+	 * the year the capital is repaid in present-value terms and ends at
+	 * `npvRp`. It is what a chart of the forecast plots.
+	 */
+	recoveryRp: number[];
+}
+
+/**
+ * The ROI forecast: the three scenarios plus the base case lifted to the top
+ * level, because most readers only want the headline.
+ */
+export interface RoiForecast {
+	/** The money the scenarios are recovering, as Step 2 entered it. */
+	capexRp: number;
+	/** The rate the cash flows are discounted at, in percent. */
+	discountRatePct: number;
+	/** How many years the cash flows run for: the funding's own tenor. */
+	horizonYears: number;
+	/** The base case, for the screens that show one set of figures. */
+	npvRp: number;
+	irrPct: number | null;
+	paybackYears: number | null;
+	scenarios: ForecastScenario[];
+}
+
+/** The Step 2 figures the forecast is computed from. */
+export interface BusinessForecastRequest {
+	capexRp: number | null;
+	tenorTahun: number | null;
+	penghematanRp: number | null;
+	pendapatanRp: number | null;
+}
+
+/**
+ * The forecast as the wizard reads it. `forecast` is null while the figures
+ * are not complete enough to compute one, which is a state the panel names
+ * rather than a zero it would have to explain.
+ */
+export interface BusinessForecastResponse {
+	forecast: RoiForecast | null;
+}
+
+/**
+ * Eleanor's reading of the forecast. Same envelope as every other reading, and
+ * asked for separately from the figures: the scenarios are arithmetic and land
+ * at once, while she takes a moment to write about them.
+ */
+export interface BusinessForecastReadingResponse {
+	reading: BusinessRiskInsight;
+}
+
+/** How the project is funded: the bond the blueprint hands to the SCF partner. */
+export interface BlueprintFundingStructure {
+	instrument: "green_bond";
+	capexRp: number;
+	tenorYears: number;
+	annualSavingRp: number;
+	annualRevenueRp: number | null;
+	/** The collateral the company offered, in the words it entered. */
+	collateral: string | null;
+}
+
+/** What the project promises to cut, against the measured baseline. */
+export interface BlueprintEmissionTargets {
+	baselineTco2: number;
+	targetPct: number;
+	targetTco2: number;
+	energySavingKwh: number;
+}
+
+/**
+ * The blueprint's financial projections, scenarios included.
+ *
+ * Every field is optional because the JSON column holds a document at whatever
+ * stage it reached: a blueprint written before the financial engine existed
+ * carries only the headline figures.
+ */
+export interface BlueprintFinancialProjections {
+	npv?: number;
+	irr?: number | null;
+	paybackPeriod?: number | null;
+	discountRatePct?: number;
+	horizonYears?: number;
+	scenarios?: ForecastScenario[];
+}
+
+/**
+ * The Green Project Blueprint document: the technical case LVV GRK validates
+ * and the SCF partner issues against. Sections are optional for the same
+ * reason the projections are: the stored document is only as complete as the
+ * stage it was written at.
+ */
+export interface BlueprintDocument {
+	fundingStructure?: BlueprintFundingStructure;
+	emissionTargets?: BlueprintEmissionTargets;
+	financialProjections?: BlueprintFinancialProjections;
+}
+
+/**
+ * The Green Project Blueprint as a reader sees it: the projections, the funding
+ * structure and the emission targets behind them, and the stage the document
+ * has reached.
+ *
+ * One shape for both readers, because it is one document: the company reads its
+ * own at whatever stage it is at, and a bidder reads it during procurement
+ * behind the extra gate that only a validated or a published blueprint is shown
+ * to vendors.
+ */
+export interface ProjectBlueprintView extends BlueprintSummary {
+	status: string;
+	validatedAt: string | null;
+	/** The rate the document discounts at, and the years it runs for. */
+	discountRatePct: number | null;
+	horizonYears: number | null;
+	fundingStructure: BlueprintFundingStructure | null;
+	emissionTargets: BlueprintEmissionTargets | null;
+	/**
+	 * The three cases, each carrying its own `recoveryRp` series: the running
+	 * total of the discounted savings against the capital, which is what the
+	 * document's projection chart plots.
+	 */
+	scenarios: ForecastScenario[];
+}
+
+/**
+ * What the public listing says about the project's measured emissions. The
+ * money lives with the partner app; what GreenShift reports here is what the
+ * MRV periods actually cut, against what the blueprint promised.
+ */
+export interface BondMonitoring {
+	/** Tonnes of CO2e the verified MRV periods add up to. */
+	verifiedTco2: number;
+	/** How many MRV periods have been reported. */
+	periods: number;
+	/** The latest reported period, "YYYY-MM". */
+	latestPeriod: string | null;
+	/** True when a verified period deviated from its baseline. */
+	anomalyFlagged: boolean;
+}
+
+/**
  * Listing lifecycle on the public bond dashboard.
  *
  * `verified` mirrors an OJK-cleared bond that brokers can list; `on_progress`
@@ -289,7 +585,15 @@ export interface BlueprintSummary {
 export const bondStatuses = ["verified", "on_progress"] as const;
 export type BondStatus = (typeof bondStatuses)[number];
 
-/** A single bond listing shown on the public bond dashboard. */
+/**
+ * A single bond listing shown on the public bond dashboard.
+ *
+ * The listing reports what GreenShift measures: the project's verified
+ * emission reductions against the target its blueprint promised. The issuance
+ * and the money around it belong to the SCF partner, so the card carries no
+ * amount, no funding total and no coupon: it carries the code the investor
+ * searches for in the partner app.
+ */
 export interface BondListing {
 	id: number;
 	title: string;
@@ -298,17 +602,13 @@ export interface BondListing {
 	companyName: string | null;
 	industrySector: string | null;
 	location: string | null;
-	/** Issuance amount (project budget), in IDR. */
-	budget: number | null;
 	riskScore: number | null;
 	targetEmissionReduction: number | null;
 	estimatedEnergySaving: number | null;
-	funded: number;
-	fundingProgress: number;
 	status: BondStatus;
 	/** When the listing became verified; drives the date shown on the card. */
 	verifiedAt: string | null;
-	blueprint: BlueprintSummary;
+	monitoring: BondMonitoring;
 }
 
 export interface BondMarketResponse {
@@ -365,6 +665,9 @@ export interface AdminUser {
 	role: string;
 	name: string;
 	companyName: string | null;
+	industrySector: string | null;
+	serviceCategory: string | null;
+	address: string | null;
 	verifiedAt: string | null;
 	createdAt: string | null;
 	vendorProfile: boolean;
@@ -497,11 +800,19 @@ export interface AdminStats {
 	payments: Record<string, number>;
 }
 
+/**
+ * A partial update: omitted keys keep their stored value, so saving the company
+ * name from one form cannot clear the legal identity captured at registration.
+ */
 export interface VendorProfileBody {
 	companyName: string;
-	description: string;
-	certifications: string[];
-	portfolio: string[];
+	description?: string;
+	serviceCategory?: string;
+	location?: string;
+	nib?: string;
+	npwp?: string;
+	certifications?: string[];
+	portfolio?: string[];
 }
 
 export interface VendorProfile {
@@ -512,6 +823,10 @@ export interface VendorProfile {
 	verified?: boolean;
 	companyName: string;
 	description: string | null;
+	serviceCategory: string | null;
+	location: string | null;
+	nib: string | null;
+	npwp: string | null;
 	certifications: string[];
 	portfolio: string[];
 	rating: number;
@@ -577,6 +892,9 @@ export interface ProposalSummary {
 	amount: number;
 	status: string;
 	revisionCount: number;
+	/** The proposal PDF the vendor filed, and where it is served from. */
+	documentName: string | null;
+	documentUrl: string | null;
 	submittedAt: string | null;
 }
 
@@ -595,6 +913,10 @@ export interface ProposalDetail extends ProposalSummary {
 	operationalCost: number | null;
 	projectedRoi: number | null;
 	warrantyPeriod: number | null;
+	/** The filed proposal PDF, as the vendor named it. Null when none is filed. */
+	documentName: string | null;
+	/** Where the filed document is served from, or null when none is filed. */
+	documentUrl: string | null;
 	reviewedAt: string | null;
 	revisions?: ProposalRevisionEntry[];
 	tender?: VendorTenderSummary | null;
@@ -610,13 +932,22 @@ export interface ProposalDetail extends ProposalSummary {
 	} | null;
 }
 
+/**
+ * What a bid carries, and what `POST /api/vendor/proposals` takes as multipart
+ * fields. The tender and the amount are the bid; the rest is what the vendor
+ * chooses to state, and an absent field is stored as absent rather than as a
+ * zero it was never given.
+ *
+ * The proposal document is the one required part: it is a file in the same
+ * request, so a bid cannot exist without the case it is made on.
+ */
 export interface ProposalDraftBody {
 	tenderId: number;
 	amount: number;
-	technicalSpec: string;
-	operationalCost: number;
-	projectedRoi: number;
-	warrantyPeriod: number;
+	technicalSpec?: string;
+	operationalCost?: number;
+	projectedRoi?: number;
+	warrantyPeriod?: number;
 }
 
 export interface ProposalUpdateBody {
@@ -641,7 +972,8 @@ export interface VendorProjectDetail {
 	estimatedEnergySaving?: number | null;
 	riskScore?: number | null;
 	tender: VendorTenderSummary | null;
-	blueprint?: BlueprintSummary;
+	/** The validated blueprint, shown to bidders once LVV GRK has cleared it. */
+	blueprint?: ProjectBlueprintView | null;
 	canSubmit?: boolean;
 }
 
@@ -717,6 +1049,8 @@ export interface VendorNegotiation {
 	requestedTimelineMonths: number | null;
 	requestedFields: string[];
 	companyNote: string;
+	/** Where the company marked the proposal, over the document they both read. */
+	annotations: ProposalAnnotation[];
 	vendorRevisedPrice: number | null;
 	vendorRevisedWarrantyYears: number | null;
 	vendorRevisedTimelineMonths: number | null;
@@ -808,8 +1142,12 @@ export interface VendorPortfolioItem {
 	energySavingPercent: number | null;
 	carbonReductionTons: number | null;
 	completionYear: number | null;
-	status: string;
 	documentName: string | null;
+	/**
+	 * Where the filed document is served from, or null when the record carries
+	 * no file. A URL rather than a key: the caller only ever opens it.
+	 */
+	documentUrl: string | null;
 }
 
 export interface VendorPortfolioBody {
@@ -824,8 +1162,6 @@ export interface VendorPortfolioBody {
 	energySavingPercent?: number;
 	carbonReductionTons?: number;
 	completionYear?: number;
-	status?: string;
-	documentName?: string;
 }
 
 export interface VendorProcurementStatusItem {
@@ -848,7 +1184,8 @@ export interface VendorProcurementStatusItem {
 }
 
 // ── Business role ─────────────────────────────────────────
-// The wizard collects a project in three steps and submits it for LVV review.
+// The wizard collects a project in three steps, reviews it on a fourth and
+// submits it for LVV review.
 // Every field name here is the one the frontend already uses, so neither side
 // keeps a translation table.
 
@@ -876,14 +1213,20 @@ export interface BusinessStep2 {
 	fileIds: string[];
 }
 
-/** Step 3: the document checklist, slot name to draft document id. */
+/**
+ * Step 3: the scope of work. These two lists are what a bidder is measured
+ * against: the key technical requirements are the company's own statement of
+ * what the delivery must meet (and part of the vocabulary the matching model
+ * reads), and the deliverables are what the vendor is expected to hand over.
+ */
 export interface BusinessStep3 {
-	docStates: Record<string, string | null>;
+	requirements: string[];
+	deliverables: string[];
 }
 
 /**
- * A partial Step 1 or Step 2 block. On autosave an absent key means the field
- * was not touched, while an explicit `null` means it was cleared.
+ * A partial Step 1, Step 2 or Step 3 block. On autosave an absent key means the
+ * field was not touched, while an explicit `null` means it was cleared.
  */
 export type BusinessStep1Patch = Partial<{
 	[K in keyof BusinessStep1]: BusinessStep1[K] | null;
@@ -891,13 +1234,16 @@ export type BusinessStep1Patch = Partial<{
 export type BusinessStep2Patch = Partial<{
 	[K in keyof BusinessStep2]: BusinessStep2[K] | null;
 }>;
+export type BusinessStep3Patch = Partial<{
+	[K in keyof BusinessStep3]: BusinessStep3[K] | null;
+}>;
 
 /** Body of `PUT /api/business/drafts/:draftId`. Every block is optional. */
 export interface BusinessDraftBody {
-	step?: 1 | 2 | 3;
+	step?: 1 | 2 | 3 | 4;
 	step1?: BusinessStep1Patch;
 	step2?: BusinessStep2Patch;
-	step3?: BusinessStep3;
+	step3?: BusinessStep3Patch;
 }
 
 /** The stored draft, merged. Null blocks have never been touched. */
@@ -907,7 +1253,7 @@ export interface BusinessDraft {
 	updatedAt: string | null;
 	step1: BusinessStep1Patch | null;
 	step2: BusinessStep2Patch | null;
-	step3: BusinessStep3 | null;
+	step3: BusinessStep3Patch | null;
 }
 
 export interface BusinessDraftResponse {
@@ -917,8 +1263,8 @@ export interface BusinessDraftResponse {
 /**
  * A file attached to an unsubmitted draft. The upload returns it and the resume
  * returns them all, so a draft that comes back after a reload still knows the
- * files it holds: the ids inside `step2.fileIds` and `step3.docStates` name
- * files, and this is what the file names and sizes are read from.
+ * files it holds: the ids inside `step2.fileIds` name files, and this is what the
+ * file names and sizes are read from.
  */
 export interface BusinessDraftDocument {
 	id: string;
@@ -945,6 +1291,20 @@ export interface BusinessSubmitBody {
 }
 
 /**
+ * The funding case the submission filed: the Step 2 figures, read back by the
+ * project's own page so it shows the same summary the review step showed.
+ * `jaminan` is free text because it is the collateral the company offered
+ * described in its own words, not an amount.
+ */
+export interface BusinessProjectFunding {
+	capexRp: number | null;
+	tenorTahun: number | null;
+	penghematanRp: number | null;
+	pendapatanRp: number | null;
+	jaminan: string | null;
+}
+
+/**
  * The submitted project, with the scores the server derived. The client never
  * computes these, so they are absent from the request body by design.
  */
@@ -952,7 +1312,7 @@ export interface BusinessSubmittedProject {
 	id: number;
 	title: string;
 	status: string;
-	/** The stage in the words the app shows, e.g. "Review LVV". */
+	/** The stage in the words the app shows, e.g. "Awaiting LVV verification". */
 	statusLabel: string;
 	submittedAt: string | null;
 	/** Tonnes of CO2e per year: consumption x emission factor. */
@@ -961,6 +1321,17 @@ export interface BusinessSubmittedProject {
 	creditRating: string | null;
 	riskScore: number | null;
 	riskLevel: string | null;
+	/** Where the project is, and what it costs, as the wizard recorded them. */
+	location: string | null;
+	sector: string | null;
+	/** The Step 2 figures, for the summary this project's page renders. */
+	funding: BusinessProjectFunding;
+	/**
+	 * The Step 3 scope of work: what a bidder must meet, and what the delivery
+	 * hands over. Read back by the project's page and by every vendor surface.
+	 */
+	technicalRequirements: string[];
+	deliverables: string[];
 }
 
 export interface BusinessSubmitResponse {
@@ -975,6 +1346,25 @@ export interface BusinessProjectResponse {
 	project: BusinessSubmittedProject;
 }
 
+/**
+ * The project's own Green Project Blueprint, or null while it has none: the
+ * document is written at verification, so a project still waiting on its LVV
+ * body answers with null rather than an empty document.
+ */
+export interface BusinessProjectBlueprintResponse {
+	blueprint: ProjectBlueprintView | null;
+}
+
+/**
+ * What the environmental registry answers about a project. The company registers
+ * the project at Sistem Registri itself, so this is how the platform can tell
+ * that the registration happened there while the project still sits waiting for
+ * verification here.
+ */
+export interface BusinessProjectRegistryResponse {
+	registered: boolean;
+}
+
 /** One row of the project table. `status` is the pill label, not the DB enum. */
 export interface BusinessProjectSummary {
 	id: number;
@@ -983,7 +1373,7 @@ export interface BusinessProjectSummary {
 	sector: string | null;
 	submittedAt: string | null;
 	capexRp: number | null;
-	/** "Review LVV" | "Matchmaking" | "Verified". */
+	/** "Register for LVV" | "Awaiting LVV verification" | "Matchmaking" | "Verified". */
 	status: string;
 }
 
@@ -1153,6 +1543,22 @@ export interface BusinessProcurementMethod {
 	desc: string;
 }
 
+/**
+ * A mark the company drew on a vendor's proposal. Coordinates are fractions of
+ * the proposal page, so the same mark lands in the same place for the vendor,
+ * who reads the document at whatever width their screen gives it.
+ */
+export type ProposalMarkKind = "highlight" | "circle";
+
+export interface ProposalAnnotation {
+	id: string;
+	kind: ProposalMarkKind;
+	x: number;
+	y: number;
+	w: number;
+	h: number;
+}
+
 /** The tender a project is running, and the bids on it. */
 export interface BusinessTender {
 	id: number;
@@ -1166,6 +1572,25 @@ export interface BusinessTender {
 	/** How many bids are in, so a list row needs no second request. */
 	bidCount: number;
 	awardedVendorName: string | null;
+}
+
+/**
+ * One revision round on a bid: what the company asked for, where it marked the
+ * proposal, and what the vendor answered. Both sides read the same row, which is
+ * what makes the request and its answer one thread.
+ */
+export interface BusinessBidNegotiation {
+	id: number;
+	iterationNumber: number;
+	status: string;
+	companyNote: string;
+	annotations: ProposalAnnotation[];
+	requestedFields: string[];
+	vendorRevisedPrice: number | null;
+	vendorRevisedWarrantyYears: number | null;
+	vendorResponseNote: string | null;
+	respondedAt: string | null;
+	createdAt: string;
 }
 
 /** One vendor's bid on a tender, in the fields the spec's form collects. */
@@ -1182,12 +1607,11 @@ export interface BusinessProcurementBid {
 	status: string;
 	revisionCount: number;
 	submittedAt: string | null;
-	/**
-	 * How this offer scores against the others on the same tender, from the
-	 * figures it states. Null when it is the only bid, because one offer cannot
-	 * be compared with anything.
-	 */
-	score: number | null;
+	/** The proposal PDF the vendor filed, or null when the bid carries none. */
+	documentName: string | null;
+	documentUrl: string | null;
+	/** Every revision round on this bid, oldest first. */
+	negotiations: BusinessBidNegotiation[];
 }
 
 /** Everything the matchmaking detail screen renders for one project. */
@@ -1242,9 +1666,11 @@ export interface BusinessAwardBody {
 }
 
 export interface BusinessBidReviewBody {
-	decision: "accept" | "revision" | "reject";
+	decision: "revision" | "reject";
 	/** Required when asking for a revision: the vendor is told what to change. */
 	note?: string | null;
+	/** Where the company marked the proposal it is asking about. */
+	annotations?: ProposalAnnotation[];
 }
 
 export interface BusinessMatchmakingSelectionResponse {
@@ -1289,6 +1715,40 @@ export interface BusinessDocumentResponse {
 
 export interface BusinessDocumentsResponse {
 	documents: BusinessDocument[];
+}
+
+/**
+ * The company account as its own settings screen reads it: the organization it
+ * represents and the person who represents it, both stored on the account row.
+ * `contactEmail` is the sign-in identity, so it is read here and never written.
+ */
+export interface BusinessProfile {
+	id: number;
+	companyName: string | null;
+	representative: string;
+	industrySector: string | null;
+	address: string | null;
+	contactEmail: string;
+	contactPhone: string | null;
+	updatedAt: string | null;
+}
+
+/**
+ * Body of `PUT /api/business/profile`. The company name is required; the rest
+ * is optional and an absent key keeps its stored value, so saving one field
+ * cannot clear the others.
+ */
+export interface BusinessProfileBody {
+	companyName: string;
+	representative?: string;
+	/** One of `industrySectors`. */
+	industrySector?: string;
+	address?: string;
+	contactPhone?: string;
+}
+
+export interface BusinessProfileResponse {
+	profile: BusinessProfile;
 }
 
 // ── Broker role ───────────────────────────────────────────

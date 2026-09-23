@@ -3,6 +3,7 @@ import type {
 	VendorProjectListItem,
 } from "../../../contracts";
 import type { GreenShiftDb } from "../../../db";
+import { iso } from "../../../lib/format";
 import {
 	isTenderVisibleTo,
 	tenderSummary,
@@ -92,10 +93,17 @@ export async function getMarketProject(
 			!existing;
 	}
 
-	// Blueprint financials and the risk composite are confidential until
-	// published to the market (investors only see them post-publication).
-	const published = row.blueprint?.status === "published";
-	const bp = published ? row.blueprint : null;
+	// The blueprint is written at LVV verification, before the tender opens, so
+	// a bidder reads the funding case and the emission targets the project was
+	// cleared on. It stays hidden until it has been validated: a draft is the
+	// company's own working document.
+	const blueprint =
+		row.blueprint &&
+		(row.blueprint.status === "validated" ||
+			row.blueprint.status === "published")
+			? row.blueprint
+			: null;
+	const projections = blueprint?.document?.financialProjections;
 
 	return {
 		id: row.project.id,
@@ -108,13 +116,22 @@ export async function getMarketProject(
 		status: row.project.status,
 		targetEmissionReduction: row.project.targetEmissionReduction,
 		estimatedEnergySaving: row.project.estimatedEnergySaving,
-		riskScore: published ? row.project.riskScore : null,
+		riskScore: blueprint ? row.project.riskScore : null,
 		tender: row.tender ? tenderSummary(row.tender) : null,
-		blueprint: {
-			irr: bp?.document?.financialProjections?.irr,
-			npv: bp?.document?.financialProjections?.npv,
-			paybackPeriod: bp?.document?.financialProjections?.paybackPeriod,
-		},
+		blueprint: blueprint
+			? {
+					status: blueprint.status,
+					validatedAt: iso(blueprint.validatedAt),
+					discountRatePct: projections?.discountRatePct ?? null,
+					horizonYears: projections?.horizonYears ?? null,
+					irr: projections?.irr ?? undefined,
+					npv: projections?.npv ?? undefined,
+					paybackPeriod: projections?.paybackPeriod ?? undefined,
+					fundingStructure: blueprint.document?.fundingStructure ?? null,
+					emissionTargets: blueprint.document?.emissionTargets ?? null,
+					scenarios: projections?.scenarios ?? [],
+				}
+			: null,
 		canSubmit,
 	};
 }

@@ -19,6 +19,7 @@ export function authUserFrom(user: typeof users.$inferSelect): AuthUser {
 		email: user.email,
 		name: user.name,
 		role: user.role,
+		companyName: user.companyName,
 		avatarKey: user.avatar,
 	};
 }

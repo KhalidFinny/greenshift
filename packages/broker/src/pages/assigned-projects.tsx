@@ -24,10 +24,12 @@ import {
 	EmptyState,
 	Input,
 	Label,
+	PaginationBar,
 	Tabs,
 	TabsContent,
 	TabsList,
 	TabsTrigger,
+	usePagedRows,
 } from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
@@ -391,6 +393,78 @@ function AssignedProjectCard({
 	);
 }
 
+/**
+ * One stage's assignment grid. The tab has already narrowed the rows, so the
+ * hook pages the filtered list and the control sits directly under the grid.
+ */
+function PagedProjectGrid({
+	items,
+	viewLabel,
+	searchQuery,
+	onAccept,
+	onDecline,
+	onRequestInformation,
+}: {
+	items: BrokerAssignedProject[];
+	viewLabel: string;
+	searchQuery: string;
+	onAccept: (projectId: string) => void;
+	onDecline: (projectId: string, reason: string) => void;
+	onRequestInformation: (
+		projectId: string,
+		message: string,
+	) => Promise<unknown>;
+}) {
+	const {
+		pageRows,
+		pageIndex,
+		pageSize,
+		pageCount,
+		total,
+		setPageIndex,
+		setPageSize,
+	} = usePagedRows(items);
+
+	if (items.length === 0) {
+		return (
+			<EmptyState
+				icon={<FontAwesomeIcon icon={faFileAlt} />}
+				title={`No projects ${viewLabel}`}
+				description={
+					searchQuery
+						? `No project matches "${searchQuery}" in this view. Clear the search to see every assignment.`
+						: "Client companies allocate verified green projects to your brokerage. An assignment appears here as soon as it is allocated."
+				}
+			/>
+		);
+	}
+
+	return (
+		<div className="space-y-4">
+			<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+				{pageRows.map((project) => (
+					<AssignedProjectCard
+						key={project.id}
+						project={project}
+						onAccept={onAccept}
+						onDecline={onDecline}
+						onRequestInformation={onRequestInformation}
+					/>
+				))}
+			</div>
+			<PaginationBar
+				label="Assigned projects"
+				pageIndex={pageIndex}
+				pageSize={pageSize}
+				pageCount={pageCount}
+				total={total}
+				onPageIndexChange={setPageIndex}
+				onPageSizeChange={setPageSize}
+			/>
+		</div>
+	);
+}
+
 export function BrokerAssignedProjectsPage() {
 	const { projects, acceptAssignment, declineAssignment, requestInformation } =
 		useBrokerData();
@@ -406,31 +480,6 @@ export function BrokerAssignedProjectsPage() {
 	const inStage = (...stages: BrokerAssignedProject["workflowStatus"][]) =>
 		filteredProjects.filter((project) =>
 			stages.includes(project.workflowStatus),
-		);
-
-	const renderGrid = (items: BrokerAssignedProject[], viewLabel: string) =>
-		items.length === 0 ? (
-			<EmptyState
-				icon={<FontAwesomeIcon icon={faFileAlt} />}
-				title={`No projects ${viewLabel}`}
-				description={
-					searchQuery
-						? `No project matches "${searchQuery}" in this view. Clear the search to see every assignment.`
-						: "Client companies allocate verified green projects to your brokerage. An assignment appears here as soon as it is allocated."
-				}
-			/>
-		) : (
-			<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-				{items.map((project) => (
-					<AssignedProjectCard
-						key={project.id}
-						project={project}
-						onAccept={acceptAssignment}
-						onDecline={declineAssignment}
-						onRequestInformation={requestInformation}
-					/>
-				))}
-			</div>
 		);
 
 	const collection = inStage("ASSIGNED", "DECLINED", "DOCUMENT_COLLECTION");
@@ -483,19 +532,54 @@ export function BrokerAssignedProjectsPage() {
 				</TabsList>
 
 				<TabsContent value="all" className="mt-6">
-					{renderGrid(filteredProjects, "assigned to you")}
+					<PagedProjectGrid
+						items={filteredProjects}
+						viewLabel="assigned to you"
+						searchQuery={searchQuery}
+						onAccept={acceptAssignment}
+						onDecline={declineAssignment}
+						onRequestInformation={requestInformation}
+					/>
 				</TabsContent>
 				<TabsContent value="collection" className="mt-6">
-					{renderGrid(collection, "in the assignment stage")}
+					<PagedProjectGrid
+						items={collection}
+						viewLabel="in the assignment stage"
+						searchQuery={searchQuery}
+						onAccept={acceptAssignment}
+						onDecline={declineAssignment}
+						onRequestInformation={requestInformation}
+					/>
 				</TabsContent>
 				<TabsContent value="under_review" className="mt-6">
-					{renderGrid(review, "in the review stage")}
+					<PagedProjectGrid
+						items={review}
+						viewLabel="in the review stage"
+						searchQuery={searchQuery}
+						onAccept={acceptAssignment}
+						onDecline={declineAssignment}
+						onRequestInformation={requestInformation}
+					/>
 				</TabsContent>
 				<TabsContent value="bond_issuance" className="mt-6">
-					{renderGrid(bond, "in bond issuance")}
+					<PagedProjectGrid
+						items={bond}
+						viewLabel="in bond issuance"
+						searchQuery={searchQuery}
+						onAccept={acceptAssignment}
+						onDecline={declineAssignment}
+						onRequestInformation={requestInformation}
+					/>
 				</TabsContent>
 				<TabsContent value="monitoring" className="mt-6">
-					{renderGrid(monitoring, "under monitoring")}
+					<PagedProjectGrid
+						items={monitoring}
+						viewLabel="under monitoring"
+						searchQuery={searchQuery}
+						onAccept={acceptAssignment}
+						onDecline={declineAssignment}
+						onRequestInformation={requestInformation}
+					/>
 				</TabsContent>
 			</Tabs>
 		</div>

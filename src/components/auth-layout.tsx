@@ -1,4 +1,12 @@
-import { Button } from "@greenshift/ui";
+import {
+	Button,
+	cn,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
 import { Eye, EyeOff, FileText, Leaf, LineChart, Shield } from "lucide-react";
 import { type ComponentProps, type ReactNode, useState } from "react";
@@ -220,15 +228,116 @@ export function AuthPasswordInput({
 	);
 }
 
+interface AuthSelectProps {
+	id: string;
+	label: string;
+	error?: unknown;
+	placeholder?: string;
+	/** The chosen value; empty while nothing is chosen, which shows the placeholder. */
+	value: string;
+	onValueChange: (value: string) => void;
+	options: readonly { value: string; label: string }[];
+	disabled?: boolean;
+}
+
+/**
+ * Select matching `AuthInput`, for a field whose values come from a fixed
+ * vocabulary rather than from the user's own words.
+ */
+export function AuthSelect({
+	id,
+	label,
+	error,
+	placeholder,
+	value,
+	onValueChange,
+	options,
+	disabled,
+}: AuthSelectProps) {
+	const errorId = `${id}-error`;
+	return (
+		<div className="space-y-2">
+			<label htmlFor={id} className={LABEL_CLASS}>
+				{label}
+			</label>
+			<Select value={value} onValueChange={onValueChange} disabled={disabled}>
+				<SelectTrigger
+					id={id}
+					aria-invalid={error ? true : undefined}
+					aria-describedby={error ? errorId : undefined}
+					className="h-11 w-full rounded-xl border-[#82928B] bg-[#FBFCFB] px-4 text-[#123D38] data-placeholder:text-[#667570] focus-visible:border-[#07815F] focus-visible:ring-2 focus-visible:ring-[#07815F]/10 sm:h-12"
+				>
+					<SelectValue placeholder={placeholder} />
+				</SelectTrigger>
+				<SelectContent>
+					{options.map((option) => (
+						<SelectItem key={option.value} value={option.value}>
+							{option.label}
+						</SelectItem>
+					))}
+				</SelectContent>
+			</Select>
+			<FieldError id={errorId} error={error} />
+		</div>
+	);
+}
+
+interface AuthTextareaProps extends ComponentProps<"textarea"> {
+	id: string;
+	label: string;
+	error?: unknown;
+}
+
+/** Multi-line input matching `AuthInput`, for text that is not a single line. */
+export function AuthTextarea({
+	id,
+	label,
+	error,
+	className,
+	...props
+}: AuthTextareaProps) {
+	const errorId = `${id}-error`;
+	return (
+		<div className="space-y-2">
+			<label htmlFor={id} className={LABEL_CLASS}>
+				{label}
+			</label>
+			<textarea
+				id={id}
+				aria-invalid={error ? true : undefined}
+				aria-describedby={error ? errorId : undefined}
+				className={cn(
+					"w-full rounded-xl border border-[#82928B] bg-[#FBFCFB] px-4 py-3 text-[#123D38] outline-none transition placeholder:text-[#667570] focus:border-[#07815F] focus:ring-2 focus:ring-[#07815F]/10",
+					className,
+				)}
+				{...props}
+			/>
+			<FieldError id={errorId} error={error} />
+		</div>
+	);
+}
+
 /** The submit button both forms use. */
-export function AuthSubmit({ children }: { children: ReactNode }) {
+export function AuthSubmit({
+	children,
+	pending = false,
+	disabled = false,
+}: {
+	children: ReactNode;
+	/** Shows the working state: the request is in flight. */
+	pending?: boolean;
+	/** Blocks the action: the form is not ready to be submitted. */
+	disabled?: boolean;
+}) {
 	return (
 		<Button
 			type="submit"
 			size="lg"
-			className="h-12 w-full cursor-pointer rounded-xl bg-[#07815F] font-semibold text-white transition hover:bg-[#066E53] active:scale-[0.99]"
+			disabled={disabled || pending}
+			aria-busy={pending}
+			className="h-12 w-full cursor-pointer rounded-xl bg-[#07815F] font-semibold text-white transition hover:bg-[#066E53] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
 		>
-			{children}
+			{pending ? "Creating account..." : children}
 		</Button>
 	);
 }

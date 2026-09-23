@@ -2,6 +2,7 @@ import { and, desc, eq } from "drizzle-orm";
 import type { GreenShiftDb } from "../../../db";
 import {
 	negotiations,
+	organizationName,
 	projects,
 	proposalRevisions,
 	proposals,
@@ -21,7 +22,7 @@ function negotiationSelection() {
 	return {
 		negotiation: negotiations,
 		projectTitle: projects.title,
-		companyName: users.name,
+		companyName: organizationName,
 		projectId: projects.id,
 	};
 }

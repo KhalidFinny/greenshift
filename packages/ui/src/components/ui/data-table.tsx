@@ -12,15 +12,8 @@ import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "#/lib/utils";
-import { Button } from "./button";
 import { Input } from "./input";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "./select";
+import { PaginationBar } from "./pagination-bar";
 import {
 	Table,
 	TableBody,
@@ -39,13 +32,12 @@ export interface DataTableProps<TData, TValue = unknown> {
 	ariaLabel?: string;
 	className?: string;
 	initialSorting?: SortingState;
-	/** When set, enables the pagination footer with this page size. */
-	pageSize?: number;
 	/**
-	 * Page sizes offered in the footer, `"all"` being "show everything". Only
-	 * read when `pageSize` is set; without it the footer keeps its single size.
+	 * Rows per page. Every table pages: a table that renders its whole dataset
+	 * at once is a table that grows without a bound. The footer is hidden while
+	 * the rows fit one page.
 	 */
-	pageSizeOptions?: Array<number | "all">;
+	pageSize?: number;
 	/** When set, renders a search input bound to the global filter. */
 	searchPlaceholder?: string;
 	emptyMessage?: string;
@@ -75,8 +67,7 @@ export function DataTable<TData, TValue = unknown>({
 	ariaLabel,
 	className,
 	initialSorting,
-	pageSize,
-	pageSizeOptions,
+	pageSize = 10,
 	searchPlaceholder,
 	emptyMessage = "No results.",
 	onRowClick,
@@ -96,8 +87,8 @@ export function DataTable<TData, TValue = unknown>({
 		getCoreRowModel: getCoreRowModel(),
 		getSortedRowModel: getSortedRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),
-		getPaginationRowModel: pageSize ? getPaginationRowModel() : undefined,
-		initialState: pageSize ? { pagination: { pageSize } } : undefined,
+		getPaginationRowModel: getPaginationRowModel(),
+		initialState: { pagination: { pageSize } },
 		getRowId,
 	});
 
@@ -209,63 +200,18 @@ export function DataTable<TData, TValue = unknown>({
 				</TableBody>
 			</Table>
 
-			{/* An empty table has no pages, so the counter would read
-			    "Page 1 of 0" under a message that already says the list is empty. */}
-			{pageSize && table.getPageCount() > 0 ? (
-				<div className="flex items-center justify-between gap-4">
-					<div className="flex items-center gap-3">
-						{pageSizeOptions ? (
-							<div className="flex items-center gap-2">
-								<span className="text-sm text-muted-foreground">Show</span>
-								<Select
-									value={
-										table.getState().pagination.pageSize >= data.length
-											? "all"
-											: String(table.getState().pagination.pageSize)
-									}
-									onValueChange={(value) => {
-										table.setPageSize(
-											value === "all" ? data.length || 1 : Number(value),
-										);
-										table.setPageIndex(0);
-									}}
-								>
-									<SelectTrigger className="h-8 w-[80px] text-sm">
-										<SelectValue />
-									</SelectTrigger>
-									<SelectContent>
-										{pageSizeOptions.map((size) => (
-											<SelectItem key={size} value={String(size)}>
-												{size === "all" ? "All" : size}
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
-							</div>
-						) : null}
-						<p className="text-base text-muted-foreground">
-							Page {table.getState().pagination.pageIndex + 1} of{" "}
-							{table.getPageCount()}
-						</p>
-					</div>
-					<div className="flex items-center gap-2">
-						<Button
-							variant="outline"
-							onClick={() => table.previousPage()}
-							disabled={!table.getCanPreviousPage()}
-						>
-							Previous
-						</Button>
-						<Button
-							variant="outline"
-							onClick={() => table.nextPage()}
-							disabled={!table.getCanNextPage()}
-						>
-							Next
-						</Button>
-					</div>
-				</div>
-			) : null}
+			<PaginationBar
+				label={ariaLabel ?? "Table"}
+				pageIndex={table.getState().pagination.pageIndex}
+				pageSize={table.getState().pagination.pageSize}
+				pageCount={table.getPageCount()}
+				total={data.length}
+				onPageIndexChange={(index) => table.setPageIndex(index)}
+				onPageSizeChange={(size) => {
+					table.setPageSize(size);
+					table.setPageIndex(0);
+				}}
+			/>
 		</div>
 	);
 }

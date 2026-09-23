@@ -7,7 +7,7 @@ import {
 	vendorMatchScores,
 	vendors,
 } from "../../../db/schema";
-import type { MATCH_WEIGHTS } from "./matching.service";
+import type { MATCH_WEIGHTS } from "./scoring";
 
 export type ScoreCriteria = Record<keyof typeof MATCH_WEIGHTS, number>;
 
@@ -23,6 +23,7 @@ export async function findProjectForMatching(
 			description: projects.description,
 			location: projects.location,
 			industrySector: projects.industrySector,
+			technicalRequirements: projects.technicalRequirements,
 			riskScore: projects.riskScore,
 		})
 		.from(projects)
@@ -39,6 +40,7 @@ export async function listVerifiedVendors(db: GreenShiftDb) {
 			id: vendors.id,
 			companyName: vendors.companyName,
 			description: vendors.description,
+			serviceCategory: vendors.serviceCategory,
 			location: vendors.location,
 			certifications: vendors.certifications,
 			portfolio: vendors.portfolio,

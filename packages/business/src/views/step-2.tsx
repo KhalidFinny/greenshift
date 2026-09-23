@@ -14,8 +14,10 @@ import {
 	CardHeader,
 	CardTitle,
 	cn,
+	PaginationBar,
 	Ring,
 	RingChart,
+	usePagedRows,
 	useStore,
 } from "@greenshift/ui";
 import { useRef } from "react";
@@ -119,6 +121,9 @@ function FinancialDocuments({
 	fileError?: string;
 }) {
 	const fileRef = useRef<HTMLInputElement | null>(null);
+	/* The attachments are user-supplied and unbounded, so they page like every
+	   other record list; the picker below stays put under the page. */
+	const paged = usePagedRows(files);
 	/* One input for both states, so the picker keeps a single accessible name.
 	   Out of the tab order: it is opened by the buttons beside it, and a focus
 	   stop on an invisible control is a trap rather than a path. */
@@ -178,7 +183,7 @@ function FinancialDocuments({
 	return (
 		<div className="space-y-3">
 			<ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
-				{files.map((file) => (
+				{paged.pageRows.map((file) => (
 					<li key={file.id} className="flex items-center gap-3 px-4 py-3.5">
 						<span className="flex h-9 min-w-9 shrink-0 items-center justify-center rounded-md bg-muted px-2 text-sm font-semibold text-muted-foreground">
 							{fileKind(file.name)}
@@ -203,6 +208,15 @@ function FinancialDocuments({
 					</li>
 				))}
 			</ul>
+			<PaginationBar
+				label="Financial documents"
+				pageIndex={paged.pageIndex}
+				pageSize={paged.pageSize}
+				pageCount={paged.pageCount}
+				total={paged.total}
+				onPageIndexChange={paged.setPageIndex}
+				onPageSizeChange={paged.setPageSize}
+			/>
 			<div className="flex flex-wrap items-center gap-x-4 gap-y-2">
 				<Button
 					type="button"

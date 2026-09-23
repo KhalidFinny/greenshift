@@ -12,8 +12,10 @@ import {
 	Button,
 	Card,
 	CardContent,
+	cn,
 	Dialog,
 	DialogContent,
+	DialogDescription,
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
@@ -31,6 +33,11 @@ interface VendorProjectCardProps {
 	variant?: "default" | "recommended";
 }
 
+/**
+ * One criterion: its name and score on one line, the score as a bar under them,
+ * and what it measures in one sentence. A row rather than a boxed card, because
+ * five boxed cards is what made this dialog a column.
+ */
 function MatchBreakdownRow({
 	label,
 	score,
@@ -40,13 +47,24 @@ function MatchBreakdownRow({
 	score: number;
 	explanation: string;
 }) {
+	// The model stores the criteria unrounded, because the total is what it
+	// rounds; a score is shown as a whole percentage.
+	const pct = Math.round(score);
 	return (
-		<div className="rounded-lg border border-border p-3">
-			<div className="flex items-center justify-between">
+		<div className="space-y-1.5">
+			<div className="flex items-baseline justify-between gap-3">
 				<span className="text-sm font-semibold">{label}</span>
-				<Badge variant="secondary">{score}%</Badge>
+				<span className="shrink-0 text-sm font-semibold tabular-nums text-emerald-700">
+					{pct}%
+				</span>
 			</div>
-			<p className="mt-1 text-sm text-muted-foreground">{explanation}</p>
+			<div className="h-1.5 rounded-full bg-muted">
+				<div
+					className="h-1.5 rounded-full bg-emerald-700"
+					style={{ width: `${pct}%` }}
+				/>
+			</div>
+			<p className="text-sm text-muted-foreground">{explanation}</p>
 		</div>
 	);
 }
@@ -54,8 +72,10 @@ function MatchBreakdownRow({
 /** Only rendered when the model has scored the project for this vendor. */
 function MatchmakingDialog({
 	matchmaking: mm,
+	projectTitle,
 }: {
 	matchmaking: MatchmakingBreakdown;
+	projectTitle: string;
 }) {
 	const strength = matchStrength(mm.overallMatch);
 
@@ -71,31 +91,43 @@ function MatchmakingDialog({
 					{mm.overallMatch}% Match
 				</Button>
 			</DialogTrigger>
-			<DialogContent className="max-w-xl">
+			<DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2">
 						<FontAwesomeIcon icon={faLeaf} className="text-emerald-700" />
-						Vendor & Project Match Analysis
+						Vendor &amp; Project Match Analysis
 					</DialogTitle>
+					<DialogDescription className="text-base">
+						{projectTitle}
+					</DialogDescription>
 				</DialogHeader>
-				<div className="space-y-4 pt-2">
-					<div className="flex items-center justify-between rounded-xl bg-[#00712D] p-4 text-white">
+
+				{/* The reading sits beside the breakdown rather than above it: the
+				    score is what the dialog is opened for, and the five criteria are
+				    read against it. */}
+				<div className="grid gap-6 pt-2 md:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
+					<div className="flex flex-col justify-center gap-6 rounded-xl bg-[#03442C] p-4 text-white">
 						<div>
-							<p className="text-sm text-emerald-200">Overall Match Score</p>
-							<h3 className="text-2xl font-bold text-white">
-								{mm.overallMatch}% Match Score
-							</h3>
+							<p className="text-sm text-emerald-200">Overall match</p>
+							<p className="mt-1 text-4xl font-bold tabular-nums">
+								{mm.overallMatch}%
+							</p>
 						</div>
-						<Badge className={`font-semibold ${strength.className}`}>
-							{strength.label} · rank {mm.rank}
-						</Badge>
+						<div className="space-y-2">
+							<Badge className={cn("font-semibold", strength.className)}>
+								{strength.label}
+							</Badge>
+							<p className="text-sm text-emerald-100/80">
+								Rank {mm.rank} among the vendors scored for this project.
+							</p>
+						</div>
 					</div>
 
-					<div className="space-y-3">
-						{MATCH_CRITERIA.map((criterion, index) => (
+					<div className="space-y-4">
+						{MATCH_CRITERIA.map((criterion) => (
 							<MatchBreakdownRow
 								key={criterion.key}
-								label={`${index + 1}. ${criterion.label}`}
+								label={criterion.label}
 								score={mm[criterion.key]}
 								explanation={criterion.explanation}
 							/>
@@ -261,7 +293,10 @@ export function VendorProjectCard({
 					{project ? (
 						<>
 							{project.matchmaking ? (
-								<MatchmakingDialog matchmaking={project.matchmaking} />
+								<MatchmakingDialog
+									matchmaking={project.matchmaking}
+									projectTitle={project.title}
+								/>
 							) : null}
 							<Link
 								to="/vendor/projects/$id"

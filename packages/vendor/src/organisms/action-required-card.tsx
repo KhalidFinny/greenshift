@@ -8,12 +8,9 @@ import {
 	CardHeader,
 	CardTitle,
 	EmptyState,
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
+	PaginationBar,
 	ShimmerBlock,
+	usePagedRows,
 } from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
@@ -141,20 +138,14 @@ export function ActionRequiredCard({
 	loading = false,
 }: ActionRequiredCardProps) {
 	const [filter, setFilter] = useState<UrgencyFilter>("all");
-	const [page, setPage] = useState(1);
-	const [pageSize, setPageSize] = useState<number | "all">(5);
 
 	const allItems = mapToActionItems(negotiations, projects, leaderboard);
 
 	const filtered =
 		filter === "all" ? allItems : allItems.filter((i) => i.urgency === filter);
 
-	const totalPages =
-		pageSize === "all" ? 1 : Math.ceil(filtered.length / pageSize);
-	const paginatedItems =
-		pageSize === "all"
-			? filtered
-			: filtered.slice((page - 1) * pageSize, page * pageSize);
+	// The filter can shorten the list; the hook clamps to a valid page.
+	const paged = usePagedRows(filtered, 5);
 
 	const counts = {
 		all: allItems.length,
@@ -167,7 +158,7 @@ export function ActionRequiredCard({
 	// One row frame; each slot is a real action or a shimmer.
 	const rows: (ActionItem | null)[] = loading
 		? Array.from({ length: 4 }, () => null)
-		: paginatedItems;
+		: paged.pageRows;
 
 	return (
 		<Card>
@@ -184,10 +175,7 @@ export function ActionRequiredCard({
 								<button
 									key={level}
 									type="button"
-									onClick={() => {
-										setFilter(level);
-										setPage(1);
-									}}
+									onClick={() => setFilter(level)}
 									className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
 										filter === level
 											? "bg-foreground/10 text-foreground"
@@ -206,7 +194,7 @@ export function ActionRequiredCard({
 							))}
 				</div>
 
-				{!loading && paginatedItems.length === 0 ? (
+				{!loading && filtered.length === 0 ? (
 					<EmptyState
 						icon={<FontAwesomeIcon icon={faClock} />}
 						title="Nothing needs your attention"
@@ -276,65 +264,19 @@ export function ActionRequiredCard({
 					</div>
 				)}
 
-				<div className="mt-4 flex items-center justify-between border-t border-border pt-4">
-					<div className="flex items-center gap-2">
-						<span className="text-sm text-muted-foreground">Show</span>
-						{loading ? (
-							<ShimmerBlock className="h-8 w-[70px] rounded-md" />
-						) : (
-							<Select
-								value={String(pageSize)}
-								onValueChange={(v) => {
-									setPageSize(v === "all" ? "all" : Number(v));
-									setPage(1);
-								}}
-							>
-								<SelectTrigger className="h-8 w-[70px]">
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="5">5</SelectItem>
-									<SelectItem value="10">10</SelectItem>
-									<SelectItem value="all">All</SelectItem>
-								</SelectContent>
-							</Select>
-						)}
+				{!loading && (
+					<div className="mt-4 border-t border-border pt-4">
+						<PaginationBar
+							label="Action items"
+							pageIndex={paged.pageIndex}
+							pageSize={paged.pageSize}
+							pageCount={paged.pageCount}
+							total={paged.total}
+							onPageIndexChange={paged.setPageIndex}
+							onPageSizeChange={paged.setPageSize}
+						/>
 					</div>
-
-					<div className="flex items-center gap-2">
-						{loading ? (
-							<>
-								<ShimmerBlock className="h-4 w-24" />
-								<ShimmerBlock className="h-8 w-20 rounded-md" />
-								<ShimmerBlock className="h-8 w-16 rounded-md" />
-							</>
-						) : (
-							<>
-								<span className="text-sm text-muted-foreground">
-									{pageSize === "all"
-										? `${filtered.length} items`
-										: `${(page - 1) * pageSize + 1} to ${Math.min(page * pageSize, filtered.length)} of ${filtered.length}`}
-								</span>
-								<Button
-									variant="outline"
-									size="sm"
-									onClick={() => setPage((p) => Math.max(1, p - 1))}
-									disabled={page === 1}
-								>
-									Previous
-								</Button>
-								<Button
-									variant="outline"
-									size="sm"
-									onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-									disabled={page === totalPages}
-								>
-									Next
-								</Button>
-							</>
-						)}
-					</div>
-				</div>
+				)}
 			</CardContent>
 		</Card>
 	);

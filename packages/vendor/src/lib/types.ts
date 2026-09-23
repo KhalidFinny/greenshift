@@ -1,3 +1,5 @@
+import type { ProposalAnnotation } from "@greenshift/ui";
+
 export type VerificationStatus =
 	| "NOT_VERIFIED"
 	| "VERIFYING"
@@ -86,6 +88,10 @@ export interface StructuredProposal {
 	warrantyPeriod: number | null;
 	costBreakdown: CostBreakdown;
 	expectedImpact: ExpectedImpact;
+	/** The filed proposal PDF, as the vendor named it. Null when none is filed. */
+	documentName: string | null;
+	/** Where the filed document is served from, or null when none is filed. */
+	documentUrl: string | null;
 	submittedAt?: string;
 	revisionCount: number;
 }
@@ -111,6 +117,8 @@ export interface NegotiationRequest {
 	requestedTimelineMonths?: number;
 	requestedFields: string[]; // e.g. ["Price", "Warranty"]
 	companyNote: string;
+	/** Where the company marked the proposal, in the proposal page's fractions. */
+	annotations: ProposalAnnotation[];
 	vendorResponseNote?: string;
 	vendorRevisedPrice?: number;
 	vendorRevisedWarrantyYears?: number;
@@ -222,8 +230,9 @@ export interface VendorPortfolioItem {
 	energySavingPercent: number | null;
 	carbonReductionTons: number | null;
 	completionYear: number | null;
-	status: "COMPLETED" | "VERIFIED";
 	documentName?: string;
+	/** Where the filed document is served from, or null when none is filed. */
+	documentUrl: string | null;
 }
 
 export interface VendorPerformanceMetrics {
@@ -261,6 +270,8 @@ export interface VendorProjectCardData {
 	/** Tonnes of CO2e the project targets; null when the company has not set one. */
 	carbonReductionTargetTons: number | null;
 	procurementMethod: ProcurementMethod;
+	/** The tender a bid is filed against. Null when the project has no tender. */
+	tenderId: number | null;
 	tenderDeadlineAt: string;
 	/** Null until the matching model has scored this project for the vendor. */
 	matchmaking: MatchmakingBreakdown | null;
@@ -273,4 +284,52 @@ export interface VendorProjectCardData {
 	riskScore: number | null;
 	technicalRequirements: string[];
 	deliverables: string[];
+}
+
+// ── Green Project Blueprint (what a bidder reads) ────────
+/** One of the three scenarios the blueprint's financial projections carry. */
+export interface BlueprintScenario {
+	key: "conservative" | "base" | "optimistic";
+	label: string;
+	/** Share of the planned annual saving the scenario assumes. */
+	savingPct: number;
+	inflationPct: number;
+	degradationPct: number;
+	npvAmount: number;
+	irrPercent: number | null;
+	paybackYears: number | null;
+}
+
+/** How the project is funded: the bond the blueprint hands to the partner. */
+export interface BlueprintFunding {
+	instrument: string;
+	capexRp: number;
+	tenorYears: number;
+	annualSavingRp: number;
+	annualRevenueRp: number | null;
+	collateral: string | null;
+}
+
+/** What the project promises to cut, against the measured baseline. */
+export interface BlueprintEmissions {
+	baselineTco2: number;
+	targetPct: number;
+	targetTco2: number;
+	energySavingKwh: number;
+}
+
+/**
+ * The Green Project Blueprint as a bidder reads it while the tender is open:
+ * the projections LVV GRK cleared, the funding structure behind them, and the
+ * emission targets the project was verified on.
+ */
+export interface VendorBlueprint {
+	status: string;
+	validatedAt: string | null;
+	irrPercent: number | null;
+	npvAmount: number | null;
+	paybackYears: number | null;
+	funding: BlueprintFunding | null;
+	emissions: BlueprintEmissions | null;
+	scenarios: BlueprintScenario[];
 }

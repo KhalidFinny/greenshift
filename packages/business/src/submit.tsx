@@ -1,6 +1,6 @@
-/* The wizard shell: it owns the four steps' state, the draft (autosave, resume,
- * submit) and everything derived from the values, then composes the chrome and
- * the step views. The steps render the form they are handed and report changes
+/* The wizard shell: it owns the four steps' state, the draft (autosave,
+ * resume, submit) and everything derived from the values, then composes the
+ * chrome and the step views. The steps render the form they are handed and report changes
  * back; the payload shapes, the risk model and the score model live in `lib/`.
  */
 
@@ -12,28 +12,26 @@ import { parseIdNumber } from "./lib/number-format";
 import { projectRisk, step1RiskTones } from "./lib/project-risk";
 import { useBusinessDraft } from "./lib/use-business-draft";
 import { useProjectWizardForm } from "./lib/use-project-wizard-form";
-import { validateStep1, validateStep2 } from "./lib/validators";
+import { validateStep1, validateStep2, validateStep3 } from "./lib/validators";
 import {
 	resumeFiles,
 	resumeValues,
 	slotFiles,
 	step1Patch,
 	step2Patch,
+	step3Patch,
 	type WizardFile,
 } from "./lib/wizard-payload";
-import { step1Values, step2Values } from "./lib/wizard-rules";
+import { step1Values, step2Values, step3Values } from "./lib/wizard-rules";
+import { ReviewView } from "./views/review";
 import { REQUIRED_DOCS, Step1View } from "./views/step-1";
 import { Step2View } from "./views/step-2";
-import { STEP3_SECTIONS, Step3View } from "./views/step-3";
-import { Step4View } from "./views/step-4";
+import { Step3View } from "./views/step-3";
 import { WizardHeader } from "./views/wizard-header";
 
-/* The slot vocabularies a resumed file is matched against, taken from the two
-   checklists themselves so neither can drift from the other. */
+/* The slot vocabulary a resumed file is matched against, taken from the
+   checklist itself so neither can drift from the other. */
 const STEP1_SLOT_IDS = REQUIRED_DOCS.map((doc) => doc.id);
-const STEP3_SLOT_IDS = STEP3_SECTIONS.flatMap((section) =>
-	section.items.map((item) => item.id),
-);
 
 export function BusinessSubmit() {
 	const form = useProjectWizardForm();
@@ -47,7 +45,6 @@ export function BusinessSubmit() {
 	/* Save and continue is what re-runs every rule of the step with its messages
 	   on; step 2 also asks for its document count, which no field owns. */
 	const [step2Attempted, setStep2Attempted] = useState(false);
-
 	/* Step 1 documents (ADR-003): slot to the name shown, and slot to the
 	   document id submit sends. Uploads are imperative, not form fields. */
 	const [uploaded, setUploaded] = useState<Record<string, string>>({});
@@ -57,10 +54,6 @@ export function BusinessSubmit() {
 	   ever appear and disappear together. */
 	const [finFiles, setFinFiles] = useState<WizardFile[]>([]);
 	const finFileIds = useMemo(() => finFiles.map((file) => file.id), [finFiles]);
-
-	/* Step 3 documents (ADR-005) */
-	const [step3Docs, setStep3Docs] = useState<Record<string, string>>({});
-	const [step3Ids, setStep3Ids] = useState<Record<string, string>>({});
 
 	/* Draft persistence. A stored draft seeds every step in one reset, which the
 	   hook applies before it arms autosave, so the seeded values are never written
@@ -78,17 +71,13 @@ export function BusinessSubmit() {
 		// own list: without it a resumed step would count files it cannot name.
 		const files = resumeFiles(resume.documents, resume.step2?.fileIds ?? []);
 		const step1Files = slotFiles(files.bySlot, STEP1_SLOT_IDS);
-		const step3Files = slotFiles(files.bySlot, STEP3_SLOT_IDS);
 		setFinFiles(files.step2);
 		setUploaded(step1Files.names);
 		setUploadedIds(step1Files.ids);
-		setStep3Docs(step3Files.names);
-		setStep3Ids(step3Files.ids);
 
-		// Four screens on screen, three payload steps: the review screen still
-		// belongs to the third.
+		// Four screens, four payload steps: the review is the fourth.
 		if (resume.step != null && resume.step > 1) {
-			setActiveStep(Math.min(resume.step, 3));
+			setActiveStep(Math.min(resume.step, 3) - 1);
 		}
 		// Last statement: autosave may only start once the stored draft is in the
 		// form, so a blank patch can never race it.
@@ -102,7 +91,7 @@ export function BusinessSubmit() {
 	}, [draft.loading]);
 
 	/** The payload step for the screen the user is on. */
-	const draftStep: 1 | 2 | 3 = activeStep <= 0 ? 1 : activeStep === 1 ? 2 : 3;
+	const draftStep: 1 | 2 | 3 | 4 = (activeStep + 1) as 1 | 2 | 3 | 4;
 
 	/**
 	 * One autosave, built from the values the form holds at the moment it is
@@ -123,9 +112,13 @@ export function BusinessSubmit() {
 			draft.saveStep({ step: 2, step2: step2Patch(live, finFileIds) });
 			return;
 		}
-		// Steps 3 and 4 hold no block of their own: uploads are stored as they
+		if (draftStep === 3) {
+			draft.saveStep({ step: 3, step3: step3Patch(live) });
+			return;
+		}
+		// The review step holds no block of its own: uploads are stored as they
 		// happen, and the two declarations belong to submit.
-		draft.saveStep({ step: 3 });
+		draft.saveStep({ step: 4 });
 	}, [draft.saveStep, draftStep, finFileIds]);
 
 	// The form's own change notification drives autosave. The hook debounces, and
@@ -174,15 +167,9 @@ export function BusinessSubmit() {
 		docsTotal: STEP2_DOC_TARGET,
 	});
 
-	/* ---- Step 4 derived risk (ADR-006.7: Step 1 trio + Step 3 six + finFiles) ---- */
-	const step3Done = STEP3_SECTIONS.flatMap((section) => section.items).filter(
-		(item) => step3Docs[item.id],
-	).length;
-	const riskDocsDone = docsDone + step3Done + finFileIds.length;
-	const riskDocsTotal =
-		REQUIRED_DOCS.length +
-		STEP3_SECTIONS.reduce((count, section) => count + section.items.length, 0) +
-		STEP2_DOC_TARGET;
+	/* ---- the review's derived risk (ADR-006.7: Step 1 trio + Step 2 files) ---- */
+	const riskDocsDone = docsDone + finFileIds.length;
+	const riskDocsTotal = REQUIRED_DOCS.length + STEP2_DOC_TARGET;
 	const riskInputsEmpty =
 		tones.finansial === null &&
 		tones.teknis === null &&
@@ -204,6 +191,7 @@ export function BusinessSubmit() {
 	   messages, the step gate and the banner count, so they cannot disagree. */
 	const step1Messages = validateStep1(step1Values(values));
 	const step2Messages = validateStep2(step2Values(values, finFileIds.length));
+	const step3Messages = validateStep3(step3Values(values));
 
 	async function handleFile(id: string, file: File | undefined) {
 		if (!file) return;
@@ -245,29 +233,6 @@ export function BusinessSubmit() {
 		setFinFiles((prev) => prev.filter((file) => file.id !== id));
 	}
 
-	async function handleStep3Upload(id: string, file: File | undefined) {
-		if (!file) return;
-		const docId = await draft.uploadDocument(file, id);
-		if (!docId) return;
-		setStep3Docs((prev) => ({ ...prev, [id]: file.name }));
-		setStep3Ids((prev) => ({ ...prev, [id]: docId }));
-	}
-
-	async function handleStep3Remove(id: string) {
-		const docId = step3Ids[id];
-		if (docId) await draft.removeDocument(docId);
-		setStep3Docs((prev) => {
-			const next = { ...prev };
-			delete next[id];
-			return next;
-		});
-		setStep3Ids((prev) => {
-			const next = { ...prev };
-			delete next[id];
-			return next;
-		});
-	}
-
 	/* ---- Shell navigation (ADR-006.1 + 006.6) ----
 	   The strip's rule needs no bookkeeping: a step only advances on an empty rule
 	   map, so every step behind the active one has been completed and is a link,
@@ -289,7 +254,7 @@ export function BusinessSubmit() {
 	/**
 	 * Save and continue. Every message the step's rules produce is shown at once,
 	 * so one press reports the whole step rather than one field at a time, and the
-	 * step only advances on an empty map. Steps 3 and 4 carry no data rules.
+	 * step only advances on an empty map. The review carries no data rules.
 	 *
 	 * The refusal itself is a toast: the page carries the message under each field
 	 * it is about, and the count of them is a response rather than page content.
@@ -314,6 +279,15 @@ export function BusinessSubmit() {
 			setActiveStep(2);
 			return;
 		}
+		if (activeStep === 2) {
+			await form.validateAllFields("change");
+			if (Object.keys(step3Messages).length > 0) {
+				reportStep(step3Messages);
+				return;
+			}
+			setActiveStep(3);
+			return;
+		}
 		setActiveStep(activeStep + 1);
 	}
 
@@ -330,7 +304,8 @@ export function BusinessSubmit() {
 		// instead of being sent as a zero.
 		if (
 			Object.keys(step1Messages).length > 0 ||
-			Object.keys(step2Messages).length > 0
+			Object.keys(step2Messages).length > 0 ||
+			Object.keys(step3Messages).length > 0
 		) {
 			return;
 		}
@@ -347,15 +322,6 @@ export function BusinessSubmit() {
 			!values.jaminan
 		) {
 			return;
-		}
-
-		// Every Step 3 slot is sent, with null for the ones not provided, so the
-		// checklist state the user sees is the state the server records.
-		const docStates: Record<string, string | null> = {};
-		for (const section of STEP3_SECTIONS) {
-			for (const item of section.items) {
-				docStates[item.id] = step3Ids[item.id] ?? null;
-			}
 		}
 
 		toast({
@@ -385,7 +351,10 @@ export function BusinessSubmit() {
 				jaminan: values.jaminan,
 				fileIds: finFileIds,
 			},
-			step3: { docStates },
+			step3: {
+				requirements: step3Values(values).requirements,
+				deliverables: step3Values(values).deliverables,
+			},
 			consent: values.consent,
 			declaration: values.declaration,
 		});
@@ -438,16 +407,10 @@ export function BusinessSubmit() {
 				/>
 			)}
 
-			{activeStep === 2 && (
-				<Step3View
-					docs={step3Docs}
-					onUpload={(id, file) => void handleStep3Upload(id, file)}
-					onRemove={(id) => void handleStep3Remove(id)}
-				/>
-			)}
+			{activeStep === 2 && <Step3View form={form} />}
 
 			{activeStep === 3 && (
-				<Step4View
+				<ReviewView
 					form={form}
 					step1={{
 						namaProyek: values.namaProyek,
@@ -461,12 +424,15 @@ export function BusinessSubmit() {
 						pendapatan: values.pendapatan,
 						jaminan: values.jaminan,
 					}}
+					step3={{
+						requirements: step3Values(values).requirements,
+						deliverables: step3Values(values).deliverables,
+					}}
 					step1Docs={REQUIRED_DOCS.map((doc) => ({
 						id: doc.id,
 						label: doc.label,
 						name: uploaded[doc.id],
 					}))}
-					step3Docs={step3Docs}
 					risk={riskAssessment}
 				/>
 			)}

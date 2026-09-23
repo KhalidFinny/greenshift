@@ -1,9 +1,11 @@
+import type { VendorNotification as ApiNotification } from "@greenshift/api/contracts";
 import { api } from "@greenshift/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
 	derivePerformanceMetrics,
 	type LeaderboardView,
+	mapBlueprint,
 	mapLeaderboard,
 	mapNegotiation,
 	mapNotification,
@@ -19,6 +21,7 @@ import type {
 	EvidenceFile,
 	NegotiationRequest,
 	StructuredProposal,
+	VendorBlueprint,
 	VendorNotification,
 	VendorPerformanceMetrics,
 	VendorPortfolioItem,
@@ -42,9 +45,14 @@ const EMPTY_LEADERBOARD: LeaderboardView = {
  * Everything the vendor dashboard renders comes from `/api/vendor/*`.
  * Bookmarks are the one exception: saving a project is client-side UI state
  * with no endpoint yet.
+ *
+ * The detail endpoint is read only when a screen names a project: the market
+ * list is enough for the cards, and the detail carries what only one project
+ * needs, such as the validated blueprint.
  */
-export function useVendorData() {
+export function useVendorData(options: { projectId?: string } = {}) {
 	const queryClient = useQueryClient();
+	const projectId = options.projectId;
 
 	// ── Local-only UI state ─────────────────────────────────
 	const [savedProjects, setSavedProjects] = useState<Set<string>>(() => {
@@ -92,15 +100,37 @@ export function useVendorData() {
 		staleTime: REFRESH_FAST,
 	});
 
+	/* A ranking belongs to one tender. A screen that names a project reads the
+	   ranking for that project's own tender; the screens that carry the vendor's
+	   live open bidding read the default one. `null` means the project's tender
+	   is not known yet, which is the only case that holds the read back: ranking
+	   another tender under this project's heading would be a wrong answer, not a
+	   slow one. */
+	const scopedTenderId = useMemo(() => {
+		if (projectId === undefined || projectId === "") return undefined;
+		const project = (marketProjectsData?.projects ?? []).find(
+			(candidate) => String(candidate.id) === projectId,
+		);
+		return project?.tender?.id ?? null;
+	}, [marketProjectsData, projectId]);
+
 	const { data: leaderboardData } = useQuery({
-		queryKey: ["vendor", "leaderboard"],
-		queryFn: () => api.vendor.leaderboard(),
+		queryKey: ["vendor", "leaderboard", scopedTenderId ?? "default"],
+		queryFn: () => api.vendor.leaderboard(scopedTenderId ?? undefined),
+		enabled: scopedTenderId !== null,
 		staleTime: REFRESH_FAST,
 	});
 
 	const { data: portfolioData } = useQuery({
 		queryKey: ["vendor", "portfolio"],
 		queryFn: () => api.vendor.portfolio(),
+		staleTime: REFRESH_SLOW,
+	});
+
+	const { data: projectDetailData } = useQuery({
+		queryKey: ["vendor", "project-detail", projectId],
+		queryFn: () => api.vendor.projectDetail(Number(projectId)),
+		enabled: projectId !== undefined && projectId !== "",
 		staleTime: REFRESH_SLOW,
 	});
 
@@ -154,6 +184,11 @@ export function useVendorData() {
 		return items.map(mapToStructuredProposal);
 	}, [proposalsData]);
 
+	const blueprint: VendorBlueprint | null = useMemo(() => {
+		const detail = projectDetailData?.project?.blueprint;
+		return detail ? mapBlueprint(detail) : null;
+	}, [projectDetailData]);
+
 	const performanceMetrics: VendorPerformanceMetrics = useMemo(() => {
 		if (!profile) {
 			return {
@@ -190,6 +225,27 @@ export function useVendorData() {
 	// ── Mutations ───────────────────────────────────────────
 	const { mutate: markRead } = useMutation({
 		mutationFn: (id: number) => api.vendor.readNotification(id),
+		// The card stops reading as unread the moment it is marked, and the refetch
+		// below confirms it rather than being what makes it happen.
+		onMutate: async (id: number) => {
+			await queryClient.cancelQueries({
+				queryKey: ["vendor", "notifications"],
+			});
+			queryClient.setQueryData(
+				["vendor", "notifications"],
+				(previous: { notifications: ApiNotification[] } | undefined) =>
+					previous
+						? {
+								...previous,
+								notifications: previous.notifications.map((notification) =>
+									notification.id === id
+										? { ...notification, read: true }
+										: notification,
+								),
+							}
+						: previous,
+			);
+		},
 		onSuccess: () =>
 			queryClient.invalidateQueries({ queryKey: ["vendor", "notifications"] }),
 	});
@@ -214,37 +270,49 @@ export function useVendorData() {
 		},
 	});
 
-	// Revising an open bid writes the new amount on the proposal itself.
-	const { mutate: reviseBid } = useMutation({
-		mutationFn: ({
-			proposalId,
-			amount,
-		}: {
+	// Revising an open bid writes the new amount on the proposal itself, and
+	// replaces the proposal document when a new one is chosen.
+	const { mutateAsync: reviseBid } = useMutation({
+		mutationFn: async (input: {
 			proposalId: number;
 			amount: number;
-		}) => api.vendor.updateProposal(proposalId, { amount }),
+			file?: File | null;
+		}) => {
+			await api.vendor.updateProposal(input.proposalId, {
+				amount: input.amount,
+			});
+			if (input.file) {
+				await api.vendor.uploadProposalDocument(input.proposalId, input.file);
+			}
+		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["vendor", "leaderboard"] });
 			queryClient.invalidateQueries({ queryKey: ["vendor", "proposals"] });
 		},
 	});
 
-	const { mutate: submitProposal } = useMutation({
-		mutationFn: (body: {
-			tenderId: number;
-			amount: number;
-			technicalSpec: string;
-			operationalCost: number;
-			projectedRoi: number;
-			warrantyPeriod: number;
-		}) => api.vendor.submitProposal(body),
+	// Both awaitable: the bid dialog only closes on a filed bid, so a rejection
+	// keeps the vendor's entry in front of them instead of discarding it. The
+	// document goes with the bid in the same request, so a bid cannot exist
+	// without the case it is made on.
+	const { mutateAsync: submitProposal } = useMutation({
+		mutationFn: (input: {
+			fields: {
+				tenderId: number;
+				amount: number;
+				technicalSpec?: string;
+				operationalCost?: number;
+				warrantyPeriod?: number;
+			};
+			file: File;
+		}) => api.vendor.submitProposal(input.fields, input.file),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["vendor", "proposals"] });
 			queryClient.invalidateQueries({ queryKey: ["vendor", "leaderboard"] });
 		},
 	});
 
-	const { mutate: createPortfolioItem } = useMutation({
+	const { mutateAsync: createPortfolioItem } = useMutation({
 		mutationFn: (item: VendorPortfolioItem) =>
 			api.vendor.addPortfolioItem({
 				projectName: item.projectName,
@@ -258,9 +326,16 @@ export function useVendorData() {
 				energySavingPercent: item.energySavingPercent ?? undefined,
 				carbonReductionTons: item.carbonReductionTons ?? undefined,
 				completionYear: item.completionYear ?? undefined,
-				status: item.status,
-				documentName: item.documentName,
 			}),
+		onSuccess: () =>
+			queryClient.invalidateQueries({ queryKey: ["vendor", "portfolio"] }),
+	});
+
+	// The file is a second request: a document is keyed to the record's id, so
+	// the record has to exist first.
+	const { mutateAsync: filePortfolioDocument } = useMutation({
+		mutationFn: ({ id, file }: { id: number; file: File }) =>
+			api.vendor.uploadPortfolioDocument(id, file),
 		onSuccess: () =>
 			queryClient.invalidateQueries({ queryKey: ["vendor", "portfolio"] }),
 	});
@@ -289,12 +364,35 @@ export function useVendorData() {
 	});
 
 	const { mutate: saveProfile } = useMutation({
-		mutationFn: (body: { companyName: string; description: string }) =>
+		mutationFn: (body: {
+			companyName: string;
+			description: string;
+			serviceCategory?: string;
+			location?: string;
+		}) =>
 			api.vendor.saveProfile({
 				companyName: body.companyName,
 				description: body.description,
+				serviceCategory: body.serviceCategory,
+				location: body.location,
 				certifications: profile?.certifications ?? [],
 				portfolio: profile?.portfolio ?? [],
+			}),
+		onSuccess: () =>
+			queryClient.invalidateQueries({ queryKey: ["vendor", "profile"] }),
+	});
+
+	/**
+	 * The legal identity a vendor is verified against. It saves onto the same
+	 * profile as everything else, so a vendor registered without NIB or NPWP can
+	 * add them here without touching the rest of the record.
+	 */
+	const { mutate: saveVerificationDetails } = useMutation({
+		mutationFn: (body: { nib: string; npwp: string }) =>
+			api.vendor.saveProfile({
+				companyName: profile?.companyName ?? "",
+				nib: body.nib,
+				npwp: body.npwp,
 			}),
 		onSuccess: () =>
 			queryClient.invalidateQueries({ queryKey: ["vendor", "profile"] }),
@@ -322,7 +420,7 @@ export function useVendorData() {
 	const placeOpenBid = (newPrice: number) => {
 		const proposalId = leaderboard.myProposalId;
 		if (!proposalId) return;
-		reviseBid({ proposalId: Number(proposalId), amount: newPrice });
+		void reviseBid({ proposalId: Number(proposalId), amount: newPrice });
 	};
 
 	const submitNegotiationResponse = (
@@ -359,23 +457,23 @@ export function useVendorData() {
 		});
 	};
 
-	const addPortfolioItem = (item: VendorPortfolioItem) => {
-		createPortfolioItem(item);
+	/**
+	 * Creates the record, then files the chosen document on it. A failure in
+	 * either request rejects, so the caller can hold its dialog open; the shared
+	 * client has already raised the toast.
+	 */
+	const addPortfolioItem = async (
+		item: VendorPortfolioItem,
+		file: File | null,
+	) => {
+		const created = await createPortfolioItem(item);
+		if (file) {
+			await filePortfolioDocument({ id: created.item.id, file });
+		}
 	};
 
 	const deletePortfolioItem = (itemId: string) => {
 		removePortfolioItem(Number(itemId));
-	};
-
-	// Verification documents have no backend field yet (they pair with the
-	// admin verification flow), so the settings form is not persisted.
-	const uploadVerificationDocs = (
-		_nib: string,
-		_npwp: string,
-		_legalDocName: string,
-		_escoCertName: string,
-	) => {
-		console.log("Upload verification docs");
 	};
 
 	const markNotificationRead = (notifId: string) => {
@@ -397,6 +495,8 @@ export function useVendorData() {
 		},
 		proposals,
 		negotiations,
+		blueprint,
+		projectDetailLoading: projectDetailData === undefined,
 		activeProjects,
 		portfolio,
 		performanceMetrics,
@@ -404,11 +504,16 @@ export function useVendorData() {
 		toggleSaveProject,
 		placeOpenBid,
 		submitProposal,
+		reviseProposal: reviseBid,
 		submitNegotiationResponse,
 		submitMilestoneEvidence,
 		addPortfolioItem,
+		// A mutation carries one variable; the hook's callers pass the pair.
+		uploadPortfolioDocument: (id: number, file: File) =>
+			filePortfolioDocument({ id, file }),
+		portfolioDocumentPath: api.vendor.portfolioDocumentPath,
 		deletePortfolioItem,
-		uploadVerificationDocs,
+		saveVerificationDetails,
 		markNotificationRead,
 		saveProfile,
 	};

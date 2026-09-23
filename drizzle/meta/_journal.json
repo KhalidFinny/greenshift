@@ -64,6 +64,34 @@
       "when": 1789879446842,
       "tag": "0008_material_nuke",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1789957959781,
+      "tag": "0009_sloppy_spot",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1790085966736,
+      "tag": "0010_flippant_shockwave",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1790161206359,
+      "tag": "0011_volatile_post",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1790163196625,
+      "tag": "0012_loving_king_cobra",
+      "breakpoints": true
     }
   ]
 }

@@ -4,7 +4,7 @@ import type {
 	BusinessDraftDocument,
 	BusinessStep1Patch,
 	BusinessStep2Patch,
-	BusinessStep3,
+	BusinessStep3Patch,
 } from "../../contracts";
 import type { draftDocuments, drafts, projectDocuments } from "../../db/schema";
 import { iso } from "../../lib/format";
@@ -36,8 +36,8 @@ export const ALLOWED_DOCUMENT_TYPES: readonly string[] = [
 
 /**
  * The slot vocabulary, so an upload cannot invent a checklist entry. Mirrors
- * the frontend: the Step 1 trio, Step 2's two financial documents, and the
- * Step 3 six.
+ * the frontend: the Step 1 trio and Step 2's two financial documents. The LVV's
+ * own document pack is not collected here: it is filed at Sistem Registri.
  */
 export const DOCUMENT_SLOTS = [
 	"tagihan",
@@ -45,33 +45,17 @@ export const DOCUMENT_SLOTS = [
 	"izin",
 	"lapkeu",
 	"rab",
-	"akta",
-	"nib",
-	"profil",
-	"studi",
-	"dram",
-	"spek",
-] as const;
-
-/** Slots the Step 3 checklist requires; used for the document completeness ratio. */
-export const STEP3_SLOTS = [
-	"akta",
-	"nib",
-	"profil",
-	"studi",
-	"dram",
-	"spek",
 ] as const;
 
 /** The Step 1 document trio. */
 export const STEP1_SLOTS = ["tagihan", "beban", "izin"] as const;
 
 /**
- * The wizard's checklist: the Step 1 trio plus the Step 3 six. Nine slots, and
- * the denominator both the credit score and the risk model use for document
- * completeness. Mirrors `REQUIRED_DOCS` and the Step 3 list in the frontend.
+ * The wizard's checklist: the Step 1 trio. Three slots, and the denominator both
+ * the credit score and the risk model use for document completeness. Mirrors
+ * `REQUIRED_DOCS` in the frontend.
  */
-export const CHECKLIST_SLOTS = [...STEP1_SLOTS, ...STEP3_SLOTS] as const;
+export const CHECKLIST_SLOTS = [...STEP1_SLOTS] as const;
 
 /** The client generates the draft id, so it is bounded rather than trusted. */
 export const MAX_DRAFT_ID = 64;
@@ -96,11 +80,17 @@ export function isDocumentSlot(value: unknown): value is string {
 /**
  * The pill label for a project status. The list shows this rather than the raw
  * enum, so the mapping lives here rather than in the page.
+ *
+ * `registry` and `assessment` are the two halves of the verification step: the
+ * company registers the project at the registry and appoints its LVV body
+ * first, and then it waits on that body, which is what the second label says.
  */
 export function pillStatus(status: string): string {
 	switch (status) {
+		case "registry":
+			return "Register for LVV";
 		case "assessment":
-			return "Review LVV";
+			return "Awaiting LVV verification";
 		case "tendering":
 		case "funding":
 			return "Matchmaking";
@@ -117,7 +107,25 @@ export function pillStatus(status: string): string {
 export interface StoredDraftPayload {
 	step1?: BusinessStep1Patch | null;
 	step2?: BusinessStep2Patch | null;
-	step3?: BusinessStep3 | null;
+	step3?: BusinessStep3Patch | null;
+}
+
+/** Scope lists are open-ended, but not unbounded: a project states a handful. */
+export const SCOPE_MAX_ITEMS = 20;
+export const SCOPE_ITEM_MAX = 300;
+
+/**
+ * The entries of a scope list that actually carry text: trimmed, blanks dropped,
+ * cut to the cap. Both the validator and the submit path read the list this way,
+ * so a whitespace entry is never an entry and never reaches a project row.
+ */
+export function scopeEntries(value: unknown): string[] {
+	if (!Array.isArray(value)) return [];
+	return value
+		.filter((entry): entry is string => typeof entry === "string")
+		.map((entry) => entry.trim())
+		.filter((entry) => entry.length > 0)
+		.slice(0, SCOPE_MAX_ITEMS);
 }
 
 /**

@@ -3,6 +3,7 @@ import type { GreenShiftDb } from "../../../db";
 import {
 	brokerAssignments,
 	documentRequests,
+	organizationName,
 	projects,
 	users,
 } from "../../../db/schema";
@@ -23,7 +24,11 @@ export async function loadDocumentContext(
 	if (rows.length === 0) return context;
 
 	const projectRows = await db
-		.select({ id: projects.id, title: projects.title, companyName: users.name })
+		.select({
+			id: projects.id,
+			title: projects.title,
+			companyName: organizationName,
+		})
 		.from(projects)
 		.innerJoin(users, eq(projects.companyId, users.id))
 		.where(
@@ -115,7 +120,7 @@ export async function getProjectSummary(
 	projectId: number,
 ): Promise<{ title: string; companyName: string } | undefined> {
 	const [project] = await db
-		.select({ title: projects.title, companyName: users.name })
+		.select({ title: projects.title, companyName: organizationName })
 		.from(projects)
 		.innerJoin(users, eq(projects.companyId, users.id))
 		.where(eq(projects.id, projectId))

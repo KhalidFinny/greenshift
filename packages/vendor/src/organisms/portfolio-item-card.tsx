@@ -18,6 +18,8 @@ interface PortfolioItemCardProps {
 }
 
 export function PortfolioItemCard({ item, onDelete }: PortfolioItemCardProps) {
+	const documentUrl = item.documentUrl;
+
 	return (
 		<Card className="relative flex flex-col">
 			{onDelete ? (
@@ -34,8 +36,9 @@ export function PortfolioItemCard({ item, onDelete }: PortfolioItemCardProps) {
 
 			<CardHeader className="space-y-2 pb-3 pr-10">
 				<Badge className="w-fit bg-emerald-700 font-semibold text-white">
-					{item.status === "VERIFIED" ? "Verified" : "Completed"}
-					{item.completionYear !== null ? ` ${item.completionYear}` : ""}
+					{item.completionYear !== null
+						? `Completed ${item.completionYear}`
+						: "Completed"}
 				</Badge>
 				<CardTitle className="line-clamp-2 text-base">
 					{item.projectName}
@@ -73,11 +76,16 @@ export function PortfolioItemCard({ item, onDelete }: PortfolioItemCardProps) {
 								? `Energy saved ${item.energySavingPercent}%`
 								: "Energy saving not reported"}
 					</span>
-					{item.documentName ? (
-						<span className="flex items-center gap-1 text-sm text-blue-700">
+					{documentUrl ? (
+						<button
+							type="button"
+							className="flex cursor-pointer items-center gap-1 text-sm text-blue-700 hover:underline"
+							aria-label={`Open ${item.documentName ?? "document"} for ${item.projectName}`}
+							onClick={() => window.open(documentUrl, "_blank", "noopener")}
+						>
 							<FontAwesomeIcon icon={faFileAlt} />
-							Document
-						</span>
+							{item.documentName ?? "Document"}
+						</button>
 					) : null}
 				</div>
 

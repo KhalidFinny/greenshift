@@ -2,7 +2,6 @@ import { Hono } from "hono";
 import type { ApiEnv } from "../../env";
 import { requireRole, requireSession } from "../../lib/authz";
 import { requireCsrf } from "../../lib/csrf";
-import { requireJsonBody } from "../../lib/http";
 import { deliveryRoutes } from "./delivery/delivery.routes";
 import { leaderboardRoutes } from "./leaderboard/leaderboard.routes";
 import { negotiationRoutes } from "./negotiations/negotiations.routes";
@@ -16,15 +15,16 @@ import { proposalsRoutes } from "./proposals/proposals.routes";
 
 export const vendorRoutes = new Hono<ApiEnv>();
 
-// Every vendor endpoint requires a vendor session. CSRF is enforced only for
-// unsafe methods inside the middleware.
-vendorRoutes.use(
-	"*",
-	requireSession,
-	requireRole("vendor"),
-	requireCsrf,
-	requireJsonBody,
-);
+/**
+ * Every vendor endpoint requires a vendor session. CSRF is enforced only for
+ * unsafe methods inside the middleware.
+ *
+ * `requireJsonBody` is deliberately absent here, unlike the admin and broker
+ * routers: the portfolio document upload is multipart, and that guard rejects
+ * any unsafe request that is not JSON. The JSON mutations apply it
+ * individually instead, so each route states its own body contract.
+ */
+vendorRoutes.use("*", requireSession, requireRole("vendor"), requireCsrf);
 
 vendorRoutes.route("/", projectsRoutes);
 vendorRoutes.route("/", participationRoutes);

@@ -20,10 +20,12 @@ import {
 	EmptyState,
 	Input,
 	Label,
+	PaginationBar,
 	Tabs,
 	TabsContent,
 	TabsList,
 	TabsTrigger,
+	usePagedRows,
 } from "@greenshift/ui";
 import { useState } from "react";
 import type { BrokerDocumentRequest, DocumentCategory } from "../lib/types";
@@ -297,6 +299,46 @@ function GlobalCreateDocumentRequestModal({
 	);
 }
 
+/**
+ * One tab's request list. The tab has already narrowed the rows (status filter)
+ * and the page has searched them, so the hook pages the filtered list and the
+ * control sits directly under it.
+ */
+function PagedRequestList({
+	requests,
+	label,
+	renderRequest,
+}: {
+	requests: BrokerDocumentRequest[];
+	label: string;
+	renderRequest: (request: BrokerDocumentRequest) => React.ReactNode;
+}) {
+	const {
+		pageRows,
+		pageIndex,
+		pageSize,
+		pageCount,
+		total,
+		setPageIndex,
+		setPageSize,
+	} = usePagedRows(requests);
+
+	return (
+		<>
+			{pageRows.map(renderRequest)}
+			<PaginationBar
+				label={label}
+				pageIndex={pageIndex}
+				pageSize={pageSize}
+				pageCount={pageCount}
+				total={total}
+				onPageIndexChange={setPageIndex}
+				onPageSizeChange={setPageSize}
+			/>
+		</>
+	);
+}
+
 export function BrokerDocumentRequestsPage() {
 	const {
 		projects,
@@ -385,97 +427,102 @@ export function BrokerDocumentRequestsPage() {
 							}
 						/>
 					)}
-					{filteredRequests.map((doc) => (
-						<Card key={doc.id}>
-							<CardContent className="p-5 space-y-3 text-sm">
-								<div className="flex flex-wrap items-center justify-between gap-2">
-									<div className="flex items-center gap-2">
-										<Badge className="bg-blue-600 text-white font-semibold">
-											{doc.category}
-										</Badge>
-										<Badge
-											className={
-												doc.status === "APPROVED"
-													? "bg-emerald-700 text-white"
-													: doc.status === "REJECTED"
-														? "bg-red-600 text-white"
-														: doc.status === "SUBMITTED"
-															? "bg-amber-700 text-white"
-															: "bg-muted text-muted-foreground"
-											}
-										>
-											Status: {doc.status}
-										</Badge>
-									</div>
-									<span className="text-muted-foreground text-sm">
-										Deadline: {doc.deadlineDate}
-									</span>
-								</div>
-
-								<div>
-									<h4 className="font-bold text-sm text-foreground">
-										{doc.documentTypeName}
-									</h4>
-									<p className="text-muted-foreground mt-0.5">
-										Project: {doc.projectTitle} • Client: {doc.companyName}
-									</p>
-									<p className="text-muted-foreground mt-1">
-										Reason: {doc.reason}
-									</p>
-								</div>
-
-								{doc.submittedFileName && (
-									<div className="rounded-lg bg-emerald-50 p-3 flex flex-wrap items-center justify-between gap-3 border border-emerald-200">
-										<span className="flex items-center gap-2 font-semibold text-emerald-950">
-											<FontAwesomeIcon
-												icon={faFileAlt}
-												className="text-emerald-700 text-sm"
-											/>
-											File Uploaded: {doc.submittedFileName} ({doc.submittedAt})
+					<PagedRequestList
+						requests={filteredRequests}
+						label="Document requests"
+						renderRequest={(doc) => (
+							<Card key={doc.id}>
+								<CardContent className="p-5 space-y-3 text-sm">
+									<div className="flex flex-wrap items-center justify-between gap-2">
+										<div className="flex items-center gap-2">
+											<Badge className="bg-blue-600 text-white font-semibold">
+												{doc.category}
+											</Badge>
+											<Badge
+												className={
+													doc.status === "APPROVED"
+														? "bg-emerald-700 text-white"
+														: doc.status === "REJECTED"
+															? "bg-red-600 text-white"
+															: doc.status === "SUBMITTED"
+																? "bg-amber-700 text-white"
+																: "bg-muted text-muted-foreground"
+												}
+											>
+												Status: {doc.status}
+											</Badge>
+										</div>
+										<span className="text-muted-foreground text-sm">
+											Deadline: {doc.deadlineDate}
 										</span>
+									</div>
 
-										{doc.status === "SUBMITTED" && (
-											<div className="flex items-center gap-2">
-												<Button
-													size="sm"
-													variant="outline"
-													onClick={() => startReview(doc.id)}
-													className="text-sm gap-1.5"
-												>
-													<FontAwesomeIcon icon={faFileAlt} />
-													Start Review
-												</Button>
-											</div>
-										)}
-										{(doc.status === "SUBMITTED" ||
-											doc.status === "UNDER_REVIEW") && (
-											<div className="flex items-center gap-2">
-												<RejectDocumentModal
-													request={doc}
-													onReject={rejectDocument}
+									<div>
+										<h4 className="font-bold text-sm text-foreground">
+											{doc.documentTypeName}
+										</h4>
+										<p className="text-muted-foreground mt-0.5">
+											Project: {doc.projectTitle} • Client: {doc.companyName}
+										</p>
+										<p className="text-muted-foreground mt-1">
+											Reason: {doc.reason}
+										</p>
+									</div>
+
+									{doc.submittedFileName && (
+										<div className="rounded-lg bg-emerald-50 p-3 flex flex-wrap items-center justify-between gap-3 border border-emerald-200">
+											<span className="flex items-center gap-2 font-semibold text-emerald-950">
+												<FontAwesomeIcon
+													icon={faFileAlt}
+													className="text-emerald-700 text-sm"
 												/>
-												<Button
-													size="sm"
-													onClick={() => approveDocument(doc.id)}
-													className="bg-emerald-700 text-white hover:bg-emerald-700 text-sm gap-1.5"
-												>
-													<FontAwesomeIcon icon={faCheckCircle} />
-													Approve Document
-												</Button>
-											</div>
-										)}
-									</div>
-								)}
+												File Uploaded: {doc.submittedFileName} (
+												{doc.submittedAt})
+											</span>
 
-								{doc.rejectionReason && (
-									<div className="rounded-lg bg-red-50 p-3 text-red-950 border border-red-200">
-										<p className="font-bold">Broker Rejection Reason:</p>
-										<p className="mt-0.5">{doc.rejectionReason}</p>
-									</div>
-								)}
-							</CardContent>
-						</Card>
-					))}
+											{doc.status === "SUBMITTED" && (
+												<div className="flex items-center gap-2">
+													<Button
+														size="sm"
+														variant="outline"
+														onClick={() => startReview(doc.id)}
+														className="text-sm gap-1.5"
+													>
+														<FontAwesomeIcon icon={faFileAlt} />
+														Start Review
+													</Button>
+												</div>
+											)}
+											{(doc.status === "SUBMITTED" ||
+												doc.status === "UNDER_REVIEW") && (
+												<div className="flex items-center gap-2">
+													<RejectDocumentModal
+														request={doc}
+														onReject={rejectDocument}
+													/>
+													<Button
+														size="sm"
+														onClick={() => approveDocument(doc.id)}
+														className="bg-emerald-700 text-white hover:bg-emerald-700 text-sm gap-1.5"
+													>
+														<FontAwesomeIcon icon={faCheckCircle} />
+														Approve Document
+													</Button>
+												</div>
+											)}
+										</div>
+									)}
+
+									{doc.rejectionReason && (
+										<div className="rounded-lg bg-red-50 p-3 text-red-950 border border-red-200">
+											<p className="font-bold">Broker Rejection Reason:</p>
+											<p className="mt-0.5">{doc.rejectionReason}</p>
+										</div>
+									)}
+								</CardContent>
+							</Card>
+						)}
+					/>
 				</TabsContent>
 
 				<TabsContent value="pending" className="mt-6 space-y-4">
@@ -488,11 +535,12 @@ export function BrokerDocumentRequestsPage() {
 							description="Nothing has been uploaded for you to review. A request moves here once the client company submits the file."
 						/>
 					)}
-					{filteredRequests
-						.filter(
+					<PagedRequestList
+						requests={filteredRequests.filter(
 							(d) => d.status === "SUBMITTED" || d.status === "UNDER_REVIEW",
-						)
-						.map((doc) => (
+						)}
+						label="Documents awaiting review"
+						renderRequest={(doc) => (
 							<Card key={doc.id}>
 								<CardContent className="p-5 space-y-3 text-sm">
 									<h4 className="font-bold text-sm">{doc.documentTypeName}</h4>
@@ -511,7 +559,8 @@ export function BrokerDocumentRequestsPage() {
 									</div>
 								</CardContent>
 							</Card>
-						))}
+						)}
+					/>
 				</TabsContent>
 
 				<TabsContent value="approved" className="mt-6 space-y-4">
@@ -523,9 +572,10 @@ export function BrokerDocumentRequestsPage() {
 							description="Documents you approve are archived here with the client and project they belong to."
 						/>
 					)}
-					{filteredRequests
-						.filter((d) => d.status === "APPROVED")
-						.map((doc) => (
+					<PagedRequestList
+						requests={filteredRequests.filter((d) => d.status === "APPROVED")}
+						label="Approved documents"
+						renderRequest={(doc) => (
 							<Card key={doc.id}>
 								<CardContent className="p-5 text-sm space-y-1">
 									<Badge className="bg-emerald-700 text-white mb-1">
@@ -537,7 +587,8 @@ export function BrokerDocumentRequestsPage() {
 									</p>
 								</CardContent>
 							</Card>
-						))}
+						)}
+					/>
 				</TabsContent>
 
 				<TabsContent value="requested" className="mt-6 space-y-4">
@@ -549,9 +600,10 @@ export function BrokerDocumentRequestsPage() {
 							description="Requests you have sent that the client has not answered yet are listed here with their submission deadline."
 						/>
 					)}
-					{filteredRequests
-						.filter((d) => d.status === "REQUESTED")
-						.map((doc) => (
+					<PagedRequestList
+						requests={filteredRequests.filter((d) => d.status === "REQUESTED")}
+						label="Requests awaiting client"
+						renderRequest={(doc) => (
 							<Card key={doc.id}>
 								<CardContent className="p-5 text-sm space-y-1">
 									<Badge variant="outline">Awaiting Client</Badge>
@@ -561,7 +613,8 @@ export function BrokerDocumentRequestsPage() {
 									</p>
 								</CardContent>
 							</Card>
-						))}
+						)}
+					/>
 				</TabsContent>
 			</Tabs>
 		</div>

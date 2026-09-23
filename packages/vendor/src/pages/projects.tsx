@@ -7,10 +7,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
 	EmptyState,
 	Input,
+	PaginationBar,
 	Tabs,
 	TabsContent,
 	TabsList,
 	TabsTrigger,
+	usePagedRows,
 } from "@greenshift/ui";
 import { useState } from "react";
 import { isTopMatch } from "../lib/matchmaking";
@@ -30,6 +32,11 @@ export function VendorProjectsPage() {
 
 	const recommended = filteredProjects.filter((p) => isTopMatch(p.matchmaking));
 	const saved = filteredProjects.filter((p) => p.isSaved);
+
+	// Each tab is its own list, so each pages the rows it renders.
+	const allPage = usePagedRows(filteredProjects);
+	const recommendedPage = usePagedRows(recommended);
+	const savedPage = usePagedRows(saved);
 
 	return (
 		<div className="space-y-6">
@@ -65,15 +72,26 @@ export function VendorProjectsPage() {
 							description="No published tender matches that name, client, or sector. Clear the search field to see every open project."
 						/>
 					) : (
-						<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-							{filteredProjects.map((proj) => (
-								<VendorProjectCard
-									key={proj.id}
-									project={proj}
-									onSave={toggleSaveProject}
-								/>
-							))}
-						</div>
+						<>
+							<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+								{allPage.pageRows.map((proj) => (
+									<VendorProjectCard
+										key={proj.id}
+										project={proj}
+										onSave={toggleSaveProject}
+									/>
+								))}
+							</div>
+							<PaginationBar
+								label="Projects"
+								pageIndex={allPage.pageIndex}
+								pageSize={allPage.pageSize}
+								pageCount={allPage.pageCount}
+								total={allPage.total}
+								onPageIndexChange={allPage.setPageIndex}
+								onPageSizeChange={allPage.setPageSize}
+							/>
+						</>
 					)}
 				</TabsContent>
 
@@ -85,16 +103,27 @@ export function VendorProjectsPage() {
 							description="Tenders scoring 90 or above on matchmaking are listed here once they are published."
 						/>
 					) : (
-						<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-							{recommended.map((proj) => (
-								<VendorProjectCard
-									key={proj.id}
-									project={proj}
-									onSave={toggleSaveProject}
-									variant="recommended"
-								/>
-							))}
-						</div>
+						<>
+							<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+								{recommendedPage.pageRows.map((proj) => (
+									<VendorProjectCard
+										key={proj.id}
+										project={proj}
+										onSave={toggleSaveProject}
+										variant="recommended"
+									/>
+								))}
+							</div>
+							<PaginationBar
+								label="Recommended projects"
+								pageIndex={recommendedPage.pageIndex}
+								pageSize={recommendedPage.pageSize}
+								pageCount={recommendedPage.pageCount}
+								total={recommendedPage.total}
+								onPageIndexChange={recommendedPage.setPageIndex}
+								onPageSizeChange={recommendedPage.setPageSize}
+							/>
+						</>
 					)}
 				</TabsContent>
 
@@ -106,15 +135,26 @@ export function VendorProjectsPage() {
 							description="Bookmark a tender from any card to shortlist it here."
 						/>
 					) : (
-						<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-							{saved.map((proj) => (
-								<VendorProjectCard
-									key={proj.id}
-									project={proj}
-									onSave={toggleSaveProject}
-								/>
-							))}
-						</div>
+						<>
+							<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+								{savedPage.pageRows.map((proj) => (
+									<VendorProjectCard
+										key={proj.id}
+										project={proj}
+										onSave={toggleSaveProject}
+									/>
+								))}
+							</div>
+							<PaginationBar
+								label="Saved projects"
+								pageIndex={savedPage.pageIndex}
+								pageSize={savedPage.pageSize}
+								pageCount={savedPage.pageCount}
+								total={savedPage.total}
+								onPageIndexChange={savedPage.setPageIndex}
+								onPageSizeChange={savedPage.setPageSize}
+							/>
+						</>
 					)}
 				</TabsContent>
 			</Tabs>

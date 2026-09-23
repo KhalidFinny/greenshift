@@ -1,6 +1,7 @@
 import type { VendorNegotiation } from "../../../contracts";
 import type { GreenShiftDb } from "../../../db";
 import { maxNegotiationIterations } from "../../../db/schema";
+import { readAnnotations } from "../../../lib/annotations";
 import { iso } from "../../../lib/format";
 import { recordAudit, vendorProfileId } from "../vendor.shared";
 import type { NegotiationRow } from "./negotiations.repository";
@@ -22,6 +23,7 @@ function toNegotiation(row: NegotiationRow): VendorNegotiation {
 		requestedTimelineMonths: n.requestedTimelineMonths,
 		requestedFields: n.requestedFields ?? [],
 		companyNote: n.companyNote,
+		annotations: readAnnotations(n.annotations),
 		vendorRevisedPrice: n.vendorRevisedPrice,
 		vendorRevisedWarrantyYears: n.vendorRevisedWarrantyYears,
 		vendorRevisedTimelineMonths: n.vendorRevisedTimelineMonths,

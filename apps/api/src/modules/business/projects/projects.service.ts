@@ -14,16 +14,18 @@ import {
 	projectRisk,
 	teknisTone,
 } from "../business.scoring";
-import { CHECKLIST_SLOTS, pillStatus } from "../business.shared";
+import { CHECKLIST_SLOTS, pillStatus, scopeEntries } from "../business.shared";
 import {
 	CONSENT_MESSAGE,
 	type FieldErrors,
 	step1Errors,
 	step2Errors,
+	step3Errors,
 	validationSummary,
 } from "../business.validation";
 import * as documentsRepository from "../documents/documents.repository";
 import * as draftsRepository from "../drafts/drafts.repository";
+import { generateBlueprint } from "../forecast/forecast.service";
 import { runMatching } from "../matchmaking/matching.service";
 import { insertNotification } from "../notifications/notifications.repository";
 import * as repository from "./projects.repository";
@@ -72,22 +74,15 @@ export async function submitProject(
 	const fields: FieldErrors = {
 		...step1Errors(body.step1),
 		...step2Errors(body.step2, false, files.length),
+		...step3Errors(body.step3),
 	};
 	if (body.consent !== true) fields.consent = CONSENT_MESSAGE;
 	if (body.declaration !== true) fields.declaration = CONSENT_MESSAGE;
 
 	// Every referenced file must belong to this draft, so a submit cannot attach
-	// another draft's uploads. The same upload is legitimately referenced from
-	// both Step 2 and a Step 3 slot, so this is de-duplicated before it is
-	// compared against the number of rows actually found.
-	const referenced = [
-		...new Set([
-			...(body.step2.fileIds ?? []),
-			...Object.values(body.step3.docStates ?? {}).filter(
-				(id): id is string => typeof id === "string",
-			),
-		]),
-	];
+	// another draft's uploads. De-duplicated, because one upload can legitimately
+	// be listed twice, and compared against the rows actually found.
+	const referenced = [...new Set(body.step2.fileIds ?? [])];
 	if (referenced.length > 0) {
 		const owned = await draftsRepository.countOwnedDocuments(
 			db,
@@ -139,7 +134,11 @@ export async function submitProject(
 			companyId,
 			title: body.step1.namaProyek.trim(),
 			description: body.step1.ringkasan.trim(),
-			status: "assessment",
+			// The next move is the company's: the project has to be registered at
+			// the environmental registry and an LVV body appointed before the body
+			// can verify anything, so a submission lands on `registry` rather than
+			// straight with the body.
+			status: "registry",
 			location: body.step1.lokasi.trim(),
 			industrySector: body.step1.sektor,
 			konsumsiMwh: body.step1.konsumsiMwh,
@@ -155,6 +154,11 @@ export async function submitProject(
 			jaminan: body.step2.jaminan,
 			creditScore: credit.score,
 			creditRating: credit.rating,
+			// The scope of work the tender is bid against: the company's own
+			// requirements, which the matching model also reads, and what the
+			// delivery is expected to hand over.
+			technicalRequirements: scopeEntries(body.step3.requirements),
+			deliverables: scopeEntries(body.step3.deliverables),
 			// Derived so the catalog and the vendor surfaces have something real
 			// to show: the capital cost is the funding target, the energy target
 			// converts MWh to kWh, and the carbon target is the requested share
@@ -172,7 +176,52 @@ export async function submitProject(
 	await repository.attachProjectToDraft(db, body.draftId, project.id);
 	await documentsRepository.promoteDraftDocuments(db, body.draftId, project.id);
 
+	// Verification is not the platform's to start: the company registers the
+	// project at Sistem Registri, uploads the verification documents there and
+	// appoints the LVV body, then marks it registered on the project's page. The
+	// reminder is what tells them so, and it stays until they do.
+	await insertNotification(db, {
+		userId: companyId,
+		type: "verification",
+		title: "Register your project for LVV verification",
+		body: `"${project.title}" is on record. Register it at Sistem Registri, upload the verification documents there, and appoint the LVV body that will verify it. Verification starts when you mark it registered.`,
+		link: `/business/projects/${project.id}`,
+	});
+
 	return { outcome: "ok", project: toSubmittedProject(project) };
+}
+
+export type StartLvvResult =
+	| { outcome: "ok"; project: BusinessSubmittedProject }
+	| { outcome: "not_found" }
+	| { outcome: "conflict"; status: string };
+
+/**
+ * The company's half of verification: the project has been registered at the
+ * registry and an LVV body appointed, so the body can start.
+ *
+ * Only a project waiting on its registration can start: a second press, or a
+ * project already with the body, changes nothing and says so. The verdict
+ * arrives out of band (`completeLvvReview`), so this answers with the project
+ * as it stands, in `assessment`.
+ */
+export async function startLvvVerification(
+	db: GreenShiftDb,
+	companyId: number,
+	projectId: number,
+): Promise<StartLvvResult> {
+	const row = await repository.findCompanyProject(db, projectId, companyId);
+	if (!row) return { outcome: "not_found" };
+	if (row.status !== "registry") {
+		return { outcome: "conflict", status: row.status };
+	}
+
+	await repository.setProjectStatus(db, projectId, "assessment");
+
+	return {
+		outcome: "ok",
+		project: toSubmittedProject({ ...row, status: "assessment" }),
+	};
 }
 
 /**
@@ -198,6 +247,17 @@ export function toSubmittedProject(
 		creditRating: row.creditRating,
 		riskScore: row.riskScore,
 		riskLevel: row.riskScore === null ? null : levelForRiskScore(row.riskScore),
+		location: row.location,
+		sector: row.industrySector,
+		funding: {
+			capexRp: row.capexRp,
+			tenorTahun: row.tenorTahun,
+			penghematanRp: row.penghematanRp,
+			pendapatanRp: row.pendapatanRp,
+			jaminan: row.jaminan,
+		},
+		technicalRequirements: row.technicalRequirements ?? [],
+		deliverables: row.deliverables ?? [],
 	};
 }
 
@@ -229,6 +289,10 @@ function sleep(ms: number): Promise<void> {
  * the platform has no integration with that registry yet, so this stands in for
  * the call and reports the outcome the body would report. A real integration
  * replaces this function and nothing else: the caller only reads the verdict.
+ *
+ * Two callers read it: the verification flow, deciding whether a project may
+ * proceed, and the project's own page, telling a company that registered the
+ * project there but has not started verification here.
  */
 export interface RegistryCheck {
 	registered: boolean;
@@ -236,7 +300,7 @@ export interface RegistryCheck {
 	subject: string;
 }
 
-async function checkEnvironmentalRegistry(
+export async function checkEnvironmentalRegistry(
 	title: string,
 ): Promise<RegistryCheck> {
 	await sleep(REGISTRY_LOOKUP_MS);
@@ -282,6 +346,14 @@ export async function completeLvvReview(
 	// Verification clears the project into matchmaking, and the matching run
 	// ranks its vendor pool in the same pass: the screen the company opens is
 	// already populated.
+	//
+	// The Green Project Blueprint is generated here, from the figures the
+	// company submitted, because verification is what makes them usable: the
+	// bidders on the project read the blueprint's funding case and emission
+	// targets while the tender is open.
+	const project = await repository.findCompanyProject(db, projectId, companyId);
+	const blueprintId = project ? await generateBlueprint(db, project) : null;
+
 	const matching = await runMatching(db, projectId);
 	await repository.setProjectStatus(db, projectId, "tendering");
 
@@ -294,7 +366,11 @@ export async function completeLvvReview(
 		userId: companyId,
 		type: "verification",
 		title: "Project verified by LVV",
-		body: `"${title}" passed verification. Vendor matchmaking is open: choose a vendor when you are ready.${shortlist}`,
+		body: `"${title}" passed verification${
+			blueprintId === null
+				? ""
+				: ", and its Green Project Blueprint is ready for bidders"
+		}. Vendor matchmaking is open: choose a vendor when you are ready.${shortlist}`,
 		link: "/business/matchmaking",
 	});
 }

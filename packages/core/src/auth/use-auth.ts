@@ -1,5 +1,5 @@
+import type { RegisterBody } from "@greenshift/api/contracts";
 import { useRouteContext, useRouter } from "@tanstack/react-router";
-
 import { api } from "../api/client";
 import { clearStoredToasts } from "../toast-bus";
 import type { AuthUser } from "./types";
@@ -14,18 +14,8 @@ export function useAuth() {
 		return loggedIn;
 	}
 
-	async function register(
-		name: string,
-		email: string,
-		password: string,
-		companyName: string,
-	): Promise<AuthUser> {
-		const { user: registered } = await api.auth.register(
-			name,
-			email,
-			password,
-			companyName,
-		);
+	async function register(input: RegisterBody): Promise<AuthUser> {
+		const { user: registered } = await api.auth.register(input);
 		await router.invalidate();
 		return registered;
 	}

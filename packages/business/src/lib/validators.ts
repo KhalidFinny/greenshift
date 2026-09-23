@@ -68,3 +68,19 @@ export function validateStep2(v: Step2Values): Record<string, string> {
 	if (v.fileCount < 1) e.files = "Upload at least 1 document.";
 	return e;
 }
+
+/* Step 3: the scope of work. Both lists are one entry per line, so the rule
+ * counts the entries that carry text. */
+export interface Step3Values {
+	requirements: string[];
+	deliverables: string[];
+}
+
+export function validateStep3(v: Step3Values): Record<string, string> {
+	const e: Record<string, string> = {};
+	if (v.requirements.length === 0)
+		e.requirements = "Add at least one key technical requirement.";
+	if (v.deliverables.length === 0)
+		e.deliverables = "Add at least one deliverable.";
+	return e;
+}

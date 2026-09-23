@@ -5,11 +5,11 @@ import { cn } from "../../lib/utils";
 import { buttonVariants } from "../ui/button";
 
 const navLinks = [
-	{ href: "#hero", label: "home" },
-	{ href: "#how-it-works", label: "how it works" },
-	{ href: "#ecosystem", label: "ecosystem" },
-	{ href: "#faq", label: "faq" },
-	{ href: "#contact", label: "contact" },
+	{ href: "#hero", label: "Home" },
+	{ href: "#how-it-works", label: "How It Works" },
+	{ href: "#ecosystem", label: "Ecosystem" },
+	{ href: "#faq", label: "FAQ" },
+	{ href: "#contact", label: "Contact" },
 ] as const;
 
 // Compact brand-green bar that fades in once the hero has been scrolled past.

@@ -15,6 +15,8 @@ import {
 	EmptyState,
 	Input,
 	Label,
+	PaginationBar,
+	usePagedRows,
 } from "@greenshift/ui";
 import { useState } from "react";
 import { formatRupiah } from "../lib/format";
@@ -144,6 +146,9 @@ export function OpenBidLeaderboard({
 		return { ...item, displayName: `Vendor ${letter}` };
 	});
 
+	// The standings page the anonymized rows.
+	const paged = usePagedRows(formattedLeaderboard);
+
 	return (
 		<Card>
 			<CardHeader className="flex flex-row items-center justify-between">
@@ -187,7 +192,7 @@ export function OpenBidLeaderboard({
 								</span>
 							</div>
 							<div className="divide-y divide-border">
-								{formattedLeaderboard.map((item) => (
+								{paged.pageRows.map((item) => (
 									<div
 										key={item.vendorName}
 										className={`flex items-center justify-between p-4 ${
@@ -233,6 +238,15 @@ export function OpenBidLeaderboard({
 								))}
 							</div>
 						</div>
+						<PaginationBar
+							label="Bid standings"
+							pageIndex={paged.pageIndex}
+							pageSize={paged.pageSize}
+							pageCount={paged.pageCount}
+							total={paged.total}
+							onPageIndexChange={paged.setPageIndex}
+							onPageSizeChange={paged.setPageSize}
+						/>
 						<p className="text-sm italic text-muted-foreground">
 							* Note: Open bidding displays real-time ranking only. Competitor
 							identities are anonymized and previous revision histories are not

@@ -102,7 +102,7 @@ export default function HeroSection() {
 					</FloatingPill>
 				</li>
 				<li className="absolute left-[8%] top-[58%]">
-					<FloatingPill animation="float-slow">ROI Tracking</FloatingPill>
+					<FloatingPill animation="float-slow">Emission Tracking</FloatingPill>
 				</li>
 				<li className="absolute right-[8%] top-[65%]">
 					<FloatingPill animation="float-slow-delayed">
@@ -140,19 +140,24 @@ export default function HeroSection() {
 						className="mr-3 inline-block h-[42px] align-middle lg:mr-[calc(var(--u)*12)] lg:h-[calc(var(--u)*42)]"
 					/>
 					helps industrial companies validate energy efficiency projects, build
-					blueprints, and monitor ROI in one measurable and transparent
-					ecosystem.
+					green project blueprints, and monitor the emission reductions they
+					deliver in one measurable and transparent ecosystem.
 				</p>
 
+				{/* The buttons take their width from their own label plus a
+				    generous gutter, and both the gutter and the height are
+				    floored: the canvas scales them with `--u` above the 1920px
+				    design canvas, but below it the 14px text floor would leave
+				    the label touching the border of a box scaled past it. */}
 				<nav
-					className="pointer-events-auto mt-12 flex flex-col items-center gap-5 sm:flex-row sm:gap-[46px] lg:mt-[calc(var(--u)*52)] lg:gap-[calc(var(--u)*46)]"
+					className="pointer-events-auto mt-12 flex flex-col items-center gap-5 sm:flex-row sm:gap-14 lg:mt-[calc(var(--u)*52)] lg:gap-[max(3.5rem,calc(var(--u)*64))]"
 					aria-label="Hero actions"
 				>
 					<Link
 						to="/register"
 						className={cn(
 							buttonVariants({ variant: "default" }),
-							"h-[42px] w-[180px] cursor-pointer rounded-[10px] bg-[#f7f7f9] text-base text-[#1a1a1a] normal-case tracking-normal hover:bg-white lg:h-[calc(var(--u)*42)] lg:w-[calc(var(--u)*180)] lg:rounded-[calc(var(--u)*10)] lg:text-[length:max(0.875rem,calc(var(--u)*16))]",
+							"h-[42px] cursor-pointer rounded-[10px] bg-[#f7f7f9] px-7 text-base text-[#1a1a1a] normal-case tracking-normal hover:bg-white lg:h-[max(2.625rem,calc(var(--u)*42))] lg:rounded-[calc(var(--u)*10)] lg:px-[max(1.75rem,calc(var(--u)*28))] lg:text-[length:max(0.875rem,calc(var(--u)*16))]",
 						)}
 					>
 						Get Started Free
@@ -161,7 +166,7 @@ export default function HeroSection() {
 						href="mailto:contact@greenshift.com?subject=Project%20%26%20Investment"
 						className={cn(
 							buttonVariants({ variant: "outline" }),
-							"h-[42px] w-[180px] cursor-pointer rounded-[10px] border-[3px] border-white bg-transparent text-base text-white normal-case tracking-normal hover:bg-white hover:text-[#1a1a1a] lg:h-[calc(var(--u)*42)] lg:w-[calc(var(--u)*180)] lg:rounded-[calc(var(--u)*10)] lg:border-[length:calc(var(--u)*3)] lg:text-[length:max(0.875rem,calc(var(--u)*16))]",
+							"h-[42px] cursor-pointer rounded-[10px] border-[3px] border-white bg-transparent px-7 text-base text-white normal-case tracking-normal hover:bg-white hover:text-[#1a1a1a] lg:h-[max(2.625rem,calc(var(--u)*42))] lg:rounded-[calc(var(--u)*10)] lg:border-[length:max(2px,calc(var(--u)*3))] lg:px-[max(1.75rem,calc(var(--u)*28))] lg:text-[length:max(0.875rem,calc(var(--u)*16))]",
 						)}
 					>
 						Contact Us

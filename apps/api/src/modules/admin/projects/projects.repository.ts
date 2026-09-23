@@ -3,6 +3,7 @@ import type { GreenShiftDb } from "../../../db";
 import {
 	auditLogs,
 	blueprints,
+	organizationName,
 	type projectStatuses,
 	projects,
 	users,
@@ -17,7 +18,7 @@ export async function listProjects(
 	const query = db
 		.select({
 			project: projects,
-			companyName: users.name,
+			companyName: organizationName,
 			blueprintStatus: blueprints.status,
 		})
 		.from(projects)

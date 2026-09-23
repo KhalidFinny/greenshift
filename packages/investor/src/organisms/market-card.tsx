@@ -1,10 +1,16 @@
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import {
-	faBolt,
+	faBuilding,
+	faCar,
+	faFlask,
+	faGears,
 	faIndustry,
+	faLandmark,
 	faLeaf,
 	faLocationDot,
-	faTruck,
+	faScroll,
+	faSeedling,
+	faShirt,
 	faUtensils,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -19,7 +25,7 @@ import {
 	cn,
 	ShimmerBlock,
 } from "@greenshift/ui";
-import { formatIdr, formatTonnes, titleCase } from "../lib/format";
+import { formatTonnes, monthLabel, titleCase } from "../lib/format";
 import { riskMeta } from "../lib/labels";
 import { BondPurchaseActions } from "./bond-purchase-actions";
 
@@ -41,41 +47,32 @@ const STATUS_META: Record<
 	},
 };
 
+/**
+ * The icon each sector draws, keyed by the sector vocabulary a project is
+ * submitted in. The icon reads the sector rather than the words in a title: a
+ * boiler retrofit in a textile plant is a textile project, and guessing from
+ * "boiler" is what made it draw as food and beverage.
+ */
+const SECTOR_ICONS: Record<string, IconDefinition> = {
+	cement: faIndustry,
+	"iron and steel": faIndustry,
+	aluminium: faIndustry,
+	fertiliser: faFlask,
+	textile: faShirt,
+	"food and beverage": faUtensils,
+	chemical: faFlask,
+	"pulp and paper": faScroll,
+	machinery: faGears,
+	automotive: faCar,
+	"commercial buildings": faBuilding,
+	"public sector": faLandmark,
+	agriculture: faSeedling,
+};
+
+/** The icon a listing draws for its sector, or the general mark when it has none. */
 function categoryIconFor(listing: BondListing): IconDefinition {
-	const scope =
-		`${listing.title} ${listing.industrySector ?? ""}`.toLowerCase();
-	if (
-		scope.includes("solar") ||
-		scope.includes("plts") ||
-		scope.includes("panel") ||
-		scope.includes("energy") ||
-		scope.includes("electric") ||
-		scope.includes("power")
-	) {
-		return faBolt;
-	}
-	if (scope.includes("logistics") || scope.includes("warehouse")) {
-		return faTruck;
-	}
-	if (
-		scope.includes("food") ||
-		scope.includes("beverage") ||
-		scope.includes("f&b") ||
-		scope.includes("boiler") ||
-		scope.includes("biomass")
-	) {
-		return faUtensils;
-	}
-	if (
-		scope.includes("manufacturing") ||
-		scope.includes("metal") ||
-		scope.includes("textile") ||
-		scope.includes("chemical") ||
-		scope.includes("paper")
-	) {
-		return faIndustry;
-	}
-	return faLeaf;
+	const sector = (listing.industrySector ?? "").trim().toLowerCase();
+	return SECTOR_ICONS[sector] ?? faLeaf;
 }
 
 function Metric({
@@ -106,9 +103,7 @@ export function BondCard({ listing }: BondCardProps) {
 	const status = STATUS_META[listing.status];
 	const categoryIcon = categoryIconFor(listing);
 	const risk = riskMeta(listing.riskScore);
-	const progress = Math.round(listing.fundingProgress * 100);
-	const irr = listing.blueprint.irr;
-	const payback = listing.blueprint.paybackPeriod;
+	const monitoring = listing.monitoring;
 	const verified = listing.status === "verified";
 
 	return (
@@ -146,43 +141,58 @@ export function BondCard({ listing }: BondCardProps) {
 				<div className="overflow-hidden rounded-lg border border-border/70">
 					<div className="grid grid-cols-3 divide-x divide-border/70">
 						<Metric
-							label="Coupon"
-							value={
-								typeof irr === "number"
-									? `${irr.toLocaleString("en-US", { maximumFractionDigits: 1 })}%`
-									: "-"
-							}
+							label="Verified cut"
+							value={formatTonnes(monitoring.verifiedTco2)}
 							tone="text-primary"
 						/>
 						<Metric
-							label="Tenor"
-							value={typeof payback === "number" ? `${payback} yrs` : "-"}
+							label="Annual target"
+							value={formatTonnes(listing.targetEmissionReduction)}
 						/>
 						<Metric label="Risk" value={risk.label} />
 					</div>
 					<div className="flex items-center justify-between gap-4 border-t border-border/70 p-3">
-						<p className="text-sm text-muted-foreground">Issuance amount</p>
+						<p className="text-sm text-muted-foreground">
+							MRV periods reported
+						</p>
 						<p className="text-lg font-semibold tabular-nums">
-							{formatIdr(listing.budget)}
+							{monitoring.periods}
 						</p>
 					</div>
 				</div>
 
-				<div>
-					<div className="flex items-center justify-between gap-4">
-						<p className="text-sm text-muted-foreground">Funding progress</p>
-						<p className="text-sm font-semibold tabular-nums">{progress}%</p>
-					</div>
-					<div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
-						<div
-							className="h-full rounded-full bg-primary transition-all"
-							style={{ width: `${progress}%` }}
-						/>
-					</div>
-					<p className="mt-2 text-sm tabular-nums text-muted-foreground">
-						{formatIdr(listing.funded)} raised ·{" "}
-						{formatTonnes(listing.targetEmissionReduction)} emission reduction
-					</p>
+				{/* What GreenShift can report itself: the measured reductions its
+				    MRV periods account for, against the baseline they held to. */}
+				<div className="rounded-lg border border-border/70 p-3">
+					{monitoring.periods === 0 ? (
+						<p className="text-sm leading-relaxed text-muted-foreground">
+							Monitoring starts with the project's first MRV period. None has
+							been reported yet, so there is nothing measured to show.
+						</p>
+					) : (
+						<>
+							<div className="flex flex-wrap items-center justify-between gap-2">
+								<p className="text-sm text-muted-foreground">
+									Latest MRV period
+								</p>
+								<p className="text-sm font-semibold tabular-nums">
+									{monthLabel(monitoring.latestPeriod ?? "")}
+								</p>
+							</div>
+							<p
+								className={cn(
+									"mt-2 text-sm leading-relaxed",
+									monitoring.anomalyFlagged
+										? "text-destructive"
+										: "text-emerald-700",
+								)}
+							>
+								{monitoring.anomalyFlagged
+									? "A reported period deviated from its baseline and is flagged for technical review."
+									: "Every reported period has held its baseline."}
+							</p>
+						</>
+					)}
 				</div>
 			</CardContent>
 
@@ -190,7 +200,7 @@ export function BondCard({ listing }: BondCardProps) {
 				{verified ? (
 					<>
 						<p className="text-sm text-muted-foreground">
-							Active listing. Buy through a broker:
+							Issued through a licensed securities partner. Buy it in their app:
 						</p>
 						<BondPurchaseActions project={listing} />
 					</>
@@ -198,8 +208,9 @@ export function BondCard({ listing }: BondCardProps) {
 					<div className="rounded-lg border border-dashed border-border/70 bg-muted/40 p-3">
 						<p className="text-sm font-medium">Not yet trading</p>
 						<p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-							The bond is still undergoing verification and broker placement.
-							Contact us for information on the offering period.
+							The blueprint is still with the validator and the securities
+							partner, so no instrument has been issued. Monitoring begins with
+							the first reported period.
 						</p>
 					</div>
 				)}
@@ -246,13 +257,12 @@ export function BondCardSkeleton() {
 					</div>
 				</div>
 
-				<div className="space-y-2">
+				<div className="rounded-lg border border-border/70 p-3">
 					<div className="flex items-center justify-between gap-4">
 						<ShimmerBlock className="h-4 w-32" />
-						<ShimmerBlock className="h-4 w-10" />
+						<ShimmerBlock className="h-4 w-16" />
 					</div>
-					<ShimmerBlock className="h-2 w-full rounded-full" />
-					<ShimmerBlock className="h-4 w-56" />
+					<ShimmerBlock className="mt-2 h-4 w-56" />
 				</div>
 			</CardContent>
 

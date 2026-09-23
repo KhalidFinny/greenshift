@@ -8,9 +8,11 @@ import { requireJsonBody } from "../../../lib/http";
 import { mutationRateLimit } from "../../../lib/mutation-limit";
 import { apiError, apiNotFound, apiSuccess } from "../../../lib/response";
 import {
+	checkEnvironmentalRegistry,
 	completeLvvReview,
 	listProjects,
 	readProject,
+	startLvvVerification,
 	submitProject,
 } from "./projects.service";
 
@@ -51,18 +53,43 @@ projectsRoutes.post(
 			});
 		}
 
-		// The file goes to a verification body, which answers later: the answer is
-		// carried out of band so the response is the submission, not the review.
+		return apiSuccess(c, { project: result.project }, "Project submitted", 201);
+	}),
+);
+
+// ── start verification ────────────────────────────────────
+// The company registers the project at the environmental registry and appoints
+// its LVV body, then marks it registered here. Only then does the body's review
+// run, out of band, so this answers with the project rather than the verdict.
+projectsRoutes.post(
+	"/projects/:id/lvv",
+	mutationRateLimit("business", "start-lvv"),
+	...factory.createHandlers(async (c) => {
+		const raw = c.req.param("id");
+		if (!raw || !/^\d+$/.test(raw)) return apiError(c, "INVALID_ID");
+
+		const db = createDb(c.env.DB);
+		const companyId = c.get("user").id;
+		const result = await startLvvVerification(db, companyId, Number(raw));
+
+		if (result.outcome === "not_found") return apiNotFound(c, "Project");
+		if (result.outcome === "conflict") {
+			return apiError(
+				c,
+				"CONFLICT",
+				"This project is not waiting to be registered for verification.",
+			);
+		}
+
 		c.executionCtx.waitUntil(
-			completeLvvReview(
-				db,
-				c.get("user").id,
-				result.project.id,
-				result.project.title,
-			),
+			completeLvvReview(db, companyId, result.project.id, result.project.title),
 		);
 
-		return apiSuccess(c, { project: result.project }, "Project submitted", 201);
+		return apiSuccess(
+			c,
+			{ project: result.project },
+			"LVV verification started",
+		);
 	}),
 );
 
@@ -80,6 +107,27 @@ projectsRoutes.get(
 		if (!project) return apiNotFound(c, "Project");
 
 		return c.json({ project });
+	}),
+);
+
+// ── registry state ────────────────────────────────────────
+// The company registers the project at Sistem Registri and appoints its LVV
+// body before verification can run, which is a step it takes outside the
+// platform. Reading the registry back is what lets the project's page tell a
+// company that has done it there to start verification here, rather than
+// leaving the project waiting on a move only they can make.
+projectsRoutes.get(
+	"/projects/:id/registry",
+	...factory.createHandlers(async (c) => {
+		const raw = c.req.param("id");
+		if (!raw || !/^\d+$/.test(raw)) return apiError(c, "INVALID_ID");
+
+		const db = createDb(c.env.DB);
+		const project = await readProject(db, c.get("user").id, Number(raw));
+		if (!project) return apiNotFound(c, "Project");
+
+		const registry = await checkEnvironmentalRegistry(project.title);
+		return c.json({ registered: registry.registered });
 	}),
 );
 

@@ -20,7 +20,7 @@ import { ExportMenu } from "../organisms/export-menu";
 import { TableSkeleton } from "../organisms/table-skeleton";
 
 const ROLE_LABELS: Record<string, string> = {
-	business: "Business",
+	business: "Company",
 	investor: "Investor",
 	vendor: "Vendor",
 	broker: "Broker",
@@ -63,10 +63,27 @@ const userColumns: ColumnDef<AdminUser>[] = [
 	},
 	{
 		id: "company",
-		accessorFn: (user) => user.companyName ?? "",
+		accessorFn: (user) =>
+			`${user.companyName ?? ""} ${user.industrySector ?? ""} ${user.serviceCategory ?? ""} ${user.address ?? ""}`,
 		header: "Company",
-		meta: { className: "max-w-56 truncate" },
-		cell: ({ row }) => row.original.companyName ?? "-",
+		meta: { className: "max-w-64" },
+		cell: ({ row }) => {
+			// A company carries a sector, a vendor a service category: the same
+			// fact about two kinds of organization, so the line reads as one.
+			const category =
+				row.original.industrySector ?? row.original.serviceCategory;
+			const detail = [category, row.original.address]
+				.filter((value): value is string => Boolean(value))
+				.join(" · ");
+			return (
+				<>
+					<p className="truncate">{row.original.companyName ?? "-"}</p>
+					{detail ? (
+						<p className="truncate text-base text-muted-foreground">{detail}</p>
+					) : null}
+				</>
+			);
+		},
 	},
 	{
 		id: "verification",

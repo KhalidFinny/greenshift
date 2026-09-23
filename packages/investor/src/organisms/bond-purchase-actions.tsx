@@ -1,19 +1,18 @@
 import {
-	faArrowUpRightFromSquare,
 	faCheck,
 	faCopy,
 	faMagnifyingGlass,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { publishToast } from "@greenshift/core";
+import {
+	PARTNER_APPS,
+	type PartnerApp,
+	PRIMARY_PARTNER,
+	publishToast,
+} from "@greenshift/core";
 import { Button } from "@greenshift/ui";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { bondCodeFor, bondSearchPayload } from "../lib/bond-code";
-import {
-	BROKER_PLATFORMS,
-	type BrokerPlatform,
-	PRIMARY_BROKER,
-} from "../lib/broker-platforms";
 
 type LaunchState = "idle" | "opening" | "launched" | "fallback";
 
@@ -23,7 +22,6 @@ interface BondPurchaseActionsProps {
 		title: string;
 		bondCode?: string | null;
 		companyName?: string | null;
-		blueprint?: { irr?: number };
 	};
 }
 
@@ -111,7 +109,7 @@ function isAndroid(): boolean {
 	return /android/i.test(navigator.userAgent);
 }
 
-function openPlay(platform: BrokerPlatform) {
+function openPlay(platform: PartnerApp) {
 	window.open(platform.playUrl, "_blank", "noopener,noreferrer");
 }
 
@@ -126,7 +124,7 @@ function openPlay(platform: BrokerPlatform) {
 export function BondPurchaseActions({ project }: BondPurchaseActionsProps) {
 	const code = bondCodeFor(project);
 	const [launch, setLaunch] = useState<LaunchState>("idle");
-	const [platform, setPlatform] = useState<BrokerPlatform>(PRIMARY_BROKER);
+	const [platform, setPlatform] = useState<PartnerApp>(PRIMARY_PARTNER);
 	const [copied, setCopied] = useState(false);
 	const copiedTimer = useRef<number | null>(null);
 
@@ -138,7 +136,7 @@ export function BondPurchaseActions({ project }: BondPurchaseActionsProps) {
 		};
 	}, []);
 
-	const openPlatform = useCallback(async (target: BrokerPlatform) => {
+	const openPlatform = useCallback(async (target: PartnerApp) => {
 		setPlatform(target);
 
 		// No known scheme, or not Android: never fire a dead intent, go to Play.
@@ -179,8 +177,8 @@ export function BondPurchaseActions({ project }: BondPurchaseActionsProps) {
 		copiedTimer.current = window.setTimeout(() => setCopied(false), 2000);
 	}, [project, code, platform.name]);
 
-	const secondary = BROKER_PLATFORMS.find(
-		(entry) => entry.key !== PRIMARY_BROKER.key,
+	const secondary = PARTNER_APPS.find(
+		(entry) => entry.key !== PRIMARY_PARTNER.key,
 	);
 
 	return (
@@ -194,12 +192,11 @@ export function BondPurchaseActions({ project }: BondPurchaseActionsProps) {
 				size="lg"
 				className="w-full text-base"
 				disabled={launch === "opening"}
-				onClick={() => void openPlatform(PRIMARY_BROKER)}
+				onClick={() => void openPlatform(PRIMARY_PARTNER)}
 			>
-				<FontAwesomeIcon icon={faArrowUpRightFromSquare} />
 				{launch === "opening"
-					? `Opening ${PRIMARY_BROKER.name}...`
-					: `Buy on ${PRIMARY_BROKER.name}`}
+					? `Opening ${PRIMARY_PARTNER.name}...`
+					: `Buy on ${PRIMARY_PARTNER.name}`}
 			</Button>
 
 			{/* Deep link failed or the platform has no scheme: Play is the exit. */}
@@ -218,7 +215,6 @@ export function BondPurchaseActions({ project }: BondPurchaseActionsProps) {
 						className="mt-2 w-full"
 						onClick={() => openPlay(platform)}
 					>
-						<FontAwesomeIcon icon={faArrowUpRightFromSquare} />
 						Open Google Play
 					</Button>
 				</div>

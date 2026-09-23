@@ -8,6 +8,7 @@ import type {
 	VendorMonthlyReport,
 	VendorTenderSummary,
 } from "../../contracts";
+import { apiRoutes } from "../../contracts";
 import type { GreenShiftDb } from "../../db";
 import {
 	auditLogs,
@@ -15,6 +16,7 @@ import {
 	type energyForecasts,
 	matchShortlistSize,
 	type milestoneEvidence,
+	organizationName,
 	type projectMilestones,
 	projects,
 	proposalRevisions,
@@ -91,7 +93,7 @@ export async function getProposalDetail(
 			proposal: proposals,
 			tender: tenders,
 			project: projects,
-			companyName: users.name,
+			companyName: organizationName,
 		})
 		.from(proposals)
 		.innerJoin(tenders, eq(proposals.tenderId, tenders.id))
@@ -116,6 +118,13 @@ export async function getProposalDetail(
 		warrantyPeriod: row.proposal.warrantyPeriod,
 		status: row.proposal.status,
 		revisionCount: row.proposal.revisionCount ?? 0,
+		documentName: row.proposal.documentName,
+		documentUrl: row.proposal.documentKey
+			? apiRoutes.vendorProposalDocumentFile.path.replace(
+					":id",
+					String(row.proposal.id),
+				)
+			: null,
 		submittedAt: iso(row.proposal.submittedAt),
 		reviewedAt: iso(row.proposal.reviewedAt),
 		tender: tenderSummary(row.tender),

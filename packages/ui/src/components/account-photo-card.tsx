@@ -1,7 +1,9 @@
 import { type AuthUser, api, avatarLimits } from "@greenshift/core";
-import { AccountAvatar, Button, Input } from "@greenshift/ui";
 import { useRouter } from "@tanstack/react-router";
 import { useRef, useState } from "react";
+import { AccountAvatar } from "./account-avatar";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
 
 const ACCEPT = avatarLimits.mimeTypes.join(",");
 

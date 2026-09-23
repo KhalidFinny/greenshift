@@ -8,10 +8,12 @@ import type {
 	BusinessDraftDocument,
 	BusinessStep1Patch,
 	BusinessStep2Patch,
+	BusinessStep3Patch,
 } from "@greenshift/core";
 import { formatId, parseIdNumber } from "./number-format";
 import type { DraftResume } from "./use-business-draft";
 import { WIZARD_VALUES, type WizardValues } from "./use-project-wizard-form";
+import { scopeLines } from "./wizard-rules";
 
 /** A file the wizard lists: the draft document reduced to what a row shows. */
 export interface WizardFile {
@@ -80,6 +82,14 @@ export function step2Patch(
 	};
 }
 
+/** The Step 3 block: each textarea becomes the list of the lines it holds. */
+export function step3Patch(values: WizardValues): BusinessStep3Patch {
+	return {
+		requirements: scopeLines(values.requirements),
+		deliverables: scopeLines(values.deliverables),
+	};
+}
+
 /**
  * The stored draft in the shape the form holds it: numbers come back through
  * `formatField`, so the number shown is the number the user typed.
@@ -87,6 +97,7 @@ export function step2Patch(
 export function resumeValues(resume: DraftResume): WizardValues {
 	const step1 = resume.step1 ?? {};
 	const step2 = resume.step2 ?? {};
+	const step3 = resume.step3 ?? {};
 	const asField = (value: number | null | undefined, fallback: string) =>
 		value != null ? formatField(value) : fallback;
 	return {
@@ -106,6 +117,8 @@ export function resumeValues(resume: DraftResume): WizardValues {
 		saving: asField(step2.penghematanRp, WIZARD_VALUES.saving),
 		pendapatan: asField(step2.pendapatanRp, WIZARD_VALUES.pendapatan),
 		jaminan: step2.jaminan ?? WIZARD_VALUES.jaminan,
+		requirements: (step3.requirements ?? []).join("\n"),
+		deliverables: (step3.deliverables ?? []).join("\n"),
 	};
 }
 

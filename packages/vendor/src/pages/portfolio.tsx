@@ -1,6 +1,11 @@
 import { faAward, faPencil, faX } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button, EmptyState } from "@greenshift/ui";
+import {
+	Button,
+	EmptyState,
+	PaginationBar,
+	usePagedRows,
+} from "@greenshift/ui";
 import { useState } from "react";
 import { formatCompactRupiah } from "../lib/format";
 import { useVendorData } from "../lib/use-vendor-data";
@@ -11,9 +16,9 @@ export function VendorPortfolioPage() {
 	const { isLoading, portfolio, addPortfolioItem, deletePortfolioItem } =
 		useVendorData();
 	const [isEditMode, setIsEditMode] = useState(false);
+	const paged = usePagedRows(portfolio);
 
 	// Totals are computed from the records on screen; nothing is estimated.
-	const verifiedCount = portfolio.filter((i) => i.status === "VERIFIED").length;
 	const carbonRecords = portfolio.filter((i) => i.carbonReductionTons !== null);
 	const totalCarbon = carbonRecords.reduce(
 		(sum, i) => sum + (i.carbonReductionTons ?? 0),
@@ -43,7 +48,6 @@ export function VendorPortfolioPage() {
 				<dl className="flex flex-wrap items-center gap-x-10 gap-y-3 rounded-xl border border-border bg-card px-5 py-4">
 					{[
 						{ label: "Records", value: String(portfolio.length) },
-						{ label: "Verified", value: String(verifiedCount) },
 						{
 							label: "Carbon abated",
 							value: carbonRecords.length
@@ -80,15 +84,26 @@ export function VendorPortfolioPage() {
 					action={<AddPortfolioDialog onAdd={addPortfolioItem} />}
 				/>
 			) : (
-				<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-					{portfolio.map((item) => (
-						<PortfolioItemCard
-							key={item.id}
-							item={item}
-							onDelete={isEditMode ? deletePortfolioItem : undefined}
-						/>
-					))}
-				</div>
+				<>
+					<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+						{paged.pageRows.map((item) => (
+							<PortfolioItemCard
+								key={item.id}
+								item={item}
+								onDelete={isEditMode ? deletePortfolioItem : undefined}
+							/>
+						))}
+					</div>
+					<PaginationBar
+						label="Portfolio records"
+						pageIndex={paged.pageIndex}
+						pageSize={paged.pageSize}
+						pageCount={paged.pageCount}
+						total={paged.total}
+						onPageIndexChange={paged.setPageIndex}
+						onPageSizeChange={paged.setPageSize}
+					/>
+				</>
 			)}
 		</div>
 	);

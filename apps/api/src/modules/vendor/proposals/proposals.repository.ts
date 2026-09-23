@@ -80,6 +80,9 @@ export async function insertProposalAtomically(
 		operationalCost: number | null | undefined;
 		projectedRoi: number | null | undefined;
 		warrantyPeriod: number | null | undefined;
+		/** The proposal document, already in R2: a bid is filed with its case. */
+		documentName: string;
+		documentKey: string;
 	},
 ) {
 	const now = new Date();
@@ -106,6 +109,8 @@ export async function insertProposalAtomically(
 					>`${input.warrantyPeriod ?? null}`.as("warranty_period"),
 					status: sql<string>`'submitted'`.as("status"),
 					revisionCount: sql<number>`0`.as("revision_count"),
+					documentName: sql<string>`${input.documentName}`.as("document_name"),
+					documentKey: sql<string>`${input.documentKey}`.as("document_key"),
 					submittedAt: sql<number>`${now.getTime()}`.as("submitted_at"),
 					reviewedAt: sql<number | null>`null`.as("reviewed_at"),
 					createdAt: sql<number>`${now.getTime()}`.as("created_at"),
@@ -160,6 +165,66 @@ export async function findProposalWithTender(
 		.limit(1);
 
 	return row;
+}
+
+/** Files a document on one of the vendor's own proposals. */
+export async function setProposalDocument(
+	db: GreenShiftDb,
+	proposalId: number,
+	vendorId: number,
+	values: { documentName: string; documentKey: string },
+) {
+	const [row] = await db
+		.update(proposals)
+		.set(values)
+		.where(and(eq(proposals.id, proposalId), eq(proposals.vendorId, vendorId)))
+		.returning({
+			documentName: proposals.documentName,
+			documentKey: proposals.documentKey,
+		});
+
+	return row ?? null;
+}
+
+/** One proposal's filed document, scoped to the vendor that owns it. */
+export async function findVendorProposalDocument(
+	db: GreenShiftDb,
+	proposalId: number,
+	vendorId: number,
+) {
+	const [row] = await db
+		.select({
+			documentName: proposals.documentName,
+			documentKey: proposals.documentKey,
+		})
+		.from(proposals)
+		.where(and(eq(proposals.id, proposalId), eq(proposals.vendorId, vendorId)))
+		.limit(1);
+
+	return row ?? null;
+}
+
+/**
+ * One proposal's filed document, scoped to a company: the proposal has to sit
+ * on a tender of one of that company's own projects, so a bid's document is not
+ * readable by another company's account.
+ */
+export async function findProjectProposalDocument(
+	db: GreenShiftDb,
+	proposalId: number,
+	projectId: number,
+) {
+	const [row] = await db
+		.select({
+			documentName: proposals.documentName,
+			documentKey: proposals.documentKey,
+		})
+		.from(proposals)
+		.innerJoin(tenders, eq(proposals.tenderId, tenders.id))
+		.where(and(eq(proposals.id, proposalId), eq(tenders.projectId, projectId)))
+		.limit(1);
+
+	return row ?? null;
 }
 
 /** Withdraw: allowed only while the proposal is still queued for review. */

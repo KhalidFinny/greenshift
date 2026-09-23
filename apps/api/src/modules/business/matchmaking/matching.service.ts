@@ -2,69 +2,29 @@
  * write the ranked rows the matchmaking screen reads.
  *
  * Every criterion is derived from fields the platform already holds, and each
- * derivation is stated beside it. The weights are the model's own, the same five
- * the screen shows: technical fit 25, relevant experience 20, historical
- * performance 20, price value 20, project risk 15.
+ * derivation is stated beside it. The model's own tables, the five criterion
+ * weights and the provinces the location term reads, live in `scoring.ts`, so
+ * the seed that has to produce a reproducible ranking reads them too.
  *
- * Two of the five have no vendor-specific source at matching time and say so
- * rather than inventing one: price value falls back to the pool mean until the
- * vendor has a price history, and project risk is a property of the project, so
- * it moves every vendor's total the same way. Both are the seams a real pricing
- * feed and a vendor-level risk model would fill.
+ * Project risk is a property of the project rather than of the vendor, so it
+ * moves every vendor's total the same way and the read renormalises it away. That
+ * is the seam a vendor-level risk model would fill.
  */
 
 import type { GreenShiftDb } from "../../../db";
 import { matchShortlistSize } from "../../../db/schema";
 import * as repository from "./matching.repository";
+import {
+	EXPERIENCE_REFERENCE,
+	MATCH_CRITERIA,
+	MATCH_WEIGHTS,
+	MAX_RATING,
+	PORTFOLIO_REFERENCE,
+	proximityScore,
+	separatingCriteria,
+	VALUE_PORTFOLIO_SHARE,
+} from "./scoring";
 
-/**
- * What the matching run scores: each criterion, the words the screen shows it
- * under, and what it is worth. One table, so the run, the stored rows and the
- * screen cannot disagree about the model.
- *
- * The weights follow the vendor-selection literature rather than a house
- * preference: Dickson's survey of purchasing managers rates quality 3.51,
- * delivery 3.42, performance history 3.00 and price 2.76 on a five-point scale,
- * which is the ordering quality > delivery > history > price that procurement
- * scoring has kept since. Those four are normalised over a risk term of 2.0,
- * which this platform adds because it finances the project as well as buys from
- * the vendor. The result: 25 / 23 / 20 / 19 / 13.
- */
-export const MATCH_CRITERIA = [
-	{ key: "technicalFit", label: "Technical Fit", weight: 25 },
-	{ key: "relevantExperience", label: "Relevant Experience", weight: 23 },
-	{ key: "historicalPerformance", label: "Historical Performance", weight: 20 },
-	{ key: "priceValue", label: "Price & Value", weight: 19 },
-	{ key: "projectRisk", label: "Project Risk", weight: 13 },
-] as const;
-
-export type MatchCriterionKey = (typeof MATCH_CRITERIA)[number]["key"];
-
-/** The weights on their own, for the total. */
-export const MATCH_WEIGHTS = Object.fromEntries(
-	MATCH_CRITERIA.map((criterion) => [criterion.key, criterion.weight]),
-) as Record<MatchCriterionKey, number>;
-
-/**
- * The criteria that separate a pool: a criterion every vendor scores the same on
- * says nothing about the difference between them, so it is left out of the total
- * and the remaining weights are renormalised over it. Exported because the read
- * applies the same rule to the stored rows, so the weights the screen shows are
- * the ones the score was actually built from.
- */
-export function separatingCriteria(
-	rows: Array<Record<MatchCriterionKey, number>>,
-): MatchCriterionKey[] {
-	if (rows.length === 0) return [];
-	return MATCH_CRITERIA.map((criterion) => criterion.key).filter(
-		(key) => new Set(rows.map((row) => row[key])).size > 1,
-	);
-}
-
-/** Projects delivered for full marks on relevant experience. */
-const EXPERIENCE_REFERENCE = 20;
-/** Ratings are out of five, so this is what a full rating is worth. */
-const MAX_RATING = 5;
 /** A word has to be at least this long to say anything about a project. */
 const MIN_TOKEN_CHARS = 4;
 /** Words every project or profile carries, which therefore say nothing. */
@@ -130,11 +90,6 @@ function historicalPerformance(rating: number | null): number {
 	return clamp(((rating ?? 0) / MAX_RATING) * 100);
 }
 
-/** Projects delivered for full marks on the portfolio half of value. */
-const PORTFOLIO_REFERENCE = 15;
-/** Where the value blend sits: half what the vendor delivers, half where from. */
-const VALUE_PORTFOLIO_SHARE = 0.5;
-
 /**
  * Price & value. What a vendor is worth is not only its price: the platform
  * scores the value signals it holds before anyone has quoted, which are the
@@ -142,10 +97,8 @@ const VALUE_PORTFOLIO_SHARE = 0.5;
  * it works to the project (distance is freight, travel and response time).
  *
  * All three are linear: rating and delivered volume are straight proportions,
- * and proximity is full marks in the project's own province, 70 in a
- * neighbouring province on the same island, 45 elsewhere in the country, and 20
- * when the location is not on file. No bids are needed, so the criterion is
- * available to every vendor from the first run.
+ * and proximity is the province term in `scoring.ts`. No bids are needed, so the
+ * criterion is available to every vendor from the first run.
  */
 function priceValue(input: {
 	rating: number | null;
@@ -162,68 +115,6 @@ function priceValue(input: {
 		record * VALUE_PORTFOLIO_SHARE + proximity * (1 - VALUE_PORTFOLIO_SHARE),
 	);
 }
-
-/**
- * How close a vendor works to the project. Compared on the province the two
- * locations name, which is the granularity both sides record.
- */
-function proximityScore(
-	vendorLocation: string | null,
-	projectLocation: string | null,
-): number {
-	const vendor = provinceOf(vendorLocation);
-	const project = provinceOf(projectLocation);
-	if (vendor === null || project === null) return 20;
-	if (vendor === project) return 100;
-	return NEIGHBOURING_PROVINCES[vendor]?.[project] === true ? 70 : 45;
-}
-
-/** The province a location string names, lowercased, or null if it names none. */
-function provinceOf(location: string | null): string | null {
-	if (!location) return null;
-	const haystack = location.toLowerCase();
-	for (const province of PROVINCES) {
-		if (haystack.includes(province)) return province;
-	}
-	return null;
-}
-
-/** The provinces the seeded and entered locations use. */
-const PROVINCES = [
-	"dki jakarta",
-	"jawa barat",
-	"jawa tengah",
-	"di yogyakarta",
-	"jawa timur",
-	"banten",
-	"bali",
-	"sumatera utara",
-	"sumatera selatan",
-	"kepulauan riau",
-	"kalimantan timur",
-	"sulawesi selatan",
-] as const;
-
-/** Which provinces sit next to which: Java is one corridor, the rest stand alone. */
-const JAVA = [
-	"dki jakarta",
-	"banten",
-	"jawa barat",
-	"jawa tengah",
-	"di yogyakarta",
-	"jawa timur",
-];
-const NEIGHBOURING_PROVINCES: Record<
-	string,
-	Record<string, true>
-> = Object.fromEntries(
-	JAVA.map((province) => [
-		province,
-		Object.fromEntries(
-			JAVA.filter((other) => other !== province).map((other) => [other, true]),
-		),
-	]),
-);
 
 /**
  * Project risk: the assessment the platform already stored, inverted so that a
@@ -270,10 +161,14 @@ export async function runMatching(
 		return { scored: 0, shortlist: [] };
 	}
 
+	/* The project's own vocabulary: what it is, and what it asks a bidder to
+	   meet. The key technical requirements are the company's statement of the
+	   work, so they are part of what the fit is measured against. */
 	const projectWords = tokens(
 		project.industrySector,
 		project.title,
 		project.description,
+		project.technicalRequirements?.join(" "),
 	);
 	const risk = projectRisk(project.riskScore);
 
@@ -293,6 +188,7 @@ export async function runMatching(
 				vendor.certifications?.join(" "),
 				vendor.portfolio?.join(" "),
 				vendor.description,
+				vendor.serviceCategory,
 			);
 			const criteria = {
 				technicalFit: technicalFit(

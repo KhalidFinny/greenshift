@@ -19,7 +19,7 @@ import type {
 	BusinessTender,
 } from "@greenshift/core";
 import { Card, CardContent, cn } from "@greenshift/ui";
-import { formatCapex, formatSubmittedAt } from "./lib/project-display";
+import { formatRupiah, formatSubmittedAt } from "./lib/project-display";
 
 /** Fourteen days is the bidding window a company gets offered by default. */
 export const DEFAULT_TENDER_DAYS = 14;
@@ -121,7 +121,11 @@ export function ProjectFacts({
 	return (
 		<div className="flex flex-wrap items-center gap-x-6 gap-y-2">
 			{[
-				{ icon: faWallet, label: "CAPEX", value: formatCapex(project.capexRp) },
+				{
+					icon: faWallet,
+					label: "CAPEX",
+					value: formatRupiah(project.capexRp),
+				},
 				{
 					icon: faMapPin,
 					label: "Location",

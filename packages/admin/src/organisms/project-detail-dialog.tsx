@@ -158,15 +158,13 @@ export function ProjectDetailDialog({
 			(item) => item.projectId === project.id,
 		) ?? null;
 	const projectLogs =
-		auditQuery.data?.logs
-			.filter(
-				(log) =>
-					(log.entityType === "project" && log.entityId === project.id) ||
-					(bp !== null &&
-						log.entityType === "blueprint" &&
-						log.entityId === bp.id),
-			)
-			.slice(0, 10) ?? [];
+		auditQuery.data?.logs.filter(
+			(log) =>
+				(log.entityType === "project" && log.entityId === project.id) ||
+				(bp !== null &&
+					log.entityType === "blueprint" &&
+					log.entityId === bp.id),
+		) ?? [];
 
 	const runStatusAction = (status: string) => {
 		setActionError(null);

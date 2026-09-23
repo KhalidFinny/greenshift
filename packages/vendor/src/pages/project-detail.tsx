@@ -6,6 +6,7 @@ import { formatRupiah } from "../lib/format";
 import { PROCUREMENT_METHOD_LABEL } from "../lib/labels";
 import { useVendorData } from "../lib/use-vendor-data";
 import { BidLeaderboard } from "../organisms/bid-leaderboard-card";
+import { BlueprintCard } from "../organisms/blueprint-card";
 import { DetailHero, DetailShell } from "../organisms/detail-shell";
 import { MatchmakingDeepDive } from "../organisms/matchmaking-deep-dive-card";
 import { ProjectProcurementActionCard } from "../organisms/project-procurement-action-card";
@@ -19,8 +20,11 @@ export function VendorProjectDetailPage({ projectId }: { projectId?: string }) {
 		verification,
 		proposals,
 		leaderboard,
+		blueprint,
+		projectDetailLoading,
 		submitProposal,
-	} = useVendorData();
+		reviseProposal,
+	} = useVendorData({ projectId });
 	const [showProposalModal, setShowProposalModal] = useState(false);
 
 	const project = projects.find((p) => p.id === projectId) ?? projects[0];
@@ -41,9 +45,12 @@ export function VendorProjectDetailPage({ projectId }: { projectId?: string }) {
 	}
 
 	const isVerified = verification.status === "VERIFIED";
-	const applied = project
-		? proposals.some((p) => p.projectId === project.id)
-		: false;
+	// The vendor's own bid on this tender, if it has filed one: the same record
+	// decides whether the action card offers a bid or a revision.
+	const myProposal = project
+		? (proposals.find((proposal) => proposal.projectId === project.id) ?? null)
+		: null;
+	const applied = myProposal !== null;
 	const isOpenBidding = project?.procurementMethod === "OPEN_BIDDING";
 
 	const daysLeft = project
@@ -82,7 +89,7 @@ export function VendorProjectDetailPage({ projectId }: { projectId?: string }) {
 											: "bg-white/10 text-emerald-200"
 									}`}
 								>
-									<FontAwesomeIcon icon={faClock} className="text-xs" />
+									<FontAwesomeIcon icon={faClock} className="text-sm" />
 									<span>
 										Deadline:{" "}
 										{new Date(project.tenderDeadlineAt).toLocaleDateString(
@@ -150,6 +157,10 @@ export function VendorProjectDetailPage({ projectId }: { projectId?: string }) {
 			}
 		>
 			<ProjectScopeCard project={project} loading={isLoading} />
+			<BlueprintCard
+				blueprint={blueprint}
+				loading={projectDetailLoading && projectId !== undefined}
+			/>
 			<MatchmakingDeepDive
 				matchmaking={project?.matchmaking}
 				loading={isLoading}
@@ -158,7 +169,18 @@ export function VendorProjectDetailPage({ projectId }: { projectId?: string }) {
 			{project ? (
 				<SubmitProposalDialog
 					project={project}
-					onSubmit={submitProposal}
+					myProposal={
+						myProposal
+							? {
+									id: Number(myProposal.id),
+									amount: myProposal.costBreakdown.totalPrice,
+									documentName: myProposal.documentName,
+									documentUrl: myProposal.documentUrl,
+								}
+							: null
+					}
+					onSubmit={(data, file) => submitProposal({ fields: data, file })}
+					onRevise={(data, file) => reviseProposal({ ...data, file })}
 					isOpen={showProposalModal}
 					onOpenChange={setShowProposalModal}
 				/>

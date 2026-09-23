@@ -2,6 +2,7 @@ import { and, asc, desc, eq, isNotNull, or, sql } from "drizzle-orm";
 import type { GreenShiftDb } from "../../../db";
 import {
 	blueprints,
+	organizationName,
 	projects,
 	proposals,
 	tenders,
@@ -22,7 +23,7 @@ export async function listProjectTenders(
 	const query = db
 		.select({
 			project: projects,
-			companyName: users.name,
+			companyName: organizationName,
 			tender: tenders,
 			myProposalId: proposals.id,
 			matchScore: vendorMatchScores,
@@ -80,7 +81,7 @@ export async function findProjectRow(db: GreenShiftDb, id: number) {
 	const [row] = await db
 		.select({
 			project: projects,
-			companyName: users.name,
+			companyName: organizationName,
 			tender: tenders,
 			blueprint: blueprints,
 		})

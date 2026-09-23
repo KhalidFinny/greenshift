@@ -7,10 +7,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
 	Button,
 	EmptyState,
+	PaginationBar,
 	Tabs,
 	TabsContent,
 	TabsList,
 	TabsTrigger,
+	usePagedRows,
 } from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
 import { useVendorData } from "../lib/use-vendor-data";
@@ -33,6 +35,11 @@ export function VendorTendersPage() {
 	const sealedBids = proposals.filter(
 		(proposal) => proposal.procurementMethod === "CLOSED_BIDDING",
 	);
+
+	// Each tab is its own list, so each pages the rows it renders.
+	const sealedBidsPage = usePagedRows(sealedBids);
+	const proposalsPage = usePagedRows(proposals);
+	const negotiationsPage = usePagedRows(negotiations);
 
 	return (
 		<div className="space-y-6">
@@ -77,13 +84,22 @@ export function VendorTendersPage() {
 								/>
 							)}
 
-							{sealedBids.map((proposal) => (
+							{sealedBidsPage.pageRows.map((proposal) => (
 								<ClosedBidCard
 									key={proposal.id}
 									title={proposal.projectTitle}
 									submittedPrice={proposal.costBreakdown.totalPrice}
 								/>
 							))}
+							<PaginationBar
+								label="Sealed bids"
+								pageIndex={sealedBidsPage.pageIndex}
+								pageSize={sealedBidsPage.pageSize}
+								pageCount={sealedBidsPage.pageCount}
+								total={sealedBidsPage.total}
+								onPageIndexChange={sealedBidsPage.setPageIndex}
+								onPageSizeChange={sealedBidsPage.setPageSize}
+							/>
 						</>
 					)}
 				</TabsContent>
@@ -101,9 +117,20 @@ export function VendorTendersPage() {
 							}
 						/>
 					) : (
-						proposals.map((prop) => (
-							<ProposalCard key={prop.id} proposal={prop} />
-						))
+						<>
+							{proposalsPage.pageRows.map((prop) => (
+								<ProposalCard key={prop.id} proposal={prop} />
+							))}
+							<PaginationBar
+								label="Proposals"
+								pageIndex={proposalsPage.pageIndex}
+								pageSize={proposalsPage.pageSize}
+								pageCount={proposalsPage.pageCount}
+								total={proposalsPage.total}
+								onPageIndexChange={proposalsPage.setPageIndex}
+								onPageSizeChange={proposalsPage.setPageSize}
+							/>
+						</>
 					)}
 				</TabsContent>
 
@@ -115,13 +142,24 @@ export function VendorTendersPage() {
 							description="A client opens a structured negotiation after evaluating your proposal. Nothing is waiting on your response right now."
 						/>
 					) : (
-						negotiations.map((neg) => (
-							<NegotiationCard
-								key={neg.id}
-								negotiation={neg}
-								onSubmitResponse={submitNegotiationResponse}
+						<>
+							{negotiationsPage.pageRows.map((neg) => (
+								<NegotiationCard
+									key={neg.id}
+									negotiation={neg}
+									onSubmitResponse={submitNegotiationResponse}
+								/>
+							))}
+							<PaginationBar
+								label="Negotiations"
+								pageIndex={negotiationsPage.pageIndex}
+								pageSize={negotiationsPage.pageSize}
+								pageCount={negotiationsPage.pageCount}
+								total={negotiationsPage.total}
+								onPageIndexChange={negotiationsPage.setPageIndex}
+								onPageSizeChange={negotiationsPage.setPageSize}
 							/>
-						))
+						</>
 					)}
 				</TabsContent>
 

@@ -4,12 +4,10 @@
  * pressed and renders what the shell tells it.
  */
 
-import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button, cn } from "@greenshift/ui";
 import type { SaveState } from "../lib/use-business-draft";
 
-/* The four step circles share one ramp. A state adds to it and never cancels it. */
+/* The step circles share one ramp. A state adds to it and never cancels it. */
 const STEP_CIRCLE =
 	"flex size-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold tabular-nums sm:size-8";
 
@@ -30,7 +28,7 @@ const STEP_STATE = {
 const STEPS = [
 	"Project Profile",
 	"Financial Eligibility",
-	"Supporting Documents",
+	"Scope of Work",
 	"Review & Submit",
 ];
 
@@ -39,8 +37,8 @@ const STEPS = [
 const STEP_SUBTITLES = [
 	"Base energy data and the goal of the project. Step 1 of 4.",
 	"The funding need and the repayment capacity. Step 2 of 4.",
-	"Legal and GHG LVV technical documents. Step 3 of 4.",
-	"Check the summary before you submit. Step 4 of 4.",
+	"The key technical requirements and the deliverables a bidder is measured against. Step 3 of 4.",
+	"Check the summary and file the project. Step 4 of 4.",
 ];
 
 /** The autosave line, empty until the first save is about to happen. */
@@ -169,7 +167,6 @@ export function WizardHeader({
 								disabled={activeStep === 0}
 								onClick={onBack}
 							>
-								<FontAwesomeIcon icon={faArrowLeft} />
 								Back
 							</Button>
 							{lastStep ? (

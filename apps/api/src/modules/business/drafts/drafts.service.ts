@@ -4,7 +4,7 @@ import type {
 	BusinessDraftDocument,
 	BusinessStep1Patch,
 	BusinessStep2Patch,
-	BusinessStep3,
+	BusinessStep3Patch,
 } from "../../../contracts";
 import type { GreenShiftDb } from "../../../db";
 import {
@@ -16,6 +16,7 @@ import {
 	type FieldErrors,
 	step1Errors,
 	step2Errors,
+	step3Errors,
 } from "../business.validation";
 import * as repository from "./drafts.repository";
 
@@ -36,17 +37,10 @@ export type LoadDraftResult =
 	| { outcome: "ok"; draft: BusinessDraft; documents: BusinessDraftDocument[] }
 	| { outcome: "not_found" };
 
-/**
- * Every `fileId` the payload references, from Step 2's list and Step 3's slots.
- * De-duplicated, because one upload can legitimately appear in both and the
- * caller compares the count with the number of rows found.
- */
+/** Every `fileId` the payload references, de-duplicated. */
 function referencedFileIds(body: BusinessDraftBody): string[] {
 	const ids = new Set<string>();
 	for (const id of body.step2?.fileIds ?? []) {
-		if (typeof id === "string") ids.add(id);
-	}
-	for (const id of Object.values(body.step3?.docStates ?? {})) {
 		if (typeof id === "string") ids.add(id);
 	}
 	return [...ids];
@@ -77,6 +71,7 @@ export async function saveDraft(
 	const fields: FieldErrors = {
 		...step1Errors(body.step1 ?? {}, true),
 		...step2Errors(body.step2 ?? {}, true),
+		...step3Errors(body.step3 ?? {}, true),
 	};
 
 	const fileIds = referencedFileIds(body);
@@ -96,17 +91,9 @@ export async function saveDraft(
 	const step2: BusinessStep2Patch | null = body.step2
 		? { ...(previous.step2 ?? {}), ...body.step2 }
 		: (previous.step2 ?? null);
-	// Step 3 carries one nested map, so its slots merge too: sending a single
-	// slot must not wipe the rest of the checklist.
-	const step3: BusinessStep3 | null = body.step3
-		? {
-				docStates: {
-					...(previous.step3?.docStates ?? {}),
-					...body.step3.docStates,
-				},
-			}
+	const step3: BusinessStep3Patch | null = body.step3
+		? { ...(previous.step3 ?? {}), ...body.step3 }
 		: (previous.step3 ?? null);
-
 	// Stored as a plain JSON record; `readPayload` gives it its shape back.
 	const payload: Record<string, unknown> = { step1, step2, step3 };
 

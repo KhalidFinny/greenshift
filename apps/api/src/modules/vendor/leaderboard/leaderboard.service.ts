@@ -16,19 +16,28 @@ const EMPTY: VendorLeaderboardResponse = {
 };
 
 /**
- * Ranking for the open-bid tender this vendor is currently bidding on: the
- * lowest amount leads, and the vendor's own row is flagged so the UI can show
- * "rank N of M".
+ * Ranking for one open tender: the lowest amount leads, and the vendor's own row
+ * is flagged so the UI can show "rank N of M".
+ *
+ * `tenderId` names the tender a project screen is showing. Without it the
+ * ranking is the vendor's own live open-bidding tender, which is what the deals
+ * and tenders screens carry. Only open bidding has standings: a closed or direct
+ * tender's offers are sealed, so it answers empty rather than leaking them.
  */
 export async function getVendorLeaderboard(
 	db: GreenShiftDb,
 	userId: number,
+	tenderId?: number,
 ): Promise<VendorLeaderboardResponse> {
 	const vendorId = await vendorProfileId(db, userId);
 	if (vendorId === null) return EMPTY;
 
-	const target = await repository.findTargetTender(db, vendorId);
+	const target =
+		tenderId === undefined
+			? await repository.findTargetTender(db, vendorId)
+			: await repository.findTenderTarget(db, tenderId, vendorId);
 	if (!target) return EMPTY;
+	if (target.tender.method !== "open") return EMPTY;
 
 	const rows = await repository.listTenderProposals(db, target.tender.id);
 
@@ -42,6 +51,7 @@ export async function getVendorLeaderboard(
 	}));
 
 	const mine = entries.find((entry) => entry.isCurrentVendor) ?? null;
+	const own = target.proposal ?? null;
 
 	return {
 		tender: {
@@ -53,8 +63,8 @@ export async function getVendorLeaderboard(
 			deadlineAt: iso(target.tender.deadlineAt),
 			budgetMax: target.tender.budgetMax,
 		},
-		myProposalId: mine?.proposalId ?? target.proposal.id,
-		myAmount: mine?.amount ?? target.proposal.amount,
+		myProposalId: mine?.proposalId ?? own?.id ?? null,
+		myAmount: mine?.amount ?? own?.amount ?? null,
 		myRank: mine?.rank ?? null,
 		entries,
 	} satisfies VendorLeaderboardResponse;

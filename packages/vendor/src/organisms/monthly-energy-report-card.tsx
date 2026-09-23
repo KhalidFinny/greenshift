@@ -7,7 +7,9 @@ import {
 	CardHeader,
 	CardTitle,
 	EmptyState,
+	PaginationBar,
 	ShimmerBlock,
+	usePagedRows,
 } from "@greenshift/ui";
 import type { MonthlyEnergyReport } from "../lib/types";
 
@@ -21,6 +23,8 @@ export function MonthlyEnergyReportCard({
 	reports,
 	loading = false,
 }: MonthlyEnergyReportCardProps) {
+	const paged = usePagedRows(reports);
+
 	return (
 		<Card>
 			<CardHeader>
@@ -57,7 +61,7 @@ export function MonthlyEnergyReportCard({
 							<span>Status</span>
 						</div>
 						<div className="divide-y divide-border">
-							{reports.map((rep) => (
+							{paged.pageRows.map((rep) => (
 								<div
 									key={rep.id}
 									className="flex items-center justify-between p-4"
@@ -75,6 +79,16 @@ export function MonthlyEnergyReportCard({
 						</div>
 					</div>
 				)}
+
+				<PaginationBar
+					label="Reporting periods"
+					pageIndex={paged.pageIndex}
+					pageSize={paged.pageSize}
+					pageCount={paged.pageCount}
+					total={paged.total}
+					onPageIndexChange={paged.setPageIndex}
+					onPageSizeChange={paged.setPageSize}
+				/>
 			</CardContent>
 		</Card>
 	);

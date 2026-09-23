@@ -3,6 +3,7 @@ import { createFactory } from "hono/factory";
 import { createDb } from "../../../db";
 import { evidenceKinds } from "../../../db/schema";
 import type { ApiEnv } from "../../../env";
+import { requireJsonBody } from "../../../lib/http";
 import { mutationRateLimit } from "../../../lib/mutation-limit";
 import { apiError, apiNotFound, apiSuccess } from "../../../lib/response";
 import { addMilestoneEvidence } from "./delivery.service";
@@ -25,6 +26,7 @@ interface EvidenceBody {
 deliveryRoutes.post(
 	"/milestones/:id/evidence",
 	mutationRateLimit("vendor", "milestone"),
+	requireJsonBody,
 	...factory.createHandlers(async (c) => {
 		const id = Number(c.req.param("id"));
 		if (!Number.isInteger(id) || id <= 0) {

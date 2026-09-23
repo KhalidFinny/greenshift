@@ -6,12 +6,14 @@ import type {
 	VendorNegotiation as ApiNegotiation,
 	VendorNotification as ApiNotification,
 	VendorPortfolioItem as ApiPortfolioItem,
+	ProjectBlueprintView,
 	ProposalDetail,
 	ProposalSummary,
 	VendorMyProject,
 	VendorProfile,
 	VendorProjectListItem,
 } from "@greenshift/api/contracts";
+import { relativeTime } from "@greenshift/ui";
 import type {
 	ActiveVendorProject,
 	CompanyVerificationDetails,
@@ -22,6 +24,7 @@ import type {
 	ProcurementMethod,
 	ProjectMilestone,
 	StructuredProposal,
+	VendorBlueprint,
 	VendorNotification,
 	VendorPerformanceMetrics,
 	VendorPortfolioItem,
@@ -35,8 +38,8 @@ export function mapVerificationStatus(
 	return {
 		status: profile.verified ? "VERIFIED" : "NOT_VERIFIED",
 		certifications: profile.certifications ?? [],
-		nib: undefined, // Not stored in backend yet
-		npwp: undefined,
+		nib: profile.nib ?? undefined,
+		npwp: profile.npwp ?? undefined,
 		legalDocUrl: undefined,
 		escoCertificationUrl: profile.certifications[0] ?? undefined,
 		isoCertificationUrl: profile.certifications[1] ?? undefined,
@@ -61,7 +64,8 @@ export function mapProjectToCardData(
 		clientBudget: project.tender?.budgetMax ?? project.budget ?? 0,
 		carbonReductionTargetTons: project.carbonReductionTargetTons ?? null,
 		procurementMethod: method,
-		tenderDeadlineAt: project.tender?.deadlineAt ?? new Date().toISOString(),
+		tenderId: project.tender?.id ?? null,
+		tenderDeadlineAt: project.tender?.deadlineAt ?? "",
 		description: project.description ?? "",
 		riskScore: project.riskScore ?? null,
 		technicalRequirements: project.technicalRequirements,
@@ -181,10 +185,9 @@ export function mapToPortfolioItem(
 		energySavingPercent: null,
 		carbonReductionTons: project.targetEmissionReduction ?? null,
 		completionYear: null,
-		// "VERIFIED" belongs to records that passed verification; an awarded
-		// project is delivered work, which is a different claim.
-		status: "COMPLETED",
 		documentName: undefined,
+		// An awarded project carries no uploaded document of its own.
+		documentUrl: null,
 	};
 }
 
@@ -212,6 +215,8 @@ export function mapToStructuredProposal(
 		warrantyPeriod: null,
 		costBreakdown: { totalPrice: proposal.amount, operationalCost: null },
 		expectedImpact: { projectedRoiPercent: null },
+		documentName: proposal.documentName ?? null,
+		documentUrl: proposal.documentUrl ?? null,
 		submittedAt: proposal.submittedAt ?? undefined,
 		revisionCount: proposal.revisionCount,
 	};
@@ -235,6 +240,8 @@ export function mapProposalDetail(detail: ProposalDetail): StructuredProposal {
 			operationalCost: detail.operationalCost,
 		},
 		expectedImpact: { projectedRoiPercent: detail.projectedRoi },
+		documentName: detail.documentName ?? null,
+		documentUrl: detail.documentUrl ?? null,
 		submittedAt: detail.submittedAt ?? undefined,
 		revisionCount: detail.revisionCount,
 	};
@@ -373,7 +380,8 @@ export function mapNotification(row: ApiNotification): VendorNotification {
 		category: NOTIFICATION_CATEGORY[row.type.toLowerCase()] ?? "System",
 		title: row.title,
 		message: row.body ?? "",
-		timestamp: row.createdAt,
+		// Dated the way the feed reads it, from the one shared implementation.
+		timestamp: relativeTime(row.createdAt),
 		isRead: row.read,
 		linkUrl: row.link ?? "/vendor",
 	};
@@ -395,6 +403,7 @@ export function mapNegotiation(row: ApiNegotiation): NegotiationRequest {
 		requestedTimelineMonths: row.requestedTimelineMonths ?? undefined,
 		requestedFields: row.requestedFields,
 		companyNote: row.companyNote,
+		annotations: row.annotations,
 		vendorResponseNote: row.vendorResponseNote ?? undefined,
 		vendorRevisedPrice: row.vendorRevisedPrice ?? undefined,
 		vendorRevisedWarrantyYears: row.vendorRevisedWarrantyYears ?? undefined,
@@ -448,8 +457,8 @@ export function mapPortfolioItem(row: ApiPortfolioItem): VendorPortfolioItem {
 		energySavingPercent: row.energySavingPercent ?? null,
 		carbonReductionTons: row.carbonReductionTons ?? null,
 		completionYear: row.completionYear ?? null,
-		status: row.status === "VERIFIED" ? "VERIFIED" : "COMPLETED",
 		documentName: row.documentName ?? undefined,
+		documentUrl: row.documentUrl,
 	};
 }
 
@@ -499,5 +508,50 @@ export function mapEnergyForecast(row: ApiEnergyForecast): EnergyForecast {
 		forecastedSavingsKwh: row.forecastedSavings ?? 0,
 		modelName: row.modelName ?? "unknown",
 		metrics: row.metrics ?? null,
+	};
+}
+
+// ── Green Project Blueprint ──────────────────────────────
+/**
+ * The blueprint a bidder reads on the procurement detail. The API only sends
+ * it once LVV GRK has validated it, so a blueprint here is one that was
+ * verified; the status travels anyway so the card can say which stage it
+ * reached.
+ */
+export function mapBlueprint(blueprint: ProjectBlueprintView): VendorBlueprint {
+	return {
+		status: blueprint.status,
+		validatedAt: blueprint.validatedAt,
+		irrPercent: blueprint.irr ?? null,
+		npvAmount: blueprint.npv ?? null,
+		paybackYears: blueprint.paybackPeriod ?? null,
+		funding: blueprint.fundingStructure
+			? {
+					instrument: blueprint.fundingStructure.instrument,
+					capexRp: blueprint.fundingStructure.capexRp,
+					tenorYears: blueprint.fundingStructure.tenorYears,
+					annualSavingRp: blueprint.fundingStructure.annualSavingRp,
+					annualRevenueRp: blueprint.fundingStructure.annualRevenueRp,
+					collateral: blueprint.fundingStructure.collateral,
+				}
+			: null,
+		emissions: blueprint.emissionTargets
+			? {
+					baselineTco2: blueprint.emissionTargets.baselineTco2,
+					targetPct: blueprint.emissionTargets.targetPct,
+					targetTco2: blueprint.emissionTargets.targetTco2,
+					energySavingKwh: blueprint.emissionTargets.energySavingKwh,
+				}
+			: null,
+		scenarios: blueprint.scenarios.map((scenario) => ({
+			key: scenario.key,
+			label: scenario.label,
+			savingPct: scenario.savingPct,
+			inflationPct: scenario.inflationPct,
+			degradationPct: scenario.degradationPct,
+			npvAmount: scenario.npvRp,
+			irrPercent: scenario.irrPct,
+			paybackYears: scenario.paybackYears,
+		})),
 	};
 }

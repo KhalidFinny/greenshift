@@ -1,5 +1,4 @@
 import {
-	faArrowRight,
 	faCircleCheck,
 	faMagnifyingGlass,
 } from "@fortawesome/free-solid-svg-icons";
@@ -24,7 +23,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
 import {
 	foldedDetail,
-	formatCapex,
+	formatRupiah,
 	formatSubmittedAt,
 	STATUS_PILL,
 } from "./lib/project-display";
@@ -144,7 +143,7 @@ export function MatchmakingList() {
 					className: "tabular-nums max-md:hidden",
 					headClassName: "max-md:hidden",
 				},
-				cell: ({ row }) => formatCapex(row.original.capexRp),
+				cell: ({ row }) => formatRupiah(row.original.capexRp),
 			},
 			{
 				id: "status",
@@ -184,7 +183,6 @@ export function MatchmakingList() {
 									params={{ projectId: String(row.original.id) }}
 									aria-label={`Vendor proposals for ${row.original.name}`}
 								>
-									<FontAwesomeIcon icon={faArrowRight} />
 									<span className="max-md:sr-only">Vendor proposals</span>
 								</Link>
 							</Button>

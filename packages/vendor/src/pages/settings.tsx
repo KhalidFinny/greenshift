@@ -8,6 +8,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAuth } from "@greenshift/core";
 import {
+	AccountPhotoCard,
 	Badge,
 	Tabs,
 	TabsContent,
@@ -15,7 +16,6 @@ import {
 	TabsTrigger,
 } from "@greenshift/ui";
 import { useVendorData } from "../lib/use-vendor-data";
-import { AccountPhotoCard } from "../organisms/account-photo-card";
 import { CertificationsCard } from "../organisms/certifications-card";
 import { CompanyProfileForm } from "../organisms/company-profile-form";
 import { DocumentsVaultCard } from "../organisms/documents-vault-card";
@@ -43,7 +43,7 @@ const STATUS_META: Record<string, { label: string; className: string }> = {
 
 export function VendorSettingsPage() {
 	const { user } = useAuth();
-	const { verification, uploadVerificationDocs, profile, saveProfile } =
+	const { verification, saveVerificationDetails, profile, saveProfile } =
 		useVendorData();
 
 	const status = STATUS_META[verification.status] ?? STATUS_META.NOT_VERIFIED;
@@ -80,6 +80,8 @@ export function VendorSettingsPage() {
 					<CompanyProfileForm
 						companyName={profile?.companyName}
 						description={profile?.description ?? undefined}
+						serviceCategory={profile?.serviceCategory}
+						location={profile?.location}
 						onSave={saveProfile}
 					/>
 				</TabsContent>
@@ -87,7 +89,7 @@ export function VendorSettingsPage() {
 				<TabsContent value="verification" className="mt-0">
 					<VerificationStatusCard
 						verification={verification}
-						onUpload={uploadVerificationDocs}
+						onSave={(nib, npwp) => saveVerificationDetails({ nib, npwp })}
 					/>
 				</TabsContent>
 

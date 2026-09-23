@@ -1,5 +1,4 @@
 import {
-	faArrowLeft,
 	faBuilding,
 	faExclamationTriangle,
 	faEye,
@@ -26,6 +25,8 @@ import {
 	EmptyState,
 	Input,
 	Label,
+	PaginationBar,
+	usePagedRows,
 } from "@greenshift/ui";
 import { Link, useParams } from "@tanstack/react-router";
 import { useState } from "react";
@@ -242,6 +243,15 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 		? projects.find((p) => p.id === targetId)
 		: projects[0];
 
+	// Both document lists are scoped to this project; the hooks page the rows
+	// the cards already filtered, and the control sits under each list. They
+	// run before the not-found return so the hook order stays fixed.
+	const projectDocs = project
+		? documentRequests.filter((d) => d.projectId === project.id)
+		: [];
+	const projectDocumentsPage = usePagedRows(project?.documents ?? []);
+	const projectDocsPage = usePagedRows(projectDocs);
+
 	// The assignment list arrives asynchronously; without a project there is
 	// nothing to render yet (or the id is not assigned to this broker).
 	if (!project) {
@@ -249,7 +259,6 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 			<div className="space-y-4">
 				<Link to="/broker/projects">
 					<Button variant="ghost" size="sm" className="gap-2">
-						<FontAwesomeIcon icon={faArrowLeft} />
 						Back to Assigned Projects
 					</Button>
 				</Link>
@@ -271,9 +280,6 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 		);
 	}
 
-	const projectDocs = documentRequests.filter(
-		(d) => d.projectId === project.id,
-	);
 	const projectReports = monthlyReports.filter(
 		(report) => report.projectId === project.id,
 	);
@@ -285,7 +291,6 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 			<div className="flex items-center justify-between">
 				<Link to="/broker/projects">
 					<Button variant="ghost" size="sm" className="gap-2">
-						<FontAwesomeIcon icon={faArrowLeft} />
 						Back to Assigned Projects
 					</Button>
 				</Link>
@@ -554,7 +559,7 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 									description="GreenShift holds no verified documents for this project yet. Documents uploaded during LVV GRK verification will be listed here."
 								/>
 							) : (
-								project.documents.map((document) => (
+								projectDocumentsPage.pageRows.map((document) => (
 									<div
 										key={document.id}
 										className="flex items-center justify-between rounded-lg border border-border p-3"
@@ -583,6 +588,15 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 									</div>
 								))
 							)}
+							<PaginationBar
+								label="Project documents"
+								pageIndex={projectDocumentsPage.pageIndex}
+								pageSize={projectDocumentsPage.pageSize}
+								pageCount={projectDocumentsPage.pageCount}
+								total={projectDocumentsPage.total}
+								onPageIndexChange={projectDocumentsPage.setPageIndex}
+								onPageSizeChange={projectDocumentsPage.setPageSize}
+							/>
 						</CardContent>
 					</Card>
 
@@ -610,7 +624,7 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 								/>
 							) : (
 								<div className="space-y-3">
-									{projectDocs.map((doc) => (
+									{projectDocsPage.pageRows.map((doc) => (
 										<div
 											key={doc.id}
 											className="rounded-xl border border-border p-4 space-y-3"
@@ -685,6 +699,15 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 									))}
 								</div>
 							)}
+							<PaginationBar
+								label="Client document requests"
+								pageIndex={projectDocsPage.pageIndex}
+								pageSize={projectDocsPage.pageSize}
+								pageCount={projectDocsPage.pageCount}
+								total={projectDocsPage.total}
+								onPageIndexChange={projectDocsPage.setPageIndex}
+								onPageSizeChange={projectDocsPage.setPageSize}
+							/>
 						</CardContent>
 					</Card>
 				</div>

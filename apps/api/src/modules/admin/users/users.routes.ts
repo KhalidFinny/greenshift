@@ -24,16 +24,21 @@ userRoutes.get(
 
 		const rows = await listUsers(db, role, limit);
 
-		const list: AdminUser[] = rows.map(({ user, vendorId }) => ({
-			id: user.id,
-			email: user.email,
-			name: user.name,
-			role: user.role,
-			companyName: user.companyName,
-			verifiedAt: iso(user.verifiedAt),
-			vendorProfile: vendorId !== null,
-			createdAt: iso(user.createdAt),
-		}));
+		const list: AdminUser[] = rows.map(
+			({ user, vendorId, vendorServiceCategory }) => ({
+				id: user.id,
+				email: user.email,
+				name: user.name,
+				role: user.role,
+				companyName: user.companyName,
+				industrySector: user.industrySector,
+				serviceCategory: vendorServiceCategory,
+				address: user.address,
+				verifiedAt: iso(user.verifiedAt),
+				vendorProfile: vendorId !== null,
+				createdAt: iso(user.createdAt),
+			}),
+		);
 		return c.json({ users: list });
 	}),
 );

@@ -3,9 +3,19 @@ import type { WizardForm, WizardValues } from "./use-project-wizard-form";
 import {
 	type Step1Values,
 	type Step2Values,
+	type Step3Values,
 	validateStep1,
 	validateStep2,
+	validateStep3,
 } from "./validators";
+
+/** One entry per line: what the scope lists are typed as, and what they store. */
+export function scopeLines(value: string): string[] {
+	return value
+		.split("\n")
+		.map((line) => line.trim())
+		.filter((line) => line.length > 0);
+}
 
 /**
  * The bridge between the wizard's form values (strings, as typed) and the
@@ -61,4 +71,16 @@ export function step1Validator(form: WizardForm, key: keyof Step1Values) {
  */
 export function step2Validator(form: WizardForm, key: keyof Step2Values) {
 	return () => validateStep2(step2Values(form.state.values, 1))[key];
+}
+
+export function step3Values(values: WizardValues): Step3Values {
+	return {
+		requirements: scopeLines(values.requirements),
+		deliverables: scopeLines(values.deliverables),
+	};
+}
+
+/** One field's message from Step 3's rule set. */
+export function step3Validator(form: WizardForm, key: keyof Step3Values) {
+	return () => validateStep3(step3Values(form.state.values))[key];
 }

@@ -1,7 +1,7 @@
 import {
-	faChartLine,
 	faCirclePlus,
 	faDownload,
+	faEye,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -14,11 +14,6 @@ import {
 	Card,
 	CardContent,
 	DataTable,
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
 	EmptyState,
 	Select,
 	SelectContent,
@@ -33,17 +28,12 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
 import {
 	foldedDetail,
-	formatCapex,
+	formatRupiah,
 	formatSubmittedAt,
 	STATUS_PILL,
 } from "./lib/project-display";
-import { RiskAssessmentBody } from "./views/risk-assessment";
 
 export function MyProjects() {
-	const [riskProject, setRiskProject] = useState<{
-		id: number;
-		name: string;
-	} | null>(null);
 	const [statusFilter, setStatusFilter] = useState("all");
 	const [sectorFilter, setSectorFilter] = useState("all");
 
@@ -52,12 +42,6 @@ export function MyProjects() {
 		queryFn: async () => (await api.business.projects({ limit: 50 })).projects,
 	});
 	const projects = projectsQuery.data ?? [];
-
-	const riskQuery = useQuery({
-		queryKey: ["business", "risk", riskProject?.id],
-		enabled: riskProject !== null,
-		queryFn: async () => (await api.business.risk(riskProject?.id ?? 0)).risk,
-	});
 
 	/**
 	 * Downloads the project's first ready document. The file lives behind the
@@ -147,7 +131,7 @@ export function MyProjects() {
 					className: "tabular-nums max-md:hidden",
 					headClassName: "max-md:hidden",
 				},
-				cell: ({ row }) => formatCapex(row.original.capexRp),
+				cell: ({ row }) => formatRupiah(row.original.capexRp),
 			},
 			{
 				id: "status",
@@ -167,23 +151,22 @@ export function MyProjects() {
 				id: "actions",
 				header: "Actions",
 				cell: ({ row }) => (
-					// Stacked below `md`: two 44px targets in a column leave the
+					// Stacked below `md`: three 44px targets in a column leave the
 					// Project and Status columns room to read at 390px.
 					<div className="flex flex-wrap items-center gap-2 max-md:flex-col">
 						<Button
-							type="button"
 							variant="outline"
 							size="sm"
 							className="max-md:h-11 max-md:w-11 max-md:px-0"
-							onClick={() =>
-								setRiskProject({
-									id: row.original.id,
-									name: row.original.name,
-								})
-							}
+							asChild
 						>
-							<FontAwesomeIcon icon={faChartLine} />
-							<span className="max-md:sr-only">Risk assessment</span>
+							<Link
+								to="/business/projects/$projectId"
+								params={{ projectId: String(row.original.id) }}
+							>
+								<FontAwesomeIcon icon={faEye} />
+								<span className="max-md:sr-only">View details</span>
+							</Link>
 						</Button>
 						<Button
 							type="button"
@@ -302,38 +285,6 @@ export function MyProjects() {
 					)}
 				</CardContent>
 			</Card>
-
-			<Dialog
-				open={riskProject !== null}
-				onOpenChange={(open) => {
-					if (!open) setRiskProject(null);
-				}}
-			>
-				<DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
-					<DialogHeader>
-						<DialogTitle className="text-lg">
-							Risk Assessment: {riskProject?.name}
-						</DialogTitle>
-						<DialogDescription className="text-base">
-							Recomputed from the stored project data.
-						</DialogDescription>
-					</DialogHeader>
-					{riskQuery.isPending ? (
-						<div className="space-y-3">
-							{Array.from({ length: 4 }).map((_, index) => (
-								<ShimmerBlock key={index} className="h-10 w-full rounded-lg" />
-							))}
-						</div>
-					) : riskQuery.isError || !riskQuery.data ? (
-						<EmptyState
-							title="No risk assessment yet"
-							description="This project does not have enough data to be scored yet."
-						/>
-					) : (
-						<RiskAssessmentBody risk={riskQuery.data} />
-					)}
-				</DialogContent>
-			</Dialog>
 		</div>
 	);
 }

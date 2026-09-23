@@ -5,10 +5,12 @@ import {
 	Button,
 	EmptyState,
 	Input,
+	PaginationBar,
 	Tabs,
 	TabsContent,
 	TabsList,
 	TabsTrigger,
+	usePagedRows,
 } from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
@@ -65,6 +67,11 @@ export function VendorOpportunitiesPage() {
 		isTopMatch(p.matchmaking),
 	);
 	const saved = availableProjects.filter((p) => p.isSaved);
+
+	// Each tab is its own list, so each pages the rows it renders.
+	const availablePage = usePagedRows(availableProjects);
+	const recommendedPage = usePagedRows(recommended);
+	const savedPage = usePagedRows(saved);
 
 	const methodPills: { label: string; value: ProcurementFilter }[] = [
 		{ label: "All Tenders", value: "ALL" },
@@ -161,17 +168,28 @@ export function VendorOpportunitiesPage() {
 							description="No available tenders match your current search or filters."
 						/>
 					) : (
-						<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-							{(isLoading ? LOADING_SLOTS : availableProjects).map(
-								(proj, i) => (
-									<VendorProjectCard
-										key={proj?.id ?? i}
-										project={proj ?? undefined}
-										onSave={toggleSaveProject}
-									/>
-								),
-							)}
-						</div>
+						<>
+							<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+								{(isLoading ? LOADING_SLOTS : availablePage.pageRows).map(
+									(proj, i) => (
+										<VendorProjectCard
+											key={proj?.id ?? i}
+											project={proj ?? undefined}
+											onSave={toggleSaveProject}
+										/>
+									),
+								)}
+							</div>
+							<PaginationBar
+								label="Available tenders"
+								pageIndex={availablePage.pageIndex}
+								pageSize={availablePage.pageSize}
+								pageCount={availablePage.pageCount}
+								total={availablePage.total}
+								onPageIndexChange={availablePage.setPageIndex}
+								onPageSizeChange={availablePage.setPageSize}
+							/>
+						</>
 					)}
 				</TabsContent>
 
@@ -182,16 +200,29 @@ export function VendorOpportunitiesPage() {
 							description="No recommended tenders match your current criteria. Try adjusting your search or filters."
 						/>
 					) : (
-						<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-							{(isLoading ? LOADING_SLOTS : recommended).map((proj, i) => (
-								<VendorProjectCard
-									key={proj?.id ?? i}
-									project={proj ?? undefined}
-									onSave={toggleSaveProject}
-									variant="recommended"
-								/>
-							))}
-						</div>
+						<>
+							<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+								{(isLoading ? LOADING_SLOTS : recommendedPage.pageRows).map(
+									(proj, i) => (
+										<VendorProjectCard
+											key={proj?.id ?? i}
+											project={proj ?? undefined}
+											onSave={toggleSaveProject}
+											variant="recommended"
+										/>
+									),
+								)}
+							</div>
+							<PaginationBar
+								label="Recommended tenders"
+								pageIndex={recommendedPage.pageIndex}
+								pageSize={recommendedPage.pageSize}
+								pageCount={recommendedPage.pageCount}
+								total={recommendedPage.total}
+								onPageIndexChange={recommendedPage.setPageIndex}
+								onPageSizeChange={recommendedPage.setPageSize}
+							/>
+						</>
 					)}
 				</TabsContent>
 
@@ -202,15 +233,28 @@ export function VendorOpportunitiesPage() {
 							description="Bookmark a tender from any card to shortlist it here."
 						/>
 					) : (
-						<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-							{(isLoading ? LOADING_SLOTS : saved).map((proj, i) => (
-								<VendorProjectCard
-									key={proj?.id ?? i}
-									project={proj ?? undefined}
-									onSave={toggleSaveProject}
-								/>
-							))}
-						</div>
+						<>
+							<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+								{(isLoading ? LOADING_SLOTS : savedPage.pageRows).map(
+									(proj, i) => (
+										<VendorProjectCard
+											key={proj?.id ?? i}
+											project={proj ?? undefined}
+											onSave={toggleSaveProject}
+										/>
+									),
+								)}
+							</div>
+							<PaginationBar
+								label="Saved tenders"
+								pageIndex={savedPage.pageIndex}
+								pageSize={savedPage.pageSize}
+								pageCount={savedPage.pageCount}
+								total={savedPage.total}
+								onPageIndexChange={savedPage.setPageIndex}
+								onPageSizeChange={savedPage.setPageSize}
+							/>
+						</>
 					)}
 				</TabsContent>
 			</Tabs>

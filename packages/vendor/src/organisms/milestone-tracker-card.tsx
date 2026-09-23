@@ -18,7 +18,9 @@ import {
 	EmptyState,
 	Input,
 	Label,
+	PaginationBar,
 	ShimmerBlock,
+	usePagedRows,
 } from "@greenshift/ui";
 import { useState } from "react";
 import { formatShortDate } from "../lib/format";
@@ -183,6 +185,8 @@ export function MilestoneTrackerCard({
 	onSubmitEvidence,
 	loading = false,
 }: MilestoneTrackerCardProps) {
+	const paged = usePagedRows(milestones);
+
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
@@ -216,7 +220,7 @@ export function MilestoneTrackerCard({
 				/>
 			) : (
 				<div className="space-y-4">
-					{milestones.map((ms) => {
+					{paged.pageRows.map((ms) => {
 						const isDone =
 							ms.status === "COMPLETED" || ms.status === "APPROVED";
 						return (
@@ -299,6 +303,16 @@ export function MilestoneTrackerCard({
 					})}
 				</div>
 			)}
+
+			<PaginationBar
+				label="Milestones"
+				pageIndex={paged.pageIndex}
+				pageSize={paged.pageSize}
+				pageCount={paged.pageCount}
+				total={paged.total}
+				onPageIndexChange={paged.setPageIndex}
+				onPageSizeChange={paged.setPageSize}
+			/>
 		</div>
 	);
 }

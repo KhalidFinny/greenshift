@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
 	index,
 	integer,
@@ -7,6 +7,7 @@ import {
 	text,
 	uniqueIndex,
 } from "drizzle-orm/sqlite-core";
+import type { BlueprintDocument, ProposalAnnotation } from "../contracts";
 
 // ── Type helpers ────────────────────────────────────────────
 export const userRoles = [
@@ -20,6 +21,9 @@ export type UserRole = (typeof userRoles)[number];
 
 export const projectStatuses = [
 	"draft",
+	/** Submitted, waiting on the company to register it at the registry. */
+	"registry",
+	/** Registered and with the verification body: LVV verification in progress. */
 	"assessment",
 	"tendering",
 	"blueprint",
@@ -41,7 +45,16 @@ export const users = sqliteTable(
 		role: text({ enum: userRoles }).notNull().default("business"),
 		name: text().notNull(),
 		hashedPassword: text("hashed_password"),
+		/**
+		 * The organization the account represents, not the person behind it. Set
+		 * by registration and kept in sync by the entity profile writers, so it is
+		 * what every list shows as the account's company.
+		 */
 		companyName: text("company_name"),
+		/** The company's sector. Company accounts only; vendors use their profile. */
+		industrySector: text("industry_sector"),
+		/** Registered address of the organization the account represents. */
+		address: text(),
 		phone: text(),
 		avatar: text(),
 		verifiedAt: integer("verified_at", { mode: "timestamp_ms" }),
@@ -63,6 +76,15 @@ export const usersRelations = relations(users, ({ one, many }) => ({
 	blueprintValidations: many(blueprints),
 }));
 
+/**
+ * The organization an account represents, as a list should label it. The person
+ * behind the account is `users.name`; this is the entity they registered, which
+ * is what vendor, broker, and admin surfaces name as the counterparty. Accounts
+ * created before organizations were part of registration have no company name,
+ * so they fall back to the account name rather than to an empty cell.
+ */
+export const organizationName = sql<string>`coalesce(${users.companyName}, ${users.name})`;
+
 // ── vendor_profiles ──────────────────────────────────────
 export const vendors = sqliteTable(
 	"vendor_profiles",
@@ -73,8 +95,13 @@ export const vendors = sqliteTable(
 			.references(() => users.id, { onDelete: "cascade" }),
 		companyName: text("company_name").notNull(),
 		description: text(),
+		/** What the vendor delivers (ESCO, solar EPC, audits). Scored as vendor text. */
+		serviceCategory: text("service_category"),
 		/** Where the vendor works from: proximity is part of what it delivers at. */
 		location: text(),
+		/** Legal identity, required before an admin can verify the profile. */
+		nib: text(),
+		npwp: text(),
 		certifications: text({ mode: "json" }).$type<string[]>().default([]),
 		portfolio: text({ mode: "json" }).$type<string[]>().default([]),
 		rating: real().default(0),
@@ -446,6 +473,9 @@ export const proposals = sqliteTable(
 		warrantyPeriod: integer("warranty_period"), // months
 		status: text().notNull().default("submitted"), // submitted | reviewed | revision | accepted | rejected
 		revisionCount: integer("revision_count").default(0),
+		/** The proposal document the vendor filed, if any: PDF, held in R2. */
+		documentName: text("document_name"),
+		documentKey: text("document_key"),
 		// Timestamps
 		submittedAt: integer("submitted_at", { mode: "timestamp_ms" }),
 		reviewedAt: integer("reviewed_at", { mode: "timestamp_ms" }),
@@ -520,21 +550,7 @@ export const blueprints = sqliteTable(
 			.references(() => projects.id, { onDelete: "cascade" }),
 		status: text().notNull().default("draft"), // draft | audit | validated | rejected | published
 		// Generated document blueprint
-		document: text({ mode: "json" }).$type<{
-			fundingStructure?: Record<string, number>;
-			emissionTargets?: Record<string, number>;
-			financialProjections?: {
-				npv?: number;
-				irr?: number;
-				paybackPeriod?: number;
-				scenarios?: {
-					conservative: unknown;
-					base: unknown;
-					optimistic: unknown;
-				};
-			};
-			[key: string]: unknown;
-		}>(),
+		document: text({ mode: "json" }).$type<BlueprintDocument>(),
 		auditorId: integer("auditor_id").references(() => users.id),
 		auditNote: text("audit_note"),
 		validatedAt: integer("validated_at", { mode: "timestamp_ms" }),
@@ -803,6 +819,11 @@ export const negotiations = sqliteTable(
 			.$type<string[]>()
 			.default([]),
 		companyNote: text("company_note").notNull(),
+		// Where the company marked the proposal it is asking about, in the
+		// proposal page's own 0-1 coordinates so both sides draw the same marks.
+		annotations: text("annotations", { mode: "json" })
+			.$type<ProposalAnnotation[]>()
+			.default([]),
 		// What the vendor answered with
 		vendorRevisedPrice: real("vendor_revised_price"),
 		vendorRevisedWarrantyYears: integer("vendor_revised_warranty_years"),
@@ -927,9 +948,12 @@ export const milestoneEvidenceRelations = relations(
 );
 
 // ── vendor_portfolio_items (vendor-authored references) ──
-export const portfolioItemStatuses = ["COMPLETED", "VERIFIED"] as const;
-export type PortfolioItemStatus = (typeof portfolioItemStatuses)[number];
-
+/**
+ * A record of delivered work. It carries no verification flag: nothing in the
+ * platform verifies a vendor's own reference, so a "verified" label on one would
+ * be a claim with no process behind it. What a vendor is verified for is the
+ * profile, which an administrator checks.
+ */
 export const vendorPortfolioItems = sqliteTable(
 	"vendor_portfolio_items",
 	{
@@ -948,10 +972,10 @@ export const vendorPortfolioItems = sqliteTable(
 		energySavingPercent: real("energy_saving_percent"),
 		carbonReductionTons: real("carbon_reduction_tons"),
 		completionYear: integer("completion_year"),
-		status: text({ enum: portfolioItemStatuses })
-			.notNull()
-			.default("COMPLETED"),
 		documentName: text("document_name"),
+		/** R2 object key of the supporting document, or null when none is filed. */
+		documentKey: text("document_key"),
+		documentType: text("document_type"),
 		createdAt: integer("created_at", { mode: "timestamp_ms" })
 			.notNull()
 			.$defaultFn(() => new Date()),

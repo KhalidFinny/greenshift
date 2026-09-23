@@ -6,16 +6,12 @@ import {
 	Dialog,
 	DialogContent,
 	DialogDescription,
-	DialogFooter,
 	DialogHeader,
 	DialogTitle,
 	EmptyState,
 } from "@greenshift/ui";
 import type { ColumnDef } from "@tanstack/react-table";
-import { useEffect, useState } from "react";
 import { RatingBar } from "./rating-bar";
-
-const PAGE_SIZE = 8;
 
 interface VendorRow {
 	vendor: AdminVendor;
@@ -114,20 +110,9 @@ export function VendorPerformanceDialog({
 	vendors,
 	onViewDetails,
 }: VendorPerformanceDialogProps) {
-	const [page, setPage] = useState(1);
-	const sorted = [...vendors].sort((a, b) => b.rating - a.rating);
-	const pageCount = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
-	const safePage = Math.min(page, pageCount);
-	const rows: VendorRow[] = sorted
-		.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
-		.map((vendor, index) => ({
-			vendor,
-			rank: (safePage - 1) * PAGE_SIZE + index + 1,
-		}));
-
-	useEffect(() => {
-		if (open) setPage(1);
-	}, [open]);
+	const rows: VendorRow[] = [...vendors]
+		.sort((a, b) => b.rating - a.rating)
+		.map((vendor, index) => ({ vendor, rank: index + 1 }));
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
@@ -137,12 +122,12 @@ export function VendorPerformanceDialog({
 						Vendor Performance
 					</DialogTitle>
 					<DialogDescription className="text-base">
-						Ranking of {sorted.length} vendors, rating on a 0–5 scale.
+						Ranking of {rows.length} vendors, rating on a 0–5 scale.
 					</DialogDescription>
 				</DialogHeader>
 
 				<div className="flex-1 overflow-y-auto">
-					{sorted.length === 0 ? (
+					{rows.length === 0 ? (
 						<div className="p-6">
 							<EmptyState
 								title="No vendor ratings yet"
@@ -158,27 +143,6 @@ export function VendorPerformanceDialog({
 						/>
 					)}
 				</div>
-
-				<DialogFooter className="shrink-0 items-center justify-between border-t border-border px-6 py-4">
-					<p className="text-base text-muted-foreground">
-						Page {safePage} of {pageCount}
-					</p>
-					<div className="flex gap-2">
-						<Button
-							variant="outline"
-							disabled={safePage <= 1}
-							onClick={() => setPage(safePage - 1)}
-						>
-							Previous
-						</Button>
-						<Button
-							disabled={safePage >= pageCount}
-							onClick={() => setPage(safePage + 1)}
-						>
-							Next
-						</Button>
-					</div>
-				</DialogFooter>
 			</DialogContent>
 		</Dialog>
 	);

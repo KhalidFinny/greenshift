@@ -30,7 +30,7 @@ packages/
   ui/             Design system: shadcn components, Header/Footer, RoleShell, charts, cn
   core/           Shared frontend contract: useAuth, guards, role nav/home, typed API client
   landing/        Landing page
-  business/       Business dashboard (placeholder — no API surface yet)
+  business/       Business dashboard (wizard, projects, matchmaking, procurement)
   vendor/         Vendor dashboard
   broker/         Broker dashboard
   admin/          Admin dashboard
@@ -42,7 +42,7 @@ scripts/          Demo-user seeder (db:setup) and seed-fixture generator
 
 | Role | Entry route | Package | Data source |
 |---|---|---|---|
-| `business` | `/business` | `packages/business` | Placeholder shell; no API surface yet. |
+| `business` | `/business` | `packages/business` | `/api/business/*` (submission wizard and drafts, projects, risk, reading, forecast, matchmaking, procurement, notifications, profile). |
 | `vendor` | `/vendor` | `packages/vendor` | `/api/vendor/*` (profile, opportunities, proposals, negotiations, notifications, leaderboard, portfolio, milestones, MRV reports). |
 | `broker` | `/broker` | `packages/broker` | `/api/broker/*` (assigned projects, document requests, monthly reports with PDF export, notifications, profile). |
 | `admin` | `/admin` | `packages/admin` | `/api/admin/*` plus `GET /api/health` for the binding-status card. Every figure the console renders comes from the API. |
@@ -153,7 +153,7 @@ step-up required, `429` rate limited, `500` internal.
 | Method | Path | Body | Description |
 |---|---|---|---|
 | POST | `/api/auth/login` | `{ email, password }` | Verify credentials, create session, set cookie. |
-| POST | `/api/auth/register` | `{ name, email, password, companyName }` | Register a business account. |
+| POST | `/api/auth/register` | `{ accountType, name, email, password, phone, organizationName, industry, address, businessInfo?, nib?, npwp? }` | Register the person and the organization they represent. `accountType` is `company` (role `business`) or `vendor`; a vendor account is written with its `vendor_profiles` row in the same batch, unverified until an admin verifies it. |
 | GET | `/api/auth/me` | none | Current user. |
 | GET | `/api/auth/csrf` | none | CSRF token and step-up expiry. |
 | POST | `/api/auth/step-up` | `{ password }` | Re-authenticate for sensitive actions. |
@@ -175,7 +175,7 @@ step-up required, `429` rate limited, `500` internal.
 | GET | `/api/vendor/my-projects/:id` | Own-proposal project detail. |
 | GET | `/api/vendor/procurement-status` | Procurement status with latest revision note. |
 | GET | `/api/vendor/profile` | Vendor profile. |
-| PUT | `/api/vendor/profile` | Atomic upsert of the vendor profile. |
+| PUT | `/api/vendor/profile` | Atomic upsert of the vendor profile; `companyName` is required, every other field is written only when the body carries it (`serviceCategory`, `location`, `nib`, `npwp`, `description`, `certifications`, `portfolio`). |
 | GET | `/api/vendor/proposals` | Own proposals. |
 | POST | `/api/vendor/proposals` | Submit a proposal to an open tender. |
 | GET | `/api/vendor/proposals/:id` | Proposal detail with revision trail. |
@@ -185,10 +185,12 @@ step-up required, `429` rate limited, `500` internal.
 | POST | `/api/vendor/negotiations/:id/response` | Answer a revision round (counter-offer, proposal revision trail, back to review). |
 | GET | `/api/vendor/notifications` | Notification feed. |
 | PATCH | `/api/vendor/notifications/:id` | Mark one notification read (idempotent). |
-| GET | `/api/vendor/leaderboard` | Ranking of the open-bid tender the vendor is currently bidding on. |
-| GET | `/api/vendor/portfolio` | Portfolio references the vendor authored. |
+| GET | `/api/vendor/leaderboard` | Ranking of one open tender: `?tenderId=` names the tender a project screen is showing, and without it the ranking is the vendor's own live open bidding. Closed and direct tenders answer empty (their offers are sealed). |
+| GET | `/api/vendor/portfolio` | Portfolio references the vendor authored, each with the URL of its filed document. |
 | POST | `/api/vendor/portfolio` | Add a portfolio reference. |
-| DELETE | `/api/vendor/portfolio/:id` | Remove a portfolio reference. |
+| POST | `/api/vendor/portfolio/:id/document` | File the supporting document on a reference (multipart, 10 MB, PDF/Word/PNG/JPG/WebP; stored in R2). |
+| GET | `/api/vendor/portfolio/:id/document` | The filed document, served inline. |
+| DELETE | `/api/vendor/portfolio/:id` | Remove a portfolio reference, and its filed document with it. |
 | POST | `/api/vendor/milestones/:id/evidence` | Attach delivery evidence to a milestone of an awarded project. |
 
 ### Broker (role `broker`)
@@ -246,12 +248,13 @@ Request and response types live in `apps/api/src/contracts.ts` and are re-export
 list of method/path pairs the frontend client calls.
 
 Not every view is API-backed yet: the admin console reads `/api/admin/*` and `GET /api/health` for every figure
-it renders, and the business dashboard is a placeholder shell. The bond catalog, the vendor dashboard and the broker dashboard read from the API — the
-vendor and broker UIs keep only client-side UI state locally, their verification-document forms have no
-backend file field yet, and the vendor performance tiles are derived from awarded projects, milestones, MRV
-reports and the platform rating (fields the API does not store, such as client endorsements, stay at 0 rather
-than being estimated). The broker's bond-preparation checklist mirrors `/api/broker/projects/:id/status`
-transitions, so the UI cannot move a project into a state the API rejects.
+it renders. The bond catalog, the business dashboard, the vendor dashboard and the broker dashboard read from
+the API — the vendor and broker UIs keep only client-side UI state locally, the vendor's verification-document
+forms have no backend file field yet (a portfolio record's own supporting document does, through
+`POST /api/vendor/portfolio/:id/document`), and the vendor performance tiles are derived from awarded
+projects, milestones, MRV reports and the platform rating (fields the API does not store, such as client
+endorsements, stay at 0 rather than being estimated). The broker's bond-preparation checklist mirrors
+`/api/broker/projects/:id/status` transitions, so the UI cannot move a project into a state the API rejects.
 
 ## 7. Data model
 
@@ -287,17 +290,21 @@ SQL migrations in `drizzle/`. The schema is also the source of the shared types.
 | `emission_reports` | MRV reports with anomaly flag/score. |
 | `audit_logs` | Traceability trail for every mutation. |
 | `notifications` | Per-user notifications. |
-| `negotiations` | Company revision rounds over a proposal (requested terms, vendor counter-offer, status). |
+| `negotiations` | Company revision rounds over a proposal (requested terms, vendor counter-offer, status, and the marks the company drew on the proposal). |
 | `project_milestones` | Delivery milestones of an awarded project. |
 | `milestone_evidence` | Files a vendor attaches to a milestone. |
-| `vendor_portfolio_items` | Portfolio references a vendor authored. |
+| `vendor_portfolio_items` | Portfolio references a vendor authored, with the R2 key of the supporting document. |
 | `broker_profiles` | Broker firm profile, licence filing and verification state, one per broker user. |
 | `broker_assignments` | Company-to-broker assignment: broker lifecycle status, assignment decision, bond tracking. |
 | `document_requests` | Broker document requests to the company, with submission and review state. |
 
 **Lifecycles**
 
-- Project: `draft -> assessment -> tendering -> blueprint -> funding -> monitoring -> completed`
+- Project: `draft -> registry -> assessment -> tendering -> blueprint -> funding -> monitoring -> completed`.
+  `registry` is the company's own move: the project is on record and waiting to be registered at the
+  environmental registry with an LVV body appointed (`POST /api/business/projects/:id/lvv`, which is what
+  advances it to `assessment`). Verification answers out of band and clears the project into `tendering`, where
+  the Green Project Blueprint is generated and matchmaking opens.
 - Blueprint: `draft -> audit -> validated | rejected -> published`
 - Proposal: `submitted -> reviewed -> revision -> accepted | rejected`
 - Tender: `open -> evaluation -> closed -> awarded`
@@ -375,8 +382,19 @@ components that every page uses:
 
 - **`DataTable`** (`packages/ui/src/components/ui/data-table.tsx`) - a generic TanStack Table wrapper over the
   shadcn table primitives. Pages pass a typed `ColumnDef<T>[]` and data. It provides column sorting (click a
-  string header), optional global search (`searchPlaceholder`), optional pagination (`pageSize`), row ids
-  (`getRowId`), per-cell classes via column `meta`, and an empty state. No page hand-writes table rows anymore.
+  string header), optional global search (`searchPlaceholder`), row ids (`getRowId`), per-cell classes via
+  column `meta`, and an empty state. No page hand-writes table rows anymore.
+  **Every table pages**: `pageSize` defaults to 10 and the footer (rows-per-page, "Page X of Y", Previous /
+  Next) renders itself while the rows exceed one page, so a table can never render an unbounded dataset whole.
+- **Pagination for lists that are not tables** - `usePagedRows(rows)` plus `<PaginationBar/>`
+  (`packages/ui/src/hooks/use-paged-rows.ts`, `packages/ui/src/components/ui/pagination-bar.tsx`). A page that
+  renders its own rows (card grids, feeds, document lists) passes the array it already has to the hook, renders
+  `pageRows`, and puts the bar under them, so a list and a table page the same way. Fixed-length collections
+  (a stage timeline, a legend, a definition list) are left unpaged on purpose.
+- **Charts** (`packages/ui/src/components/charts/`) - visx-based, themed through the `--chart-*` tokens: `BarChart`
+  with `Bar`/`BarXAxis`/`Grid`, `PieChart`, `RingChart`, and `LineChart`
+  (`line-chart.tsx`) for projections, which plots one path per series with the
+  y domain derived from the values it is given and an optional `reference` line.
 - **Forms** (`packages/ui/src/components/form/form.tsx`) - a `createFormHook` bundle exposing `useAppForm`
   plus the field components `TextField`, `NumberField` (optional `prefix`/`unit`), `SelectField`,
   `TextareaField`, `CheckboxField`, and `PasswordField`, and the `SubmitButton`. Field components read the

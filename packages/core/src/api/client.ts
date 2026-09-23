@@ -31,14 +31,21 @@ import type {
 	BusinessDraftBody,
 	BusinessDraftResponse,
 	BusinessDraftResumeResponse,
+	BusinessForecastReadingResponse,
+	BusinessForecastRequest,
+	BusinessForecastResponse,
 	BusinessMatchingRunResponse,
 	BusinessMatchmakingDetail,
 	BusinessMatchmakingListResponse,
 	BusinessMatchmakingSelectionBody,
 	BusinessMatchmakingSelectionResponse,
 	BusinessNotification,
+	BusinessProfileBody,
+	BusinessProfileResponse,
+	BusinessProjectBlueprintResponse,
 	BusinessProjectReadingRequest,
 	BusinessProjectReadingResponse,
+	BusinessProjectRegistryResponse,
 	BusinessProjectResponse,
 	BusinessProjectsResponse,
 	BusinessRiskInsightRequest,
@@ -104,20 +111,10 @@ export const api = {
 				method: apiRoutes.login.method,
 				body: JSON.stringify({ email, password } satisfies LoginBody),
 			}),
-		register: (
-			name: string,
-			email: string,
-			password: string,
-			companyName: string,
-		) =>
+		register: (body: RegisterBody) =>
 			request<AuthResponse>(apiRoutes.register.path, {
 				method: apiRoutes.register.method,
-				body: JSON.stringify({
-					name,
-					email,
-					password,
-					companyName,
-				} satisfies RegisterBody),
+				body: JSON.stringify(body satisfies RegisterBody),
 			}),
 		me: () => request<AuthResponse>(apiRoutes.me.path),
 		csrf: () => request<CsrfResponse>(apiRoutes.csrf.path),
@@ -248,6 +245,11 @@ export const api = {
 				apiRoutes.businessReadNotification.path.replace(":id", String(id)),
 				{ method: apiRoutes.businessReadNotification.method },
 			),
+		/** The whole feed: registered after the `:id` route, so paths cannot clash. */
+		readAllNotifications: () =>
+			request<{ read: number }>(apiRoutes.businessNotifications.path, {
+				method: apiRoutes.businessReadNotification.method,
+			}),
 		draft: (draftId: string) =>
 			request<BusinessDraftResumeResponse>(
 				apiRoutes.businessDraftResume.path.replace(
@@ -280,6 +282,13 @@ export const api = {
 				method: apiRoutes.businessSubmit.method,
 				body: JSON.stringify(body satisfies BusinessSubmitBody),
 			}),
+		profile: () =>
+			request<BusinessProfileResponse>(apiRoutes.businessProfile.path),
+		saveProfile: (body: BusinessProfileBody) =>
+			request<BusinessProfileResponse>(apiRoutes.businessSaveProfile.path, {
+				method: apiRoutes.businessSaveProfile.method,
+				body: JSON.stringify(body satisfies BusinessProfileBody),
+			}),
 		projects: (params?: { limit?: number }) =>
 			request<BusinessProjectsResponse>(
 				apiRoutes.businessProjects.path + query(params),
@@ -291,6 +300,32 @@ export const api = {
 		risk: (id: number) =>
 			request<BusinessRiskResponse>(
 				apiRoutes.businessProjectRisk.path.replace(":id", String(id)),
+			),
+		/**
+		 * The project's own Green Project Blueprint, or null while it has none:
+		 * the document is written at verification.
+		 */
+		blueprint: (id: number) =>
+			request<BusinessProjectBlueprintResponse>(
+				apiRoutes.businessProjectBlueprint.path.replace(":id", String(id)),
+			),
+		/**
+		 * What Sistem Registri answers about the project: registered or not, which
+		 * is what tells the page a company did it there and has not started
+		 * verification here.
+		 */
+		registry: (id: number) =>
+			request<BusinessProjectRegistryResponse>(
+				apiRoutes.businessProjectRegistry.path.replace(":id", String(id)),
+			),
+		/**
+		 * The company marks the project registered at the registry and its LVV
+		 * body appointed, which starts verification.
+		 */
+		startLvv: (id: number) =>
+			request<BusinessProjectResponse>(
+				apiRoutes.businessStartLvv.path.replace(":id", String(id)),
+				{ method: apiRoutes.businessStartLvv.method },
 			),
 		/** The wizard's assessment, answered with Eleanor's reading of it. */
 		riskInsight: (body: BusinessRiskInsightRequest) =>
@@ -305,6 +340,24 @@ export const api = {
 				{
 					method: apiRoutes.businessProjectReading.method,
 					body: JSON.stringify(body satisfies BusinessProjectReadingRequest),
+				},
+			),
+		/** The ROI forecast for the figures entered so far: the same engine the blueprint is generated with. */
+		projectForecast: (body: BusinessForecastRequest) =>
+			request<BusinessForecastResponse>(
+				apiRoutes.businessProjectForecast.path,
+				{
+					method: apiRoutes.businessProjectForecast.method,
+					body: JSON.stringify(body satisfies BusinessForecastRequest),
+				},
+			),
+		/** Eleanor's reading of that forecast, written from the same figures. */
+		forecastReading: (body: BusinessForecastRequest) =>
+			request<BusinessForecastReadingResponse>(
+				apiRoutes.businessProjectForecastReading.path,
+				{
+					method: apiRoutes.businessProjectForecastReading.method,
+					body: JSON.stringify(body satisfies BusinessForecastRequest),
 				},
 			),
 		documents: (id: number) =>
@@ -445,14 +498,33 @@ export const api = {
 			request<{ proposal: ProposalDetail }>(
 				apiRoutes.vendorProposalDetail.path.replace(":id", String(id)),
 			),
-		submitProposal: (body: ProposalDraftBody) =>
-			request<{ proposal: ProposalSummary }>(
+		/**
+		 * Multipart: the bid and the proposal document are one filing. The
+		 * document is required, so the offer and the case for it are sent
+		 * together and the server writes them as one row.
+		 */
+		submitProposal: (fields: ProposalDraftBody, file: File) => {
+			const body = new FormData();
+			body.set("tenderId", String(fields.tenderId));
+			body.set("amount", String(fields.amount));
+			if (fields.technicalSpec !== undefined) {
+				body.set("technicalSpec", fields.technicalSpec);
+			}
+			if (fields.operationalCost !== undefined) {
+				body.set("operationalCost", String(fields.operationalCost));
+			}
+			if (fields.projectedRoi !== undefined) {
+				body.set("projectedRoi", String(fields.projectedRoi));
+			}
+			if (fields.warrantyPeriod !== undefined) {
+				body.set("warrantyPeriod", String(fields.warrantyPeriod));
+			}
+			body.set("file", file);
+			return request<{ proposal: ProposalSummary }>(
 				apiRoutes.vendorSubmitProposal.path,
-				{
-					method: apiRoutes.vendorSubmitProposal.method,
-					body: JSON.stringify(body satisfies ProposalDraftBody),
-				},
-			),
+				{ method: apiRoutes.vendorSubmitProposal.method, body },
+			);
+		},
 		updateProposal: (id: number, body: ProposalUpdateBody) =>
 			request<{ proposal: ProposalDetail }>(
 				apiRoutes.vendorUpdateProposal.path.replace(":id", String(id)),
@@ -466,6 +538,15 @@ export const api = {
 				apiRoutes.vendorWithdrawProposal.path.replace(":id", String(id)),
 				{ method: apiRoutes.vendorWithdrawProposal.method },
 			),
+		/** Multipart: the shared request helper leaves the boundary to the browser. */
+		uploadProposalDocument: (id: number, file: File) => {
+			const body = new FormData();
+			body.set("file", file);
+			return request<{ documentName: string }>(
+				apiRoutes.vendorProposalDocument.path.replace(":id", String(id)),
+				{ method: apiRoutes.vendorProposalDocument.method, body },
+			);
+		},
 		notifications: (params?: { limit?: number }) =>
 			request<{ notifications: VendorNotification[] }>(
 				apiRoutes.vendorNotifications.path + query(params),
@@ -475,6 +556,11 @@ export const api = {
 				apiRoutes.vendorReadNotification.path.replace(":id", String(id)),
 				{ method: apiRoutes.vendorReadNotification.method },
 			),
+		/** The whole feed: registered after the `:id` route, so paths cannot clash. */
+		readAllNotifications: () =>
+			request<{ read: number }>(apiRoutes.vendorNotifications.path, {
+				method: apiRoutes.vendorReadNotification.method,
+			}),
 		negotiations: () =>
 			request<{ negotiations: VendorNegotiation[] }>(
 				apiRoutes.vendorNegotiations.path,
@@ -487,8 +573,11 @@ export const api = {
 					body: JSON.stringify(body satisfies VendorNegotiationResponseBody),
 				},
 			),
-		leaderboard: () =>
-			request<VendorLeaderboardResponse>(apiRoutes.vendorLeaderboard.path),
+		leaderboard: (tenderId?: number) =>
+			request<VendorLeaderboardResponse>(
+				apiRoutes.vendorLeaderboard.path +
+					query(tenderId === undefined ? undefined : { tenderId }),
+			),
 		portfolio: () =>
 			request<{ portfolio: VendorPortfolioItem[] }>(
 				apiRoutes.vendorPortfolio.path,
@@ -506,6 +595,18 @@ export const api = {
 				apiRoutes.vendorDeletePortfolioItem.path.replace(":id", String(id)),
 				{ method: apiRoutes.vendorDeletePortfolioItem.method },
 			),
+		/** Multipart: the shared request helper leaves the boundary to the browser. */
+		uploadPortfolioDocument: (id: number, file: File) => {
+			const body = new FormData();
+			body.set("file", file);
+			return request<{ item: VendorPortfolioItem }>(
+				apiRoutes.vendorPortfolioDocument.path.replace(":id", String(id)),
+				{ method: apiRoutes.vendorPortfolioDocument.method, body },
+			);
+		},
+		/** Where a filed portfolio document is served from. */
+		portfolioDocumentPath: (id: number) =>
+			apiRoutes.vendorPortfolioDocumentFile.path.replace(":id", String(id)),
 		addMilestoneEvidence: (
 			milestoneId: number,
 			body: { kind: string; fileName: string; notes?: string },
@@ -598,6 +699,11 @@ export const api = {
 				apiRoutes.brokerReadNotification.path.replace(":id", String(id)),
 				{ method: apiRoutes.brokerReadNotification.method },
 			),
+		/** The whole feed: registered after the `:id` route, so paths cannot clash. */
+		readAllNotifications: () =>
+			request<{ read: number }>(apiRoutes.brokerNotifications.path, {
+				method: apiRoutes.brokerReadNotification.method,
+			}),
 	},
 	/** Read-only platform probes (`GET /api/health`), used by the admin console. */
 	system: {

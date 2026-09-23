@@ -94,11 +94,38 @@ as. Structural changes from ADR-008 are noted per section.
   phone needs no sideways drag.
 - Rows come from `GET /api/business/projects`: name with a muted
   location/sector line, submitted date, CAPEX, and the status pill the API
-  returns (`Review LVV`, `Matchmaking`, `Verified`).
-- Row actions: "Risk assessment" opens a controlled `Dialog` that fetches
-  `GET /api/business/projects/:id/risk` and renders `RiskAssessmentBody`; the
+  returns (`Register for LVV`, `Awaiting LVV verification`, `Matchmaking`,
+  `Verified`).
+- After submit the project is the company's to move: the project's own page shows
+  the same summary the review step showed, and the verification section on it is
+  the reminder to register the project at Sistem Registri and appoint the LVV
+  body. The page also reads the registry back
+  (`GET /api/business/projects/:id/registry`), so a project the registry already
+  holds while the platform still waits says so and asks for verification to be
+  started here rather than leaving the company waiting on a step only they can
+  take. Marking it registered (`POST /api/business/projects/:id/lvv`) moves the
+  pill to `Awaiting LVV verification`; verification then answers out of band and
+  clears the project into matchmaking. The LVV documents are not part of the
+  summary or of the record: they are filed at Sistem Registri, which is where the
+  LVV body reads them.
+- Row actions: "View details" opens the project's own page, which is the same
+  summary the review step showed plus the Green Project Blueprint it became; the
   download icon opens the project's first ready document, and says so when none
-  is ready yet.
+  is ready yet. The risk assessment lives on that page, so the list no longer
+  opens it in a dialog.
+
+## Revisions before an award (ADR-011)
+
+- A bid is awarded only once its revisions are done: `POST
+  /api/business/procurement/:projectId/award` refuses a bid whose latest round is
+  still `PENDING_VENDOR_RESPONSE` (`409 INVALID_STATE`), and the bidding screen
+  disables "Accept & award" and "Ask for a revision" on that bid, naming the round
+  it waits on. Rejecting the bid stays possible.
+- Asking for a second revision while one is open is refused too
+  (`revision_pending`), so the vendor is never two asks behind.
+- Deciding a tender closes its rounds: `AGREED` on the winning bid, `LOCKED` on
+  every bid that was turned down or rejected, which is what the vendor's
+  negotiation card and its action-required count read.
 
 ## Matchmaking — Vendor Matchmaking (ADR-008)
 
