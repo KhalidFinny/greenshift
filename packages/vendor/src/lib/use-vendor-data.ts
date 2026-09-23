@@ -10,6 +10,7 @@ import {
 	mapNegotiation,
 	mapNotification,
 	mapPortfolioItem,
+	mapProjectDetailToCardData,
 	mapProjectToCardData,
 	mapToActiveProject,
 	mapToPortfolioItem,
@@ -172,6 +173,12 @@ export function useVendorData(options: { projectId?: string } = {}) {
 	const blueprint: VendorBlueprint | null = useMemo(() => {
 		const detail = projectDetailData?.project?.blueprint;
 		return detail ? mapBlueprint(detail) : null;
+	}, [projectDetailData]);
+
+	/** The tender the route names, when the capped market list does not carry it. */
+	const projectDetailCard: VendorProjectCardData | null = useMemo(() => {
+		const detail = projectDetailData?.project;
+		return detail ? mapProjectDetailToCardData(detail) : null;
 	}, [projectDetailData]);
 
 	const performanceMetrics: VendorPerformanceMetrics = useMemo(() => {
@@ -475,6 +482,7 @@ export function useVendorData(options: { projectId?: string } = {}) {
 		proposals,
 		negotiations,
 		blueprint,
+		projectDetailCard,
 		projectDetailLoading: projectDetailData === undefined,
 		activeProjects,
 		portfolio,

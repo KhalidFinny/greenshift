@@ -1,4 +1,9 @@
-import { faFilePdf, faGavel, faTrash } from "@fortawesome/free-solid-svg-icons";
+import {
+	faFilePdf,
+	faFileShield,
+	faGavel,
+	faTrash,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
 	Button,
@@ -51,6 +56,8 @@ interface SubmitProposalDialogProps {
 	) => Promise<unknown>;
 	isOpen: boolean;
 	onOpenChange: (open: boolean) => void;
+	/** Opens the blueprint over this dialog, so a bidder checks the case without losing the draft. */
+	onViewBlueprint: () => void;
 }
 
 function formatNumber(value: string): string {
@@ -72,6 +79,7 @@ export function SubmitProposalDialog({
 	onRevise,
 	isOpen,
 	onOpenChange,
+	onViewBlueprint,
 }: SubmitProposalDialogProps) {
 	const revising = myProposal !== null;
 	const deadlinePassed =
@@ -152,7 +160,7 @@ export function SubmitProposalDialog({
 	return (
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>
 			<DialogContent className="!max-w-lg gap-0 p-0 max-h-[90vh] overflow-y-auto">
-				<DialogHeader className="border-b border-border px-6 pt-6 pb-4">
+				<DialogHeader className="flex-row flex-wrap items-center justify-between gap-3 border-b border-border px-6 pt-6 pr-12 pb-4">
 					<DialogTitle className="flex items-center gap-2 text-xl font-semibold">
 						<FontAwesomeIcon icon={faGavel} className="text-primary" />
 						{revising
@@ -161,6 +169,16 @@ export function SubmitProposalDialog({
 								? "Submit Your Bid"
 								: "Submit Proposal"}
 					</DialogTitle>
+					<Button
+						type="button"
+						variant="outline"
+						size="sm"
+						className="shrink-0 gap-2"
+						onClick={onViewBlueprint}
+					>
+						<FontAwesomeIcon icon={faFileShield} aria-hidden />
+						View Blueprint
+					</Button>
 				</DialogHeader>
 
 				<div className="px-6 pt-5 pb-6">

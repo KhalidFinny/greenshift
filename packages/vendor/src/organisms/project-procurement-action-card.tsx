@@ -1,6 +1,7 @@
 import {
 	faCheckCircle,
 	faExclamationTriangle,
+	faFileShield,
 	faPaperPlane,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -13,6 +14,7 @@ interface ProjectProcurementActionCardProps {
 	procurementMethod: ProcurementMethod;
 	applied?: boolean;
 	onOpenProposal: () => void;
+	onViewBlueprint: () => void;
 	/** Verification / bid state still in flight: same frames, shimmering leaves. */
 	loading?: boolean;
 }
@@ -22,6 +24,7 @@ export function ProjectProcurementActionCard({
 	procurementMethod,
 	applied = false,
 	onOpenProposal,
+	onViewBlueprint,
 	loading = false,
 }: ProjectProcurementActionCardProps) {
 	return (
@@ -93,6 +96,18 @@ export function ProjectProcurementActionCard({
 						</Button>
 					)}
 				</div>
+			)}
+
+			{/* The blueprint travels with the tender: readable before a bid exists and while one is drafted. */}
+			{loading ? null : (
+				<Button
+					variant="outline"
+					className="w-full gap-2"
+					onClick={onViewBlueprint}
+				>
+					<FontAwesomeIcon icon={faFileShield} aria-hidden />
+					View Blueprint
+				</Button>
 			)}
 		</div>
 	);

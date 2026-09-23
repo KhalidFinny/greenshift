@@ -20,6 +20,8 @@ interface BlueprintCardProps {
 	/** Null while the project carries no validated blueprint. */
 	blueprint: VendorBlueprint | null;
 	loading?: boolean;
+	/** False when the host already titles the blueprint (the dialog). */
+	showHeader?: boolean;
 }
 
 /** The stage the document reached, in the words a bidder reads it under. */
@@ -42,6 +44,7 @@ function Figure({ label, value }: { label: string; value: string }) {
 export function BlueprintCard({
 	blueprint,
 	loading = false,
+	showHeader = true,
 }: BlueprintCardProps) {
 	if (loading) {
 		return (
@@ -64,23 +67,25 @@ export function BlueprintCard({
 
 	return (
 		<Card>
-			<CardHeader>
-				<div className="flex flex-wrap items-center justify-between gap-3">
-					<CardTitle className="flex items-center gap-2 text-lg">
-						<FontAwesomeIcon
-							icon={faFileShield}
-							className="text-primary"
-							aria-hidden
-						/>
-						Green Project Blueprint
-					</CardTitle>
-					{blueprint ? (
-						<Badge variant="secondary">
-							{STATUS_LABEL[blueprint.status] ?? blueprint.status}
-						</Badge>
-					) : null}
-				</div>
-			</CardHeader>
+			{showHeader ? (
+				<CardHeader>
+					<div className="flex flex-wrap items-center justify-between gap-3">
+						<CardTitle className="flex items-center gap-2 text-lg">
+							<FontAwesomeIcon
+								icon={faFileShield}
+								className="text-primary"
+								aria-hidden
+							/>
+							Green Project Blueprint
+						</CardTitle>
+						{blueprint ? (
+							<Badge variant="secondary">
+								{STATUS_LABEL[blueprint.status] ?? blueprint.status}
+							</Badge>
+						) : null}
+					</div>
+				</CardHeader>
+			) : null}
 			<CardContent className="space-y-4 text-sm">
 				{blueprint === null ? (
 					<p className="leading-relaxed text-muted-foreground">

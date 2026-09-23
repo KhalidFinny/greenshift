@@ -11,6 +11,7 @@ import type {
 	ProposalSummary,
 	VendorMyProject,
 	VendorProfile,
+	VendorProjectDetail,
 	VendorProjectListItem,
 } from "@greenshift/api/contracts";
 import { relativeTime } from "@greenshift/ui";
@@ -21,6 +22,7 @@ import type {
 	MonthlyEnergyReport,
 	NegotiationRequest,
 	OpenBidLeaderboardEntry,
+	PortfolioProjectStatus,
 	ProcurementMethod,
 	ProjectMilestone,
 	StructuredProposal,
@@ -30,6 +32,9 @@ import type {
 	VendorPortfolioItem,
 	VendorProjectCardData,
 } from "./types";
+
+/** A calendar month in milliseconds, for the delivery duration the milestone schedule implies. */
+const MONTH_MS = 1000 * 60 * 60 * 24 * 30.44;
 
 export function mapVerificationStatus(
 	profile: VendorProfile,
@@ -84,6 +89,35 @@ export function mapProjectToCardData(
 					rank: project.matchScore.rank,
 				}
 			: null,
+		isSaved: false,
+	};
+}
+
+/**
+ * The same card data, built from the detail endpoint. The market list is capped,
+ * so a deep link to a tender past the cap has no list row to render.
+ */
+export function mapProjectDetailToCardData(
+	detail: VendorProjectDetail,
+): VendorProjectCardData {
+	return {
+		id: String(detail.id),
+		title: detail.title,
+		companyName: detail.companyName ?? "Unknown Company",
+		industrySector: detail.industrySector ?? "Unknown",
+		location: detail.location ?? "Unknown",
+		estimatedValue: detail.tender?.budgetMax ?? detail.budget ?? 0,
+		clientBudget: detail.tender?.budgetMax ?? detail.budget ?? 0,
+		carbonReductionTargetTons: detail.targetEmissionReduction ?? null,
+		procurementMethod: mapProcurementMethod(detail.tender?.method),
+		tenderId: detail.tender?.id ?? null,
+		tenderDeadlineAt: detail.tender?.deadlineAt ?? "",
+		description: detail.description ?? "",
+		riskScore: detail.riskScore ?? null,
+		technicalRequirements: detail.technicalRequirements ?? [],
+		deliverables: detail.deliverables ?? [],
+		// The detail endpoint carries no match score for this vendor.
+		matchmaking: null,
 		isSaved: false,
 	};
 }
@@ -164,6 +198,60 @@ export function mapToPortfolioItem(
 	}
 
 	const project = myProject.project;
+	const milestones = (myProject.milestones ?? []).map(mapMilestone);
+	const reports = (myProject.monthlyReports ?? []).map(mapMonthlyReport);
+	// The API sends the periods newest first; the detail chart reads them oldest first.
+	const periods = [...reports].sort((a, b) => a.period.localeCompare(b.period));
+
+	// The same schedule read as the active-project view, with the project's own status overriding it once the company has closed it out.
+	const progress =
+		milestones.length > 0
+			? Math.round(
+					milestones.reduce(
+						(sum, milestone) => sum + milestone.completionPercent,
+						0,
+					) / milestones.length,
+				)
+			: 0;
+	const status: PortfolioProjectStatus =
+		project.status === "completed" || progress >= 100
+			? "COMPLETED"
+			: progress >= 90
+				? "COMMISSIONING"
+				: "IN_PROGRESS";
+
+	const settled = milestones.filter(
+		(milestone) =>
+			milestone.status === "APPROVED" || milestone.status === "COMPLETED",
+	);
+	const workStartedAt = milestones[0]?.startDate || null;
+	const targetCompletionAt = milestones[milestones.length - 1]?.dueDate || null;
+	// A due date alone is not a completion date: the work is done only when the whole schedule is signed off.
+	const completedAt =
+		milestones.length > 0 && settled.length === milestones.length
+			? targetCompletionAt
+			: null;
+	const durationMonths =
+		workStartedAt && targetCompletionAt
+			? Math.max(
+					1,
+					Math.ceil(
+						(new Date(targetCompletionAt).getTime() -
+							new Date(workStartedAt).getTime()) /
+							MONTH_MS,
+					),
+				)
+			: null;
+
+	const reported = periods.length > 0;
+	const energySavedKwh = periods.reduce(
+		(sum, report) => sum + report.energySavedKwh,
+		0,
+	);
+	const carbonAbatedTons = periods.reduce(
+		(sum, report) => sum + report.carbonSavedTons,
+		0,
+	);
 
 	return {
 		id: String(project.id),
@@ -171,19 +259,31 @@ export function mapToPortfolioItem(
 		clientName: project.companyName ?? "",
 		projectType: project.industrySector ?? "",
 		location: project.location ?? "",
+		// The award record carries no written description; the vendor's own portfolio entry is the only place that has one.
 		description: "",
 		projectValue: myProject.proposal.amount,
-		// The award record carries no duration, services list, or completion year.
-		durationMonths: null,
+		durationMonths,
+		// The award record carries no services list.
 		servicesProvided: "",
 		// The project reports kWh/yr saved, not a percentage.
 		energySavingKwh: project.estimatedEnergySaving ?? null,
 		energySavingPercent: null,
 		carbonReductionTons: project.targetEmissionReduction ?? null,
-		completionYear: null,
-		documentName: undefined,
-		// An awarded project carries no uploaded document of its own.
-		documentUrl: null,
+		completionYear: completedAt ? new Date(completedAt).getFullYear() : null,
+		documentName: myProject.proposal.documentName ?? undefined,
+		// The filed bid is the one document the award record carries.
+		documentUrl: myProject.proposal.documentUrl,
+		status,
+		bidSubmittedAt: myProject.proposal.submittedAt ?? null,
+		workStartedAt,
+		targetCompletionAt,
+		completedAt,
+		milestonesApproved: settled.length,
+		milestonesTotal: milestones.length,
+		latestReportPeriod: periods[periods.length - 1]?.period ?? null,
+		reportedEnergySavedKwh: reported ? energySavedKwh : null,
+		reportedCarbonAbatedTons: reported ? carbonAbatedTons : null,
+		monthlyReports: periods,
 	};
 }
 

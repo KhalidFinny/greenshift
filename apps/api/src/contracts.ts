@@ -995,6 +995,9 @@ export interface VendorProjectDetail {
 	estimatedEnergySaving?: number | null;
 	riskScore?: number | null;
 	tender: VendorTenderSummary | null;
+	/** The scope of work the tender is bid against. */
+	technicalRequirements?: string[];
+	deliverables?: string[];
 	/** The validated blueprint, shown to bidders once LVV GRK has cleared it. */
 	blueprint?: ProjectBlueprintView | null;
 	canSubmit?: boolean;

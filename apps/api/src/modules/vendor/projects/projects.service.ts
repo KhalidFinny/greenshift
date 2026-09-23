@@ -115,6 +115,8 @@ export async function getMarketProject(
 		estimatedEnergySaving: row.project.estimatedEnergySaving,
 		riskScore: blueprint ? row.project.riskScore : null,
 		tender: row.tender ? tenderSummary(row.tender) : null,
+		technicalRequirements: row.project.technicalRequirements ?? [],
+		deliverables: row.project.deliverables ?? [],
 		blueprint: blueprint
 			? {
 					status: blueprint.status,

@@ -10,7 +10,7 @@ import {
 } from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
 import { formatRupiah } from "../lib/format";
-import type { VendorPortfolioItem } from "../lib/types";
+import { PORTFOLIO_STATUS_LABEL, type VendorPortfolioItem } from "../lib/types";
 
 interface PortfolioItemCardProps {
 	item: VendorPortfolioItem;
@@ -19,6 +19,12 @@ interface PortfolioItemCardProps {
 
 export function PortfolioItemCard({ item, onDelete }: PortfolioItemCardProps) {
 	const documentUrl = item.documentUrl;
+	// A reference the vendor wrote by hand carries no schedule, so it reads as the completed work it records.
+	const status = item.status ?? "COMPLETED";
+	const badge =
+		status === "COMPLETED" && item.completionYear !== null
+			? `${PORTFOLIO_STATUS_LABEL[status]} ${item.completionYear}`
+			: PORTFOLIO_STATUS_LABEL[status];
 
 	return (
 		<Card className="relative flex flex-col">
@@ -35,10 +41,15 @@ export function PortfolioItemCard({ item, onDelete }: PortfolioItemCardProps) {
 			) : null}
 
 			<CardHeader className="space-y-2 pb-3 pr-10">
-				<Badge className="w-fit bg-emerald-700 font-semibold text-white">
-					{item.completionYear !== null
-						? `Completed ${item.completionYear}`
-						: "Completed"}
+				<Badge
+					variant={status === "COMPLETED" ? "default" : "secondary"}
+					className={
+						status === "COMPLETED"
+							? "w-fit bg-emerald-700 font-semibold text-white"
+							: "w-fit font-semibold"
+					}
+				>
+					{badge}
 				</Badge>
 				<CardTitle className="line-clamp-2 text-base">
 					{item.projectName}

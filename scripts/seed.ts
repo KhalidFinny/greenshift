@@ -1,4 +1,9 @@
-import { industrySectors } from "../apps/api/src/contracts";
+import {
+	companyDocumentLabels,
+	companyDocumentSlots,
+	type CompanyDocumentSlot,
+	industrySectors,
+} from "../apps/api/src/contracts";
 import {
 	creditScore,
 	finansialTone,
@@ -92,6 +97,10 @@ export async function buildSeed(): Promise<SeedGroups> {
 		"-- destroys the rows it manages: never load it onto a live database.",
 		...RESET_TABLES.map((table) => `DELETE FROM ${table};`),
 		...(await buildAccountStatements()),
+
+		// The pack each seeded company was verified on, so the administrator's review of an
+		// already-verified account reads the certificates instead of two empty slots.
+		...BUSINESS_EMAILS.flatMap((email) => companyDocumentStatements(email)),
 	];
 
 	// Vendor-domain fixtures so the vendor API is exercisable end to end: P1 has an open tender
@@ -1155,6 +1164,43 @@ function accountField(
 const BUSINESS_EMAILS = DEMO_ACCOUNTS.filter(
 	(account) => account.role === "business",
 ).map((account) => account.username);
+
+/**
+ * The model the certificate scanner records in a scan, so a fixture scan names the reader that
+ * actually reads one.
+ */
+const COMPANY_DOCUMENT_SCAN_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+
+/** The file each certificate slot holds, named and sized the way a company would upload it. */
+const COMPANY_DOCUMENT_FILE: Record<
+	CompanyDocumentSlot,
+	{ name: (company: string) => string; sizeBytes: number }
+> = {
+	akta: {
+		name: (company) => `Akta Pendirian - ${company}.pdf`,
+		sizeBytes: 286720,
+	},
+	siup: { name: (company) => `SIUP - ${company}.pdf`, sizeBytes: 194560 },
+};
+
+/**
+ * The two certificates behind one seeded company's verification pack: its deed and its trading
+ * licence, each with the reading that cleared it, so the administrator's review shows the pack an
+ * already-verified company filed. The rows carry the `file_key` convention of the upload endpoint;
+ * no R2 object stands behind them, so a download reports a missing object.
+ */
+function companyDocumentStatements(username: string): string[] {
+	const company = accountField(username, "companyName");
+	return companyDocumentSlots.map((slot) => {
+		const label = companyDocumentLabels[slot];
+		const { name, sizeBytes } = COMPANY_DOCUMENT_FILE[slot];
+		const fileName = name(company);
+		const note = `Read as ${label} naming ${company}, carrying the NIB filed on this account.`;
+		return `INSERT INTO company_documents (user_id, slot, file_name, file_key, content_type, size_bytes, scan, uploaded_at)
+	SELECT id, '${slot}', '${fileName}', 'company-documents/' || id || '/${slot}/${fileName}', 'application/pdf', ${sizeBytes}, json_object('verdict', 'PASSED', 'documentType', '${label}', 'companyName', '${company}', 'registrationNumber', nib, 'note', '${note}', 'model', '${COMPANY_DOCUMENT_SCAN_MODEL}', 'at', strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-30 days')), ${nowTs(-30)} FROM users WHERE email = '${username}@greenshift.dev';`;
+	});
+}
+
 const VENDOR_EMAILS = DEMO_ACCOUNTS.filter(
 	(account) => account.role === "vendor",
 ).map((account) => account.username);

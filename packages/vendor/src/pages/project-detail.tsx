@@ -7,6 +7,7 @@ import { PROCUREMENT_METHOD_LABEL } from "../lib/labels";
 import { useVendorData } from "../lib/use-vendor-data";
 import { BidLeaderboard } from "../organisms/bid-leaderboard-card";
 import { BlueprintCard } from "../organisms/blueprint-card";
+import { BlueprintDialog } from "../organisms/blueprint-dialog";
 import { DetailHero, DetailShell } from "../organisms/detail-shell";
 import { MatchmakingDeepDive } from "../organisms/matchmaking-deep-dive-card";
 import { ProjectProcurementActionCard } from "../organisms/project-procurement-action-card";
@@ -21,15 +22,20 @@ export function VendorProjectDetailPage({ projectId }: { projectId?: string }) {
 		proposals,
 		leaderboard,
 		blueprint,
+		projectDetailCard,
 		projectDetailLoading,
 		submitProposal,
 		reviseProposal,
 	} = useVendorData({ projectId });
 	const [showProposalModal, setShowProposalModal] = useState(false);
+	const [showBlueprintModal, setShowBlueprintModal] = useState(false);
 
-	const project = projects.find((p) => p.id === projectId) ?? projects[0];
+	// The market list is capped, so a tender past the cap is read from its own detail.
+	const project =
+		projects.find((p) => p.id === projectId) ?? projectDetailCard ?? undefined;
 
-	if (!isLoading && !project) {
+	// The detail read has to land before the tender counts as missing.
+	if (!isLoading && !project && !projectDetailLoading) {
 		return (
 			<DetailShell
 				backTo="/vendor/opportunities"
@@ -144,6 +150,7 @@ export function VendorProjectDetailPage({ projectId }: { projectId?: string }) {
 						procurementMethod={project?.procurementMethod ?? "OPEN_BIDDING"}
 						applied={applied}
 						onOpenProposal={() => setShowProposalModal(true)}
+						onViewBlueprint={() => setShowBlueprintModal(true)}
 						loading={isLoading}
 					/>
 
@@ -182,8 +189,16 @@ export function VendorProjectDetailPage({ projectId }: { projectId?: string }) {
 					onRevise={(data, file) => reviseProposal({ ...data, file })}
 					isOpen={showProposalModal}
 					onOpenChange={setShowProposalModal}
+					onViewBlueprint={() => setShowBlueprintModal(true)}
 				/>
 			) : null}
+
+			<BlueprintDialog
+				blueprint={blueprint}
+				loading={projectDetailLoading && projectId !== undefined}
+				isOpen={showBlueprintModal}
+				onOpenChange={setShowBlueprintModal}
+			/>
 		</DetailShell>
 	);
 }

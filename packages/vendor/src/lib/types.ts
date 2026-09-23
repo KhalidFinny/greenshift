@@ -204,6 +204,19 @@ export interface ActiveVendorProject {
 	actualCarbonReductionTons?: number;
 }
 
+/** Where the delivery of an awarded project stands, read from its milestone schedule. */
+export type PortfolioProjectStatus =
+	| "IN_PROGRESS"
+	| "COMMISSIONING"
+	| "COMPLETED";
+
+/** Display copy for the delivery states, which are defined here, so both the card and the detail page read one vocabulary. */
+export const PORTFOLIO_STATUS_LABEL: Record<PortfolioProjectStatus, string> = {
+	IN_PROGRESS: "In progress",
+	COMMISSIONING: "Commissioning",
+	COMPLETED: "Completed",
+};
+
 export interface VendorPortfolioItem {
 	id: string;
 	projectName: string;
@@ -223,6 +236,26 @@ export interface VendorPortfolioItem {
 	documentName?: string;
 	/** Where the filed document is served from, or null when none is filed. */
 	documentUrl: string | null;
+	/* Delivery fields below are carried by an awarded project only: a record the vendor authored by hand has no schedule behind it. */
+	status?: PortfolioProjectStatus;
+	/** When the winning bid was filed. */
+	bidSubmittedAt?: string | null;
+	/** Start date of the first milestone in the schedule. */
+	workStartedAt?: string | null;
+	/** Due date of the last milestone in the schedule. */
+	targetCompletionAt?: string | null;
+	/** The last milestone's due date, set only once every milestone is approved or completed. */
+	completedAt?: string | null;
+	milestonesApproved?: number;
+	milestonesTotal?: number;
+	/** The most recent MRV period reported, e.g. "2026-08". */
+	latestReportPeriod?: string | null;
+	/** kWh summed over every reported period; null when nothing is reported. */
+	reportedEnergySavedKwh?: number | null;
+	/** tCO₂e summed over every reported period; null when nothing is reported. */
+	reportedCarbonAbatedTons?: number | null;
+	/** Reported MRV periods, oldest first, as the detail chart reads them. Empty when none is reported. */
+	monthlyReports?: MonthlyEnergyReport[];
 }
 
 export interface VendorPerformanceMetrics {
