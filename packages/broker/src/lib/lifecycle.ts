@@ -1,7 +1,4 @@
-import type {
-	BrokerProjectWorkflowStatus,
-	ExternalBondIssuanceStatus,
-} from "./types";
+import type { BrokerProjectWorkflowStatus } from "./types";
 
 /** The broker lifecycle (§20) is separate from the GreenShift project lifecycle. */
 export const WORKFLOW_LABELS: Record<BrokerProjectWorkflowStatus, string> = {
@@ -13,12 +10,6 @@ export const WORKFLOW_LABELS: Record<BrokerProjectWorkflowStatus, string> = {
 	BOND_ISSUANCE: "Bond Issuance",
 	MONITORING: "Monitoring",
 	COMPLETED: "Completed",
-};
-
-export const BOND_STATUS_LABELS: Record<ExternalBondIssuanceStatus, string> = {
-	NOT_STARTED: "Not Started",
-	IN_PROGRESS: "In Progress",
-	ISSUED: "Issued",
 };
 
 /** Mirrors the transitions the API accepts, including one-step corrections. */

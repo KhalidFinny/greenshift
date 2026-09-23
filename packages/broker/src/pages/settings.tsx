@@ -1,7 +1,6 @@
 import {
 	faBuilding,
 	faCheckCircle,
-	faClock,
 	faFileContract,
 	faInfoCircle,
 	faSave,
@@ -27,6 +26,7 @@ import {
 } from "@greenshift/ui";
 import { useEffect, useState } from "react";
 
+import { VERIFICATION_STATUS_META } from "../lib/labels";
 import { useBrokerData } from "../lib/use-broker-data";
 
 export function BrokerSettingsPage() {
@@ -106,7 +106,7 @@ export function BrokerSettingsPage() {
 						<CardHeader className="border-b border-border bg-muted/30">
 							<div className="flex flex-wrap items-center justify-between gap-2">
 								<div>
-									<CardTitle className="text-lg flex items-center gap-2">
+									<CardTitle className="flex items-center gap-2 text-lg">
 										<FontAwesomeIcon
 											icon={faShieldAlt}
 											className="text-[#03442C]"
@@ -118,24 +118,14 @@ export function BrokerSettingsPage() {
 										licensing before facilitating green bond underwriting.
 									</CardDescription>
 								</div>
-								<div>
-									{verificationDetails.status === "VERIFIED" && (
-										<Badge className="bg-emerald-700 text-white font-bold gap-1 px-3 py-1 text-sm">
-											<FontAwesomeIcon icon={faCheckCircle} /> OFFICIALLY
-											VERIFIED
-										</Badge>
-									)}
-									{verificationDetails.status === "VERIFYING" && (
-										<Badge className="bg-amber-700 text-white font-bold gap-1 px-3 py-1 text-sm">
-											<FontAwesomeIcon icon={faClock} /> VERIFYING
-										</Badge>
-									)}
-									{verificationDetails.status === "NOT_VERIFIED" && (
-										<Badge className="bg-slate-500 text-white font-bold gap-1 px-3 py-1 text-sm">
-											NOT VERIFIED
-										</Badge>
-									)}
-								</div>
+								<Badge
+									className={
+										VERIFICATION_STATUS_META[verificationDetails.status]
+											.className
+									}
+								>
+									{VERIFICATION_STATUS_META[verificationDetails.status].label}
+								</Badge>
 							</div>
 						</CardHeader>
 
@@ -231,7 +221,7 @@ export function BrokerSettingsPage() {
 											onClick={handleStartVerification}
 											type="submit"
 											disabled={isVerifying}
-											className="bg-[#03442C] text-white hover:bg-[#03442C]/90 gap-2 text-sm"
+											className="gap-2 bg-[#00712D] text-white hover:bg-[#00712D]/90"
 										>
 											{isVerifying ? (
 												<>
@@ -255,7 +245,7 @@ export function BrokerSettingsPage() {
 				<TabsContent value="profile" className="mt-4 space-y-6">
 					<Card>
 						<CardHeader>
-							<CardTitle className="text-lg flex items-center gap-2">
+							<CardTitle className="flex items-center gap-2 text-lg">
 								<FontAwesomeIcon icon={faBuilding} className="text-[#03442C]" />
 								Firm Profile & Broker Representative
 							</CardTitle>
@@ -310,7 +300,7 @@ export function BrokerSettingsPage() {
 								<div className="flex justify-end pt-2">
 									<Button
 										type="submit"
-										className="bg-[#03442C] text-white hover:bg-[#03442C]/90 gap-2 text-sm"
+										className="gap-2 bg-[#00712D] text-white hover:bg-[#00712D]/90"
 									>
 										<FontAwesomeIcon icon={faSave} />
 										Save Profile Changes
@@ -322,9 +312,9 @@ export function BrokerSettingsPage() {
 				</TabsContent>
 
 				<TabsContent value="compliance" className="mt-4 space-y-6">
-					<Card className="border-l-4 border-l-[#03442C]">
+					<Card>
 						<CardHeader>
-							<CardTitle className="text-lg flex items-center gap-2">
+							<CardTitle className="flex items-center gap-2 text-lg">
 								<FontAwesomeIcon
 									icon={faFileContract}
 									className="text-[#03442C]"
@@ -348,8 +338,8 @@ export function BrokerSettingsPage() {
 											Restricted Interaction to Client Companies
 										</p>
 										<p className="text-muted-foreground mt-0.5">
-											Brokers only interact directly with the **Client Company**
-											for document collection and bond underwriting preparation.
+											Brokers only interact directly with the Client Company for
+											document collection and bond underwriting preparation.
 											Brokers do not coordinate directly with Vendors.
 										</p>
 									</div>
@@ -365,7 +355,7 @@ export function BrokerSettingsPage() {
 											No In-App Bond Trading or Transactions
 										</p>
 										<p className="text-muted-foreground mt-0.5">
-											Brokers **DO NOT PURCHASE** or trade green bonds directly
+											Brokers do not purchase or trade green bonds directly
 											inside the GreenShift platform. Bond issuances are tracked
 											externally (External Bond Issuance Tracker).
 										</p>
@@ -383,7 +373,7 @@ export function BrokerSettingsPage() {
 										</p>
 										<p className="text-muted-foreground mt-0.5">
 											Project Risk Assessments and Monthly Monitoring Reports
-											are strictly **Read-Only** to maintain tamper-free
+											are strictly read-only to maintain tamper-free
 											transparency with external investors.
 										</p>
 									</div>

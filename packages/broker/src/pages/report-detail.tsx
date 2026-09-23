@@ -17,9 +17,11 @@ import {
 	CardHeader,
 	CardTitle,
 	EmptyState,
+	ShimmerBlock,
 } from "@greenshift/ui";
 import { Link, useParams } from "@tanstack/react-router";
 
+import { REPORT_STATUS_META } from "../lib/labels";
 import { useBrokerData } from "../lib/use-broker-data";
 
 function formatRupiah(amount: number) {
@@ -32,22 +34,37 @@ function formatRupiah(amount: number) {
 
 export function BrokerReportDetailPage() {
 	const { id } = useParams({ strict: false }) as { id?: string };
-	const { monthlyReports, isLoading } = useBrokerData();
+	const { monthlyReports, isLoading, isError, refetch } = useBrokerData();
 
 	const report = monthlyReports.find((r) => r.id === id) ?? monthlyReports[0];
 
 	if (!report) {
 		return (
-			<div className="space-y-4">
-				<Link to="/broker/monthly-reports">
-					<Button variant="ghost" size="sm" className="gap-2">
-						Back to Monthly Reports
-					</Button>
-				</Link>
-				{isLoading ? (
+			<div className="space-y-6">
+				<div className="flex items-center gap-4">
+					<Link to="/broker/monthly-reports">
+						<Button variant="outline" className="cursor-pointer font-medium">
+							Back to Monthly Reports
+						</Button>
+					</Link>
+				</div>
+				{isError ? (
+					<EmptyState
+						tone="error"
+						title="Monitoring reports did not load"
+						description="GET /api/broker/reports did not answer, so this period report could not be read."
+						action={
+							<Button variant="outline" onClick={() => void refetch()}>
+								Try again
+							</Button>
+						}
+					/>
+				) : isLoading ? (
 					<Card>
-						<CardContent className="p-8 text-center text-sm text-muted-foreground">
-							Loading the monitoring report...
+						<CardContent className="space-y-4">
+							<ShimmerBlock className="h-9 w-2/3" />
+							<ShimmerBlock className="h-5 w-1/3" />
+							<ShimmerBlock className="h-28 w-full" />
 						</CardContent>
 					</Card>
 				) : (
@@ -66,14 +83,16 @@ export function BrokerReportDetailPage() {
 		<div className="space-y-6">
 			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 				<div>
-					<Link
-						to="/broker/monthly-reports"
-						className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-2"
-					>
-						Back to Monthly Reports
+					<Link to="/broker/monthly-reports">
+						<Button
+							variant="outline"
+							className="mb-2 cursor-pointer font-medium"
+						>
+							Back to Monthly Reports
+						</Button>
 					</Link>
 					<h1 className="text-2xl font-bold">{report.projectTitle}</h1>
-					<p className="text-sm text-muted-foreground mt-0.5">
+					<p className="mt-0.5 text-sm text-muted-foreground">
 						Monthly Monitoring Report Period:{" "}
 						<span className="font-semibold text-foreground">
 							{report.period}
@@ -82,7 +101,7 @@ export function BrokerReportDetailPage() {
 				</div>
 				<div className="flex items-center gap-2">
 					<Button
-						className="bg-[#03442C] text-white hover:bg-[#03442C]/90 gap-1.5 text-sm"
+						className="gap-1.5 bg-[#00712D] text-white hover:bg-[#00712D]/90"
 						onClick={() =>
 							report.pdfExportUrl && window.location.assign(report.pdfExportUrl)
 						}
@@ -93,23 +112,16 @@ export function BrokerReportDetailPage() {
 				</div>
 			</div>
 
-			<Card className="overflow-hidden border-t-4 border-t-[#03442C]">
+			<Card className="overflow-hidden">
 				<CardHeader className="bg-muted/30 pb-4">
 					<div className="flex flex-wrap items-center justify-between gap-2">
 						<div className="flex items-center gap-2">
-							<Badge className="bg-[#03442C] text-white font-bold">
-								Report ID: {report.id}
-							</Badge>
+							<Badge variant="outline">Report ID: {report.id}</Badge>
 							<Badge
-								className={
-									report.overallStatus === "ON_TRACK"
-										? "bg-emerald-700 text-white font-bold"
-										: report.overallStatus === "ATTENTION_REQUIRED"
-											? "bg-amber-700 text-white font-bold"
-											: "bg-red-600 text-white font-bold"
-								}
+								className={REPORT_STATUS_META[report.overallStatus].className}
 							>
-								Monitoring Status: {report.overallStatus.replace(/_/g, " ")}
+								Monitoring Status:{" "}
+								{REPORT_STATUS_META[report.overallStatus].label}
 							</Badge>
 						</div>
 						<p className="text-sm text-muted-foreground">
@@ -222,7 +234,7 @@ export function BrokerReportDetailPage() {
 					<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 						<Card>
 							<CardHeader className="pb-3">
-								<CardTitle className="text-sm font-semibold flex items-center gap-2">
+								<CardTitle className="flex items-center gap-2 text-lg">
 									<FontAwesomeIcon icon={faClock} className="text-[#03442C]" />
 									Milestone Status & Field Execution
 								</CardTitle>
@@ -258,7 +270,7 @@ export function BrokerReportDetailPage() {
 
 						<Card>
 							<CardHeader className="pb-3">
-								<CardTitle className="text-sm font-semibold flex items-center gap-2">
+								<CardTitle className="flex items-center gap-2 text-lg">
 									<FontAwesomeIcon
 										icon={faShieldAlt}
 										className="text-[#03442C]"

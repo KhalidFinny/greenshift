@@ -1,7 +1,6 @@
 import {
 	faCheckCircle,
 	faFileAlt,
-	faFilter,
 	faPlus,
 	faSearch,
 	faTimesCircle,
@@ -21,6 +20,7 @@ import {
 	Input,
 	Label,
 	PaginationBar,
+	ShimmerBlock,
 	Tabs,
 	TabsContent,
 	TabsList,
@@ -28,6 +28,7 @@ import {
 	usePagedRows,
 } from "@greenshift/ui";
 import { useState } from "react";
+import { DOCUMENT_REQUEST_STATUS_META } from "../lib/labels";
 import type { BrokerDocumentRequest, DocumentCategory } from "../lib/types";
 import { useBrokerData } from "../lib/use-broker-data";
 
@@ -157,7 +158,7 @@ function GlobalCreateDocumentRequestModal({
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
-				<Button className="bg-[#03442C] text-white hover:bg-[#03442C]/90 gap-2">
+				<Button className="gap-2 bg-[#00712D] text-white hover:bg-[#00712D]/90">
 					<FontAwesomeIcon icon={faPlus} />
 					Create Document Request
 				</Button>
@@ -282,7 +283,7 @@ function GlobalCreateDocumentRequestModal({
 						</Button>
 						<Button
 							type="submit"
-							className="bg-[#03442C] text-white hover:bg-[#03442C]/90"
+							className="bg-[#00712D] text-white hover:bg-[#00712D]/90"
 						>
 							Send Document Request
 						</Button>
@@ -333,6 +334,9 @@ export function BrokerDocumentRequestsPage() {
 	const {
 		projects,
 		documentRequests,
+		isLoading,
+		isError,
+		refetch,
 		createDocumentRequest,
 		approveDocument,
 		rejectDocument,
@@ -348,20 +352,29 @@ export function BrokerDocumentRequestsPage() {
 			d.projectTitle.toLowerCase().includes(searchQuery.toLowerCase()),
 	);
 
+	if (isError) {
+		return (
+			<EmptyState
+				tone="error"
+				title="Document requests did not load"
+				description="GET /api/broker/document-requests did not answer, so no request raised for a client company could be read."
+				action={
+					<Button variant="outline" onClick={() => void refetch()}>
+						Try again
+					</Button>
+				}
+			/>
+		);
+	}
+
 	return (
 		<div className="space-y-6">
-			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-				<div>
-					<h1 className="text-2xl font-bold">Document Requests Center</h1>
-					<p className="mt-1 text-sm text-muted-foreground">
-						Request legal, financial, and technical documents from Client
-						Companies for bond underwriting requirements.
-					</p>
-				</div>
-				<GlobalCreateDocumentRequestModal
-					projects={projects}
-					onCreateRequest={createDocumentRequest}
-				/>
+			<div>
+				<h1 className="text-2xl font-bold">Document Requests Center</h1>
+				<p className="mt-1 text-sm text-muted-foreground">
+					Request legal, financial, and technical documents from Client
+					Companies for bond underwriting requirements.
+				</p>
 			</div>
 
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -377,236 +390,257 @@ export function BrokerDocumentRequestsPage() {
 						onChange={(e) => setSearchQuery(e.target.value)}
 					/>
 				</div>
-				<Button variant="outline" className="gap-2 shrink-0">
-					<FontAwesomeIcon icon={faFilter} />
-					Filter Category
-				</Button>
+				<GlobalCreateDocumentRequestModal
+					projects={projects}
+					onCreateRequest={createDocumentRequest}
+				/>
 			</div>
 
-			<Tabs defaultValue="all">
-				<TabsList className="flex w-full overflow-x-auto *:shrink-0 *:whitespace-nowrap sm:grid sm:grid-cols-4">
-					<TabsTrigger value="all">All ({filteredRequests.length})</TabsTrigger>
-					<TabsTrigger value="pending">
-						Awaiting Review (
-						{
-							filteredRequests.filter(
-								(d) => d.status === "SUBMITTED" || d.status === "UNDER_REVIEW",
-							).length
-						}
-						)
-					</TabsTrigger>
-					<TabsTrigger value="approved">
-						Approved (
-						{filteredRequests.filter((d) => d.status === "APPROVED").length})
-					</TabsTrigger>
-					<TabsTrigger value="requested">
-						Awaiting Client (
-						{filteredRequests.filter((d) => d.status === "REQUESTED").length})
-					</TabsTrigger>
-				</TabsList>
-
-				<TabsContent value="all" className="mt-6 space-y-4">
-					{filteredRequests.length === 0 && (
-						<EmptyState
-							icon={<FontAwesomeIcon icon={faFileAlt} />}
-							title="No document requests"
-							description={
-								searchQuery
-									? `No request matches "${searchQuery}". Clear the search to see every request.`
-									: "You have not asked a client company for documents yet. Use Create Document Request to collect the files underwriting needs."
+			{isLoading && documentRequests.length === 0 ? (
+				<div className="space-y-3">
+					{Array.from({ length: 3 }, (_, index) => (
+						<ShimmerBlock key={index} className="h-32 w-full" />
+					))}
+				</div>
+			) : (
+				<Tabs defaultValue="all">
+					<TabsList className="flex w-full overflow-x-auto *:shrink-0 *:whitespace-nowrap sm:grid sm:grid-cols-4">
+						<TabsTrigger value="all">
+							All ({filteredRequests.length})
+						</TabsTrigger>
+						<TabsTrigger value="pending">
+							Awaiting Review (
+							{
+								filteredRequests.filter(
+									(d) =>
+										d.status === "SUBMITTED" || d.status === "UNDER_REVIEW",
+								).length
 							}
-						/>
-					)}
-					<PagedRequestList
-						requests={filteredRequests}
-						label="Document requests"
-						renderRequest={(doc) => (
-							<Card key={doc.id}>
-								<CardContent className="p-5 space-y-3 text-sm">
-									<div className="flex flex-wrap items-center justify-between gap-2">
-										<div className="flex items-center gap-2">
-											<Badge className="bg-blue-600 text-white font-semibold">
-												{doc.category}
-											</Badge>
-											<Badge
-												className={
-													doc.status === "APPROVED"
-														? "bg-emerald-700 text-white"
-														: doc.status === "REJECTED"
-															? "bg-red-600 text-white"
-															: doc.status === "SUBMITTED"
-																? "bg-amber-700 text-white"
-																: "bg-muted text-muted-foreground"
-												}
-											>
-												Status: {doc.status}
-											</Badge>
-										</div>
-										<span className="text-muted-foreground text-sm">
-											Deadline: {doc.deadlineDate}
-										</span>
-									</div>
+							)
+						</TabsTrigger>
+						<TabsTrigger value="approved">
+							Approved (
+							{filteredRequests.filter((d) => d.status === "APPROVED").length})
+						</TabsTrigger>
+						<TabsTrigger value="requested">
+							Awaiting Client (
+							{filteredRequests.filter((d) => d.status === "REQUESTED").length})
+						</TabsTrigger>
+					</TabsList>
 
-									<div>
-										<h4 className="font-bold text-sm text-foreground">
+					<TabsContent value="all" className="mt-6 space-y-4">
+						{filteredRequests.length === 0 && (
+							<EmptyState
+								icon={<FontAwesomeIcon icon={faFileAlt} />}
+								title="No document requests"
+								description={
+									searchQuery
+										? `No request matches "${searchQuery}". Clear the search to see every request.`
+										: "You have not asked a client company for documents yet. Use Create Document Request to collect the files underwriting needs."
+								}
+							/>
+						)}
+						<PagedRequestList
+							requests={filteredRequests}
+							label="Document requests"
+							renderRequest={(doc) => (
+								<Card key={doc.id}>
+									<CardContent className="p-5 space-y-3 text-sm">
+										<div className="flex flex-wrap items-center justify-between gap-2">
+											<div className="flex items-center gap-2">
+												<Badge variant="outline">{doc.category}</Badge>
+												<Badge
+													className={
+														DOCUMENT_REQUEST_STATUS_META[doc.status].className
+													}
+												>
+													{DOCUMENT_REQUEST_STATUS_META[doc.status].label}
+												</Badge>
+											</div>
+											<span className="text-muted-foreground text-sm">
+												Deadline: {doc.deadlineDate}
+											</span>
+										</div>
+
+										<div>
+											<h4 className="font-bold text-sm text-foreground">
+												{doc.documentTypeName}
+											</h4>
+											<p className="text-muted-foreground mt-0.5">
+												Project: {doc.projectTitle} • Client: {doc.companyName}
+											</p>
+											<p className="text-muted-foreground mt-1">
+												Reason: {doc.reason}
+											</p>
+										</div>
+
+										{doc.submittedFileName && (
+											<div className="rounded-lg bg-emerald-50 p-3 flex flex-wrap items-center justify-between gap-3 border border-emerald-200">
+												<span className="flex items-center gap-2 font-semibold text-emerald-950">
+													<FontAwesomeIcon
+														icon={faFileAlt}
+														className="text-emerald-700 text-sm"
+													/>
+													File Uploaded: {doc.submittedFileName} (
+													{doc.submittedAt})
+												</span>
+
+												{doc.status === "SUBMITTED" && (
+													<div className="flex items-center gap-2">
+														<Button
+															size="sm"
+															variant="outline"
+															onClick={() => startReview(doc.id)}
+															className="text-sm gap-1.5"
+														>
+															<FontAwesomeIcon icon={faFileAlt} />
+															Start Review
+														</Button>
+													</div>
+												)}
+												{(doc.status === "SUBMITTED" ||
+													doc.status === "UNDER_REVIEW") && (
+													<div className="flex items-center gap-2">
+														<RejectDocumentModal
+															request={doc}
+															onReject={rejectDocument}
+														/>
+														<Button
+															size="sm"
+															onClick={() => approveDocument(doc.id)}
+															className="bg-emerald-700 text-white hover:bg-emerald-700 text-sm gap-1.5"
+														>
+															<FontAwesomeIcon icon={faCheckCircle} />
+															Approve Document
+														</Button>
+													</div>
+												)}
+											</div>
+										)}
+
+										{doc.rejectionReason && (
+											<div className="rounded-lg bg-red-50 p-3 text-red-950 border border-red-200">
+												<p className="font-bold">Broker Rejection Reason:</p>
+												<p className="mt-0.5">{doc.rejectionReason}</p>
+											</div>
+										)}
+									</CardContent>
+								</Card>
+							)}
+						/>
+					</TabsContent>
+
+					<TabsContent value="pending" className="mt-6 space-y-4">
+						{filteredRequests.filter(
+							(d) => d.status === "SUBMITTED" || d.status === "UNDER_REVIEW",
+						).length === 0 && (
+							<EmptyState
+								icon={<FontAwesomeIcon icon={faFileAlt} />}
+								title="No documents awaiting review"
+								description="Nothing has been uploaded for you to review. A request moves here once the client company submits the file."
+							/>
+						)}
+						<PagedRequestList
+							requests={filteredRequests.filter(
+								(d) => d.status === "SUBMITTED" || d.status === "UNDER_REVIEW",
+							)}
+							label="Documents awaiting review"
+							renderRequest={(doc) => (
+								<Card key={doc.id}>
+									<CardContent className="p-5 space-y-3 text-sm">
+										<h4 className="font-bold text-sm">
 											{doc.documentTypeName}
 										</h4>
-										<p className="text-muted-foreground mt-0.5">
-											Project: {doc.projectTitle} • Client: {doc.companyName}
-										</p>
-										<p className="text-muted-foreground mt-1">
-											Reason: {doc.reason}
-										</p>
-									</div>
-
-									{doc.submittedFileName && (
-										<div className="rounded-lg bg-emerald-50 p-3 flex flex-wrap items-center justify-between gap-3 border border-emerald-200">
-											<span className="flex items-center gap-2 font-semibold text-emerald-950">
-												<FontAwesomeIcon
-													icon={faFileAlt}
-													className="text-emerald-700 text-sm"
-												/>
-												File Uploaded: {doc.submittedFileName} (
-												{doc.submittedAt})
+										<div className="flex items-center justify-between pt-2 border-t border-border">
+											<span className="flex items-center gap-1.5 font-semibold text-emerald-700">
+												<FontAwesomeIcon icon={faFileAlt} />
+												{doc.submittedFileName}
 											</span>
-
-											{doc.status === "SUBMITTED" && (
-												<div className="flex items-center gap-2">
-													<Button
-														size="sm"
-														variant="outline"
-														onClick={() => startReview(doc.id)}
-														className="text-sm gap-1.5"
-													>
-														<FontAwesomeIcon icon={faFileAlt} />
-														Start Review
-													</Button>
-												</div>
-											)}
-											{(doc.status === "SUBMITTED" ||
-												doc.status === "UNDER_REVIEW") && (
-												<div className="flex items-center gap-2">
-													<RejectDocumentModal
-														request={doc}
-														onReject={rejectDocument}
-													/>
-													<Button
-														size="sm"
-														onClick={() => approveDocument(doc.id)}
-														className="bg-emerald-700 text-white hover:bg-emerald-700 text-sm gap-1.5"
-													>
-														<FontAwesomeIcon icon={faCheckCircle} />
-														Approve Document
-													</Button>
-												</div>
-											)}
+											<Button
+												size="sm"
+												onClick={() => approveDocument(doc.id)}
+												className="bg-emerald-700 text-white hover:bg-emerald-700 text-sm"
+											>
+												Approve Document
+											</Button>
 										</div>
-									)}
-
-									{doc.rejectionReason && (
-										<div className="rounded-lg bg-red-50 p-3 text-red-950 border border-red-200">
-											<p className="font-bold">Broker Rejection Reason:</p>
-											<p className="mt-0.5">{doc.rejectionReason}</p>
-										</div>
-									)}
-								</CardContent>
-							</Card>
-						)}
-					/>
-				</TabsContent>
-
-				<TabsContent value="pending" className="mt-6 space-y-4">
-					{filteredRequests.filter(
-						(d) => d.status === "SUBMITTED" || d.status === "UNDER_REVIEW",
-					).length === 0 && (
-						<EmptyState
-							icon={<FontAwesomeIcon icon={faFileAlt} />}
-							title="No documents awaiting review"
-							description="Nothing has been uploaded for you to review. A request moves here once the client company submits the file."
+									</CardContent>
+								</Card>
+							)}
 						/>
-					)}
-					<PagedRequestList
-						requests={filteredRequests.filter(
-							(d) => d.status === "SUBMITTED" || d.status === "UNDER_REVIEW",
+					</TabsContent>
+
+					<TabsContent value="approved" className="mt-6 space-y-4">
+						{filteredRequests.filter((d) => d.status === "APPROVED").length ===
+							0 && (
+							<EmptyState
+								icon={<FontAwesomeIcon icon={faCheckCircle} />}
+								title="No approved documents"
+								description="Documents you approve are archived here with the client and project they belong to."
+							/>
 						)}
-						label="Documents awaiting review"
-						renderRequest={(doc) => (
-							<Card key={doc.id}>
-								<CardContent className="p-5 space-y-3 text-sm">
-									<h4 className="font-bold text-sm">{doc.documentTypeName}</h4>
-									<div className="flex items-center justify-between pt-2 border-t border-border">
-										<span className="flex items-center gap-1.5 font-semibold text-emerald-700">
-											<FontAwesomeIcon icon={faFileAlt} />
-											{doc.submittedFileName}
-										</span>
-										<Button
-											size="sm"
-											onClick={() => approveDocument(doc.id)}
-											className="bg-emerald-700 text-white hover:bg-emerald-700 text-sm"
+						<PagedRequestList
+							requests={filteredRequests.filter((d) => d.status === "APPROVED")}
+							label="Approved documents"
+							renderRequest={(doc) => (
+								<Card key={doc.id}>
+									<CardContent className="p-5 text-sm space-y-1">
+										<Badge
+											className={
+												DOCUMENT_REQUEST_STATUS_META[doc.status].className
+											}
 										>
-											Approve Document
-										</Button>
-									</div>
-								</CardContent>
-							</Card>
-						)}
-					/>
-				</TabsContent>
-
-				<TabsContent value="approved" className="mt-6 space-y-4">
-					{filteredRequests.filter((d) => d.status === "APPROVED").length ===
-						0 && (
-						<EmptyState
-							icon={<FontAwesomeIcon icon={faCheckCircle} />}
-							title="No approved documents"
-							description="Documents you approve are archived here with the client and project they belong to."
+											{DOCUMENT_REQUEST_STATUS_META[doc.status].label}
+										</Badge>
+										<h4 className="font-bold text-sm">
+											{doc.documentTypeName}
+										</h4>
+										<p className="text-muted-foreground">
+											{doc.submittedFileName}
+										</p>
+									</CardContent>
+								</Card>
+							)}
 						/>
-					)}
-					<PagedRequestList
-						requests={filteredRequests.filter((d) => d.status === "APPROVED")}
-						label="Approved documents"
-						renderRequest={(doc) => (
-							<Card key={doc.id}>
-								<CardContent className="p-5 text-sm space-y-1">
-									<Badge className="bg-emerald-700 text-white mb-1">
-										Approved
-									</Badge>
-									<h4 className="font-bold text-sm">{doc.documentTypeName}</h4>
-									<p className="text-muted-foreground">
-										{doc.submittedFileName}
-									</p>
-								</CardContent>
-							</Card>
-						)}
-					/>
-				</TabsContent>
+					</TabsContent>
 
-				<TabsContent value="requested" className="mt-6 space-y-4">
-					{filteredRequests.filter((d) => d.status === "REQUESTED").length ===
-						0 && (
-						<EmptyState
-							icon={<FontAwesomeIcon icon={faFileAlt} />}
-							title="No requests awaiting a client"
-							description="Requests you have sent that the client has not answered yet are listed here with their submission deadline."
-						/>
-					)}
-					<PagedRequestList
-						requests={filteredRequests.filter((d) => d.status === "REQUESTED")}
-						label="Requests awaiting client"
-						renderRequest={(doc) => (
-							<Card key={doc.id}>
-								<CardContent className="p-5 text-sm space-y-1">
-									<Badge variant="outline">Awaiting Client</Badge>
-									<h4 className="font-bold text-sm">{doc.documentTypeName}</h4>
-									<p className="text-muted-foreground">
-										Deadline: {doc.deadlineDate}
-									</p>
-								</CardContent>
-							</Card>
+					<TabsContent value="requested" className="mt-6 space-y-4">
+						{filteredRequests.filter((d) => d.status === "REQUESTED").length ===
+							0 && (
+							<EmptyState
+								icon={<FontAwesomeIcon icon={faFileAlt} />}
+								title="No requests awaiting a client"
+								description="Requests you have sent that the client has not answered yet are listed here with their submission deadline."
+							/>
 						)}
-					/>
-				</TabsContent>
-			</Tabs>
+						<PagedRequestList
+							requests={filteredRequests.filter(
+								(d) => d.status === "REQUESTED",
+							)}
+							label="Requests awaiting client"
+							renderRequest={(doc) => (
+								<Card key={doc.id}>
+									<CardContent className="p-5 text-sm space-y-1">
+										<Badge
+											className={
+												DOCUMENT_REQUEST_STATUS_META[doc.status].className
+											}
+										>
+											{DOCUMENT_REQUEST_STATUS_META[doc.status].label}
+										</Badge>
+										<h4 className="font-bold text-sm">
+											{doc.documentTypeName}
+										</h4>
+										<p className="text-muted-foreground">
+											Deadline: {doc.deadlineDate}
+										</p>
+									</CardContent>
+								</Card>
+							)}
+						/>
+					</TabsContent>
+				</Tabs>
+			)}
 		</div>
 	);
 }

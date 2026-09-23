@@ -302,6 +302,19 @@ export function useBrokerData() {
 			profileQuery.isLoading ||
 			projectsQuery.isLoading ||
 			reportsQuery.isLoading,
+		/** The dashboard reads the request and notification queues on their own, so
+		 * a slow feed shimmers without holding back the loaded figures. */
+		isLoadingDocumentRequests: requestsQuery.isLoading,
+		isLoadingNotifications: notificationsQuery.isLoading,
+		/** Any of the five reads failing leaves the page's data incomplete, so the
+		 * error state covers them together and offers one retry. */
+		isError:
+			profileQuery.isError ||
+			projectsQuery.isError ||
+			requestsQuery.isError ||
+			reportsQuery.isError ||
+			notificationsQuery.isError,
+		refetch: () => queryClient.refetchQueries({ queryKey: ["broker"] }),
 		verification,
 		profile: profileDetails,
 		projects,

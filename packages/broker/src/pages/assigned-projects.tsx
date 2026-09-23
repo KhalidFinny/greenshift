@@ -1,7 +1,6 @@
 import {
 	faBuilding,
 	faFileAlt,
-	faFilter,
 	faInfoCircle,
 	faMapMarkerAlt,
 	faSearch,
@@ -25,6 +24,7 @@ import {
 	Input,
 	Label,
 	PaginationBar,
+	ShimmerBlock,
 	Tabs,
 	TabsContent,
 	TabsList,
@@ -33,7 +33,8 @@ import {
 } from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { BOND_STATUS_LABELS, workflowLabel } from "../lib/lifecycle";
+import { BOND_STATUS_META } from "../lib/labels";
+import { workflowLabel } from "../lib/lifecycle";
 import type { BrokerAssignedProject } from "../lib/types";
 import { useBrokerData } from "../lib/use-broker-data";
 
@@ -208,7 +209,7 @@ function RequestInformationModal({
 						<Button
 							type="submit"
 							disabled={busy}
-							className="bg-[#03442C] text-white hover:bg-[#03442C]/90"
+							className="bg-[#00712D] text-white hover:bg-[#00712D]/90"
 						>
 							Send Request
 						</Button>
@@ -240,7 +241,7 @@ function AssignedProjectCard({
 		<Card className="flex flex-col justify-between">
 			<CardHeader className="space-y-3 pb-3">
 				<div className="flex flex-wrap items-center gap-2">
-					<Badge className="bg-[#03442C] text-white">
+					<Badge className="bg-[#00712D] text-white">
 						{workflowLabel(project.workflowStatus)}
 					</Badge>
 					<Badge
@@ -293,7 +294,7 @@ function AssignedProjectCard({
 
 				<div className="flex items-center justify-between text-muted-foreground">
 					<span className="flex items-center gap-1">
-						<FontAwesomeIcon icon={faMapMarkerAlt} className="text-red-500" />
+						<FontAwesomeIcon icon={faMapMarkerAlt} />
 						{project.location || "Location not recorded"}
 					</span>
 					<span>
@@ -308,8 +309,7 @@ function AssignedProjectCard({
 					<span>
 						Bond:{" "}
 						<strong className="text-foreground">
-							{BOND_STATUS_LABELS[project.bondInfo.status] ??
-								project.bondInfo.status}
+							{BOND_STATUS_META[project.bondInfo.status].label}
 						</strong>
 					</span>
 					<span className="flex items-center gap-1">
@@ -352,7 +352,7 @@ function AssignedProjectCard({
 						</div>
 						<div className="flex flex-wrap items-center justify-between gap-2">
 							<DeclineAssignmentModal project={project} onDecline={onDecline} />
-							<div className="flex items-center gap-2">
+							<div className="flex flex-wrap items-center gap-2">
 								<RequestInformationModal
 									project={project}
 									onRequest={onRequestInformation}
@@ -360,7 +360,7 @@ function AssignedProjectCard({
 								<Button
 									size="sm"
 									onClick={() => onAccept(project.id)}
-									className="bg-[#03442C] text-white hover:bg-[#03442C]/90 text-sm"
+									className="bg-[#00712D] text-white hover:bg-[#00712D]/90"
 								>
 									Accept Assignment
 								</Button>
@@ -377,7 +377,7 @@ function AssignedProjectCard({
 						<Link to="/broker/projects/$id" params={{ id: project.id }}>
 							<Button
 								size="sm"
-								className="w-full bg-[#03442C] text-white hover:bg-[#03442C]/90"
+								className="w-full bg-[#00712D] text-white hover:bg-[#00712D]/90"
 							>
 								Project Detail
 							</Button>
@@ -459,8 +459,15 @@ function PagedProjectGrid({
 }
 
 export function BrokerAssignedProjectsPage() {
-	const { projects, acceptAssignment, declineAssignment, requestInformation } =
-		useBrokerData();
+	const {
+		projects,
+		isLoading,
+		isError,
+		refetch,
+		acceptAssignment,
+		declineAssignment,
+		requestInformation,
+	} = useBrokerData();
 	const [searchQuery, setSearchQuery] = useState("");
 
 	const filteredProjects = projects.filter(
@@ -480,101 +487,114 @@ export function BrokerAssignedProjectsPage() {
 	const bond = inStage("READY_FOR_BOND_ISSUANCE", "BOND_ISSUANCE");
 	const monitoring = inStage("MONITORING", "COMPLETED");
 
+	if (isError) {
+		return (
+			<EmptyState
+				tone="error"
+				title="Assigned projects did not load"
+				description="GET /api/broker/projects did not answer, so no assignment allocated to your brokerage could be read."
+				action={
+					<Button variant="outline" onClick={() => void refetch()}>
+						Try again
+					</Button>
+				}
+			/>
+		);
+	}
+
 	return (
 		<div className="space-y-6">
-			<div>
-				<h1 className="text-2xl font-bold">Assigned Verified Projects</h1>
-				<p className="mt-1 text-sm text-muted-foreground">
-					LVV GRK verified green projects allocated by client companies for
-					external green bond underwriting and preparation.
-				</p>
+			<div className="relative w-full sm:max-w-md">
+				<FontAwesomeIcon
+					icon={faSearch}
+					className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground"
+				/>
+				<Input
+					placeholder="Search by project name, client company, or vendor..."
+					className="pl-9"
+					value={searchQuery}
+					onChange={(e) => setSearchQuery(e.target.value)}
+				/>
 			</div>
 
-			<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-				<div className="relative flex-1">
-					<FontAwesomeIcon
-						icon={faSearch}
-						className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground"
-					/>
-					<Input
-						placeholder="Search by project name, client company, or vendor..."
-						className="pl-9"
-						value={searchQuery}
-						onChange={(e) => setSearchQuery(e.target.value)}
-					/>
+			{isLoading ? (
+				<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+					{Array.from({ length: 3 }, (_, index) => (
+						<ShimmerBlock key={index} className="h-80 w-full" />
+					))}
 				</div>
-				<Button variant="outline" className="gap-2 shrink-0">
-					<FontAwesomeIcon icon={faFilter} />
-					Filter Workflow Status
-				</Button>
-			</div>
+			) : (
+				<Tabs defaultValue="all">
+					<TabsList className="flex w-full overflow-x-auto *:shrink-0 *:whitespace-nowrap sm:grid sm:grid-cols-5">
+						<TabsTrigger value="all">
+							All ({filteredProjects.length})
+						</TabsTrigger>
+						<TabsTrigger value="collection">
+							Assignment ({collection.length})
+						</TabsTrigger>
+						<TabsTrigger value="under_review">
+							Review ({review.length})
+						</TabsTrigger>
+						<TabsTrigger value="bond_issuance">
+							Bond ({bond.length})
+						</TabsTrigger>
+						<TabsTrigger value="monitoring">
+							Monitoring ({monitoring.length})
+						</TabsTrigger>
+					</TabsList>
 
-			<Tabs defaultValue="all">
-				<TabsList className="flex w-full overflow-x-auto *:shrink-0 *:whitespace-nowrap sm:grid sm:grid-cols-5">
-					<TabsTrigger value="all">All ({filteredProjects.length})</TabsTrigger>
-					<TabsTrigger value="collection">
-						Assignment ({collection.length})
-					</TabsTrigger>
-					<TabsTrigger value="under_review">
-						Review ({review.length})
-					</TabsTrigger>
-					<TabsTrigger value="bond_issuance">Bond ({bond.length})</TabsTrigger>
-					<TabsTrigger value="monitoring">
-						Monitoring ({monitoring.length})
-					</TabsTrigger>
-				</TabsList>
-
-				<TabsContent value="all" className="mt-6">
-					<PagedProjectGrid
-						items={filteredProjects}
-						viewLabel="assigned to you"
-						searchQuery={searchQuery}
-						onAccept={acceptAssignment}
-						onDecline={declineAssignment}
-						onRequestInformation={requestInformation}
-					/>
-				</TabsContent>
-				<TabsContent value="collection" className="mt-6">
-					<PagedProjectGrid
-						items={collection}
-						viewLabel="in the assignment stage"
-						searchQuery={searchQuery}
-						onAccept={acceptAssignment}
-						onDecline={declineAssignment}
-						onRequestInformation={requestInformation}
-					/>
-				</TabsContent>
-				<TabsContent value="under_review" className="mt-6">
-					<PagedProjectGrid
-						items={review}
-						viewLabel="in the review stage"
-						searchQuery={searchQuery}
-						onAccept={acceptAssignment}
-						onDecline={declineAssignment}
-						onRequestInformation={requestInformation}
-					/>
-				</TabsContent>
-				<TabsContent value="bond_issuance" className="mt-6">
-					<PagedProjectGrid
-						items={bond}
-						viewLabel="in bond issuance"
-						searchQuery={searchQuery}
-						onAccept={acceptAssignment}
-						onDecline={declineAssignment}
-						onRequestInformation={requestInformation}
-					/>
-				</TabsContent>
-				<TabsContent value="monitoring" className="mt-6">
-					<PagedProjectGrid
-						items={monitoring}
-						viewLabel="under monitoring"
-						searchQuery={searchQuery}
-						onAccept={acceptAssignment}
-						onDecline={declineAssignment}
-						onRequestInformation={requestInformation}
-					/>
-				</TabsContent>
-			</Tabs>
+					<TabsContent value="all" className="mt-6">
+						<PagedProjectGrid
+							items={filteredProjects}
+							viewLabel="assigned to you"
+							searchQuery={searchQuery}
+							onAccept={acceptAssignment}
+							onDecline={declineAssignment}
+							onRequestInformation={requestInformation}
+						/>
+					</TabsContent>
+					<TabsContent value="collection" className="mt-6">
+						<PagedProjectGrid
+							items={collection}
+							viewLabel="in the assignment stage"
+							searchQuery={searchQuery}
+							onAccept={acceptAssignment}
+							onDecline={declineAssignment}
+							onRequestInformation={requestInformation}
+						/>
+					</TabsContent>
+					<TabsContent value="under_review" className="mt-6">
+						<PagedProjectGrid
+							items={review}
+							viewLabel="in the review stage"
+							searchQuery={searchQuery}
+							onAccept={acceptAssignment}
+							onDecline={declineAssignment}
+							onRequestInformation={requestInformation}
+						/>
+					</TabsContent>
+					<TabsContent value="bond_issuance" className="mt-6">
+						<PagedProjectGrid
+							items={bond}
+							viewLabel="in bond issuance"
+							searchQuery={searchQuery}
+							onAccept={acceptAssignment}
+							onDecline={declineAssignment}
+							onRequestInformation={requestInformation}
+						/>
+					</TabsContent>
+					<TabsContent value="monitoring" className="mt-6">
+						<PagedProjectGrid
+							items={monitoring}
+							viewLabel="under monitoring"
+							searchQuery={searchQuery}
+							onAccept={acceptAssignment}
+							onDecline={declineAssignment}
+							onRequestInformation={requestInformation}
+						/>
+					</TabsContent>
+				</Tabs>
+			)}
 		</div>
 	);
 }
