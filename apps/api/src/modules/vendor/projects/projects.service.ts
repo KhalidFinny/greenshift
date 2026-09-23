@@ -11,7 +11,6 @@ import {
 } from "../vendor.shared";
 import * as repository from "./projects.repository";
 
-// ── projects (procurement market) ─────────────────────────
 export async function listMarketProjects(
 	db: GreenShiftDb,
 	userId: number,
@@ -93,10 +92,8 @@ export async function getMarketProject(
 			!existing;
 	}
 
-	// The blueprint is written at LVV verification, before the tender opens, so
-	// a bidder reads the funding case and the emission targets the project was
-	// cleared on. It stays hidden until it has been validated: a draft is the
-	// company's own working document.
+	// The blueprint is written at LVV verification, before the tender opens, so a
+	// bidder reads the funding case it was cleared on; it stays hidden until validated.
 	const blueprint =
 		row.blueprint &&
 		(row.blueprint.status === "validated" ||

@@ -43,8 +43,14 @@ const STATUS_META: Record<string, { label: string; className: string }> = {
 
 export function VendorSettingsPage() {
 	const { user } = useAuth();
-	const { verification, saveVerificationDetails, profile, saveProfile } =
-		useVendorData();
+	const {
+		verification,
+		saveVerificationDetails,
+		profile,
+		saveProfile,
+		uploadCertificate,
+		uploadingCertificate,
+	} = useVendorData();
 
 	const status = STATUS_META[verification.status] ?? STATUS_META.NOT_VERIFIED;
 
@@ -82,6 +88,7 @@ export function VendorSettingsPage() {
 						description={profile?.description ?? undefined}
 						serviceCategory={profile?.serviceCategory}
 						location={profile?.location}
+						tdp={profile?.tdp}
 						onSave={saveProfile}
 					/>
 				</TabsContent>
@@ -90,6 +97,8 @@ export function VendorSettingsPage() {
 					<VerificationStatusCard
 						verification={verification}
 						onSave={(nib, npwp) => saveVerificationDetails({ nib, npwp })}
+						onUploadCertificate={uploadCertificate}
+						uploading={uploadingCertificate}
 					/>
 				</TabsContent>
 

@@ -1,9 +1,6 @@
 import type { ProposalAnnotation } from "../contracts";
 
-/**
- * How many marks one revision round may carry on a proposal. A page of a
- * proposal does not need more than this to say what has to change.
- */
+/** How many marks one revision round may carry on a proposal. */
 const MAX_ANNOTATIONS = 40;
 
 /** A 0-1 fraction of the proposal page, or null when it is not one. */
@@ -12,14 +9,8 @@ function fraction(value: unknown): number | null {
 	return Math.min(1, Math.max(0, value));
 }
 
-/**
- * The marks a company drew on a proposal, read back as stored.
- *
- * Both sides of a revision draw these — the company over the document it is
- * asking about, the vendor over the document it must answer — so a mark that is
- * not a well-formed box on the page is dropped rather than stored: the vendor
- * would otherwise see a mark the company never made.
- */
+// The marks a company drew on a proposal, read back as stored. Both sides of a
+// revision draw them, so a malformed box is dropped rather than stored.
 export function readAnnotations(value: unknown): ProposalAnnotation[] {
 	if (!Array.isArray(value)) return [];
 

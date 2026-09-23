@@ -1,8 +1,5 @@
-/* The draft's wire format: the blocks an autosave sends, the values a resume
- * seeds back into the form, and the files the steps list. Kept out of the views
- * so the shell builds one payload and one resume seed, and the field names the
- * API expects appear in exactly one file.
- */
+/* The draft's wire format: the autosave blocks, the resume values and the file lists. Kept out of
+ * the views so the field names the API expects appear in exactly one file. */
 
 import type {
 	BusinessDraftDocument,
@@ -47,11 +44,8 @@ function formatField(value: number): string {
 	return formatId(value, Number.isInteger(value) ? 0 : 2);
 }
 
-/**
- * The Step 1 block in the wire names the API uses. Every key of the step is
- * present: a blank string and an unparseable number go as `null`, which the
- * server's partial merge reads as cleared rather than rejecting.
- */
+/** The Step 1 block in the API's wire names; every key of the step is present, and a blank string
+ * or unparseable number goes as `null`, which the server's partial merge reads as cleared. */
 export function step1Patch(values: WizardValues): BusinessStep1Patch {
 	return {
 		namaProyek: orNull(values.namaProyek),
@@ -90,10 +84,8 @@ export function step3Patch(values: WizardValues): BusinessStep3Patch {
 	};
 }
 
-/**
- * The stored draft in the shape the form holds it: numbers come back through
- * `formatField`, so the number shown is the number the user typed.
- */
+/** The stored draft in the form's shape; numbers return through `formatField`, so the value shown
+ * is the one the user typed. */
 export function resumeValues(resume: DraftResume): WizardValues {
 	const step1 = resume.step1 ?? {};
 	const step2 = resume.step2 ?? {};
@@ -122,13 +114,8 @@ export function resumeValues(resume: DraftResume): WizardValues {
 	};
 }
 
-/**
- * The draft's files in the shape the steps list them. The stored blocks hold
- * ids only, so the names and sizes come from the resume's own document list:
- * without it a resumed step counts files it cannot name. Step 1 and Step 3 hold
- * one file per slot, so the last upload to a slot is the one their checklist
- * shows; Step 2 is an ordered list, so its files are read by id.
- */
+/** The draft's files as the steps list them: the blocks hold ids only, so names and sizes come
+ * from the document list. Steps 1/3 keep the last upload per slot; Step 2 is read by id. */
 export function resumeFiles(
 	documents: BusinessDraftDocument[],
 	step2FileIds: string[],

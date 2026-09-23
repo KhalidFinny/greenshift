@@ -7,11 +7,8 @@ import { Input } from "./ui/input";
 
 const ACCEPT = avatarLimits.mimeTypes.join(",");
 
-/**
- * The account picture, editable. Files are checked against the same limits the
- * API enforces before anything is sent, and the router is invalidated after a
- * change so the shell avatar picks the new picture up.
- */
+/** The account picture, editable. Files are checked against the API's own limits
+ * before anything is sent; the router is invalidated so the shell avatar updates. */
 export function AccountPhotoCard({ user }: { user: AuthUser }) {
 	const router = useRouter();
 	const inputRef = useRef<HTMLInputElement>(null);

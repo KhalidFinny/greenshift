@@ -15,7 +15,7 @@ Cloudflare Worker (src/server.ts)
   |-- /api/*        -> Hono app (apps/api)
   |-- everything else -> TanStack Start SSR (src/routes)
   |
-Bindings: D1 (DB) | KV (KV) | R2 (R2)
+Bindings: D1 (DB) | KV (KV) | R2 (R2) | Workers AI (AI)
 ```
 
 The Worker entry (`src/server.ts`) routes by pathname: `/api` and `/api/*` go to the Hono application,
@@ -36,20 +36,21 @@ packages/
   admin/          Admin dashboard
   investor/       Public bond catalog
 src/              Web app: TanStack Start routes, router, Worker entry
-docs/             Role specifications (broker, vendor)
-scripts/          Demo-user seeder (db:setup) and seed-fixture generator
+docs/             Role specifications, ADRs, glossary
+scripts/          Demo accounts (accounts.ts) and the seed-fixture generator (seed.ts)
 ```
 
 | Role | Entry route | Package | Data source |
 |---|---|---|---|
-| `business` | `/business` | `packages/business` | `/api/business/*` (submission wizard and drafts, projects, risk, reading, forecast, matchmaking, procurement, notifications, profile). |
+| `business` | `/business` | `packages/business` | `/api/business/*` (own verification, submission wizard and drafts, projects, documents, risk, reading, forecast, matchmaking, procurement, notifications, profile). |
 | `vendor` | `/vendor` | `packages/vendor` | `/api/vendor/*` (profile, opportunities, proposals, negotiations, notifications, leaderboard, portfolio, milestones, MRV reports). |
 | `broker` | `/broker` | `packages/broker` | `/api/broker/*` (assigned projects, document requests, monthly reports with PDF export, notifications, profile). |
 | `admin` | `/admin` | `packages/admin` | `/api/admin/*` plus `GET /api/health` for the binding-status card. Every figure the console renders comes from the API. |
 | `investor` | `/bonds` | `packages/investor` | `GET /api/investor/market` (D1 only; the catalog renders an empty state when nothing is published). |
 
 `roleHome` and `roleNav` in `packages/core/src/auth/index.ts` are the single source of truth for a role's home
-route and sidebar; `requireRole` uses them for redirects.
+route and sidebar; `requireRole` uses them for redirects. The same file holds `requireVerifiedCompany`, the
+client-side mirror of the company gate described in § 5.
 
 Import rules, enforced by convention and folder discipline:
 
@@ -69,13 +70,15 @@ import contract without the runtime cost.
 ```
 apps/api/src/
   index.ts          app assembly: error/not-found handlers and the module mounts
-  env.ts            Worker bindings (DB, KV, R2)
+  env.ts            Worker bindings (DB, KV, R2, AI)
   contracts.ts      the shared request/response contract the frontend imports
   db/               Drizzle instance and schema
   lib/              cross-cutting infrastructure: session, password, csrf, authz, rate-limit,
-                    http, format, mutation-limit, pdf
+                    mutation-limit, http, document-upload, response, request-logger, annotations,
+                    format, pdf
   modules/
-    <module>/                 one module per role: auth, investor, vendor, broker, admin, health
+    <module>/                 one module per surface: auth, account, business, vendor, broker,
+                              admin, investor, health
       <module>.routes.ts      module router: shared middleware (session, role, CSRF) and feature mounts
       <module>.shared.ts      helpers used by more than one feature of the module
       <feature>/
@@ -84,17 +87,19 @@ apps/api/src/
         <feature>.repository.ts  all Drizzle access for the feature
 ```
 
-A feature only gets a `.service.ts` when it holds rules beyond reading and shaping data — there are no
+A feature only gets a `.service.ts` when it holds rules beyond reading and shaping data: there are no
 pass-through layers. Route handlers never query Drizzle directly, and repositories never touch Hono contexts.
 
 ## 3. Request lifecycle
 
 1. `src/server.ts` receives the request and picks the API or SSR handler.
 2. For SSR, the root route `beforeLoad` calls the `getSessionFn` server function, which reads the session
-   cookie and resolves the user from KV with a fresh D1 lookup of the role.
+   cookie, resolves the session from KV and re-reads the user row from D1, so the role is never stale.
 3. `context.user` is available to the router; guards (`requireRole`) redirect unauthenticated users to
    `/login` and wrong-role users to their role home.
 4. Role layout routes (`src/routes/_auth.<role>.*`) render the matching package.
+5. A business account that is not verified is sent to `/business/verification` instead, by
+   `requireVerifiedCompany` in the business layout route (`src/routes/_auth.business.tsx`).
 
 ## 4. Authentication and authorization
 
@@ -113,7 +118,47 @@ pass-through layers. Route handlers never query Drizzle directly, and repositori
 - **Step-up**: sensitive admin mutations require a recent re-authentication and return `428 STEP_UP_REQUIRED`
   when it is missing.
 
-## 5. Security
+## 5. Account verification
+
+Account gates sit in front of the work, and they work differently.
+
+**Company: self-verifying.** A `business` account files a pack and the platform reads it.
+
+- The details it confirms go through `PUT /api/business/verification`, together with its legal identity: NIB
+  and NPWP.
+- Two certificates, one file per slot: `akta` (Deed of incorporation, Akta Pendirian) and `siup` (Trading
+  licence), defined by `companyDocumentSlots` and `companyDocumentLabels` in `apps/api/src/contracts.ts`.
+  Files are PDF, PNG, JPG or WebP, 10 MB at most, stored in R2.
+- `POST /api/business/verification/submit` refuses while anything is missing, then scans every filed
+  certificate (`apps/api/src/modules/business/verification/document-scan.service.ts`). `AI.toMarkdown`
+  converts the file to text and an instruct model reports the document type, the company name and the
+  registration number the document states. The model only reads: the comparison against the account's own
+  name, NIB and NPWP happens in code, so every verdict traces back to words the document contains.
+- Outcomes: every certificate reads and matches, so the account verifies itself; a mismatch rejects the filing
+  with the reading; an unreadable file asks for a clearer scan, three attempts, then the account goes to an
+  administrator. An administrator can also verify or revoke by hand, and reads the filed files through
+  `GET /api/admin/users/:id/verification` and `GET /api/admin/users/:id/verification/documents/:slot`.
+
+`requireVerifiedCompany` in `apps/api/src/lib/authz.ts` answers `403 COMPANY_NOT_VERIFIED` for every business
+endpoint mounted after it, and `business.routes.ts` mounts `verificationRoutes` before the gate, so the
+verification step is the only work an unverified company can do. The router mirrors the gate in
+`src/routes/_auth.business.tsx`.
+
+**Vendor: reviewed by an administrator.** A vendor files its legal identity (NIB, NPWP, TDP) and one industry
+certificate, an ESCO licence or an ISO energy-management certificate (`vendorCertificateLabel` in
+`contracts.ts`), held on the vendor profile with the scan's reading. The scan runs on upload and only reads the
+document; the verdict stays with the administrator. The certificate endpoints are declared in
+`apiRoutes` as `vendorCertificate` and `vendorCertificateFile` and implemented in
+`apps/api/src/modules/vendor/profile/certificate.service.ts`. An administrator verifies the profile with
+`PATCH /api/admin/vendors/:id/verify`, which refuses to verify until the pack is on file (NPWP, TDP, at least
+one certification entry and the certificate file) and records a rejection reason. Until then the vendor can
+browse but `POST /api/vendor/proposals` and the proposal update endpoints answer `403 VERIFICATION_REQUIRED`.
+
+**Broker: reviewed by an administrator.** The broker has the same shape as the vendor: profile and
+notifications stay reachable while verification is pending, and everything else goes through
+`requireVerifiedBroker` in `apps/api/src/modules/broker/broker.shared.ts`.
+
+## 6. Security
 
 - **CSRF**: unsafe methods on authenticated routes require a same-origin `Origin`/`Referer`/`sec-fetch-site`
   and an `x-csrf-token` header equal to the session's CSRF token.
@@ -126,7 +171,7 @@ pass-through layers. Route handlers never query Drizzle directly, and repositori
 - **Error handling**: a central `app.onError` and a last-resort Worker boundary log details server-side and
   return sanitized 500s.
 
-## 6. HTTP API reference
+## 7. HTTP API reference
 
 Base path `/api`. All responses are JSON.
 
@@ -159,11 +204,63 @@ step-up required, `429` rate limited, `500` internal.
 | POST | `/api/auth/step-up` | `{ password }` | Re-authenticate for sensitive actions. |
 | POST | `/api/auth/logout` | none | Destroy session, clear cookie. |
 
+### Account (any signed-in role)
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/account/avatar` | The account's profile picture, streamed from R2. |
+| PUT | `/api/account/avatar` | Upload or replace the picture (multipart field `avatar`). |
+| DELETE | `/api/account/avatar` | Remove the picture and its R2 object. |
+
 ### Public bonds
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | GET | `/api/investor/market` | none | Bond catalog: `{ bonds: BondListing[] }`. |
+
+### Business (role `business`)
+
+The verification endpoints come first: they are mounted before `requireVerifiedCompany`, so an unverified
+account can file its pack (see § 5).
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/business/verification` | The account's verification: status, details, identity, both certificate slots, what is missing, scans left. |
+| PUT | `/api/business/verification` | Save the details the company confirms (name, sector, address, representative, phone, NIB, NPWP). |
+| POST | `/api/business/verification/documents/:slot` | File one certificate (`akta` or `siup`; multipart, 10 MB, PDF/PNG/JPG/WebP, stored in R2). |
+| GET | `/api/business/verification/documents/:slot` | Read a filed certificate back. |
+| DELETE | `/api/business/verification/documents/:slot` | Remove a filed certificate. |
+| POST | `/api/business/verification/submit` | File the pack for review; runs the document scan and decides the verdict. |
+| PUT | `/api/business/drafts/:draftId` | Save one wizard step of a draft. |
+| GET | `/api/business/drafts/:draftId` | Resume a draft. |
+| POST | `/api/business/drafts/:draftId/documents` | Attach a draft document (multipart). |
+| DELETE | `/api/business/drafts/:draftId/documents/:docId` | Remove a draft document. |
+| POST | `/api/business/projects/submit` | Consume the draft, score the project and create it. |
+| GET | `/api/business/projects` | The company's projects with their status pill. |
+| GET | `/api/business/projects/:id` | One project as the review step showed it, plus the blueprint it became. |
+| GET | `/api/business/projects/:id/risk` | Stored risk assessment. |
+| GET | `/api/business/projects/:id/registry` | What the environmental registry answers about the project. |
+| POST | `/api/business/projects/:id/lvv` | Mark the project registered at Sistem Registri with an LVV body appointed. |
+| GET | `/api/business/projects/:id/blueprint` | The Green Project Blueprint, or null while there is none. |
+| GET | `/api/business/projects/:id/documents` | The project's documents. |
+| GET | `/api/business/projects/:id/documents/:docId/download` | One project document. |
+| GET | `/api/business/profile` | Company profile. |
+| PUT | `/api/business/profile` | Save the company profile. |
+| GET | `/api/business/matchmaking` | Projects waiting on a vendor choice. |
+| GET | `/api/business/matchmaking/:projectId` | One project's ranking and match factors. |
+| POST | `/api/business/matchmaking/:projectId/matching` | Re-run the scoring model. |
+| POST | `/api/business/matchmaking/:projectId/selection` | Record the chosen vendor. |
+| PATCH | `/api/business/procurement/:projectId/tender` | Close bidding (`action: close`); the bids move to evaluation. |
+| POST | `/api/business/procurement/:projectId/award` | Award a bid. |
+| POST | `/api/business/procurement/:projectId/proposals/:proposalId/review` | Ask for a revision or reject a bid (`decision: revision` or `reject`); accepting is the award endpoint. |
+| GET | `/api/business/procurement/:projectId/proposals/:proposalId/document` | The bid's PDF. |
+| POST | `/api/business/review/reading` | The risk assessment read back in prose. |
+| POST | `/api/business/review/forecast` | ROI scenarios for the wizard's review step. |
+| POST | `/api/business/review/forecast/reading` | The forecast read back in prose. |
+| POST | `/api/business/risk/insight` | On-demand risk narrative. |
+| GET | `/api/business/notifications` | Notification feed. |
+| PATCH | `/api/business/notifications/:id` | Mark one notification read. |
+| PATCH | `/api/business/notifications` | Mark the whole feed read. |
 
 ### Vendor (role `vendor`)
 
@@ -175,16 +272,21 @@ step-up required, `429` rate limited, `500` internal.
 | GET | `/api/vendor/my-projects/:id` | Own-proposal project detail. |
 | GET | `/api/vendor/procurement-status` | Procurement status with latest revision note. |
 | GET | `/api/vendor/profile` | Vendor profile. |
-| PUT | `/api/vendor/profile` | Atomic upsert of the vendor profile; `companyName` is required, every other field is written only when the body carries it (`serviceCategory`, `location`, `nib`, `npwp`, `description`, `certifications`, `portfolio`). |
+| PUT | `/api/vendor/profile` | Atomic upsert of the vendor profile; `companyName` is required, every other field is written only when the body carries it (`serviceCategory`, `location`, `nib`, `npwp`, `tdp`, `description`, `certifications`, `portfolio`). |
+| POST | `/api/vendor/profile/certificate` | File the industry certificate (ESCO licence or ISO energy management; multipart, 10 MB, PDF/PNG/JPG/WebP, stored in R2). |
+| GET | `/api/vendor/profile/certificate` | The filed certificate, served inline. |
 | GET | `/api/vendor/proposals` | Own proposals. |
-| POST | `/api/vendor/proposals` | Submit a proposal to an open tender. |
+| POST | `/api/vendor/proposals` | Submit a proposal to an open tender (multipart: the bid row is written with its PDF or not at all). |
 | GET | `/api/vendor/proposals/:id` | Proposal detail with revision trail. |
 | PATCH | `/api/vendor/proposals/:id` | Edit a submitted proposal, answer a revision, or revise an open bid. |
 | DELETE | `/api/vendor/proposals/:id` | Withdraw a still-`submitted` proposal. |
+| POST | `/api/vendor/proposals/:id/document` | File or replace the proposal PDF (multipart). |
+| GET | `/api/vendor/proposals/:id/document` | The proposal PDF. |
 | GET | `/api/vendor/negotiations` | Revision rounds the company opened on the vendor's proposals. |
 | POST | `/api/vendor/negotiations/:id/response` | Answer a revision round (counter-offer, proposal revision trail, back to review). |
 | GET | `/api/vendor/notifications` | Notification feed. |
 | PATCH | `/api/vendor/notifications/:id` | Mark one notification read (idempotent). |
+| PATCH | `/api/vendor/notifications` | Mark the whole feed read. |
 | GET | `/api/vendor/leaderboard` | Ranking of one open tender: `?tenderId=` names the tender a project screen is showing, and without it the ranking is the vendor's own live open bidding. Closed and direct tenders answer empty (their offers are sealed). |
 | GET | `/api/vendor/portfolio` | Portfolio references the vendor authored, each with the URL of its filed document. |
 | POST | `/api/vendor/portfolio` | Add a portfolio reference. |
@@ -204,7 +306,7 @@ profile and notification endpoints stay reachable while verification is pending.
 | PUT | `/api/broker/profile` | Save the firm profile; filing licence data records a verification submission. |
 | GET | `/api/broker/projects` | Assigned projects with parties, contract value, LVV GRK status, risk assessment, bond tracking, project documents, delivery milestones and open request count. |
 | POST | `/api/broker/projects/:id/response` | Accept, request information about, or decline an assignment (a decline requires a reason). |
-| PATCH | `/api/broker/projects/:id/status` | Move the broker lifecycle (§20); illegal transitions return `409`. |
+| PATCH | `/api/broker/projects/:id/status` | Move the broker lifecycle (see the lifecycles in § 8); illegal transitions return `409`. |
 | PATCH | `/api/broker/projects/:id/bond` | Track the external bond (status, serial, amount, tenor, coupon, dates). |
 | GET | `/api/broker/document-requests` | Document requests raised against assigned projects. |
 | POST | `/api/broker/document-requests` | Request a document from the company (free-form type, period, reason, deadline). |
@@ -214,6 +316,7 @@ profile and notification endpoints stay reachable while verification is pending.
 | GET | `/api/broker/reports/:id/pdf` | The report as a generated PDF (`application/pdf`, attachment). |
 | GET | `/api/broker/notifications` | Notification feed. |
 | PATCH | `/api/broker/notifications/:id` | Mark one notification read (idempotent). |
+| PATCH | `/api/broker/notifications` | Mark the whole feed read. |
 
 Each report is composed from source data rather than stored prose: progress from `project_milestones`, energy
 and carbon from the period's `emission_reports` row, and the official figures the company published in
@@ -227,6 +330,8 @@ usual PDF libraries.
 |---|---|---|
 | GET | `/api/admin/users` | Users with role/verification info. |
 | PATCH | `/api/admin/users/:id/verify` | Verify or unverify a user. |
+| GET | `/api/admin/users/:id/verification` | One account's company verification, as the reviewer reads it. |
+| GET | `/api/admin/users/:id/verification/documents/:slot` | A certificate the account filed. |
 | GET | `/api/admin/projects` | Projects with company and blueprint status. |
 | PATCH | `/api/admin/projects/:id/status` | Advance the project lifecycle. |
 | GET | `/api/admin/blueprints` | Blueprints with project titles. |
@@ -239,7 +344,8 @@ usual PDF libraries.
 | GET | `/api/admin/analytics` | Trailing 12 months of accounts, organizations, projects, investments, ROI paid and MRV carbon reduction, plus platform totals and the summed project carbon target. |
 | GET | `/api/admin/anomalies` | Read-only red-flag rule engine. |
 | GET | `/api/admin/vendors` | Vendor profiles. |
-| PATCH | `/api/admin/vendors/:id/verify` | Verify or unverify a vendor profile. |
+| PATCH | `/api/admin/vendors/:id/verify` | Verify or reject a vendor profile. Verifying requires the filed pack (NPWP, TDP, at least one certification entry and the certificate file); a rejection carries a reason. |
+| GET | `/api/admin/vendors/:id/certificate` | The industry certificate the vendor filed, as the reviewer reads it. |
 | GET | `/api/admin/brokers` | Broker profiles with licence filing and verification state. |
 | PATCH | `/api/admin/brokers/:id/verify` | Verify or reject a broker profile (a rejection requires a reason). |
 
@@ -247,16 +353,15 @@ Request and response types live in `apps/api/src/contracts.ts` and are re-export
 `@greenshift/api`, so client and server share one typed contract. `apiRoutes` in the same file is the single
 list of method/path pairs the frontend client calls.
 
-Not every view is API-backed yet: the admin console reads `/api/admin/*` and `GET /api/health` for every figure
-it renders. The bond catalog, the business dashboard, the vendor dashboard and the broker dashboard read from
-the API — the vendor and broker UIs keep only client-side UI state locally, the vendor's verification-document
-forms have no backend file field yet (a portfolio record's own supporting document does, through
-`POST /api/vendor/portfolio/:id/document`), and the vendor performance tiles are derived from awarded
-projects, milestones, MRV reports and the platform rating (fields the API does not store, such as client
-endorsements, stay at 0 rather than being estimated). The broker's bond-preparation checklist mirrors
-`/api/broker/projects/:id/status` transitions, so the UI cannot move a project into a state the API rejects.
+Every surface reads the API: the admin console uses `/api/admin/*` plus `GET /api/health` for its binding
+card, and the bond catalog, the company dashboard, the vendor dashboard and the broker dashboard all fetch
+from their own module. The vendor and broker UIs keep only client-side UI state locally. The vendor
+performance tiles are derived from awarded projects, milestones, MRV reports and the platform rating; fields
+the API does not store, such as client endorsements, stay at 0 rather than being estimated. The broker's
+bond-preparation checklist mirrors `/api/broker/projects/:id/status` transitions, so the UI cannot move a
+project into a state the API rejects.
 
-## 7. Data model
+## 8. Data model
 
 D1 is the source of truth. The schema is defined with Drizzle in `apps/api/src/db/schema.ts` and versioned as
 SQL migrations in `drizzle/`. The schema is also the source of the shared types.
@@ -274,12 +379,16 @@ SQL migrations in `drizzle/`. The schema is also the source of the shared types.
 
 | Table | Purpose |
 |---|---|
-| `users` | Accounts for the five roles (`business`, `investor`, `vendor`, `admin`, `broker`). |
-| `vendor_profiles` | Vendor company profile, one per vendor user. |
+| `users` | Accounts for the five roles (`business`, `investor`, `vendor`, `admin`, `broker`), with a company account's legal identity (NIB, NPWP) and verification state. |
+| `company_documents` | The certificates a company files for verification: one row per slot, holding the R2 key and the scan's reading. |
+| `vendor_profiles` | Vendor company profile, one per vendor user, with its legal identity and the industry certificate it filed. |
 | `projects` | Business projects with parameters, risk result, lifecycle status. |
+| `drafts` | The submission wizard's saved state, one per company. |
+| `draft_documents` | Files attached to a draft, before the project exists. |
 | `project_documents` | Uploaded documents and OCR status. |
 | `risk_assessments` | Financial/technical/implementation scores. |
 | `vendor_match_scores` | Weighted vendor matching scores per project. |
+| `vendor_assignments` | The matchmaking choice that opens a tender to one vendor. |
 | `tenders` | Procurement round for a project. |
 | `proposals` | Vendor bids for a tender. |
 | `proposal_revisions` | Revision trail for a proposal. |
@@ -311,21 +420,28 @@ SQL migrations in `drizzle/`. The schema is also the source of the shared types.
 - Broker assignment: `ASSIGNED -> DOCUMENT_COLLECTION <-> UNDER_REVIEW -> READY_FOR_BOND_ISSUANCE -> BOND_ISSUANCE -> MONITORING -> COMPLETED` (plus `DECLINED`); forward steps only, with a one-step correction
 - Document request: `REQUESTED -> SUBMITTED -> UNDER_REVIEW -> APPROVED | REJECTED -> RESUBMISSION`
 - External bond: `NOT_STARTED -> IN_PROGRESS -> ISSUED` (tracked only; issuance happens outside GreenShift)
+- Company verification: `NOT_VERIFIED -> NEEDS_RESCAN -> PENDING -> VERIFIED | REJECTED`. `NEEDS_RESCAN` is
+  the scan asking for a clearer file; after three attempts the account goes to `PENDING`, where an
+  administrator decides. `REJECTED` carries the reading that caused it.
 
 **Unique constraints** (enforced in the database, and what make the `ON CONFLICT` upserts atomic):
 
 | Index | Guarantees |
 |---|---|
 | `users_email_unique` | One account per email. |
+| `company_documents_user_slot_unique` | One file per certificate slot per account. |
 | `vendor_profiles_user_id_unique` | One vendor profile per user. |
 | `proposals_tender_vendor_unique` | One proposal per vendor per tender. |
 | `proposal_revisions_proposal_number_unique` | One row per revision number. |
+| `negotiations_proposal_iteration_unique` | One revision round per proposal and iteration. |
+| `project_milestones_project_step_unique` | One milestone per step of a project. |
+| `vendor_assignments_project_unique` | One matchmaking choice per project. |
 | `investments_bond_serial_unique` | Unique bond serial (nullable). |
 | `roi_payments_escrow_tx_unique` | Unique escrow transaction id (nullable). |
 | `broker_profiles_user_id_unique` | One broker profile per user. |
 | `broker_assignments_project_broker_unique` | One assignment per project and broker. |
 
-## 8. Data access (Drizzle only)
+## 9. Data access (Drizzle only)
 
 All application data access goes through the Drizzle instance (`createDb(env.DB)`). There are no direct D1
 binding calls and no hand-written SQL statements. `sql` template fragments are used only where the query
@@ -340,45 +456,41 @@ Highlights:
 - Multi-statement writes use `db.batch`, which is D1's transactional primitive (D1 does not support
   interactive transactions across separate statements).
 
-## 9. Migrations and deployment
+## 10. Migrations and deployment
 
 ```bash
 bun run db:generate                                       # generate a migration from schema changes
 bunx wrangler d1 migrations apply greenshift-db --local   # apply locally
-bun run db:setup                                          # seed the demo users into the local database
-bunx wrangler d1 migrations apply greenshift-db --remote   # apply to production
+bunx wrangler d1 migrations apply greenshift-db --remote  # apply to production
 ```
 
-`scripts/seed.ts` groups its statements into a **full** set (accounts, vendor fixtures, bond catalog, broker
-fixtures) and a **broker** set. `bun scripts/seed.ts` prints the full set; `scripts/setup-broker.ts`
-(`bun run db:setup:broker`) applies only the broker group so an existing database gains the broker fixtures
-without a reset.
-
-`scripts/setup-db.ts` (wrapped by `bun run db:setup`) only inserts the demo accounts and skips the ones that
-already exist, so it is safe to re-run. `scripts/setup-broker.ts` is likewise idempotent: it creates missing
-accounts, applies the fixture statements in one transaction, and skips the group when a broker profile already
-exists. Migrations themselves are applied by Wrangler (`migrations_dir` in
-`wrangler.jsonc`) when the dev server starts.
+`scripts/seed.ts` builds the whole fixture set (accounts, vendor fixtures, bond catalog, broker fixtures) and
+prints it as SQL. `scripts/accounts.ts` is the single source of truth for the demo accounts and for each
+company's name, sector and address. The generated file resets every table it owns before inserting, which
+makes it re-runnable locally and destructive by design, so it is never pointed at a deployed database.
+Migrations themselves are applied by Wrangler (`migrations_dir` in `wrangler.jsonc`) when the dev server
+starts.
 
 Migrations are generated by Drizzle Kit and should not be hand-edited. D1 ties each migration to an implicit
 transaction and enforces foreign keys, so a migration that rebuilds a table with inbound foreign keys must use
 `PRAGMA defer_foreign_keys = on` rather than Drizzle Kit's default `PRAGMA foreign_keys=OFF`. Before applying
 new unique indexes to a populated database, check for duplicate rows first, or the index build will fail.
 
-The Worker, D1, KV and R2 bindings are declared in `wrangler.jsonc`; `bun run deploy` builds and deploys.
+The Worker, D1, KV, R2 and Workers AI bindings are declared in `wrangler.jsonc`; `bun run deploy` builds and
+deploys.
 
-## 10. Verification
+## 11. Quality gate
 
 - `bun run typecheck` (tsc) and `bun run check` (Biome) are the gate for every change.
 - The route tree is regenerated with `bun run generate-routes`.
-- Local end-to-end checks exercise login, the vendor profile/proposal flows, the broker assignment and
-  document review flows (including the PDF export), the admin stats and anomaly console, and the public bond
-  catalog.
+- End-to-end checks exercise login, the company verification pack (on a deployed worker, where Workers AI
+  runs), the vendor profile and proposal flows, the broker assignment and document review flows (including
+  the PDF export), the admin stats and anomaly console, and the public bond catalog.
 
-## 11. UI component conventions
+## 12. UI component conventions
 
-The shared UI layer (`@greenshift/ui`) builds on the shadcn primitives and adds two TanStack-powered
-components that every page uses:
+The shared UI layer (`@greenshift/ui`) builds on the shadcn primitives and adds the components every page
+uses:
 
 - **`DataTable`** (`packages/ui/src/components/ui/data-table.tsx`) - a generic TanStack Table wrapper over the
   shadcn table primitives. Pages pass a typed `ColumnDef<T>[]` and data. It provides column sorting (click a

@@ -7,20 +7,17 @@ import { type ReactElement, useMemo } from "react";
 import { niceYDomain } from "./y-domain-utils";
 
 export interface LineSeries {
-	/** Stable key for React. */
 	key: string;
-	/** Name shown in the legend. */
 	label: string;
 	/** One value per x label; null leaves a gap in the line. */
 	values: Array<number | null>;
-	/** Any CSS colour, e.g. "var(--chart-2)". */
 	color: string;
 	/** Dashed line, for a projection rather than a measurement. Default false. */
 	dashed?: boolean;
 }
 
 export interface LineChartProps {
-	/** The x tick labels, one per point, shared by every series. */
+	/** One per point, shared by every series. */
 	labels: string[];
 	series: LineSeries[];
 	/** A horizontal mark the lines are read against, e.g. the capital. */
@@ -29,7 +26,6 @@ export interface LineChartProps {
 	formatValue: (value: number) => string;
 	/** Chart height in pixels; the width follows the container. Default 280. */
 	height?: number;
-	/** Accessible name for the figure. */
 	ariaLabel: string;
 }
 

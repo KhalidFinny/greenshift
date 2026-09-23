@@ -1,15 +1,5 @@
-/* The wizard's last step: the review the user submits on.
- *
- * The summary is `ProjectSummary`, the same component the project's own page
- * renders from the stored record. The review is the company reading back what
- * it filed and the record is the same summary afterwards, so the two surfaces
- * are one summary rather than two renderings of it, which is also what keeps
- * them agreeing with the Green Project Blueprint the figures become.
- *
- * What belongs to the wizard alone is C: the two declarations submit is gated
- * on. They are not part of the project's record, because they are a statement
- * made once, at the moment of filing.
- */
+/* The wizard's last step: the review the user submits on. The summary is the same
+ * `ProjectSummary` the project page renders; only the declarations belong to the wizard. */
 
 import { parseIdNumber } from "../lib/number-format";
 import type { ProjectFunding } from "../lib/project-funding";
@@ -62,7 +52,6 @@ export interface ReviewViewProps {
 	risk: ProjectRiskResult | null;
 }
 
-/** The form's typed figures as the numbers the summary reads. */
 function fundingFrom(step2: Step2Summary): ProjectFunding {
 	return {
 		capexRp: parseIdNumber(step2.capex),
@@ -75,9 +64,8 @@ function fundingFrom(step2: Step2Summary): ProjectFunding {
 export function ReviewView(props: ReviewViewProps) {
 	const { form, step1, step2, step3, step1Docs, risk } = props;
 
-	/* The project's own documents: what the money figures were read from, and
-	   what a bidder reads with the tender. The LVV's pack is not part of the
-	   submission: it is filed at Sistem Registri. */
+	/* The project's own documents: what the money figures were read from, and what a
+	   bidder reads with the tender. The LVV's pack is filed at Sistem Registri. */
 	const step1Rows: SummaryDocumentRow[] = step1Docs.map((doc) => ({
 		id: doc.id,
 		label: doc.label,

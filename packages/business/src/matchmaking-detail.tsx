@@ -1,20 +1,5 @@
-/* The vendor ranking for one project: who is available, what the model scored
- * them, the route the company appoints one by, and the window that opens.
- *
- * Selecting a vendor reads it: its record and its weighted score appear in the
- * panel beside the table, one vendor at a time, which is how a shortlist is
- * actually read. Selecting it again puts it back.
- *
- * Nobody is appointed here. The route is what opens the tender, and the vendor a
- * project ends up with is whichever bid the company awards on the bidding page;
- * only the direct route names a vendor up front, because that is the route that
- * runs without competing bids.
- *
- * Nobody is bidding until a route is chosen and the tender is open, so this page
- * carries no bidding of its own: once there are bids, a button on the table
- * opens the bidding page, which is where the offers, the closing and the verdicts
- * live.
- */
+/* Vendor ranking for one project: availability, the model's scores, and the route
+ * that opens the tender. Only the direct route names a vendor; bids decide the rest. */
 
 import {
 	faCircleCheck,
@@ -60,7 +45,6 @@ import {
 	VendorRecord,
 } from "./matchmaking-shared";
 
-/** The icon each route draws, keyed by the route id. */
 const ROUTE_ICONS = {
 	open: faMagnifyingGlassChart,
 	closed: faGavel,
@@ -89,8 +73,8 @@ export function MatchmakingDetail({ projectId }: { projectId: string }) {
 	}
 
 	if (detailQuery.isError || !detailQuery.data) {
-		// A missing project and a failed request are told apart: the first is the
-		// route's own answer, the second is worth retrying.
+		// Missing project vs failed request: the first is the route's own answer, the second worth
+		// retrying.
 		const missing =
 			detailQuery.error instanceof ApiError && detailQuery.error.status === 404;
 		return (
@@ -120,11 +104,8 @@ export function MatchmakingDetail({ projectId }: { projectId: string }) {
 	return <VendorRanking detail={detailQuery.data} projectId={projectId} />;
 }
 
-/**
- * The ranking, with the project already loaded. It is its own component so the
- * table's columns are built under the same hooks every render: a hook below the
- * loading return would change the hook order the moment the query lands.
- */
+/** Its own component so the columns are built under the same hooks every render:
+ * a hook below the loading return would change hook order once the query lands. */
 function VendorRanking({
 	detail,
 	projectId,
@@ -141,7 +122,6 @@ function VendorRanking({
 	const [reading, setReading] = useState<number | null>(null);
 	const [busy, setBusy] = useState(false);
 
-	/** Runs a write and says whether it landed, so a flow can continue on it. */
 	async function act(action: () => Promise<unknown>): Promise<boolean> {
 		setBusy(true);
 		try {
@@ -163,26 +143,22 @@ function VendorRanking({
 	const route = method ?? detail.selectedMethod ?? tender?.method ?? null;
 	// Once bidding closes the terms are frozen: the bids were made against them.
 	const shaping = tender === null || tender.status === "open";
-	// The vendor the project went with, once its tender is awarded. Until then no
-	// vendor holds it: the bids decide that, on the bidding page.
+	// The vendor the project went with once its tender is awarded; before that, none.
 	const winnerName = tender?.awardedVendorName ?? null;
-	// The direct route is the only one that names a vendor up front, because it is
-	// the only route that runs without competing bids.
+	// The direct route is the only one that names a vendor up front; it runs without competing bids.
 	const direct = route === "direct";
 	const namedVendor =
 		recommendedVendors.find(
 			(vendor) => vendor.id === (vendorId ?? detail.selectedVendorId),
 		) ?? null;
-	// What the panel beside the table is showing: the vendor the reader picked, or
-	// the project's own vendor when they have not picked one.
+	// What the panel shows: the vendor the reader picked, else the project's own vendor.
 	const readVendor =
 		recommendedVendors.find(
 			(vendor) => vendor.id === reading || vendor.name === winnerName,
 		) ?? null;
 	// Vendors are only bidding once a route has been chosen and offers are in.
 	const bidding = (tender?.bidCount ?? 0) > 0;
-	// Whether the tender can open: a route is chosen, and the direct route has
-	// named the vendor it appoints.
+	// The tender opens on a chosen route; direct must have named its vendor first.
 	const canOpen =
 		route !== null && (route !== "direct" || namedVendor !== null);
 	// What the route has produced so far, in one line the strip can carry.
@@ -211,16 +187,13 @@ function VendorRanking({
 	function chooseRoute(nextMethod: BusinessMatchmakingMethod) {
 		setMethod(nextMethod);
 		if (!shaping) return;
-		// The open and closed routes open the tender on their own rule. The direct
-		// route cannot open until it has named the vendor it appoints.
+		// Open and closed routes open the tender by their own rule; direct names its vendor first.
 		if (nextMethod === "direct" && namedVendor === null) return;
 		void saveTerms(nextMethod);
 	}
 
-	/**
-	 * The terms as the route picker and the deadline field have them. The vendor
-	 * is sent only for the direct route, which is the one that names one.
-	 */
+	/** The terms as the route picker and the deadline field have them. The vendor is
+	 * sent only for the direct route, the one that names one. */
 	function saveTerms(
 		nextMethod: BusinessMatchmakingMethod | null = route,
 		vendor: BusinessRecommendedVendor | null = namedVendor,
@@ -238,10 +211,8 @@ function VendorRanking({
 		);
 	}
 
-	/**
-	 * Choosing the route opens the tender and lands on the phase it starts, so
-	 * the company sees the window running rather than a button that changed.
-	 */
+	/** Choosing the route opens the tender and lands on the phase it starts, so the
+	 * company sees the window running rather than a button that changed. */
 	async function openTender() {
 		const opened = await saveTerms();
 		if (!opened) return;
@@ -355,9 +326,8 @@ function VendorRanking({
 				id: "act",
 				header: "",
 				meta: { className: cn(CELL, "w-40 text-right"), headClassName: CELL },
-				// The open and closed routes invite their pool by their own rule and
-				// the bids decide the rest, so naming a vendor here is the direct
-				// route's act alone.
+				// The open and closed routes invite their pool by their own rule, so
+				// naming a vendor here is the direct route's act alone.
 				cell: ({ row }) =>
 					direct ? (
 						<Button
@@ -378,8 +348,7 @@ function VendorRanking({
 					) : null,
 			},
 		],
-		// The row actions close over the terms on screen, so the columns are
-		// rebuilt when those change rather than reading a stale route or deadline.
+		// The row actions close over the on-screen terms, so the columns rebuild when those change.
 		[
 			deadline,
 			detail.selectedVendorId,
@@ -411,8 +380,7 @@ function VendorRanking({
 			>
 				<div className="mt-4 flex flex-wrap items-end justify-between gap-x-8 gap-y-5 border-t border-border pt-4">
 					<ProjectFacts detail={detail} />
-					{/* The window is a fact about the tender, so it sits with the rest of
-					    the project's facts rather than down with the route picker. */}
+					{/* The window is a fact about the tender, so it sits with the project's facts. */}
 					{shaping && (
 						<div className="space-y-3">
 							<label
@@ -442,8 +410,6 @@ function VendorRanking({
 					<section className="space-y-3">
 						<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
 							<h2 className="text-lg font-semibold">Available vendors</h2>
-							{/* The bidding list is its own page, reached from the table, and
-							    only once vendors are actually bidding on the open tender. */}
 							<div className="flex flex-wrap items-center gap-x-4 gap-y-2">
 								<p className="text-sm text-muted-foreground">
 									{recommendedVendors.length} scored, {detail.shortlistSize}{" "}
@@ -485,9 +451,8 @@ function VendorRanking({
 								columns={columns}
 								data={recommendedVendors}
 								getRowId={(vendor) => String(vendor.id)}
-								/* The ranking is what the page is for, so the five
-								   strongest vendors are what it leads with and the rest
-								   are a page away. */
+								/* The ranking is what the page is for, so it leads with the five
+								   strongest vendors; the rest are a page away. */
 								pageSize={5}
 								onRowClick={(vendor) => toggleRead(vendor.id)}
 								rowClassName={(vendor) =>
@@ -567,8 +532,8 @@ function VendorRanking({
 										: "Open the tender"}
 								</Button>
 							)}
-							{/* A closed tender has no table button when nothing came in, so
-							    the way to its page stays here. */}
+							{/* A closed tender with nothing in has no table button, so the way to its page stays
+							    here. */}
 							{!shaping && (
 								<Button variant="outline" asChild>
 									<Link
@@ -588,7 +553,7 @@ function VendorRanking({
 							)}
 						</div>
 
-						{/* What the choices above add up to, on the record. */}
+						{/* What the choices above add up to. */}
 						<div className="grid gap-x-6 gap-y-3 border-t border-border pt-4 sm:grid-cols-4">
 							{[
 								{

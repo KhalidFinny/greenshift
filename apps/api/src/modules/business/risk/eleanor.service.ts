@@ -6,16 +6,8 @@ import type {
 import type { Env } from "../../../env";
 import { ANALYST_VOICE, analystReading, joinWords } from "../review/analyst";
 
-/**
- * Eleanor, the risk analyst on the review step.
- *
- * She reads only the assessment the platform already produced: the four area
- * percentages, the band they add up to, and the factors and mitigations the
- * scoring model derived. The model writes the narrative when the binding is
- * present; without it the same figures are composed here, so a reviewer always
- * has a reading and never a spinner that resolves to nothing. Neither path can
- * state a fact the assessment does not hold.
- */
+/* Eleanor, the risk analyst on the review step. She reads only the assessment the
+ * platform produced; the model writes the narrative when bound, the same figures otherwise. */
 
 const FULL_SYSTEM_PROMPT = [
 	ANALYST_VOICE,
@@ -66,13 +58,8 @@ const AREA_READING: Record<string, string> = {
 		"The credit profile raises the cost of the debt the project depends on.",
 };
 
-/**
- * The reading composed from the figures alone, in Eleanor's voice. Every
- * sentence traces back to an input, which is what makes it safe to show when
- * the model is unavailable. An area is only described as a pressure when the
- * scoring model actually banded it as one, so the prose never argues against
- * the number it sits next to.
- */
+// The reading composed from the figures alone, in Eleanor's voice. An area is only
+// called a pressure when the model banded it as one, so the prose never argues with the number.
 export function composeInsight(risk: BusinessRiskInsightBody): string {
 	const answered = risk.breakdown.filter((row) => row.tone !== null);
 	if (answered.length === 0) {
@@ -167,10 +154,8 @@ function riskSignature(risk: BusinessRiskInsightBody): string {
 	].join("|");
 }
 
-/**
- * The two sentences the summary panels hold, composed from the figures alone.
- * Same discipline as the full reading: each sentence traces back to an input.
- */
+// The two sentences the summary panels hold, composed from the figures alone. Same
+// discipline as the full reading: each sentence traces back to an input.
 export function composeBriefInsight(risk: BusinessRiskInsightBody): string {
 	const answered = risk.breakdown.filter((row) => row.tone !== null);
 	if (answered.length === 0) {

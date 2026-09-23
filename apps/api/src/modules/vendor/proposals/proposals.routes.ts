@@ -23,16 +23,14 @@ const factory = createFactory<ApiEnv>();
 export const proposalsRoutes = new Hono<ApiEnv>();
 
 /**
- * What the multipart envelope around one file costs: the boundaries and the part
- * headers. The declared length covers the envelope too, so the gate has to allow
- * for it or a file exactly at the limit would be refused.
+ * What the multipart envelope around one file costs: the boundaries and part
+ * headers. The gate has to allow for it or a file at the limit is refused.
  */
 const MULTIPART_ENVELOPE_SLACK = 8 * 1024;
 
 /**
  * An optional multipart field as the number it states, or undefined when the
- * vendor left it out. A field that is present but unreadable comes back as NaN,
- * which the `invalidNumber` rules then reject.
+ * vendor left it out. A present but unreadable field comes back NaN and is rejected.
  */
 function optionalNumber(value: unknown): number | undefined {
 	if (value === undefined || value === null || value === "") return undefined;
@@ -68,15 +66,13 @@ proposalsRoutes.get(
 );
 
 // Multipart, because the bid and the document it is made on are one filing:
-// the fields are the offer, the file is the case for it, and the document is
-// required, so no bid exists without one.
+// the document is required, so no bid exists without one.
 proposalsRoutes.post(
 	"/proposals",
 	mutationRateLimit("vendor", "proposal"),
 	...factory.createHandlers(async (c) => {
-		// The declared length is read before the body is: `parseBody` buffers the
-		// whole request, so a file over the limit has to be turned away before it
-		// is materialized in the isolate.
+		// The declared length is read before the body is: `parseBody` buffers the whole
+		// request, so an oversized file is turned away before it is materialized.
 		const declared = Number(c.req.header("content-length") ?? "0");
 		if (
 			Number.isFinite(declared) &&
@@ -117,8 +113,7 @@ proposalsRoutes.post(
 			);
 		}
 
-		// Multipart fields arrive as strings, so each one is read as the number
-		// the offer states rather than trusted as typed.
+		// Multipart fields arrive as strings, so each is read as the number it states.
 		const tenderId = Number(body.tenderId);
 		const amount = Number(body.amount);
 		const technicalSpec = body.technicalSpec;
@@ -229,8 +224,7 @@ proposalsRoutes.delete(
 	}),
 );
 
-// ── file the proposal document ────────────────────────────
-// Multipart, like every upload: `requireJsonBody` is not on this router, so the
+// Multipart, like every upload: this router carries no `requireJsonBody`, so the
 // JSON mutations guard themselves and this route takes the file as it is.
 proposalsRoutes.post(
 	"/proposals/:id/document",
@@ -241,9 +235,8 @@ proposalsRoutes.post(
 			return apiError(c, "INVALID_ID");
 		}
 
-		// The declared length is read before the body is: `parseBody` buffers the
-		// whole request, so a file over the limit has to be turned away before it
-		// is materialized in the isolate.
+		// The declared length is read before the body is: `parseBody` buffers the whole
+		// request, so an oversized file is turned away before it is materialized.
 		const declared = Number(c.req.header("content-length") ?? "0");
 		if (
 			Number.isFinite(declared) &&
@@ -295,7 +288,6 @@ proposalsRoutes.post(
 	}),
 );
 
-// ── read the filed document ───────────────────────────────
 proposalsRoutes.get(
 	"/proposals/:id/document",
 	...factory.createHandlers(async (c) => {

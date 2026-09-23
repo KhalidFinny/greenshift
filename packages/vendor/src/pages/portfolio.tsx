@@ -28,8 +28,7 @@ export function VendorPortfolioPage() {
 
 	return (
 		<div className="space-y-6">
-			{/* Page header. The shell already titles this page, so the heading here is
-			    the purpose, not a repeat of the word "Portfolio". */}
+			{/* The shell already titles this page, so the heading here states the purpose rather than repeating "Portfolio". */}
 			<div className="flex flex-wrap items-center justify-end gap-4">
 				<div className="flex items-center gap-2">
 					<Button

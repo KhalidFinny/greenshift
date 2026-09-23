@@ -20,7 +20,6 @@ const factory = createFactory<ApiEnv>();
 
 export const projectsRoutes = new Hono<ApiEnv>();
 
-// ── submit ────────────────────────────────────────────────
 // Creates the project while consuming its draft and scoring it, which is why
 // it reads as an action rather than a collection POST.
 projectsRoutes.post(
@@ -57,10 +56,8 @@ projectsRoutes.post(
 	}),
 );
 
-// ── start verification ────────────────────────────────────
-// The company registers the project at the environmental registry and appoints
-// its LVV body, then marks it registered here. Only then does the body's review
-// run, out of band, so this answers with the project rather than the verdict.
+// The company registers the project at the registry and appoints its LVV body, then
+// marks it registered here; the body's review runs out of band, so this answers the project.
 projectsRoutes.post(
 	"/projects/:id/lvv",
 	mutationRateLimit("business", "start-lvv"),
@@ -93,7 +90,6 @@ projectsRoutes.post(
 	}),
 );
 
-// ── read one ──────────────────────────────────────────────
 // The confirmation page reads the project it just created, so the figures on it
 // are the stored ones rather than a second derivation in the browser.
 projectsRoutes.get(
@@ -110,12 +106,8 @@ projectsRoutes.get(
 	}),
 );
 
-// ── registry state ────────────────────────────────────────
-// The company registers the project at Sistem Registri and appoints its LVV
-// body before verification can run, which is a step it takes outside the
-// platform. Reading the registry back is what lets the project's page tell a
-// company that has done it there to start verification here, rather than
-// leaving the project waiting on a move only they can make.
+// Registration at Sistem Registri is a step taken off-platform. Reading it back lets
+// the project page prompt a company that has done it there to start verification here.
 projectsRoutes.get(
 	"/projects/:id/registry",
 	...factory.createHandlers(async (c) => {
@@ -131,7 +123,6 @@ projectsRoutes.get(
 	}),
 );
 
-// ── list ──────────────────────────────────────────────────
 projectsRoutes.get(
 	"/projects",
 	...factory.createHandlers(async (c) => {

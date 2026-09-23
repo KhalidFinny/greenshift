@@ -1,18 +1,5 @@
-/* One project's own record: the summary the company filed, the Green Project
- * Blueprint it became, and the two things that follow it.
- *
- * The summary is `ProjectSummary`, the same component the wizard's review step
- * renders, read here from the stored project instead of from a form. The page a
- * company opens on a filed project is therefore the case it submitted, which is
- * also what the blueprint is generated from: the two are the same case at two
- * stages, and both belong on this page.
- *
- * What the record adds is the verification step. The LVV body has its own
- * system, so the project is registered at Sistem Registri, the documents it
- * needs are uploaded there and the body is appointed before verification runs:
- * that is the company's move to make, which is why it is a reminder that stays
- * on this page rather than something the platform does behind them.
- */
+/* One project's record: the summary the company filed, the blueprint it became, and
+ * the verification step it still owes. Registration happens at Sistem Registri. */
 
 import {
 	faClock,
@@ -44,17 +31,11 @@ const STAGES = [
 	},
 ] as const;
 
-/**
- * How far along that path each stored status is: the number of stages already
- * behind the project. Keyed by the enum rather than its pill label, because the
- * label is presentation copy and the enum is what the row actually holds. A
- * status the schema does not define cannot reach here; if one did, it would read
- * as freshly submitted, which is the safe direction to be wrong in.
- */
+/** How far each stored status is along that path: the stages already behind it.
+ * Keyed by the enum, not the pill label; an unknown status reads as fresh. */
 const STAGES_PASSED: Record<string, number> = {
 	draft: 0,
-	// The project is on record and waiting on the company, so verification has
-	// not started either way.
+	// On record and waiting on the company, so verification has not started either way.
 	registry: 0,
 	assessment: 0,
 	tendering: 1,
@@ -64,7 +45,6 @@ const STAGES_PASSED: Record<string, number> = {
 	completed: 2,
 };
 
-/** Where one stage stands for a project at that point. */
 function stageState(
 	index: number,
 	status: string,
@@ -74,10 +54,8 @@ function stageState(
 	return index === passed ? "in progress" : "waiting";
 }
 
-/**
- * Whether verification has cleared the project, which is what opens vendor
- * matchmaking. A route offered before that would lead to an empty screen.
- */
+/** Whether verification has cleared the project, which is what opens vendor
+ * matchmaking: a route offered earlier would lead to an empty screen. */
 export function isMatchmakingOpen(status: string): boolean {
 	return (STAGES_PASSED[status] ?? 0) >= 1;
 }
@@ -111,17 +89,8 @@ function verificationState(
 	}
 }
 
-/**
- * The verification reminder: what the company has to do, whether the registry
- * already holds it, and the one action that starts verification. It stays on the
- * page in every state, so the step is never a page the company has to remember.
- *
- * The registration itself happens at Sistem Registri, outside the platform, which
- * is why the page reads the registry back: a project that is registered there and
- * still waiting here is a company that did the first half and has nothing left to
- * do but press the button, and one that is not registered anywhere is told what
- * the step is.
- */
+/* The verification reminder, on the page in every state so the step is never a page
+   to remember. Registration happens at Sistem Registri, so the page reads it back. */
 function VerificationSection({
 	projectId,
 	status,
@@ -131,8 +100,8 @@ function VerificationSection({
 }) {
 	const queryClient = useQueryClient();
 
-	// Asked only while the project is still waiting on it: once verification is
-	// under way or done, the registry has nothing left to tell this page.
+	// Asked only while the project waits on it: once verification is under way, the registry adds
+	// nothing.
 	const registry = useQuery({
 		queryKey: ["business", "registry", projectId],
 		enabled: status === "registry",
@@ -142,9 +111,8 @@ function VerificationSection({
 
 	const state = verificationState(status, registry.data);
 
-	/* The registry read is a live call to another system, so the line says what it
-	   is waiting for instead of claiming the project is unregistered until the
-	   answer lands. */
+	/* The registry read is a live call to another system, so the line says what it is
+	   waiting for instead of claiming the project is unregistered. */
 	const label =
 		status === "registry" && registry.isPending
 			? "Checking Sistem Registri…"
@@ -153,8 +121,7 @@ function VerificationSection({
 	const start = useMutation({
 		mutationFn: async () => (await api.business.startLvv(projectId)).project,
 		onSuccess: async (project) => {
-			// The response is the project as it now stands, so the page and its
-			// pill update without waiting for a refetch.
+			// The response is the project as it now stands, so the page updates without a refetch.
 			queryClient.setQueryData(["business", "project", projectId], project);
 			await queryClient.invalidateQueries({
 				queryKey: ["business", "projects"],
@@ -272,8 +239,7 @@ export function ProjectRecord({ projectId }: { projectId: string }) {
 		);
 	}
 
-	/* The stored files, read back under the slot each was uploaded into, which
-	   is what names it in the same words the company filed it under. */
+	/* The stored files, read back under the slot each was uploaded into. */
 	const stored = Object.fromEntries(
 		(documentsQuery.data ?? []).map(
 			(document) => [document.slot, document] as const,
@@ -288,8 +254,7 @@ export function ProjectRecord({ projectId }: { projectId: string }) {
 				id: slot.id,
 				label: slot.label,
 				name: file?.fileName,
-				// Null while the file is still being read, so the row offers no
-				// link that would answer with a 409.
+				// Null while the file is still being read, so the row offers no link that would answer 409.
 				downloadUrl: file?.downloadUrl ?? undefined,
 			};
 		});
@@ -298,10 +263,8 @@ export function ProjectRecord({ projectId }: { projectId: string }) {
 
 	return (
 		<div className="space-y-10">
-			{/* Two columns once there is room for them: the summary the company
-			    filed on one side, the document it became and the step that
-			    follows it on the other. Stacked below `xl`, where half a screen
-			    would leave the charts and the tables too narrow to read. */}
+			{/* Two columns once there is room: the summary filed on one side, the document
+			    it became and the step that follows on the other. Stacked below `xl`. */}
 			<div className="grid gap-10 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] xl:items-start">
 				<ProjectSummary
 					context="record"

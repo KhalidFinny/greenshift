@@ -27,11 +27,7 @@ export type AnomalyReport = {
 	counts: Record<AdminAnomaly["severity"] | "total", number>;
 };
 
-/**
- * Read-only rule engine: surfaces rule breaches and anomalies across the
- * database for platform oversight. Admin monitors, never mutates operational
- * state.
- */
+/** Read-only rule engine: admin monitors, never mutates operational state. */
 export async function detectAnomalies(
 	db: GreenShiftDb,
 ): Promise<AnomalyReport> {
@@ -257,8 +253,8 @@ export async function detectAnomalies(
 		(a, b) =>
 			SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity] ||
 			(b.createdAt ?? "").localeCompare(a.createdAt ?? "") ||
-			// Stable tiebreaker: rows sharing a severity and timestamp would
-			// otherwise come back in arbitrary database order.
+			// Stable tiebreaker: rows sharing a severity and timestamp come back in arbitrary
+			// order otherwise.
 			String(a.id).localeCompare(String(b.id)),
 	);
 

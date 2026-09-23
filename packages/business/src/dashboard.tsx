@@ -24,9 +24,6 @@ import { useMemo, useState } from "react";
 import { formatId } from "./lib/number-format";
 import { formatSubmittedAt } from "./lib/project-display";
 
-// ── helpers ────────────────────────────────────────────────
-
-/** Projects submitted in the month `offset` months back, optionally filtered. */
 function inMonth(
 	projects: BusinessProjectSummary[],
 	offset: number,
@@ -44,17 +41,12 @@ function inMonth(
 	});
 }
 
-/** "+3" / "-2" / "0", for the delta badge. */
 function signed(delta: number): string {
 	return `${delta > 0 ? "+" : ""}${delta}`;
 }
 
-// ── table ────
-
-/**
- * The badge follows the record, not the raw status: a project with no
- * submission date is a draft, whatever stage the row happens to carry.
- */
+/** The badge follows the record, not the raw status: no submission date is a
+ * draft, whatever stage the row carries. */
 function StatusBadge({
 	status,
 	submittedAt,
@@ -127,8 +119,6 @@ const columns: ColumnDef<BusinessProjectSummary>[] = [
 	},
 ];
 
-// ── dashboard ──────────────────────────────────────────────
-
 export function BusinessDashboard() {
 	const [statusFilter, setStatusFilter] = useState("all");
 	const [sectorFilter, setSectorFilter] = useState("all");
@@ -140,8 +130,7 @@ export function BusinessDashboard() {
 	const loading = projectsQuery.isPending;
 
 	const total = projects.length;
-	// The verification step is two statuses now: the registry registration that
-	// opens it, and the LVV verification itself. Both read as "in review".
+	// Registration and LVV verification are separate statuses; both read as "in review".
 	const inReview = projects.filter(
 		(p) =>
 			p.status === "Register for LVV" ||
@@ -178,11 +167,8 @@ export function BusinessDashboard() {
 		(b.submittedAt ?? "").localeCompare(a.submittedAt ?? ""),
 	);
 
-	/**
-	 * Filter options are read off the loaded rows in the order the table already
-	 * shows them, so a select can only offer a status or sector some project
-	 * actually has, and never a stage that is not in the data.
-	 */
+	/** Options come off the loaded rows in table order, so a select can only
+	 * offer a status or sector some project actually has. */
 	const statusOptions = useMemo(
 		() => [...new Set(projects.map((project) => project.status))],
 		[projects],
@@ -237,7 +223,6 @@ export function BusinessDashboard() {
 				</div>
 			) : (
 				<>
-					{/* ── One band: CAPEX left, three metrics beside it, all horizontal ── */}
 					<div className="rounded-lg bg-white p-6 shadow-sm">
 						<div className="flex flex-col gap-8 lg:flex-row lg:gap-0">
 							<div className="lg:flex-[1.4] lg:pr-8">
@@ -370,7 +355,6 @@ export function BusinessDashboard() {
 						</div>
 					</div>
 
-					{/* ── Projects ── */}
 					<div className="rounded-lg bg-white p-4 shadow-sm">
 						{/* The two filters sit above the table; the search box below them
 						    is the table's own and narrows whatever they leave. */}

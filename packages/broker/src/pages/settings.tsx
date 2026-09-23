@@ -38,8 +38,7 @@ export function BrokerSettingsPage() {
 		saveProfile,
 	} = useBrokerData();
 
-	// Verification state: the firm profile arrives from the API, so the form
-	// adopts it on first load and submits licence data for platform review.
+	// The firm profile arrives from the API; the form adopts it and submits licence data for review.
 	const [nib, setNib] = useState("");
 	const [licenseNumber, setLicenseNumber] = useState("");
 	const [licenseAuthority, setLicenseAuthority] = useState("");

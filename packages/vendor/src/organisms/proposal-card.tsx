@@ -15,10 +15,7 @@ interface ProposalCardProps {
 	loading?: boolean;
 }
 
-/**
- * Proposal status badges on the light card surface. The 600 shades that carried
- * white text here were below AA, so the tones use the 700 shades.
- */
+/** Proposal status badges on the light card surface: the 600 shades failed AA with white text, so the tones use the 700 shades. */
 const TONE_CLASS: Record<string, string> = {
 	default: "bg-blue-700 text-white",
 	secondary: "bg-slate-600 text-white",

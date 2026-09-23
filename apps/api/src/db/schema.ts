@@ -7,9 +7,16 @@ import {
 	text,
 	uniqueIndex,
 } from "drizzle-orm/sqlite-core";
-import type { BlueprintDocument, ProposalAnnotation } from "../contracts";
+import type {
+	BlueprintDocument,
+	CompanyDocumentScan,
+	ProposalAnnotation,
+} from "../contracts";
+import {
+	companyDocumentSlots,
+	companyVerificationStatuses,
+} from "../contracts";
 
-// ── Type helpers ────────────────────────────────────────────
 export const userRoles = [
 	"business",
 	"investor",
@@ -36,7 +43,6 @@ export type ProjectStatus = (typeof projectStatuses)[number];
 export const tenderMethods = ["open", "closed", "direct"] as const;
 export type TenderMethod = (typeof tenderMethods)[number];
 
-// ── users ──────────────────────────────────────────────────
 export const users = sqliteTable(
 	"users",
 	{
@@ -46,9 +52,8 @@ export const users = sqliteTable(
 		name: text().notNull(),
 		hashedPassword: text("hashed_password"),
 		/**
-		 * The organization the account represents, not the person behind it. Set
-		 * by registration and kept in sync by the entity profile writers, so it is
-		 * what every list shows as the account's company.
+		 * The organization the account represents, not the person behind it: kept in
+		 * sync by the entity profile writers and shown as the account's company.
 		 */
 		companyName: text("company_name"),
 		/** The company's sector. Company accounts only; vendors use their profile. */
@@ -57,6 +62,30 @@ export const users = sqliteTable(
 		address: text(),
 		phone: text(),
 		avatar: text(),
+		/**
+		 * The legal identity a company account is verified against, filed by the company:
+		 * the certificates behind them are rows in `company_documents`.
+		 */
+		nib: text(),
+		npwp: text(),
+		/**
+		 * Where the account stands, as the scan or an administrator decided it. Stored
+		 * rather than derived, because every request is gated on this row.
+		 */
+		verificationState: text("verification_state", {
+			enum: companyVerificationStatuses,
+		})
+			.notNull()
+			.default("NOT_VERIFIED"),
+		/** How many times a scan has come back unreadable: the rescan budget. */
+		verificationScanAttempts: integer("verification_scan_attempts")
+			.notNull()
+			.default(0),
+		/** When the company filed its verification pack; `verifiedAt` is the verdict. */
+		legalDocsSubmittedAt: integer("legal_docs_submitted_at", {
+			mode: "timestamp_ms",
+		}),
+		verificationRejectionReason: text("verification_rejection_reason"),
 		verifiedAt: integer("verified_at", { mode: "timestamp_ms" }),
 		createdAt: integer("created_at", { mode: "timestamp_ms" })
 			.notNull()
@@ -77,15 +106,11 @@ export const usersRelations = relations(users, ({ one, many }) => ({
 }));
 
 /**
- * The organization an account represents, as a list should label it. The person
- * behind the account is `users.name`; this is the entity they registered, which
- * is what vendor, broker, and admin surfaces name as the counterparty. Accounts
- * created before organizations were part of registration have no company name,
- * so they fall back to the account name rather than to an empty cell.
+ * The organization an account represents as a list labels it: the registered
+ * company name, falling back to the account name when there is none.
  */
 export const organizationName = sql<string>`coalesce(${users.companyName}, ${users.name})`;
 
-// ── vendor_profiles ──────────────────────────────────────
 export const vendors = sqliteTable(
 	"vendor_profiles",
 	{
@@ -102,6 +127,16 @@ export const vendors = sqliteTable(
 		/** Legal identity, required before an admin can verify the profile. */
 		nib: text(),
 		npwp: text(),
+		/** Company registration number, required with the NPWP. */
+		tdp: text(),
+		/** The ESCO or ISO certificate the vendor filed, held in R2 with the scan's reading. */
+		certificateName: text("certificate_name"),
+		certificateKey: text("certificate_key"),
+		certificateScan: text("certificate_scan", {
+			mode: "json",
+		}).$type<CompanyDocumentScan>(),
+		/** Why an administrator turned the profile down, as the vendor reads it. */
+		verificationRejectionReason: text("verification_rejection_reason"),
 		certifications: text({ mode: "json" }).$type<string[]>().default([]),
 		portfolio: text({ mode: "json" }).$type<string[]>().default([]),
 		rating: real().default(0),
@@ -119,7 +154,6 @@ export const vendorsRelations = relations(vendors, ({ one, many }) => ({
 	proposals: many(proposals),
 }));
 
-// ── projects ─────────────────────────────────────────────
 export const projects = sqliteTable(
 	"projects",
 	{
@@ -130,16 +164,13 @@ export const projects = sqliteTable(
 		title: text().notNull(),
 		description: text(),
 		status: text({ enum: projectStatuses }).notNull().default("draft"),
-		// Project parameters
 		targetEmissionReduction: real("target_emission_reduction"),
 		estimatedEnergySaving: real("estimated_energy_saving"),
 		budget: real(),
 		location: text(),
 		industrySector: text("industry_sector"),
-		// ── Business wizard inputs ──────────────────────────────
-		// Stored explicitly rather than as a JSON blob: the risk read
-		// recomputes from these, and money is queried. Only Step 1's summary
-		// maps onto an existing column, `description`.
+		// Business wizard inputs, stored explicitly rather than as a JSON blob: the risk
+		// read recomputes from these and money is queried.
 		konsumsiMwh: real("konsumsi_mwh"),
 		biayaRp: real("biaya_rp"),
 		faktorEmisi: real("faktor_emisi"),
@@ -160,10 +191,8 @@ export const projects = sqliteTable(
 			.$type<string[]>()
 			.default([]),
 		deliverables: text({ mode: "json" }).$type<string[]>().default([]),
-		// Risk assessment result
 		riskScore: real("risk_score"),
 		riskSummary: text("risk_summary"),
-		// Timestamps
 		submittedAt: integer("submitted_at", { mode: "timestamp_ms" }),
 		completedAt: integer("completed_at", { mode: "timestamp_ms" }),
 		createdAt: integer("created_at", { mode: "timestamp_ms" })
@@ -195,10 +224,9 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
 	forecasts: many(energyForecasts),
 }));
 
-// ── drafts (business wizard, before submission) ──────────
 /**
- * One wizard draft. The id is generated by the client so that autosave can
- * upsert without a create round trip.
+ * One wizard draft. The id is client-generated so autosave can upsert without
+ * a create round trip.
  */
 export const drafts = sqliteTable(
 	"drafts",
@@ -228,12 +256,9 @@ export const drafts = sqliteTable(
 	(t) => [index("idx_drafts_company").on(t.companyId)],
 );
 
-// ── draft_documents (files uploaded before submit) ───────
 /**
- * Files attached to an unsubmitted draft. They live here rather than in
- * `project_documents` because that table requires a project, and the project
- * does not exist until submit. Submit promotes these rows into
- * `project_documents` and clears them.
+ * Files attached to an unsubmitted draft. They live here because
+ * `project_documents` requires a project, which does not exist until submit.
  */
 export const draftDocuments = sqliteTable(
 	"draft_documents",
@@ -257,7 +282,6 @@ export const draftDocuments = sqliteTable(
 	(t) => [index("idx_draft_docs_draft").on(t.draftId)],
 );
 
-// ── project_documents (Document Intelligence / OCR) ──────
 export const projectDocuments = sqliteTable(
 	"project_documents",
 	{
@@ -293,7 +317,6 @@ export const projectDocumentsRelations = relations(
 	}),
 );
 
-// ── risk_assessments ─────────────────────────────────────
 export const riskAssessments = sqliteTable(
 	"risk_assessments",
 	{
@@ -307,13 +330,11 @@ export const riskAssessments = sqliteTable(
 		implementationScore: real("implementation_score"),
 		environmentalScore: real("environmental_score"),
 		overallScore: real("overall_score"),
-		// Mitigation
 		recommendations: text({ mode: "json" }).$type<string[]>().default([]),
 		notes: text(),
 		/**
-		 * Eleanor's written reading of this assessment. Written once, when the
-		 * project is submitted, and kept with the record: a view costs nothing and
-		 * the analysis cannot drift from the figures it was written about.
+		 * Eleanor's written reading of this assessment, written once at submission and
+		 * kept with the record so the analysis cannot drift from its figures.
 		 */
 		insight: text(),
 		/** "ai" when Workers AI wrote it, "model" when the analyst composed it. */
@@ -334,7 +355,6 @@ export const riskAssessmentsRelations = relations(
 	}),
 );
 
-// ── vendor_match_scores (5-weight SPK breakdown) ─────────
 export const vendorMatchScores = sqliteTable(
 	"vendor_match_scores",
 	{
@@ -345,7 +365,6 @@ export const vendorMatchScores = sqliteTable(
 		vendorId: integer("vendor_id")
 			.notNull()
 			.references(() => vendors.id, { onDelete: "cascade" }),
-		// 5 weighted criteria
 		technicalFit: real("technical_fit"),
 		relevantExperience: real("relevant_experience"),
 		historicalPerformance: real("historical_performance"),
@@ -377,11 +396,9 @@ export const vendorMatchScoresRelations = relations(
 	}),
 );
 
-// ── vendor_assignments (the company's matchmaking choice) ─
 /**
  * The company's choice: the vendor it appoints and the procurement route it
- * will run. `method` shares `tenderMethods` with the tender this opens, so the
- * choice and the tender it becomes are the same value in the same dialect.
+ * will run. `method` shares `tenderMethods` with the tender this opens.
  */
 export const vendorAssignments = sqliteTable(
 	"vendor_assignments",
@@ -422,7 +439,6 @@ export const vendorAssignmentsRelations = relations(
 	}),
 );
 
-// ── tenders ──────────────────────────────────────────────
 export const tenders = sqliteTable(
 	"tenders",
 	{
@@ -455,7 +471,6 @@ export const tendersRelations = relations(tenders, ({ one, many }) => ({
 	proposals: many(proposals),
 }));
 
-// ── proposals ────────────────────────────────────────────
 export const proposals = sqliteTable(
 	"proposals",
 	{
@@ -476,7 +491,6 @@ export const proposals = sqliteTable(
 		/** The proposal document the vendor filed, if any: PDF, held in R2. */
 		documentName: text("document_name"),
 		documentKey: text("document_key"),
-		// Timestamps
 		submittedAt: integer("submitted_at", { mode: "timestamp_ms" }),
 		reviewedAt: integer("reviewed_at", { mode: "timestamp_ms" }),
 		createdAt: integer("created_at", { mode: "timestamp_ms" })
@@ -505,7 +519,6 @@ export const proposalsRelations = relations(proposals, ({ one, many }) => ({
 	revisions: many(proposalRevisions),
 }));
 
-// ── proposal_revisions (max 3 revisions per proposal) ────
 export const proposalRevisions = sqliteTable(
 	"proposal_revisions",
 	{
@@ -540,7 +553,6 @@ export const proposalRevisionsRelations = relations(
 	}),
 );
 
-// ── blueprints (Green Project Blueprint) ──────────────────
 export const blueprints = sqliteTable(
 	"blueprints",
 	{
@@ -549,7 +561,6 @@ export const blueprints = sqliteTable(
 			.notNull()
 			.references(() => projects.id, { onDelete: "cascade" }),
 		status: text().notNull().default("draft"), // draft | audit | validated | rejected | published
-		// Generated document blueprint
 		document: text({ mode: "json" }).$type<BlueprintDocument>(),
 		auditorId: integer("auditor_id").references(() => users.id),
 		auditNote: text("audit_note"),
@@ -580,7 +591,6 @@ export const blueprintsRelations = relations(blueprints, ({ one }) => ({
 	}),
 }));
 
-// ── energy_forecasts (AI Predictive Analytics) ────────────
 export const energyForecasts = sqliteTable(
 	"energy_forecasts",
 	{
@@ -593,7 +603,6 @@ export const energyForecasts = sqliteTable(
 		forecastedConsumption: real("forecasted_consumption"), // kWh
 		forecastedSavings: real("forecasted_savings"), // kWh
 		modelName: text("model_name").default("random_forest"),
-		// SHAP interpretability values
 		shapValues: text("shap_values", { mode: "json" }),
 		metrics: text({ mode: "json" }).$type<{
 			mae?: number;
@@ -618,7 +627,6 @@ export const energyForecastsRelations = relations(
 	}),
 );
 
-// ── investments ──────────────────────────────────────────
 export const investments = sqliteTable(
 	"investments",
 	{
@@ -657,7 +665,6 @@ export const investmentsRelations = relations(investments, ({ one, many }) => ({
 	payments: many(roiPayments),
 }));
 
-// ── roi_payments (Smart ROI Tracker) ─────────────────────
 export const roiPayments = sqliteTable(
 	"roi_payments",
 	{
@@ -687,7 +694,6 @@ export const roiPaymentsRelations = relations(roiPayments, ({ one }) => ({
 	}),
 }));
 
-// ── emission_reports (MRV) ──────────────────────────────
 export const emissionReports = sqliteTable(
 	"emission_reports",
 	{
@@ -697,17 +703,14 @@ export const emissionReports = sqliteTable(
 			.references(() => projects.id, { onDelete: "cascade" }),
 		periodStart: integer("period_start", { mode: "timestamp_ms" }),
 		periodEnd: integer("period_end", { mode: "timestamp_ms" }),
-		// Energy & emission metrics
 		actualConsumption: real("actual_consumption"),
 		baselineConsumption: real("baseline_consumption"),
 		emissionReduction: real("emission_reduction"),
-		// Anomaly detection
 		anomalyFlagged: integer("anomaly_flagged", { mode: "boolean" }).default(
 			false,
 		),
 		anomalyScore: real("anomaly_score"),
 		anomalyNote: text("anomaly_note"),
-		// Full report data
 		reportData: text("report_data", { mode: "json" }),
 		verifiedBy: integer("verified_by").references(() => users.id),
 		verifiedAt: integer("verified_at", { mode: "timestamp_ms" }),
@@ -731,7 +734,6 @@ export const emissionReportsRelations = relations(
 	}),
 );
 
-// ── audit_logs (traceability / audit trail) ──────────────
 export const auditLogs = sqliteTable(
 	"audit_logs",
 	{
@@ -758,7 +760,6 @@ export const auditLogs = sqliteTable(
 	],
 );
 
-// ── notifications ────────────────────────────────────────
 export const notifications = sqliteTable(
 	"notifications",
 	{
@@ -781,7 +782,6 @@ export const notifications = sqliteTable(
 	],
 );
 
-// ── negotiations (company revision rounds over a proposal) ─
 export const negotiationStatuses = [
 	"PENDING_VENDOR_RESPONSE",
 	"SUBMITTED_BY_VENDOR",
@@ -790,13 +790,11 @@ export const negotiationStatuses = [
 ] as const;
 export type NegotiationStatus = (typeof negotiationStatuses)[number];
 
-/** A proposal can be renegotiated at most three times. */
 export const maxNegotiationIterations = 3;
 
 /**
- * How many of a project's ranked vendors the company is offered to choose
- * between. A direct selection appoints one of them; a closed tender invites only
- * these, while an open one invites every verified vendor.
+ * How many of a project's ranked vendors the company is offered: a direct
+ * selection appoints one, a closed tender invites only these.
  */
 export const matchShortlistSize = 3;
 
@@ -811,7 +809,6 @@ export const negotiations = sqliteTable(
 		status: text({ enum: negotiationStatuses })
 			.notNull()
 			.default("PENDING_VENDOR_RESPONSE"),
-		// What the company asked for
 		requestedPriceReduction: real("requested_price_reduction"),
 		requestedWarrantyYears: integer("requested_warranty_years"),
 		requestedTimelineMonths: integer("requested_timeline_months"),
@@ -824,7 +821,6 @@ export const negotiations = sqliteTable(
 		annotations: text("annotations", { mode: "json" })
 			.$type<ProposalAnnotation[]>()
 			.default([]),
-		// What the vendor answered with
 		vendorRevisedPrice: real("vendor_revised_price"),
 		vendorRevisedWarrantyYears: integer("vendor_revised_warranty_years"),
 		vendorRevisedTimelineMonths: integer("vendor_revised_timeline_months"),
@@ -854,7 +850,6 @@ export const negotiationsRelations = relations(negotiations, ({ one }) => ({
 	}),
 }));
 
-// ── project_milestones (delivery tracking after award) ───
 export const milestoneStatuses = [
 	"NOT_STARTED",
 	"IN_PROGRESS",
@@ -909,7 +904,6 @@ export const projectMilestonesRelations = relations(
 	}),
 );
 
-// ── milestone_evidence (files attached to a milestone) ───
 export const evidenceKinds = [
 	"photo",
 	"video",
@@ -947,12 +941,47 @@ export const milestoneEvidenceRelations = relations(
 	}),
 );
 
-// ── vendor_portfolio_items (vendor-authored references) ──
 /**
- * A record of delivered work. It carries no verification flag: nothing in the
- * platform verifies a vendor's own reference, so a "verified" label on one would
- * be a claim with no process behind it. What a vendor is verified for is the
- * profile, which an administrator checks.
+ * The certificates a company files to prove it is a real entity, one file per
+ * slot. The NIB and NPWP live on the account itself (`users.nib`, `users.npwp`).
+ */
+export const companyDocuments = sqliteTable(
+	"company_documents",
+	{
+		id: integer().primaryKey({ autoIncrement: true }),
+		userId: integer("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		slot: text({ enum: companyDocumentSlots }).notNull(),
+		fileName: text("file_name").notNull(),
+		/** R2 object key. Served back through the download endpoint. */
+		fileKey: text("file_key").notNull(),
+		contentType: text("content_type"),
+		sizeBytes: integer("size_bytes"),
+		/** What the scan read off this certificate, and the verdict it reached. */
+		scan: text({ mode: "json" }).$type<CompanyDocumentScan>(),
+		uploadedAt: integer("uploaded_at", { mode: "timestamp_ms" })
+			.notNull()
+			.$defaultFn(() => new Date()),
+	},
+	(t) => [
+		uniqueIndex("company_documents_user_slot_unique").on(t.userId, t.slot),
+	],
+);
+
+export const companyDocumentsRelations = relations(
+	companyDocuments,
+	({ one }) => ({
+		user: one(users, {
+			fields: [companyDocuments.userId],
+			references: [users.id],
+		}),
+	}),
+);
+
+/**
+ * A record of delivered work. Nothing in the platform verifies a vendor's own
+ * reference; the profile is what an administrator checks.
  */
 export const vendorPortfolioItems = sqliteTable(
 	"vendor_portfolio_items",
@@ -997,7 +1026,6 @@ export const vendorPortfolioItemsRelations = relations(
 	}),
 );
 
-// ── broker_profiles ─────────────────────────────────────
 export const brokerProfiles = sqliteTable(
 	"broker_profiles",
 	{
@@ -1037,11 +1065,9 @@ export const brokerProfilesRelations = relations(brokerProfiles, ({ one }) => ({
 	}),
 }));
 
-// ── broker_assignments ──────────────────────────────────
 /**
- * The Broker's own bond-preparation lifecycle (§20). It is deliberately
- * separate from the GreenShift project lifecycle: "COMPLETED" here means the
- * Broker finished its part, not that the project itself is complete.
+ * The Broker's own bond-preparation lifecycle (§20), separate from the project
+ * lifecycle: "COMPLETED" here means the Broker finished its part.
  */
 export const brokerWorkflowStatuses = [
 	"ASSIGNED",
@@ -1129,7 +1155,6 @@ export const brokerAssignmentsRelations = relations(
 	}),
 );
 
-// ── document_requests (Broker → Company) ────────────────
 export const documentCategories = [
 	"Legal",
 	"Financial",
@@ -1139,7 +1164,7 @@ export const documentCategories = [
 ] as const;
 export type DocumentCategory = (typeof documentCategories)[number];
 
-/** Document lifecycle from §18: REQUESTED → SUBMITTED → UNDER_REVIEW → APPROVED | REJECTED → RESUBMISSION. */
+/** Document lifecycle (§18). */
 export const documentRequestStatuses = [
 	"REQUESTED",
 	"SUBMITTED",

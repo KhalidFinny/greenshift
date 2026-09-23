@@ -1,10 +1,5 @@
-/* The reading the review step opens with: the project and its funding case, in
- * the analyst's words rather than as a list of the figures the user just typed.
- *
- * Written from Steps 1 and 2 only. The percentages and the payback period are
- * arithmetic over those figures, so the prose can state a relationship without
- * importing a benchmark the platform does not have.
- */
+/* The reading the review step opens with: the project and its funding case in the
+ * analyst's words. Written from Steps 1 and 2 only; ratios are arithmetic over them. */
 
 import type {
 	BusinessProjectReadingRequest,
@@ -75,12 +70,8 @@ function missingFigures(input: BusinessProjectReadingRequest): string[] {
 	return missing;
 }
 
-/**
- * The reading composed from the figures alone, in the analyst's voice. Every
- * sentence traces back to an input, and what is not filled in is named rather
- * than glossed over, which is what makes it safe to show when the model is
- * unavailable.
- */
+// The reading composed from the figures alone, in the analyst's voice. Every sentence
+// traces to an input and what is missing is named, so it is safe when the model is down.
 export function composeProjectReading(
 	input: BusinessProjectReadingRequest,
 ): string {
@@ -174,11 +165,8 @@ function stated(value: number | null): string {
 	return value === null ? "not provided" : rupiah(value);
 }
 
-/**
- * The figures as a brief, derived values included: the model is told what the
- * arithmetic already says, so it reasons about the case instead of recomputing
- * it, and cannot mistake a ratio for an input.
- */
+// The figures as a brief, derived values included, so the model reasons about the case
+// instead of recomputing it and cannot mistake a ratio for an input.
 function asBrief(
 	input: BusinessProjectReadingRequest,
 	plan: PlanReading,

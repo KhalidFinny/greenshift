@@ -1,11 +1,5 @@
-/**
- * Broker-facing bond code.
- *
- * An issued bond carries the code its broker registered, and the API returns it
- * verbatim. A bond that has not been issued yet has no code, so we fall back to
- * a deterministic value derived from the project: never random, or the investor
- * could not find the same bond twice.
- */
+/** Broker-facing bond code: the API returns the registered code verbatim, and an
+ * unissued bond falls back to a value derived from the project, never random. */
 export function bondCodeFor(project: {
 	id: number;
 	bondCode?: string | null;
@@ -14,14 +8,8 @@ export function bondCodeFor(project: {
 	return `GS-BND-${String(project.id).padStart(4, "0")}`;
 }
 
-/**
- * Plain-text payload for the "Copy Code" button.
- *
- * Investors paste this into the broker app's search field, so it carries the
- * code plus just enough context (name, issuer) to disambiguate. The coupon is
- * not included: the terms of the issuance belong to the partner app, which is
- * where the investor reads them.
- */
+/** "Copy Code" payload: the code plus name and issuer, because it is pasted into
+ * the broker app's search field. Coupon terms stay in the partner app. */
 export function bondSearchPayload(project: {
 	id: number;
 	title: string;

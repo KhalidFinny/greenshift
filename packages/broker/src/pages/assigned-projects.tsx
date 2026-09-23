@@ -219,11 +219,7 @@ function RequestInformationModal({
 	);
 }
 
-/**
- * One assignment card. Shows the financing information the broker needs (§11):
- * parties, value, LVV GRK validation, risk, lifecycle stage, bond status,
- * open document requests and the last monitoring report date.
- */
+/** One assignment card: the financing facts the broker needs to decide (§11). */
 function AssignedProjectCard({
 	project,
 	onAccept,
@@ -393,10 +389,7 @@ function AssignedProjectCard({
 	);
 }
 
-/**
- * One stage's assignment grid. The tab has already narrowed the rows, so the
- * hook pages the filtered list and the control sits directly under the grid.
- */
+/** One stage's assignment grid: hook pages the tab's filtered rows, control under it. */
 function PagedProjectGrid({
 	items,
 	viewLabel,

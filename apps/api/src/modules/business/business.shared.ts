@@ -9,14 +9,10 @@ import type {
 import type { draftDocuments, drafts, projectDocuments } from "../../db/schema";
 import { iso } from "../../lib/format";
 
-/** Upload limits for wizard documents. */
 export const MAX_DOCUMENT_BYTES = 25 * 1024 * 1024;
 
-/**
- * Accepted document types. Extensions are checked alongside the MIME type
- * because browsers report spreadsheets inconsistently, often as
- * `application/octet-stream`.
- */
+// Extensions are checked alongside the MIME type: browsers report spreadsheets
+// inconsistently, often as `application/octet-stream`.
 export const ALLOWED_DOCUMENT_EXTENSIONS = [
 	"pdf",
 	"xls",
@@ -34,11 +30,8 @@ export const ALLOWED_DOCUMENT_TYPES: readonly string[] = [
 	"image/jpeg",
 ];
 
-/**
- * The slot vocabulary, so an upload cannot invent a checklist entry. Mirrors
- * the frontend: the Step 1 trio and Step 2's two financial documents. The LVV's
- * own document pack is not collected here: it is filed at Sistem Registri.
- */
+// Slot vocabulary so an upload cannot invent a checklist entry; mirrors the
+// frontend. The LVV's own pack is filed at Sistem Registri, not collected here.
 export const DOCUMENT_SLOTS = [
 	"tagihan",
 	"beban",
@@ -47,20 +40,15 @@ export const DOCUMENT_SLOTS = [
 	"rab",
 ] as const;
 
-/** The Step 1 document trio. */
 export const STEP1_SLOTS = ["tagihan", "beban", "izin"] as const;
 
-/**
- * The wizard's checklist: the Step 1 trio. Three slots, and the denominator both
- * the credit score and the risk model use for document completeness. Mirrors
- * `REQUIRED_DOCS` in the frontend.
- */
+// The denominator the credit score and risk model use for document
+// completeness; mirrors `REQUIRED_DOCS` in the frontend.
 export const CHECKLIST_SLOTS = [...STEP1_SLOTS] as const;
 
 /** The client generates the draft id, so it is bounded rather than trusted. */
 export const MAX_DRAFT_ID = 64;
 
-/** Narrows a path segment to a usable draft id. */
 export function validDraftId(value: string | undefined): value is string {
 	return (
 		typeof value === "string" &&
@@ -77,14 +65,8 @@ export function isDocumentSlot(value: unknown): value is string {
 	);
 }
 
-/**
- * The pill label for a project status. The list shows this rather than the raw
- * enum, so the mapping lives here rather than in the page.
- *
- * `registry` and `assessment` are the two halves of the verification step: the
- * company registers the project at the registry and appoints its LVV body
- * first, and then it waits on that body, which is what the second label says.
- */
+// The list shows this label rather than the raw status enum. `registry` and
+// `assessment` are the two halves of verification: register, then await the LVV.
 export function pillStatus(status: string): string {
 	switch (status) {
 		case "registry":
@@ -114,11 +96,8 @@ export interface StoredDraftPayload {
 export const SCOPE_MAX_ITEMS = 20;
 export const SCOPE_ITEM_MAX = 300;
 
-/**
- * The entries of a scope list that actually carry text: trimmed, blanks dropped,
- * cut to the cap. Both the validator and the submit path read the list this way,
- * so a whitespace entry is never an entry and never reaches a project row.
- */
+// Trimmed, blanks dropped, cut to the cap. The validator and the submit path
+// both read the list this way, so a whitespace entry never reaches a project row.
 export function scopeEntries(value: unknown): string[] {
 	if (!Array.isArray(value)) return [];
 	return value
@@ -128,10 +107,8 @@ export function scopeEntries(value: unknown): string[] {
 		.slice(0, SCOPE_MAX_ITEMS);
 }
 
-/**
- * The stored payload is the client's own blocks, written through the autosave
- * validator, so it is read back as those blocks rather than re-derived.
- */
+// The stored payload is the client's own blocks, written through the autosave
+// validator, so it is read back as those blocks rather than re-derived.
 export function readPayload(payload: unknown): StoredDraftPayload {
 	return (payload ?? {}) as StoredDraftPayload;
 }
@@ -148,11 +125,8 @@ export function draftEntry(row: typeof drafts.$inferSelect): BusinessDraft {
 	};
 }
 
-/**
- * A file attached to a draft. Draft files are not OCR'd: that only happens once
- * submit promotes them onto a project, so this carries the size rather than an
- * OCR state.
- */
+// Draft files are not OCR'd (that happens when submit promotes them to a
+// project), so this carries the size rather than an OCR state.
 export function draftDocumentEntry(
 	row: typeof draftDocuments.$inferSelect,
 ): BusinessDraftDocument {
@@ -165,7 +139,6 @@ export function draftDocumentEntry(
 	};
 }
 
-/** A document on a submitted project. */
 export function projectDocumentEntry(
 	row: typeof projectDocuments.$inferSelect,
 	projectId: number,

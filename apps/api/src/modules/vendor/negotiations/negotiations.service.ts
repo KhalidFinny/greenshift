@@ -33,7 +33,6 @@ function toNegotiation(row: NegotiationRow): VendorNegotiation {
 	};
 }
 
-// ── negotiations ──────────────────────────────────────────
 export async function listVendorNegotiations(
 	db: GreenShiftDb,
 	userId: number,
@@ -58,9 +57,8 @@ export type RespondToNegotiationResult =
 	| { status: "invalid_state" }
 	| { status: "load_failed" };
 
-// Answer a company revision request: stores the vendor's counter-offer on the
-// negotiation, appends a vendor entry to the proposal revision trail and puts
-// the proposal back in review.
+// Answer a company revision request: store the counter-offer, append a vendor
+// entry to the revision trail and put the proposal back in review.
 export async function respondToVendorNegotiation(
 	db: GreenShiftDb,
 	userId: number,

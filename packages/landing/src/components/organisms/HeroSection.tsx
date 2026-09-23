@@ -5,17 +5,8 @@ import { useParallax } from "../../hooks/useParallax";
 import FloatingPill from "../atoms/FloatingPill";
 import DashboardShowcase from "../molecules/DashboardShowcase";
 
-// The hero is a viewport-filling stage whose layers are absolutely
-// positioned, so it cannot reflow: it is laid out on a 1920x950 design
-// canvas (see `--u` in styles.css), the viewport its sizes are authored
-// against, and every content size below is a multiple of that canvas pixel
-// from `lg` up while positions stay in percentages. Sizes are the u = 1
-// values; the small-screen layout keeps the original responsive classes.
-// Canvas text is floored at 0.875rem: `--u` drops below 1px on any viewport
-// narrower than the 1920 canvas, which would otherwise render body copy
-// under the 14px floor.
-// Background images render immediately on load; only the title (first) and
-// the floating pills + dashboard (after) animate in.
+// The hero cannot reflow: its layers are absolutely positioned on a 1920x950 design
+// canvas (`--u`), so canvas text is floored at 0.875rem to stay above the 14px floor.
 export default function HeroSection() {
 	const yBg = useParallax(0.08);
 	const yDashboard = useParallax(0.12, 60);
@@ -144,11 +135,8 @@ export default function HeroSection() {
 					deliver in one measurable and transparent ecosystem.
 				</p>
 
-				{/* The buttons take their width from their own label plus a
-				    generous gutter, and both the gutter and the height are
-				    floored: the canvas scales them with `--u` above the 1920px
-				    design canvas, but below it the 14px text floor would leave
-				    the label touching the border of a box scaled past it. */}
+				{/* The gutter and height are floored: the canvas scales them with `--u`, but
+				    below the 1920px canvas the 14px text floor would leave the label touching the border. */}
 				<nav
 					className="pointer-events-auto mt-12 flex flex-col items-center gap-5 sm:flex-row sm:gap-14 lg:mt-[calc(var(--u)*52)] lg:gap-[max(3.5rem,calc(var(--u)*64))]"
 					aria-label="Hero actions"

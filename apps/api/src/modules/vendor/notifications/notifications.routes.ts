@@ -31,7 +31,6 @@ function toNotification(
 	};
 }
 
-// ── notifications ─────────────────────────────────────────
 notificationRoutes.get(
 	"/notifications",
 	...factory.createHandlers(async (c) => {
@@ -61,7 +60,6 @@ notificationRoutes.patch(
 	}),
 );
 
-// ── read the whole feed ───────────────────────────────────
 // Registered after the `:id` route so the two cannot shadow each other.
 notificationRoutes.patch(
 	"/notifications",

@@ -1,4 +1,4 @@
-import type { VendorProfile } from "../../../contracts";
+import { apiRoutes, type VendorProfile } from "../../../contracts";
 import type { GreenShiftDb } from "../../../db";
 import type { users, vendors } from "../../../db/schema";
 import { iso } from "../../../lib/format";
@@ -18,6 +18,7 @@ function toVendorProfile(
 		location: vendor.location,
 		nib: vendor.nib,
 		npwp: vendor.npwp,
+		tdp: vendor.tdp,
 		certifications: (vendor.certifications as string[]) ?? [],
 		portfolio: (vendor.portfolio as string[]) ?? [],
 		rating: vendor.rating ?? 0,
@@ -27,6 +28,12 @@ function toVendorProfile(
 		userEmail: user.email,
 		userName: user.name,
 		createdAt: iso(vendor.createdAt),
+		certificateName: vendor.certificateName,
+		certificateUrl: vendor.certificateKey
+			? apiRoutes.vendorCertificateFile.path
+			: null,
+		certificateScan: vendor.certificateScan ?? null,
+		rejectionReason: vendor.verificationRejectionReason,
 	};
 }
 

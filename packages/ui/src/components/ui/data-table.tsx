@@ -32,11 +32,7 @@ export interface DataTableProps<TData, TValue = unknown> {
 	ariaLabel?: string;
 	className?: string;
 	initialSorting?: SortingState;
-	/**
-	 * Rows per page. Every table pages: a table that renders its whole dataset
-	 * at once is a table that grows without a bound. The footer is hidden while
-	 * the rows fit one page.
-	 */
+	/** Rows per page; every table pages. The footer is hidden while the rows fit one page. */
 	pageSize?: number;
 	/** When set, renders a search input bound to the global filter. */
 	searchPlaceholder?: string;
@@ -166,9 +162,8 @@ export function DataTable<TData, TValue = unknown>({
 						<TableRow>
 							<TableCell
 								colSpan={columns.length}
-								// The message wraps rather than widening the table past
-								// its container, so a long, filter-aware message cannot
-								// reintroduce a sideways drag on a phone.
+								// The message wraps instead of widening the table, so a long
+								// filter-aware message cannot reintroduce sideways drag on a phone.
 								className="h-24 text-center whitespace-normal text-muted-foreground"
 							>
 								{emptyMessage}

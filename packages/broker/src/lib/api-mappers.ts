@@ -20,10 +20,7 @@ import type {
 	MonthlyProjectReport,
 } from "./types";
 
-/**
- * The UI model keeps string identifiers (route parameters are strings) and
- * relative timestamps; everything else mirrors the API contract.
- */
+/** UI model: string ids (route params) and relative timestamps; the rest mirrors the API. */
 function id(value: number): string {
 	return String(value);
 }

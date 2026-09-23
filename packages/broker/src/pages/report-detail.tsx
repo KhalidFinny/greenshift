@@ -36,7 +36,6 @@ export function BrokerReportDetailPage() {
 
 	const report = monthlyReports.find((r) => r.id === id) ?? monthlyReports[0];
 
-	// Reports load asynchronously; render a placeholder until one is available.
 	if (!report) {
 		return (
 			<div className="space-y-4">

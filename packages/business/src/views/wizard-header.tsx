@@ -1,8 +1,5 @@
-/* The wizard's chrome for the active step: the sticky bar with the step strip,
- * the autosave line and the step actions, then the step's purpose and the
- * invalid-fields banner. It holds no wizard state: it reports what the user
- * pressed and renders what the shell tells it.
- */
+/* The wizard's chrome for the active step: the sticky bar with the step strip, the
+ * autosave line and the actions, then the step's purpose and the invalid-field banner. */
 
 import { Button, cn } from "@greenshift/ui";
 import type { SaveState } from "../lib/use-business-draft";
@@ -23,8 +20,7 @@ const STEP_STATE = {
 	upcoming: "border border-border bg-muted text-muted-foreground",
 } as const;
 
-/* The COMPANY names from the glossary, which supersede the old step 1-internal
-   names (Profile & Needs / Financial Viability). */
+/* The COMPANY names from the glossary, which supersede the old step 1-internal names. */
 const STEPS = [
 	"Project Profile",
 	"Financial Eligibility",
@@ -32,8 +28,7 @@ const STEPS = [
 	"Review & Submit",
 ];
 
-/* One line of orientation for the step the user is on, on the page rather than
-   in the sticky bar. */
+/* One line of orientation for the step the user is on, on the page rather than the bar. */
 const STEP_SUBTITLES = [
 	"Base energy data and the goal of the project. Step 1 of 4.",
 	"The funding need and the repayment capacity. Step 2 of 4.",
@@ -85,9 +80,8 @@ export function WizardHeader({
 
 	return (
 		<>
-			{/* The wizard's own header, and the only sticky element: the step
-			    strip and the actions share a row while they fit, and wrap
-			    onto their own rows when they do not. */}
+			{/* The wizard's own header, and the only sticky element: the strip and the
+			    actions share a row while they fit, and wrap when they do not. */}
 			<header className="sticky top-0 z-20 -mx-4 border-b border-border bg-background px-4 py-2 sm:-mx-6 sm:px-6">
 				<div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:gap-x-4">
 					<ol
@@ -102,12 +96,8 @@ export function WizardHeader({
 									key={step}
 									className={cn(
 										"relative flex min-w-0 items-center gap-1.5",
-										// A segment in the gap to the next step, at the circles'
-										// centre line: a rail between steps rather than one line
-										// running behind all of them. Its insets match the gap on
-										// either side of it (12px gap, 8px line and 2px either
-										// side; 20px and 12px from sm), so the spacing between a
-										// circle, the rail and the next circle reads even.
+										// A segment in the gap to the next step, at the circles' centre line,
+										// rather than one rail behind all of them; its insets match the gap either side.
 										i < STEPS.length - 1 &&
 											"after:absolute after:top-1/2 after:left-[calc(100%+2px)] after:h-px after:w-2 after:-translate-y-1/2 after:bg-border sm:after:left-[calc(100%+4px)] sm:after:w-3",
 									)}
@@ -144,8 +134,7 @@ export function WizardHeader({
 							);
 						})}
 					</ol>
-					{/* Four names do not fit on a phone line, so the one the user is on
-					    is named beside the numbers there instead. */}
+					{/* Four names do not fit on a phone line, so the active one is named beside the numbers. */}
 					<span className="truncate text-sm font-semibold sm:hidden">
 						{STEPS[activeStep]}
 					</span>

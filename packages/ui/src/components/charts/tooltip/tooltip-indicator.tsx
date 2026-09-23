@@ -18,21 +18,12 @@ export type IndicatorWidth =
 	| "thick"; // 8px
 
 export interface TooltipIndicatorProps {
-	/** X position in pixels (center of the indicator) */
 	x: number;
-	/** Height of the indicator */
 	height: number;
-	/** Whether the indicator is visible */
 	visible: boolean;
-	/**
-	 * Width of the indicator - number (pixels) or preset.
-	 * Ignored if `span` is provided.
-	 */
+	/** Indicator width: pixels or preset. Ignored when `span` is set. */
 	width?: IndicatorWidth;
-	/**
-	 * Number of columns/days to span, with current point centered.
-	 * Requires `columnWidth` to be set.
-	 */
+	/** Columns/days to span, current point centered; requires `columnWidth`. */
 	span?: number;
 	/** Width of a single column/day in pixels. Required when using `span`. */
 	columnWidth?: number;
@@ -46,7 +37,6 @@ export interface TooltipIndicatorProps {
 	fadeLength?: number;
 	/** Animate position with a spring. Default: true */
 	animate?: boolean;
-	/** Unique ID for the gradient */
 	gradientId?: string;
 	/** Per-chart override; falls back to `ChartConfigProvider.tooltipSpring`. */
 	springConfig?: SpringConfig;
@@ -72,8 +62,7 @@ function resolveWidth(width: IndicatorWidth): number {
 	}
 }
 
-// Inner-only-on-visible so `useSpring` initializes at the real cursor x
-// instead of 0 on first hover.
+// Inner-only-on-visible so `useSpring` initializes at the real cursor x, not 0, on first hover.
 export function TooltipIndicator(props: TooltipIndicatorProps) {
 	if (!props.visible) {
 		return null;

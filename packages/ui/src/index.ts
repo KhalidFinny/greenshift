@@ -10,6 +10,7 @@ export { PieSlice } from "./components/charts/pie-slice";
 export * from "./components/charts/ring";
 export * from "./components/charts/ring-chart";
 export { ChartTooltip } from "./components/charts/tooltip/chart-tooltip";
+export * from "./components/district-combobox";
 export * from "./components/empty-state";
 export * from "./components/form/form";
 export { default as Footer } from "./components/layout/Footer";

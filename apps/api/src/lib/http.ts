@@ -11,11 +11,8 @@ const SAFE_METHODS: Record<string, true> = {
 	OPTIONS: true,
 };
 
-/**
- * Rejects unsafe requests whose body is not JSON, or whose declared body size
- * is obviously too large. Applied once per router (see the role routers);
- * reads and other safe methods pass straight through.
- */
+// Rejects unsafe requests whose body is not JSON or whose declared size is too
+// large. Applied once per role router; safe methods pass straight through.
 export const requireJsonBody = createMiddleware<ApiEnv>(
 	async (c: Context<ApiEnv>, next: Next) => {
 		if (SAFE_METHODS[c.req.method.toUpperCase()]) return next();

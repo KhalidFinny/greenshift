@@ -17,12 +17,8 @@ export function scopeLines(value: string): string[] {
 		.filter((line) => line.length > 0);
 }
 
-/**
- * The bridge between the wizard's form values (strings, as typed) and the
- * per-step rule sets in `validators.ts` (numbers and counts). Both the shell
- * (gating a step, submitting) and the field components (inline messages) go
- * through here, so one rule set stays the only source of every message.
- */
+/** The bridge from the form's typed strings to `validators.ts` numbers and counts; the shell and
+ * the field components both go through here, so one rule set is the only source of messages. */
 export function step1Values(values: WizardValues): Step1Values {
 	return {
 		namaProyek: values.namaProyek,
@@ -52,23 +48,14 @@ export function step2Values(
 	};
 }
 
-/**
- * One field's message from Step 1's rule set. The rules each read only their own
- * value, and the validator runs against live form state, so a field reports the
- * same sentence the step gate does.
- */
+/** One field's message from Step 1's rule set, read against live form state, so the field reports
+ * the same sentence the step gate does. */
 export function step1Validator(form: WizardForm, key: keyof Step1Values) {
 	return () => validateStep1(step1Values(form.state.values))[key];
 }
 
-/**
- * One field's message from Step 2's rule set.
- *
- * The `files` rule belongs to the upload zone rather than to any input, and the
- * shell reports it there. Validating a text field must not fail over a missing
- * file, so the count is treated as satisfied here and only the step gate has the
- * real number.
- */
+/** One field's message from Step 2's rule set. The `files` rule belongs to the upload zone, so a
+ * text field must not fail over a missing file and the count is treated as satisfied here. */
 export function step2Validator(form: WizardForm, key: keyof Step2Values) {
 	return () => validateStep2(step2Values(form.state.values, 1))[key];
 }

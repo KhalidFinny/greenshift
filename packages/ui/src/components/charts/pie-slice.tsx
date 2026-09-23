@@ -7,7 +7,6 @@ import { usePieHover, usePieStable } from "./pie-context";
 import { useEnterComplete } from "./use-enter-complete";
 import { useMountProgress } from "./use-mount-progress";
 
-// Helper to generate arc path using d3 arc generator
 function generateArcPath(
 	innerRadius: number,
 	outerRadius: number,
@@ -25,27 +24,22 @@ function generateArcPath(
 	return generator({ startAngle, endAngle } as unknown as null) || "";
 }
 
-// Calculate the translation offset for a slice to "pop out" along its radial axis
 function getSliceOffset(
 	startAngle: number,
 	endAngle: number,
 	distance: number,
 ): { x: number; y: number } {
-	// Calculate the midpoint angle of the slice
 	const midAngle = (startAngle + endAngle) / 2;
-	// In d3-shape, 0 radians is at 12 o'clock, angles increase clockwise
-	// So the outward direction is: x = sin(angle), y = -cos(angle)
+	// d3-shape: 0 rad is 12 o'clock, angles grow clockwise; outward is (sin, -cos)
 	return {
 		x: Math.sin(midAngle) * distance,
 		y: -Math.cos(midAngle) * distance,
 	};
 }
 
-/** Hover effect types */
 export type PieSliceHoverEffect = "translate" | "grow" | "none";
 
 export interface PieSliceProps {
-	/** Index of the slice in the data array */
 	index: number;
 	/** Optional color override - falls back to data color or palette */
 	color?: string;
@@ -55,16 +49,11 @@ export interface PieSliceProps {
 	animate?: boolean;
 	/** Show glow effect on hover. Default: true */
 	showGlow?: boolean;
-	/**
-	 * Hover effect type. Default: "translate"
-	 * - "translate": Slice moves outward along its radial axis
-	 * - "grow": Slice extends its outer radius (gets longer)
-	 * - "none": No hover animation
-	 */
+	/** Hover effect. Default: "translate" pops the slice outward, "grow" extends its outer radius,
+	 * "none" is static. */
 	hoverEffect?: PieSliceHoverEffect;
 	/** Distance in pixels for hover effect (translate distance or grow amount). Defaults to PieChart's hoverOffset */
 	hoverOffset?: number;
-	/** Additional CSS class */
 	className?: string;
 }
 
@@ -343,7 +332,6 @@ export const PieSlice = memo(function PieSlice({
 	} = usePieStable();
 	const { hoveredIndex, setHoveredIndex } = usePieHover();
 
-	// Use prop if provided, otherwise use context value
 	const hoverOffset = hoverOffsetProp ?? contextHoverOffset;
 
 	const arcData = arcs[index];
@@ -365,14 +353,13 @@ export const PieSlice = memo(function PieSlice({
 	const isHovered = hoveredIndex === index;
 	const isFaded = hoveredIndex !== null && hoveredIndex !== index;
 
-	// Calculate values for non-animated/static paths
 	const offset = getSliceOffset(
 		arcData.startAngle,
 		arcData.endAngle,
 		hoverOffset,
 	);
 
-	// Generate the static hitbox path (always uses base outer radius)
+	// Hitbox uses the base outer radius, not the grown one
 	const hitboxPath = generateArcPath(
 		innerRadius,
 		outerRadius,
@@ -382,7 +369,6 @@ export const PieSlice = memo(function PieSlice({
 		arcData.padAngle,
 	);
 
-	// Generate the visible path for grow effect
 	const grownOuterRadius = isHovered ? outerRadius + hoverOffset : outerRadius;
 	const grownPath = generateArcPath(
 		innerRadius,
@@ -393,7 +379,6 @@ export const PieSlice = memo(function PieSlice({
 		arcData.padAngle,
 	);
 
-	// Render animated slice based on effect type
 	const renderAnimatedSlice = () => {
 		if (hoverEffect === "grow") {
 			return (
@@ -437,7 +422,6 @@ export const PieSlice = memo(function PieSlice({
 		);
 	};
 
-	// Render static (non-animated) slice
 	const renderStaticSlice = () => {
 		if (hoverEffect === "grow") {
 			return (
@@ -461,7 +445,6 @@ export const PieSlice = memo(function PieSlice({
 			);
 		}
 
-		// Default: translate effect
 		const shouldTranslate = hoverEffect !== "none" && isHovered;
 		const translateX = shouldTranslate ? offset.x : 0;
 		const translateY = shouldTranslate ? offset.y : 0;
@@ -491,7 +474,6 @@ export const PieSlice = memo(function PieSlice({
 
 	return (
 		<g style={{ cursor: "pointer" }}>
-			{/* Invisible hitbox - stays in place, handles hover events */}
 			{/* biome-ignore lint/a11y/noStaticElementInteractions: SVG path used as hover hitbox for visualization */}
 			<path
 				d={hitboxPath}
@@ -500,7 +482,6 @@ export const PieSlice = memo(function PieSlice({
 				onMouseLeave={() => setHoveredIndex(null)}
 			/>
 
-			{/* Visible slice - animates based on hover effect, no pointer events */}
 			{animate ? renderAnimatedSlice() : renderStaticSlice()}
 		</g>
 	);

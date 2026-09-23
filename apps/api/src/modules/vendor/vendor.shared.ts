@@ -46,7 +46,6 @@ export async function vendorProfileId(
 	return profile?.id ?? null;
 }
 
-/** Audit-trail write shared by the vendor feature services. */
 export async function recordAudit(
 	db: GreenShiftDb,
 	entry: typeof auditLogs.$inferInsert,
@@ -142,7 +141,6 @@ export async function getProposalDetail(
 	};
 }
 
-// ── delivery mappers ──────────────────────────────────────
 export function evidenceEntry(
 	row: typeof milestoneEvidence.$inferSelect,
 ): VendorMilestoneEvidence {
@@ -214,10 +212,8 @@ export function monthlyReportEntry(
 }
 
 /**
- * Whether a tender is this vendor's business at all, by the route it runs on.
- * Open bidding is public to every verified vendor; closed bidding belongs to
- * the vendors the matching model put forward for the project; direct selection
- * is a private 1-on-1 with the one vendor the company appointed.
+ * Whether a tender is this vendor's business at all: open bidding is public to
+ * every verified vendor, closed belongs to the shortlist, direct is the appointed one.
  */
 export async function isTenderVisibleTo(
 	db: GreenShiftDb,

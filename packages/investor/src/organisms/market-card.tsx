@@ -47,12 +47,8 @@ const STATUS_META: Record<
 	},
 };
 
-/**
- * The icon each sector draws, keyed by the sector vocabulary a project is
- * submitted in. The icon reads the sector rather than the words in a title: a
- * boiler retrofit in a textile plant is a textile project, and guessing from
- * "boiler" is what made it draw as food and beverage.
- */
+/** Sector icons keyed by the submitted sector vocabulary: the sector decides the
+ * icon, so a boiler retrofit in a textile plant still reads as textile. */
 const SECTOR_ICONS: Record<string, IconDefinition> = {
 	cement: faIndustry,
 	"iron and steel": faIndustry,
@@ -69,7 +65,6 @@ const SECTOR_ICONS: Record<string, IconDefinition> = {
 	agriculture: faSeedling,
 };
 
-/** The icon a listing draws for its sector, or the general mark when it has none. */
 function categoryIconFor(listing: BondListing): IconDefinition {
 	const sector = (listing.industrySector ?? "").trim().toLowerCase();
 	return SECTOR_ICONS[sector] ?? faLeaf;
@@ -219,11 +214,8 @@ export function BondCard({ listing }: BondCardProps) {
 	);
 }
 
-/**
- * Loading frame for `BondCard`: the same card, header, metric grid, progress
- * band, and footer, with shimmering leaves. It lives beside the card it stands
- * in for so the two cannot drift apart.
- */
+/** Loading frame for `BondCard`: the same card, header, metric grid and footer with
+ * shimmering leaves, kept beside the card so the two cannot drift apart. */
 export function BondCardSkeleton() {
 	return (
 		<Card className="flex flex-col">

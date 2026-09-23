@@ -1,11 +1,5 @@
-/* Eleanor's reading of the project and its funding case, for the summary the
- * review step opens with and the one the project's own page shows.
- *
- * The figures travel to the endpoint that composes the reading, because the
- * wizard has no project row to store one on yet. The request is keyed by the
- * figures themselves, so the same case is asked for once and an edit that
- * changes it is a different question.
- */
+/* Eleanor's reading of the project and its funding case, for the review-step summary and the
+ * project page; the figures travel because the wizard has no project row, and key the request. */
 
 import { api } from "@greenshift/core";
 import { useQuery } from "@tanstack/react-query";

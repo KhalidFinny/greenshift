@@ -37,14 +37,8 @@ interface NegotiationCardProps {
 	) => void;
 }
 
-/**
- * Negotiation state as a chip. Every state pairs its colour with the word, per
- * the palette rules in DESIGN.md: amber while the vendor owes a response,
- * emerald once settled, blue only for the genuinely informational "waiting on
- * the client" state, and the foreground colour when no action is possible.
- * Each pairing is 700-on-50 and verified against its own tint: amber 4.85:1,
- * emerald 5.09:1, blue 6.28:1.
- */
+/** Negotiation state as a chip: every state pairs its colour with the word, never colour alone.
+ * Each pairing is 700-on-50 and verified against its own tint (amber 4.85:1, emerald 5.09:1, blue 6.28:1). */
 const STATUS_META: Record<
 	NegotiationRequest["status"],
 	{ label: string; className: string }
@@ -116,9 +110,7 @@ function RespondNegotiationDialog({
 					</DialogDescription>
 				</DialogHeader>
 
-				{/* What was asked, beside what the vendor answers: the request is
-				    read while the counter-offer is written, rather than scrolled
-				    past above it. */}
+				{/* What was asked, beside what the vendor answers: the request is read while the counter-offer is written. */}
 				<form
 					onSubmit={handleSubmit}
 					className="grid gap-6 pt-2 text-sm md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
@@ -243,11 +235,7 @@ function RespondNegotiationDialog({
 	);
 }
 
-/**
- * The proposal as the client marked it. The marks were drawn in the proposal
- * page's own coordinates, so they land on the same lines here as they did on the
- * client's screen — which is the whole point of sending them.
- */
+/** The proposal as the client marked it: the marks use the proposal page's own coordinates, so they land on the same lines here. */
 function MarkedProposalDialog({
 	negotiation,
 }: {
@@ -326,9 +314,8 @@ export function NegotiationCard({
 	onSubmitResponse,
 }: NegotiationCardProps) {
 	const status = STATUS_META[negotiation.status];
-	/* The round is the vendor's to answer only while it is open and inside the
-	   limit. An answered round waits on the client, and an agreed or locked one
-	   is closed: a response control on any of those could only be refused. */
+	/* The round is the vendor's to answer only while it is open and inside the limit: a response control on an
+	   answered, agreed, or locked round could only be refused. */
 	const awaitingVendor =
 		negotiation.status === "PENDING_VENDOR_RESPONSE" &&
 		negotiation.iterationNumber <= negotiation.maxIterations;
@@ -355,8 +342,7 @@ export function NegotiationCard({
 						Client: {negotiation.companyName}
 					</p>
 				</div>
-				{/* Nothing left to answer, so the control is not rendered at all and
-				    the card body says why. */}
+				{/* Nothing left to answer, so the control is not rendered and the card body says why. */}
 				{awaitingVendor ? (
 					<RespondNegotiationDialog
 						negotiation={negotiation}

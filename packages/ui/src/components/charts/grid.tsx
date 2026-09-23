@@ -136,13 +136,10 @@ export function Grid({
 		active: shimmerActive,
 	});
 
-	// For bar charts, determine which scale to use for grid lines
-	// Horizontal bar charts: vertical grid should use yScale (value scale)
-	// Vertical bar charts: horizontal grid uses yScale (value scale)
+	// Horizontal bar charts carry the value scale on y for both grid directions;
+	// every other chart uses xScale for columns.
 	const isHorizontalBarChart = orientation === "horizontal" && barScale;
 
-	// For vertical grid lines in horizontal bar charts, use yScale (the value scale)
-	// For time-based charts, use xScale
 	const columnScale = isHorizontalBarChart ? yScale : xScale;
 	const rowTickValuesResolved = resolveRowTickValues({
 		hideHorizontalEdgeLines,
@@ -163,19 +160,16 @@ export function Grid({
 			: undefined;
 	const uniqueId = useId();
 
-	// Horizontal fade mask (for grid rows - fades left/right)
 	const hMaskId = `grid-rows-fade-${uniqueId}`;
 	const hGradientId = `${hMaskId}-gradient`;
 	const shimmerGradientId = `grid-shimmer-${uniqueId}`;
 
-	// Vertical fade mask (for grid columns - fades top/bottom)
 	const vMaskId = `grid-cols-fade-${uniqueId}`;
 	const vGradientId = `${vMaskId}-gradient`;
 	const horizontalFadeMask = fadeHorizontal ? `url(#${hMaskId})` : undefined;
 
 	return (
 		<g className="chart-grid">
-			{/* Gradient mask for horizontal grid lines - fades at left/right */}
 			{horizontal && fadeHorizontal && (
 				<defs>
 					<linearGradient id={hGradientId} x1="0%" x2="100%" y1="0%" y2="0%">
@@ -219,7 +213,6 @@ export function Grid({
 				</defs>
 			) : null}
 
-			{/* Gradient mask for vertical grid lines - fades at top/bottom */}
 			{vertical && fadeVertical && (
 				<defs>
 					<linearGradient id={vGradientId} x1="0%" x2="0%" y1="0%" y2="100%">

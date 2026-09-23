@@ -47,9 +47,8 @@ export type UpdateBlueprintResult =
 	| { ok: false; reason: "not_publishable" };
 
 /**
- * Auditor gatekeeper workflow: validates the requested transition, checks the
- * blueprint is complete before publication, persists the change with its audit
- * entry, and opens the project for funding once published.
+ * Auditor gatekeeper workflow: validates the requested transition, requires a
+ * complete blueprint before publication, and opens the project for funding.
  */
 export async function updateBlueprint(
 	db: GreenShiftDb,

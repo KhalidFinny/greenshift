@@ -40,7 +40,6 @@ function generateRingArcPath(
 }
 
 export interface RingChartProps {
-	/** Data array - each item represents a ring */
 	data: RingData[];
 	/** Chart size in pixels. If not provided, uses parent container size */
 	size?: number;
@@ -52,26 +51,19 @@ export interface RingChartProps {
 	baseInnerRadius?: number;
 	/** Animation duration in milliseconds. Default: 1100 */
 	animationDuration?: number;
-	/** Additional class name for the container */
 	className?: string;
-	/** Controlled hover state - index of hovered ring */
 	hoveredIndex?: number | null;
-	/** Callback when hover state changes */
 	onHoverChange?: (index: number | null) => void;
 	/** Start angle in radians. Default: -PI/2 (top) */
 	startAngle?: number;
 	/** End angle in radians. Default: 3*PI/2 (full circle) */
 	endAngle?: number;
-	/** Framer Motion transition for ring enter animation */
 	enterTransition?: Transition;
 	/** Scales ring stagger delays (1 = default). */
 	enterStaggerScale?: number;
-	/**
-	 * High-frequency geometry updates (e.g. studio NumberField scrub).
-	 * Uses plain SVG paths instead of Motion `d` morphing.
-	 */
+	/** High-frequency geometry updates (studio NumberField scrub): plain SVG paths instead of Motion
+	 * `d` morphing. */
 	geometryScrubbing?: boolean;
-	/** Child components (Ring, RingCenter, etc.) */
 	children: ReactNode;
 }
 
@@ -102,7 +94,6 @@ function isRing(child: ReactNode): boolean {
 	);
 }
 
-// Helper to check if a child is a RingCenter component
 function isRingCenter(child: ReactNode): boolean {
 	return (
 		isValidElement(child) &&
@@ -151,7 +142,6 @@ const RingChartCore = memo(function RingChartCore({
 	const [animationKey] = useState(0);
 	const [isLoaded, setIsLoaded] = useState(false);
 
-	// Use controlled or uncontrolled hover state
 	const isControlled = hoveredIndexProp !== undefined;
 	const hoveredIndex = isControlled ? hoveredIndexProp : internalHoveredIndex;
 	const setHoveredIndex = useCallback(
@@ -165,37 +155,30 @@ const RingChartCore = memo(function RingChartCore({
 		[isControlled, onHoverChange],
 	);
 
-	// Use the smaller dimension to ensure the chart fits
 	const size = Math.min(width, height);
 	const center = size / 2;
 
-	// Calculate scaled dimensions to fit within the available space
-	// The outermost ring needs to fit within the chart with some padding
+	// Scale everything so the outermost ring fits the available radius with padding
 	const ringCount = data.length;
-	const padding = 8; // Padding from edge
+	const padding = 8;
 	const availableRadius = center - padding;
 
-	// Calculate the "design" outer radius (what we'd need at 1:1 scale)
 	const designOuterRadius =
 		baseInnerRadiusProp +
 		(ringCount - 1) * (strokeWidthProp + ringGapProp) +
 		strokeWidthProp;
 
-	// Scale factor to fit within available space
 	const scale = Math.min(1, availableRadius / designOuterRadius);
 
-	// Apply scaling to all dimensions
 	const strokeWidth = strokeWidthProp * scale;
 	const ringGap = ringGapProp * scale;
 	const baseInnerRadius = baseInnerRadiusProp * scale;
 
-	// Calculate total value
 	const totalValue = useMemo(
 		() => data.reduce((sum, d) => sum + d.value, 0),
 		[data],
 	);
 
-	// Get color for a ring index
 	const getColor = useCallback(
 		(index: number) => {
 			const item = data[index];
@@ -207,7 +190,6 @@ const RingChartCore = memo(function RingChartCore({
 		[data],
 	);
 
-	// Get ring radii for an index
 	const getRingRadii = useCallback(
 		(index: number) => {
 			const innerRadius = baseInnerRadius + index * (strokeWidth + ringGap);
@@ -271,8 +253,7 @@ const RingChartCore = memo(function RingChartCore({
 		return () => clearTimeout(timer);
 	}, [enterTransition, enterStaggerScale, geometryScrubbing]);
 
-	// Separate SVG children (rings) from HTML children (RingCenter)
-	// This avoids Safari's foreignObject positioning bugs (WebKit #23113)
+	// Split SVG rings from HTML center; avoids Safari foreignObject bugs (WebKit #23113)
 	const { svgChildren, centerChildren } = useMemo(() => {
 		const svgNodes: ReactNode[] = [];
 		const centerNodes: ReactNode[] = [];
@@ -335,9 +316,7 @@ const RingChartCore = memo(function RingChartCore({
 		],
 	);
 
-	// Use CSS Grid stacking to layer SVG and HTML content
-	// This avoids Safari's foreignObject rendering bugs where HTML content
-	// inside SVG foreignObject renders at wrong positions when it has a RenderLayer
+	// CSS Grid stacking layers SVG and HTML; avoids Safari foreignObject RenderLayer mispositioning
 	return (
 		<RingProvider value={contextValue}>
 			<div
@@ -349,7 +328,6 @@ const RingChartCore = memo(function RingChartCore({
 					height: size,
 				}}
 			>
-				{/* SVG layer with rings */}
 				<svg
 					aria-hidden="true"
 					height={size}
@@ -371,7 +349,6 @@ const RingChartCore = memo(function RingChartCore({
 					</Group>
 				</svg>
 
-				{/* HTML layer with center content - stacked on top via grid */}
 				{centerChildren.length > 0 && (
 					<div
 						className="pointer-events-none flex items-center justify-center"
@@ -425,7 +402,6 @@ export function RingChart({
 }: RingChartProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 
-	// If fixed size is provided, use it directly
 	if (fixedSize) {
 		return (
 			<div
@@ -455,7 +431,6 @@ export function RingChart({
 		);
 	}
 
-	// Otherwise use ParentSize for responsive sizing
 	return (
 		<div
 			className={cn("relative aspect-square w-full", className)}

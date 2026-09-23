@@ -8,7 +8,8 @@ as. Structural changes from ADR-008 are noted per section.
 
 - Wizard steps (COMPANY names, per ADR-006; supersede the old Step 1-internal
   names): 01. Project Profile, 02. Financial Eligibility,
-  03. Supporting Documents, 04. Review & Submit.
+  03. Scope of Work, 04. Review & Submit. ADR-012 replaced Step 3's original
+  content (the LVV document pack, ADR-005) with the scope of work.
 - ADR-008: the wizard has no page title. Its own header is sticky and spans the
   content end to end, and it carries both the step strip and the action bar on
   one line at `sm` and up: Back (never validates) plus the primary action, which
@@ -52,7 +53,8 @@ as. Structural changes from ADR-008 are noted per section.
   grid, and the rail holds only this card and the donut summary.
 - Energy-baseline docs — "Documents to Prepare": 3 required rows (12 months of
   electricity bills, load profile/account, site permit/legality), each uploaded
-  through the draft. Separate from Step 3's legal/technical docs (ADR-005).
+  through the draft. Separate from Step 3, which collects the scope of work
+  rather than documents (ADR-012).
   ADR-008: this section sits in the middle column as Step 1's last section (it
   used to be at the bottom of the right rail), with one compact card per document
   carrying its own upload control.
@@ -65,17 +67,26 @@ as. Structural changes from ADR-008 are noted per section.
 - Laporan Keuangan + RAB via dashed upload zone (≥1 file required).
 - Simulasi Credit Scoring: derived mock BBB+ with progress bar; "Belum dihitung" when empty.
 
-## Step 3 — Dokumen Pendukung (ADR-005, implemented)
+## Step 3 — Lingkup Pekerjaan (ADR-012, implemented)
 
-- Legalitas Entitas: Akta Perusahaan, NIB & NPWP (ships Uploaded demo state), Profil Perusahaan.
-- Dokumen Teknis & Mitigasi Emisi: Studi Kelayakan, DRAM, Spesifikasi Teknis.
-- Status Kelengkapan: `n / 6 Dokumen Terunggah` + green progress bar; Panduan LVV GRK info card.
+- Scope of Work: two open-ended lists, one entry per line, replacing the
+  legal/technical document pack of ADR-005.
+- Key technical requirements: the equipment, standards and performance a bidder
+  has to meet. These join the project's vocabulary in
+  `matching.service.ts`, so the technical-fit criterion reads the company's own
+  statement of the work.
+- Expected deliverables: what the vendor hands over (documents, equipment, test
+  reports). Every bidder reads them on the tender beside the scope.
+- The step validates that each list carries at least one entry; the review step
+  reads both back under "Scope of Work". The LVV documents are not part of the
+  wizard: they are filed at Sistem Registri, which is where the LVV body reads
+  them.
 
 ## Step 4 — Review & Kirim (ADR-006, implemented)
 
 - Ringkasan Proyek & Finansial: two read-only `bg-muted` blocks (Steps 1+2).
 - Project Risk Assessment — `Penilaian Risiko Proyek` (ADR-006.7): derived
-  section between Status Dokumen and Deklarasi. Risk score 0–100
+  section (D) between Scope of Work and the Declaration. Risk score 0–100
   (Rendah <40, Moderat 40–69, Tinggi ≥70) from Step 1 tones + Step 2
   credit score + doc completeness; success probability = 100 − score.
   Breakdown rows (Finansial/Teknis/Implementasi/Pembiayaan, badge + bar);

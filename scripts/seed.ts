@@ -51,17 +51,13 @@ export interface SeedGroups {
 }
 
 /**
- * Reset preamble for the full set. The fixtures below insert fixed accounts and
- * unique keys, so without this the file only applies to a clean database. The
- * order is children before parents, matching the foreign keys, so it satisfies
- * them at every step.
- *
- * The `broker` group deliberately carries no reset: it is applied on top of an
- * existing database by scripts/setup-broker.ts.
+ * Reset preamble for the full set: children before parents, matching the foreign keys, so the fixed
+ * accounts and unique keys re-insert. The `broker` group carries no reset; setup-broker.ts applies it.
  */
 const RESET_TABLES = [
 	"audit_logs",
 	"blueprints",
+	"company_documents",
 	"emission_reports",
 	"energy_forecasts",
 	"notifications",
@@ -89,10 +85,8 @@ const RESET_TABLES = [
 export async function buildSeed(): Promise<SeedGroups> {
 	const brokerLines: string[] = [];
 	const lines = [
-		// The reset below is destructive by design: everything the fixtures own is
-		// deleted before it is re-inserted. That is what makes the file re-runnable
-		// locally, and it is also why it must never be pointed at a database that
-		// holds real accounts or projects.
+		// Destructive by design: everything the fixtures own is deleted first, so this must never
+		// be pointed at a database that holds real accounts or projects.
 		"-- GreenShift demo fixtures. Resets the tables it owns, then re-inserts",
 		"-- them, so the file is safe to re-run against a local database. It",
 		"-- destroys the rows it manages: never load it onto a live database.",
@@ -100,17 +94,13 @@ export async function buildSeed(): Promise<SeedGroups> {
 		...(await buildAccountStatements()),
 	];
 
-	// Vendor-domain fixtures so the vendor API is exercisable end-to-end:
-	// P1 has an open tender without a bid (demo POST /proposals + duplicate 409);
-	// P2–P5 carry one vendor1 proposal each covering submitted / revision /
-	// reviewed / accepted. P3 has a business revision request with a note.
+	// Vendor-domain fixtures so the vendor API is exercisable end to end: P1 has an open tender
+	// with no bid (demo POST /proposals + duplicate 409); P2–P5 cover the four proposal stages.
 	lines.push(
-		// vendor profile
 		...VENDOR_PROFILES.slice(0, 1).map(vendorProfileStatement),
 
-		// The two verification-step projects: one waiting on the company to
-		// register it at Sistem Registri, one registered and with its LVV body.
-		// Neither carries a tender, so the procurement web below is untouched.
+		// The two verification-step projects: one waiting to be registered at Sistem Registri, one
+		// registered with its LVV body. Neither carries a tender, so the procurement web is untouched.
 		...projectStatements({
 			company: BUSINESS,
 			title: "Boiler Feedwater Economizer, Malang",
@@ -158,7 +148,6 @@ export async function buildSeed(): Promise<SeedGroups> {
 			createdDaysAgo: 6,
 		}),
 
-		// projects (all in tendering)
 		...projectStatements({
 			company: BUSINESS,
 			title: "Textile Factory Retrofit",
@@ -279,7 +268,6 @@ export async function buildSeed(): Promise<SeedGroups> {
 			createdDaysAgo: 0,
 		}),
 
-		// tenders
 		`INSERT INTO tenders (project_id, method, status, budget_min, budget_max, deadline_at, created_at, updated_at)
 	VALUES (${projectId("Textile Factory Retrofit")}, 'open', 'open', 300000000, 500000000, ${nowTs(14)}, ${nowTs()}, ${nowTs()});`,
 		`INSERT INTO tenders (project_id, method, status, budget_min, budget_max, deadline_at, created_at, updated_at)
@@ -291,7 +279,6 @@ export async function buildSeed(): Promise<SeedGroups> {
 		`INSERT INTO tenders (project_id, method, status, budget_min, budget_max, deadline_at, created_at, updated_at)
 	VALUES (${projectId("Biomass Boiler")}, 'open', 'closed', 1800000000, 2500000000, ${nowTs(-10)}, ${nowTs()}, ${nowTs()});`,
 
-		// proposals (vendor1)
 		`INSERT INTO proposals (tender_id, vendor_id, amount, technical_spec, operational_cost, projected_roi, warranty_period, status, revision_count, submitted_at, created_at, updated_at)
 	VALUES (${tenderId("Solar Rooftop 500 kWp")}, ${VENDOR}, 850000000, 'Monocrystalline 550 Wp panels, string inverter, rooftop structure, IoT monitoring.', 42000000, 14.5, 36, 'submitted', 0, ${nowTs(-5)}, ${nowTs(-5)}, ${nowTs(-5)});`,
 		`INSERT INTO proposals (tender_id, vendor_id, amount, technical_spec, operational_cost, projected_roi, warranty_period, status, revision_count, submitted_at, created_at, updated_at)
@@ -301,8 +288,8 @@ export async function buildSeed(): Promise<SeedGroups> {
 		`INSERT INTO proposals (tender_id, vendor_id, amount, technical_spec, operational_cost, projected_roi, warranty_period, status, revision_count, submitted_at, created_at, updated_at)
 	VALUES (${tenderId("Biomass Boiler")}, ${VENDOR}, 2100000000, '5 MWth biomass boiler, automatic feeding system, ESP + wet scrubber.', 180000000, 16.5, 48, 'accepted', 0, ${nowTs(-20)}, ${nowTs(-20)}, ${nowTs(-20)});`,
 
-		// The matchmaking choice behind each of those tenders: the company appoints
-		// a vendor and a route, and the route is what opens the tender.
+		// The matchmaking choice behind each tender: the company appoints a vendor and a route,
+		// and the route is what opens the tender.
 		...[
 			"Textile Factory Retrofit",
 			"Solar Rooftop 500 kWp",
@@ -318,15 +305,13 @@ export async function buildSeed(): Promise<SeedGroups> {
 		`INSERT INTO proposal_revisions (proposal_id, revision_number, note, amount, previous_amount, created_by, created_at)
 	VALUES ((SELECT id FROM proposals WHERE tender_id = ${tenderId("Compressed Air Optimization")}), 1, 'The proposal price exceeds the tender maximum budget (IDR 100 million). Please submit a price revision.', 110000000, NULL, 'company', ${nowTs(-6)});`,
 
-		// award the Biomass Boiler tender to vendor1
 		`UPDATE tenders SET status = 'awarded', awarded_proposal_id = (SELECT id FROM proposals WHERE tender_id = tenders.id)
 	WHERE project_id = ${projectId("Biomass Boiler")};`,
 	);
 
 	const verifiedBy = "(SELECT id FROM users WHERE email = 'admin1@greenshift.dev')";
 
-	// The story's own bids, as the matching model reads them: which vendor bid,
-	// and the sector of the project each bid was made on.
+	// The story's own bids as the matching model reads them: which vendor bid, on which sector.
 	for (const [vendorEmail, sector] of [
 		["vendor1", "Machinery"],
 		["vendor1", "Food and beverage"],
@@ -340,10 +325,8 @@ export async function buildSeed(): Promise<SeedGroups> {
 		bidHistory.push({ vendorEmail, sector });
 	}
 
-	// Public bond dashboard fixtures so the dashboard is exercisable without
-	// an account: two projects already past procurement (funding + published
-	// blueprint) plus MRV emission reports: one anomaly-flagged to demo the
-	// anomaly badge.
+	// Public bond dashboard fixtures, so the dashboard works without an account: two projects past
+	// procurement (funding + published blueprint) plus MRV reports, one anomaly-flagged.
 	lines.push(
 		...projectStatements({
 			company: BUSINESS,
@@ -392,9 +375,8 @@ export async function buildSeed(): Promise<SeedGroups> {
 			createdDaysAgo: 90,
 		}),
 
-		// A project that has passed verification and is in matchmaking with no
-		// tender yet: the ranking is what the company reads first, and choosing a
-		// route is what opens the tender.
+		// A project past verification and in matchmaking with no tender yet: the ranking is what the
+		// company reads first, and choosing a route is what opens the tender.
 		...projectStatements({
 			company: BUSINESS,
 			title: "Cooling Tower Retrofit, Gresik",
@@ -422,7 +404,7 @@ export async function buildSeed(): Promise<SeedGroups> {
 		`INSERT INTO blueprints (project_id, status, document, validated_at, published_at, created_at, updated_at)
 	VALUES (${projectId("Cooling Tower Retrofit, Gresik")}, 'published', '{"financialProjections":{"npv":310000000,"irr":15.4,"paybackPeriod":4}}', ${nowTs(-40)}, ${nowTs(-38)}, ${nowTs(-42)}, ${nowTs(-38)});`,
 
-		// published blueprints (validated before publication, per lifecycle)
+		// Published blueprints: validation precedes publication, per the lifecycle.
 		`INSERT INTO blueprints (project_id, status, document, validated_at, published_at, created_at, updated_at)
 	VALUES (${projectId("Factory Chiller Retrofit")}, 'published', '{"financialProjections":{"npv":98000000,"irr":12,"paybackPeriod":4}}', ${nowTs(-115)}, ${nowTs(-112)}, ${nowTs(-120)}, ${nowTs(-112)});`,
 		`INSERT INTO blueprints (project_id, status, document, validated_at, published_at, created_at, updated_at)
@@ -445,9 +427,8 @@ export async function buildSeed(): Promise<SeedGroups> {
 	VALUES (${projectId("Electric Motor Efficiency")}, ${nowTs(-30)}, ${nowTs(0)}, 72900, 85000, 9.56, 0, '{}', ${verifiedBy}, ${nowTs(3)}, ${nowTs(0)});`,
 	);
 
-	// Vendor app fixtures: the negotiation the company opened on the compressed-air
-	// proposal, the delivery milestones + MRV reports of the awarded biomass
-	// project, the vendor's own portfolio entries and its notification feed.
+	// Vendor app fixtures: the negotiation opened on the compressed-air proposal, the awarded
+	// biomass project's milestones and MRV reports, vendor1's portfolio and notification feed.
 	lines.push(
 		`INSERT INTO negotiations (proposal_id, iteration_number, status, requested_price_reduction, requested_warranty_years, requested_timeline_months, requested_fields, company_note, created_at, updated_at)
 	VALUES ((SELECT id FROM proposals WHERE tender_id = ${tenderId("Compressed Air Optimization")}), 1, 'PENDING_VENDOR_RESPONSE', 10000000, 3, 6, '["Total Project Price","Unit & Service Warranty Period","Implementation Timeline"]', 'The proposal price exceeds the tender maximum budget (IDR 100 million) and the warranty period is shorter than the board requires. Please revise the price and extend the warranty to 36 months.', ${nowTs(-6)}, ${nowTs(-6)});`,
@@ -489,20 +470,16 @@ export async function buildSeed(): Promise<SeedGroups> {
 	);
 
 
-	// Broker fixtures. The broker stage starts only after LVV GRK validation and a
-	// Company decision, so every assignment below sits on a validated blueprint.
-	// broker1 carries one assignment per broker lifecycle stage, the document
-	// requests it raised, the risk assessments it reads and the monthly reports it
-	// forwards to investors.
+	// Broker fixtures: every assignment sits on a validated blueprint, because the stage starts
+	// only after LVV GRK validation and a company decision. broker1 covers each lifecycle stage.
 	brokerLines.push(
-		// vendor profiles for the two vendors that won the broker-stage projects
+		// The two vendors that won the broker-stage projects.
 		...VENDOR_PROFILES.slice(1, 3).map(vendorProfileStatement),
 
-		// verified broker profile (self-registered, licence verified by the platform)
 		`INSERT INTO broker_profiles (user_id, company_name, description, representative, contact_email, contact_phone, website, address, nib, financial_license_number, license_authority, submitted_at, verified_at, created_at, updated_at)
 	SELECT id, 'Capital Green Securities', 'Green bond underwriter and financial intermediary for verified industrial decarbonisation projects.', 'Budi Santoso, CSA', 'budi.santoso@capitalgreen.co.id', '+62 21 5000 1234', 'https://capitalgreen.co.id', 'Financial Club Tower 18th Floor, SCBD, South Jakarta 12190', '9120803410291', 'KEP-45/D.04/2023', 'Financial Services Authority (OJK)', ${nowTs(-60)}, ${nowTs(-59)}, ${nowTs(-60)}, ${nowTs(-60)} FROM users WHERE email = 'broker1@greenshift.dev';`,
 
-		// projects that reached the broker stage
+		// Projects that reached the broker stage.
 		...projectStatements({
 			company: BUSINESS,
 			title: "Industrial Waste Heat Recovery",
@@ -553,7 +530,6 @@ export async function buildSeed(): Promise<SeedGroups> {
 		}),
 		`UPDATE projects SET status = 'monitoring' WHERE id = ${projectId("Biomass Boiler")};`,
 
-		// LVV GRK validated blueprints (validation precedes the broker stage)
 		`INSERT INTO blueprints (project_id, status, document, validated_at, created_at, updated_at)
 	VALUES (${projectId("Biomass Boiler")}, 'validated', '{"financialProjections":{"npv":520000000,"irr":16.5,"paybackPeriod":4}}', ${nowTs(-22)}, ${nowTs(-24)}, ${nowTs(-22)});`,
 		`INSERT INTO blueprints (project_id, status, document, validated_at, created_at, updated_at)
@@ -561,7 +537,6 @@ export async function buildSeed(): Promise<SeedGroups> {
 		`INSERT INTO blueprints (project_id, status, document, validated_at, created_at, updated_at)
 	VALUES (${projectId("Cold Storage Efficiency Retrofit")}, 'validated', '{"financialProjections":{"npv":186000000,"irr":13.2,"paybackPeriod":4}}', ${nowTs(-34)}, ${nowTs(-36)}, ${nowTs(-34)});`,
 
-		// awarded tenders and the accepted proposals behind each assignment
 		`INSERT INTO tenders (project_id, method, status, budget_min, budget_max, deadline_at, created_at, updated_at)
 	VALUES (${projectId("Factory Chiller Retrofit")}, 'closed', 'closed', 400000000, 520000000, ${nowTs(-70)}, ${nowTs(-90)}, ${nowTs(-70)});`,
 		`INSERT INTO tenders (project_id, method, status, budget_min, budget_max, deadline_at, created_at, updated_at)
@@ -582,7 +557,6 @@ export async function buildSeed(): Promise<SeedGroups> {
 		`UPDATE tenders SET status = 'awarded', awarded_proposal_id = (SELECT id FROM proposals WHERE tender_id = tenders.id)
 	WHERE project_id IN (${projectId("Factory Chiller Retrofit")}, ${projectId("Electric Motor Efficiency")}, ${projectId("Industrial Waste Heat Recovery")}, ${projectId("Cold Storage Efficiency Retrofit")});`,
 
-		// The choice each of those rounds was awarded out of.
 		...(
 			[
 				["Factory Chiller Retrofit", "vendor2"],
@@ -596,7 +570,7 @@ export async function buildSeed(): Promise<SeedGroups> {
 	VALUES (${projectId(project)}, (SELECT id FROM vendor_profiles WHERE user_id = (SELECT id FROM users WHERE email = '${vendorEmail}@greenshift.dev')), '${accountField(vendorEmail, "companyName")}', 'closed', ${nowTs(-52)}, ${nowTs(-52)});`,
 		),
 
-		// official risk assessments (read-only for the broker)
+		// Official risk assessments, read-only for the broker.
 		`INSERT INTO risk_assessments (project_id, financial_score, technical_score, implementation_score, environmental_score, overall_score, recommendations, notes, assessed_by, assessed_at)
 	VALUES (${projectId("Factory Chiller Retrofit")}, 42, 30, 44, 26, 36, '["Stage the retrofit outside the peak cooling season","Hold a spare compressor on site"]', 'Financial risk follows the tenant occupancy profile of the facility; the technical baseline is metered and verified. Anomaly detection flagged the latest reporting period.', 'system', ${nowTs(-75)});`,
 		`INSERT INTO risk_assessments (project_id, financial_score, technical_score, implementation_score, environmental_score, overall_score, recommendations, notes, assessed_by, assessed_at)
@@ -608,7 +582,6 @@ export async function buildSeed(): Promise<SeedGroups> {
 		`INSERT INTO risk_assessments (project_id, financial_score, technical_score, implementation_score, environmental_score, overall_score, recommendations, notes, assessed_by, assessed_at)
 	VALUES (${projectId("Cold Storage Efficiency Retrofit")}, 30, 26, 36, 22, 29, '["Retrofit one cold room at a time to protect stock"]', 'Refrigeration load is stable and well metered; the retrofit is executed in stages.', 'system', ${nowTs(-30)});`,
 
-		// broker assignments: one per lifecycle stage
 		`INSERT INTO broker_assignments (project_id, broker_id, company_id, status, assigned_at, responded_at, bond_status, bond_amount, tenor_months, coupon_rate_percent, issuance_date, maturity_date, created_at, updated_at)
 	VALUES (${projectId("Factory Chiller Retrofit")}, ${BROKER}, ${BUSINESS}, 'UNDER_REVIEW', ${nowTs(-40)}, ${nowTs(-38)}, 'IN_PROGRESS', 480000000, 36, 8.5, ${nowTs(13)}, ${nowTs(1110)}, ${nowTs(-40)}, ${nowTs(-6)});`,
 		`INSERT INTO broker_assignments (project_id, broker_id, company_id, status, assigned_at, responded_at, bond_status, bond_amount, tenor_months, coupon_rate_percent, issuance_date, maturity_date, created_at, updated_at)
@@ -620,7 +593,6 @@ export async function buildSeed(): Promise<SeedGroups> {
 		`INSERT INTO broker_assignments (project_id, broker_id, company_id, status, decline_reason, assigned_at, responded_at, created_at, updated_at)
 	VALUES (${projectId("Cold Storage Efficiency Retrofit")}, ${BROKER}, ${BUSINESS}, 'DECLINED', 'The feedstock and off-take contract structure for this facility does not meet our underwriting requirements at this tenor.', ${nowTs(-25)}, ${nowTs(-24)}, ${nowTs(-25)}, ${nowTs(-24)});`,
 
-		// delivery milestones behind the reported progress
 		`INSERT INTO project_milestones (project_id, step_number, title, description, start_date, due_date, completion_percent, status, vendor_notes, company_review_notes, created_at, updated_at)
 	VALUES (${projectId("Factory Chiller Retrofit")}, 1, 'Cooling Load Audit & Design', 'Metered cooling load audit, plant room layout and stamped design drawings.', ${nowTs(-38)}, ${nowTs(-30)}, 100, 'APPROVED', 'Audit report and Rev B drawings issued.', 'Approved by the facility engineer.', ${nowTs(-38)}, ${nowTs(-30)});`,
 		`INSERT INTO project_milestones (project_id, step_number, title, description, start_date, due_date, completion_percent, status, vendor_notes, company_review_notes, created_at, updated_at)
@@ -632,7 +604,6 @@ export async function buildSeed(): Promise<SeedGroups> {
 		`INSERT INTO project_milestones (project_id, step_number, title, description, start_date, due_date, completion_percent, status, vendor_notes, company_review_notes, created_at, updated_at)
 	VALUES (${projectId("Electric Motor Efficiency")}, 2, 'Motor & VSD Replacement', 'Progressive replacement of motors and installation of variable speed drives.', ${nowTs(-50)}, ${nowTs(-10)}, 60, 'IN_PROGRESS', 'Line 1 and 2 complete; line 3 scheduled for the next shutdown.', NULL, ${nowTs(-50)}, ${nowTs(-8)});`,
 
-		// document requests across the lifecycle (§18)
 		`INSERT INTO document_requests (assignment_id, project_id, broker_id, company_id, category, document_type_name, required_period, reason, deadline_date, additional_notes, status, submitted_file_name, submitted_file_url, submitted_at, created_at, updated_at)
 	VALUES (${brokerAssignmentId("Factory Chiller Retrofit")}, ${projectId("Factory Chiller Retrofit")}, ${BROKER}, ${BUSINESS}, 'Financial', 'Audited Financial Statements', '2025 (Full Year)', 'Required for solvency ratio analysis and bond underwriting preparation.', ${nowTs(-12)}, 'Please include the independent auditor opinion.', 'SUBMITTED', 'Audited_Financial_Statements_2025.pdf', 'documents/audited-financial-statements-2025.pdf', ${nowTs(-14)}, ${nowTs(-24)}, ${nowTs(-14)});`,
 		`INSERT INTO document_requests (assignment_id, project_id, broker_id, company_id, category, document_type_name, required_period, reason, deadline_date, additional_notes, status, created_at, updated_at)
@@ -644,12 +615,11 @@ export async function buildSeed(): Promise<SeedGroups> {
 		`INSERT INTO document_requests (assignment_id, project_id, broker_id, company_id, category, document_type_name, required_period, reason, deadline_date, status, submitted_file_name, submitted_file_url, submitted_at, reviewed_at, created_at, updated_at)
 	VALUES (${brokerAssignmentId("Biomass Boiler")}, ${projectId("Biomass Boiler")}, ${BROKER}, ${BUSINESS}, 'Legal', 'Environmental Permit (UKL-UPL)', '2026-2031', 'Environmental compliance evidence for the bond information memorandum.', ${nowTs(-50)}, 'APPROVED', 'Environmental_Permit_UKL_UPL.pdf', 'documents/environmental-permit.pdf', ${nowTs(-56)}, ${nowTs(-54)}, ${nowTs(-60)}, ${nowTs(-54)});`,
 
-		// official report payloads for the latest period of each monitored project
+		// Official report payloads for the latest period of each monitored project.
 		`UPDATE emission_reports SET report_data = '{"plannedBudgetAmount":420000000,"actualSpendingAmount":441000000,"expectedEnergySavingsKwh":10500,"expectedCarbonReductionTons":8.0,"projectedRoiPercent":12.5,"actualRoiPerformancePercent":9.1,"overallStatus":"AT_RISK","detectedRisksOrAnomalies":["Measured savings are 6.3% against a planned 8.2% for the period.","Cooling load rose after the production line addition, pushing consumption above the baseline expectation."],"overallConclusion":"Progress is behind plan and measured savings are below the project assumption. Corrective action is required before the performance test."}' WHERE id = (SELECT max(id) FROM emission_reports WHERE project_id = ${projectId("Factory Chiller Retrofit")});`,
 		`UPDATE emission_reports SET report_data = '{"plannedBudgetAmount":180000000,"actualSpendingAmount":168000000,"expectedEnergySavingsKwh":21000,"expectedCarbonReductionTons":14.8,"projectedRoiPercent":16,"actualRoiPerformancePercent":17.2,"overallStatus":"ON_TRACK","detectedRisksOrAnomalies":[],"overallConclusion":"Motor replacement is ahead of the planned spend and measured savings are in line with the audit estimate."}' WHERE id = (SELECT max(id) FROM emission_reports WHERE project_id = ${projectId("Electric Motor Efficiency")});`,
 		`UPDATE emission_reports SET report_data = '{"evidenceDocs":["MRV_Biomass_2026-08.pdf"],"plannedBudgetAmount":1050000000,"actualSpendingAmount":1012000000,"expectedEnergySavingsKwh":275000,"expectedCarbonReductionTons":192.6,"projectedRoiPercent":16.5,"actualRoiPerformancePercent":17.1,"overallStatus":"ON_TRACK","detectedRisksOrAnomalies":[],"overallConclusion":"Erection is complete and commissioning is under way; measured emission reduction matches the validated baseline."}' WHERE id = (SELECT max(id) FROM emission_reports WHERE project_id = ${projectId("Biomass Boiler")});`,
 
-		// broker notifications (§38)
 		`INSERT INTO notifications (user_id, type, title, body, read, link, created_at)
 	VALUES (${BROKER}, 'assignment', 'New project assigned: Industrial Waste Heat Recovery', 'PT Green Nusantara assigned a validated project to you. Accept, request information, or decline with a reason.', 0, '/broker/projects', ${nowTs(-3)});`,
 		`INSERT INTO notifications (user_id, type, title, body, read, link, created_at)
@@ -662,16 +632,12 @@ export async function buildSeed(): Promise<SeedGroups> {
 	VALUES (${BROKER}, 'bond', 'Bond issued: Biomass Boiler', 'The external issuance for Biomass Boiler is recorded as issued (GS-BND-2026-004).', 1, '/broker/projects', ${nowTs(-34)});`,
 	);
 
-	// Keep the broker group in the full output as well, in order.
 	lines.push(...brokerLines);
 
-	// Then bring every other list up to the floor of five rows.
 	lines.push(...buildVolumeFixtures());
 
-	// Audit trail. The admin Audit Log page reads this table, so the demo carries
-	// the decisions behind the fixtures above rather than an empty page. Actions
-	// and actors are the ones the modules themselves write, and every entry
-	// lands after the row it references.
+	// Audit trail: the admin Audit Log page reads this table, so the demo carries the decisions
+	// behind the fixtures above. Every entry lands after the row it references.
 	const actor = (email: string) =>
 		`(SELECT id FROM users WHERE email = '${email}')`;
 	const ADMIN = actor("admin1@greenshift.dev");
@@ -745,10 +711,8 @@ const CITIES = [
 ];
 
 /**
- * The province each plant city sits in. Every location the fixtures write names
- * one, because the matchmaking model reads the province off both the project
- * and the vendor: a bare city name scores as an unknown location, which would
- * hide the proximity term the ranking turns on.
+ * The province each plant city sits in: the matchmaking model reads the province off both the
+ * project and the vendor, and a bare city name would score as an unknown location.
  */
 const PROVINCE_BY_CITY: Record<string, string> = {
 	Cilacap: "Jawa Tengah",
@@ -776,19 +740,14 @@ function located(city: string): string {
 }
 
 /**
- * Indonesian industrial electricity tariff, rupiah per MWh. The annual energy
- * spend is derived from it and the metered consumption, so `biaya_rp` and
- * `konsumsi_mwh` cannot disagree.
+ * Indonesian industrial electricity tariff, rupiah per MWh: the annual energy spend derives from
+ * it and the metered consumption, so `biaya_rp` and `konsumsi_mwh` cannot disagree.
  */
 const TARIFF_RP_PER_MWH = 1_400_000;
 
 /**
- * The figures every project's Step 1 and Step 2 are built from, and the tables
- * the generated projects draw them from. The annual saving is the capex repaid
- * over a realistic payback, and the metered consumption is set so that saving
- * stays a plausible share of the annual energy spend: neither can drift from
- * the other, and the coverage ratio `saving / (capex / tenor)` lands where the
- * credit model expects a real project to sit.
+ * The payback, tenor, saving share, emission factor, target, revenue multiple and collateral the
+ * generated projects draw from, so the saving stays a plausible share of the annual energy spend.
  */
 const GENERATED_PAYBACKS = [2.8, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 6.5, 7.0];
 const GENERATED_TENORS = [4, 5, 5, 6, 5, 6, 5, 5, 4, 4];
@@ -826,16 +785,15 @@ const COLLATERAL_PHRASES = [
 /** The Step 1 and Step 2 figures a capex and a payback imply. */
 interface WizardInputs {
 	capexRp: number;
-	/** Years the annual saving takes to repay the capex. */
 	paybackYears: number;
 	tenorTahun: number;
-	/** The saving as a share of the annual energy spend, under 0.2. */
+	/** Share of the annual energy spend; stays under 0.2. */
 	savingShare: number;
 	faktorEmisi: number;
 	targetPct: number;
 	timelineQuarter: string;
 	jaminan: string;
-	/** Site revenue as a multiple of the annual energy spend, above 1. */
+	/** Multiple of the annual energy spend; stays above 1. */
 	revenueMultiple: number;
 }
 
@@ -854,11 +812,8 @@ type ProjectInputs = Pick<
 >;
 
 /**
- * Derives one project's Step 1 and Step 2 figures from its capex and the
- * payback the project is expected to run at. The saving is the capex repaid
- * over the payback (whole millions), and the metered consumption is whatever
- * makes that saving the given share of the annual energy spend, so the money
- * flows stay plausible against the bill they are measured against.
+ * Derives one project's Step 1 and Step 2 figures: the saving is the capex repaid over the payback
+ * (whole millions), and the consumption is whatever makes it the given share of the annual spend.
  */
 function projectInputs(inputs: WizardInputs): ProjectInputs {
 	const penghematanRp =
@@ -881,10 +836,8 @@ function projectInputs(inputs: WizardInputs): ProjectInputs {
 }
 
 /**
- * The Step 1 and Step 2 figures for a generated project of a given capex, from
- * the tables above. The seed picks a payback, a tenor, a saving share and a
- * tariff so the volume fixtures span the payback, coverage and credit bands
- * rather than all reading the same.
+ * The Step 1 and Step 2 figures for a generated project of a given capex: the tables above are
+ * picked by index, so the volume fixtures span the payback, coverage and credit bands.
  */
 function wizardInputs(capexRp: number, seed: number): ProjectInputs {
 	const i = seed % GENERATED_PAYBACKS.length;
@@ -902,13 +855,8 @@ function wizardInputs(capexRp: number, seed: number): ProjectInputs {
 }
 
 /**
- * The wizard inputs of one project. Everything the submitted row stores is
- * derived from these, so a project cannot be seeded with a missing or
- * contradictory column: the baseline is consumption × emission factor, the
- * reduction target is the requested share of it, the energy saving converts the
- * target MWh to kWh, the budget is the capex, the annual spend is the metered
- * consumption at the industrial tariff, and the credit and risk figures come
- * from the scoring model the API submits with.
+ * The wizard inputs of one project. Every stored column is derived from these, so a project cannot
+ * be seeded with a missing or contradictory one; the credit and risk figures come from the model.
  */
 interface ProjectParams {
 	/** Company id, as a SQL expression. */
@@ -961,9 +909,8 @@ function slugify(name: string): string {
 }
 
 /**
- * The scope of work each measure carries, keyed by the measure the project
- * installs. The vendor project detail renders these beside the description, so
- * every project reads as its own scope instead of shared copy.
+ * The scope of work each measure carries, keyed by the measure the project installs: the vendor
+ * project detail renders these, so every project reads as its own scope.
  */
 const SCOPE_BY_MEASURE: Record<
 	string,
@@ -1068,9 +1015,8 @@ const SCOPE_BY_MEASURE: Record<
 };
 
 /**
- * The dummy file each checklist slot holds. Keyed by the slot vocabulary, so a
- * project cannot be seeded with a missing slot, and named from the plant and
- * the measure, so it reads as that project's own document.
+ * The dummy file each checklist slot holds, keyed by the slot vocabulary so no project can be
+ * seeded with a missing slot; the name comes from the plant and the measure.
  */
 const DOCUMENT_FILE_NAME: Record<
 	(typeof CHECKLIST_SLOTS)[number],
@@ -1120,8 +1066,8 @@ function projectColumns(params: ProjectParams): ProjectColumns {
 }
 
 /**
- * The risk score a project's own params derive. The matching block reads it so
- * the ranking it stores agrees with the risk score the project row carries.
+ * The risk score a project's own params derive, so the ranking the matching block stores agrees
+ * with the risk score the project row carries.
  */
 function riskScoreOf(title: string): number {
 	const params = paramsByTitle[title];
@@ -1130,11 +1076,8 @@ function riskScoreOf(title: string): number {
 }
 
 /**
- * One project as the statements that create it: the submitted row, every wizard
- * column filled from `params`, then its nine checklist documents. Every project
- * INSERT goes through here, so a project is complete by construction. The
- * reduction target is written as the SQL expression the API's derivation
- * implies, so it cannot drift from the baseline it is derived from.
+ * One project as the statements that create it: the row, every wizard column filled from `params`,
+ * then its nine checklist documents. The reduction target is written as the API's own expression.
  */
 function projectStatements(params: ProjectParams): string[] {
 	paramsByTitle[params.title] = params;
@@ -1151,11 +1094,8 @@ function projectStatements(params: ProjectParams): string[] {
 }
 
 /**
- * One project's Green Project Blueprint, written from the figures its own
- * submission carries through the same builder the API uses when verification
- * clears a project. Every project past verification carries one, because the
- * blueprint is what a bidder reads beside the tender: a project that reached
- * procurement without one would show the vendor an empty document.
+ * One project's Green Project Blueprint, written through the same builder the API uses when
+ * verification clears a project: a bidder reads it beside the tender, so it cannot be missing.
  */
 function blueprintStatement(
 	title: string,
@@ -1198,10 +1138,8 @@ const accountByUsername: Record<string, DemoAccount> = Object.fromEntries(
 );
 
 /**
- * One organization field of a demo account. The accounts are the single source
- * of truth for a company's name, sector and address, so a fixture that needs
- * one reads it here rather than repeating it, and a missing field fails the
- * build instead of seeding a null the screens would have to explain.
+ * One organization field of a demo account: the accounts are the single source of truth for a
+ * company's name, sector and address, and a missing field fails the build rather than seeding null.
  */
 function accountField(
 	username: string,
@@ -1222,10 +1160,8 @@ const VENDOR_EMAILS = DEMO_ACCOUNTS.filter(
 ).map((account) => account.username);
 const BROKER_EMAILS = ["broker1", "broker2", "broker3", "broker4", "broker5"];
 /**
- * One investor, because the platform has no investor surface: the bond is bought
- * and held in the partner app. The row exists for the investment and ROI
- * fixtures, which join `users` on `investor_id` and are what the admin's
- * investment list, payout queue and analytics read.
+ * One investor, because the platform has no investor surface: the row exists for the investment
+ * and ROI fixtures, which join `users` on `investor_id`.
  */
 const INVESTOR_EMAILS = ["investor1"];
 
@@ -1239,27 +1175,18 @@ interface VendorProfile {
 	description: string;
 	nib: string;
 	npwp: string;
+	/** Company registration number, filed with the NPWP. */
+	tdp: string;
 	certifications: string;
 	portfolio: string;
 	rating: number;
 	total: number;
-	/** How long the profile has been verified. */
 	verifiedDaysAgo: number;
 }
 
 /**
- * The ten vendors, one profile each. The first three are written by the story
- * fixtures and the rest by the volume fixtures, in this order, because the
- * story's proposals look their bidders up by company name and the vendors have
- * to exist first.
- *
- * The locations are spread across the provinces on purpose, so the proximity
- * term separates them: two sit in the same province as most of the plants, three
- * in neighbouring Java provinces, and the rest outside Java, which is the 45
- * band. The company names come from `scripts/accounts.ts`.
- *
- * The portfolios read as an efficiency contractor's reference list because that
- * is the text the matching model tokenises when a vendor has no bid history.
+ * The ten vendors, one profile each: the first three are looked up by company name from the story
+ * fixtures, so they must exist first. Locations spread across provinces, to separate proximity.
  */
 const VENDOR_PROFILES: readonly VendorProfile[] = [
 	{
@@ -1270,6 +1197,7 @@ const VENDOR_PROFILES: readonly VendorProfile[] = [
 			"Industrial energy-efficiency solutions provider: energy audits, equipment retrofits, and renewable energy installation.",
 		nib: "9120001234567",
 		npwp: "01.234.567.8-901.000",
+		tdp: "01.234.1.03.12345",
 		certifications: '["SNI ISO 50001","K3 Certificate","PJK3"]',
 		portfolio:
 			'["Boiler retrofit PT Maju Bersama (2023)","Solar rooftop 300 kWp PT Sinar Abadi (2024)"]',
@@ -1285,6 +1213,7 @@ const VENDOR_PROFILES: readonly VendorProfile[] = [
 			"HVAC and refrigeration efficiency contractor: chiller retrofits, controls, and measurement-based performance contracting.",
 		nib: "9120002234567",
 		npwp: "02.345.678.9-012.000",
+		tdp: "02.345.1.03.23456",
 		certifications:
 			'["SNI ISO 9001","K3 Certificate","Refrigerant Handling License"]',
 		portfolio:
@@ -1301,6 +1230,7 @@ const VENDOR_PROFILES: readonly VendorProfile[] = [
 			"Biomass and waste-heat thermal systems: boiler conversion, feed systems, and emission control equipment.",
 		nib: "9120003234567",
 		npwp: "03.456.789.0-013.000",
+		tdp: "03.456.1.03.34567",
 		certifications:
 			'["SNI ISO 45001","K3 Certificate","Boiler Operator License"]',
 		portfolio:
@@ -1317,6 +1247,7 @@ const VENDOR_PROFILES: readonly VendorProfile[] = [
 			"Solar PV engineering, procurement and construction for rooftop and ground-mount systems, including net-metering permits.",
 		nib: "9120004234567",
 		npwp: "04.567.890.1-014.000",
+		tdp: "04.567.1.03.45678",
 		certifications: '["SNI ISO 9001","K3 Certificate","IUPTLU Solar"]',
 		portfolio:
 			'["Rooftop solar 500 kWp PT Tekstil Jaya (2025)","Ground-mount 1 MWp PT Sawit Lestari (2024)"]',
@@ -1332,6 +1263,7 @@ const VENDOR_PROFILES: readonly VendorProfile[] = [
 			"Industrial motor and drive efficiency specialist: energy audits, IE3 retrofits and variable speed drive integration.",
 		nib: "9120005234567",
 		npwp: "05.678.901.2-015.000",
+		tdp: "05.678.1.03.56789",
 		certifications: '["SNI ISO 50001","K3 Certificate"]',
 		portfolio:
 			'["IE3 motor retrofit PT Kertas Nusantara (2025)","VSD integration PT Baja Prima (2024)"]',
@@ -1347,6 +1279,7 @@ const VENDOR_PROFILES: readonly VendorProfile[] = [
 			"Rooftop and ground-mount solar PV contractor: structural assessment, modules and inverters, net-metering paperwork, and monitoring.",
 		nib: "9120006234567",
 		npwp: "06.789.012.3-016.000",
+		tdp: "06.789.1.03.67890",
 		certifications: '["SNI ISO 9001","K3 Certificate","IUPTLU Solar"]',
 		portfolio:
 			'["Rooftop solar 420 kWp PT Graha Sentra Properti (2025)","Solar carport 120 kWp hotel group (2024)"]',
@@ -1362,6 +1295,7 @@ const VENDOR_PROFILES: readonly VendorProfile[] = [
 			"Energy audit house: metered baselines, ISO 50001 management systems, and savings verification for industrial plants.",
 		nib: "9120007234567",
 		npwp: "07.890.123.4-017.000",
+		tdp: "07.890.1.03.78901",
 		certifications: '["SNI ISO 50001","K3 Certificate","PJK3"]',
 		portfolio:
 			'["Plant-wide energy audit PT Kertas Nusantara (2025)","ISO 50001 baseline PT Tekstil Jaya (2024)"]',
@@ -1377,6 +1311,7 @@ const VENDOR_PROFILES: readonly VendorProfile[] = [
 			"Cooling plant contractor for commercial buildings and cold stores: chillers, controls, and kW/ton optimisation.",
 		nib: "9120008234567",
 		npwp: "08.901.234.5-018.000",
+		tdp: "08.901.1.03.89012",
 		certifications:
 			'["SNI ISO 9001","K3 Certificate","Refrigerant Handling License"]',
 		portfolio:
@@ -1393,6 +1328,7 @@ const VENDOR_PROFILES: readonly VendorProfile[] = [
 			"Industrial lighting contractor: photometric surveys, high-bay LED relamping, and occupancy control installation.",
 		nib: "9120009234567",
 		npwp: "09.012.345.6-019.000",
+		tdp: "09.012.1.03.90123",
 		certifications: '["SNI ISO 9001","K3 Certificate"]',
 		portfolio:
 			'["High-bay LED relamping PT Baja Prima (2025)","Warehouse lighting retrofit PT Sawit Lestari (2024)"]',
@@ -1408,6 +1344,7 @@ const VENDOR_PROFILES: readonly VendorProfile[] = [
 			"Steam and thermal systems contractor: boiler retrofits, burner tuning, and flue-gas heat recovery on industrial plants.",
 		nib: "9120010234567",
 		npwp: "10.123.456.7-020.000",
+		tdp: "10.123.1.03.01234",
 		certifications:
 			'["SNI ISO 45001","K3 Certificate","Boiler Operator License"]',
 		portfolio:
@@ -1424,14 +1361,13 @@ const VENDOR_COMPANIES = VENDOR_EMAILS.map((email) =>
 
 /** One vendor profile as SQL. The company name comes from the account list. */
 function vendorProfileStatement(profile: VendorProfile): string {
-	return `INSERT INTO vendor_profiles (user_id, company_name, description, service_category, location, nib, npwp, certifications, portfolio, rating, total_projects, verified_at, created_at)
-	SELECT id, '${accountField(profile.email, "companyName")}', '${profile.description}', '${profile.serviceCategory}', '${profile.location}', '${profile.nib}', '${profile.npwp}', '${profile.certifications}', '${profile.portfolio}', ${profile.rating}, ${profile.total}, ${nowTs(-profile.verifiedDaysAgo)}, ${nowTs(-profile.verifiedDaysAgo)} FROM users WHERE email = '${profile.email}@greenshift.dev';`;
+	return `INSERT INTO vendor_profiles (user_id, company_name, description, service_category, location, nib, npwp, tdp, certifications, portfolio, rating, total_projects, verified_at, created_at)
+	SELECT id, '${accountField(profile.email, "companyName")}', '${profile.description}', '${profile.serviceCategory}', '${profile.location}', '${profile.nib}', '${profile.npwp}', '${profile.tdp}', '${profile.certifications}', '${profile.portfolio}', ${profile.rating}, ${profile.total}, ${nowTs(-profile.verifiedDaysAgo)}, ${nowTs(-profile.verifiedDaysAgo)} FROM users WHERE email = '${profile.email}@greenshift.dev';`;
 }
 
 /**
- * Indices whose measures give the five discovery tenders one distinct vendor
- * speciality each (boiler, solar, chiller, motor, biomass), so every vendor has
- * a top-ranked opportunity on its own Discover page.
+ * Indices whose measures give the five discovery tenders one distinct vendor speciality each
+ * (boiler, solar, chiller, motor, biomass), so every vendor tops one Discover page.
  */
 const DISCOVERY_INDICES = [0, 1, 2, 6, 7] as const;
 
@@ -1439,19 +1375,15 @@ const userByEmail = (email: string) =>
 	`(SELECT id FROM users WHERE email = '${email}@greenshift.dev')`;
 
 /**
- * Title of the nth generated project. The title repeats once n%8 and n%15
- * repeat together, i.e. every 120 values, so callers must keep their indices
- * inside one 120-wide band: 0-4 for the discovery tenders and 10-34 for the
- * broker stage. The uniqueness guard below enforces that.
+ * Title of the nth generated project. Titles repeat every 120 values (n%8 and n%15), so callers
+ * must keep their indices inside one band: 0-4 for discovery, 10-34 for the broker stage.
  */
 const generatedTitle = (n: number) =>
 	`${MEASURES[n % MEASURES.length]}, ${CITIES[n % CITIES.length]} Plant`;
 
 /**
- * The fixture lookups find a project, a tender and a vendor by name, so a
- * repeated title would silently point two statements at the same row. Every
- * generated title is claimed here before it is written; the authored story
- * titles are unique by inspection.
+ * The fixture lookups find a project, tender and vendor by name, so a repeated title would
+ * silently point two statements at one row: every generated title is claimed here first.
  */
 const usedTitles = new Set<string>();
 
@@ -1468,19 +1400,14 @@ const assignmentIdFor = (title: string) =>
 	`(SELECT id FROM broker_assignments WHERE project_id = ${projectId(title)})`;
 
 /**
- * Every bid the fixtures place, as the matching model reads them: the vendor
- * that made it and the sector of the project it was made on. Technical fit is
- * the share of a vendor's bids made in the project's own sector, so the fixtures
- * keep their own history: without it the ranking they seed would disagree with
- * the one a matching re-run produces.
+ * Every bid the fixtures place, as the matching model reads them: technical fit is the share of a
+ * vendor's bids in the project's sector, so the seeded ranking matches a re-run.
  */
 const bidHistory: Array<{ vendorEmail: string; sector: string }> = [];
 
 /**
- * A procurement round the web runs for one company: an open tender still taking
- * bids, or a closed one it has awarded. Planned before the rows are written,
- * because the winner of an awarded round is the best-ranked vendor that bid,
- * which is only known once the matching model has scored the pool.
+ * A procurement round the web runs for one company: an open tender or a closed awarded one.
+ * Planned before the rows, because the winner is the best-ranked vendor that bid.
  */
 interface WebRound {
 	title: string;
@@ -1504,31 +1431,22 @@ interface WebRound {
 }
 
 /**
- * The ranked pool of each scored project, best first, as the matching block
- * computed it. The web reads it to award a tender, so the vendor a company
- * appoints is one its own ranking put forward.
+ * The ranked pool of each scored project, best first, as the matching block computed it: an
+ * awarded tender goes to a vendor the project's own ranking put forward.
  */
 const rankingByProject: Record<string, string[]> = {};
 
 /**
- * Volume fixtures. The statements in `buildSeed` above tell the curated demo
- * story; this block fills the remaining lists a signed-in role can open: vendor
- * discovery, deals, negotiations, portfolio and notification feed; broker
- * assignments, document requests and reports; admin users, vendors and audit
- * log; and the public bond catalog, so none of them renders an empty state.
- *
- * Everything here is generated from the small tables above rather than hand
- * written, because the only requirement is that each list reaches ROW_FLOOR.
+ * Volume fixtures, generated from the tables above rather than hand written: they fill the
+ * remaining lists a signed-in role can open, so none of them renders an empty state.
  */
 function buildVolumeFixtures(): string[] {
 	const out: string[] = [];
 
-	// ── vendor profiles beyond the story fixtures ─────────────
 	for (const profile of VENDOR_PROFILES.slice(3)) {
 		out.push(vendorProfileStatement(profile));
 	}
 
-	// ── broker profiles beyond broker1 ───────────────────────
 	for (const b of [
 		{
 			email: "broker2",
@@ -1569,10 +1487,8 @@ function buildVolumeFixtures(): string[] {
 		);
 	}
 
-	// ── vendor discovery: open tenders with a live negotiation ─
-	// Five open tenders carry vendor1 bids in negotiation, so Discover and the
-	// negotiation inbox are populated without disturbing the bid-free tender the
-	// story fixtures keep for the submit-and-conflict demo.
+	// Vendor discovery: five open tenders carry vendor1 bids in negotiation, so Discover and the
+	// negotiation inbox are populated without disturbing the bid-free tender the story keeps.
 	for (const n of DISCOVERY_INDICES) {
 		const title = claimTitle(generatedTitle(n));
 		const budget = 400000000 + n * 150000000;
@@ -1610,16 +1526,8 @@ function buildVolumeFixtures(): string[] {
 		);
 	}
 
-	// ── the procurement web, planned before its rows are written ──
-	// Every company runs two rounds: an open tender still taking bids, and a
-	// closed one it has awarded. Five vendors bid in each, drawn from the whole
-	// pool by a rotation, so every company ranks a real field of bidders and every
-	// vendor carries deals at every stage.
-	//
-	// The plan is data because the rows depend on the matching model: an awarded
-	// round goes to the best-ranked vendor that bid, which is only known once the
-	// pool has been scored. The bids are recorded here, though, because the model
-	// scores technical fit from the bid history.
+	// The procurement web: every company runs an open tender and a closed awarded one, five bidders
+	// each. Planned as data because the winner is the best-ranked bidder, known only after scoring.
 	const WEB_BIDDERS = 5;
 	const webRounds: WebRound[] = [];
 	for (
@@ -1629,10 +1537,8 @@ function buildVolumeFixtures(): string[] {
 	) {
 		const companyEmail = BUSINESS_EMAILS[companyIndex] as string;
 		const location = accountField(companyEmail, "address");
-		// The round happens at the company's own plant, so it is titled and
-		// located by it rather than by the city rotation the generated projects
-		// use: a title that named another city than the location would read as a
-		// different project.
+		// The round happens at the company's own plant, so it is titled and located by it, not by
+		// the city rotation the generated projects use.
 		const city = location.split(",")[0] as string;
 		for (let round = 0; round < 2; round++) {
 			const measure = MEASURES[
@@ -1679,9 +1585,8 @@ function buildVolumeFixtures(): string[] {
 				openedDaysAgo,
 				bidders,
 			};
-			// Registered here rather than at INSERT time: the matching block below
-			// scores the pool before these rows are written, and it reads the risk
-			// score each project's own params derive.
+			// Registered here rather than at INSERT time: the matching block below scores the pool
+			// before these rows are written, and reads the risk score the params derive.
 			paramsByTitle[plan.title] = plan.params;
 			webRounds.push(plan);
 			for (const vendorEmail of bidders) {
@@ -1690,11 +1595,8 @@ function buildVolumeFixtures(): string[] {
 		}
 	}
 
-	// ── broker stage: five assignments for each broker ────────
-	// Each generated project carries the full chain the broker and admin
-	// surfaces read: a validated or published blueprint, an awarded tender, an
-	// accepted proposal, a risk assessment, an assignment, monthly MRV reports,
-	// delivery milestones and a document request.
+	// Broker stage: each generated project carries the full chain the broker and admin surfaces
+	// read (blueprint, awarded tender, accepted proposal, risk assessment, assignment, MRV, docs).
 	const STAGE_PROJECTS = ROW_FLOOR * ROW_FLOOR;
 	for (let j = 0; j < STAGE_PROJECTS; j++) {
 		const n = 10 + j;
@@ -1771,9 +1673,8 @@ function buildVolumeFixtures(): string[] {
 			);
 		}
 
-		// One evidence file for the first few projects, which is what the project
-		// drill-downs display. The documents themselves come from the project's
-		// own checklist set.
+		// One evidence file for the first few projects, which is what the project drill-downs
+		// display; the documents themselves come from the project's own checklist set.
 		if (j < ROW_FLOOR) {
 			out.push(
 				`INSERT INTO milestone_evidence (milestone_id, kind, file_name, file_url, notes, uploaded_at)
@@ -1782,7 +1683,7 @@ function buildVolumeFixtures(): string[] {
 		}
 	}
 
-	// ── notification feeds: vendor and broker are the roles with a bell ─
+	// Notification feeds: vendor and broker are the roles with a bell.
 	for (let v = 0; v < VENDOR_EMAILS.length; v++) {
 		for (let k = 0; k < ROW_FLOOR; k++) {
 			out.push(
@@ -1800,8 +1701,7 @@ function buildVolumeFixtures(): string[] {
 		}
 	}
 
-	// ── vendor portfolio entries ──────────────────────────────
-	// vendor1 already has three from the story fixtures; the rest start empty.
+	// Vendor portfolio entries: vendor1 already has three from the story fixtures, the rest start empty.
 	const PORTFOLIO_EXISTING: Record<string, number> = {
 		"EcoTech Solutions": 3,
 	};
@@ -1818,12 +1718,10 @@ function buildVolumeFixtures(): string[] {
 		}
 	}
 
-	// ── funding: active investments behind the public catalog ─
-	// The catalog derives funding progress from active investments, so these
-	// rows are what turn a bare budget figure into a funding percentage.
+	// Active investments behind the public catalog: the catalog derives funding progress from them,
+	// so these rows turn a bare budget figure into a funding percentage.
 	for (let n = 0; n < 10; n++) {
-		// These are the first ten broker-stage projects, all of which carry a
-		// published blueprint; the title is already claimed above.
+		// The first ten broker-stage projects, all with a published blueprint; the title is claimed above.
 		const title = generatedTitle(10 + n);
 		const investment = userByEmail(
 			INVESTOR_EMAILS[n % INVESTOR_EMAILS.length] as string,
@@ -1835,7 +1733,6 @@ function buildVolumeFixtures(): string[] {
 		);
 	}
 
-	// ── ROI schedules for the admin payout queue ──────────────
 	for (let n = 0; n < ROW_FLOOR; n++) {
 		const investmentId = `(SELECT id FROM investments WHERE bond_serial_number = 'GS-BND-2026-1${String(n).padStart(2, "0")}')`;
 		for (let period = 1; period <= ROW_FLOOR; period++) {
@@ -1847,24 +1744,13 @@ function buildVolumeFixtures(): string[] {
 		}
 	}
 
-	// ── vendor matching scores, by the model the run uses ─────
-	// Same five criteria, same weights and same location vocabulary as
-	// `matching.service.ts` (imported from `scoring.ts`), computed over the vendor
-	// profiles and the bid history the fixtures themselves created. A re-run of
-	// the matching endpoint over the same rows therefore reproduces this ranking:
-	// the seeds are a starting point, not a parallel model.
-	//
-	// `projectRisk` is the same for every vendor (it is a property of the project)
-	// and is renormalised away, exactly as the run does. The criterion values stay
-	// unrounded, as the model's own `clamp` leaves them: the total is what rounds.
+	// Vendor matching scores, by the model the run uses: the same criteria and weights as
+	// `matching.service.ts`, over the seeded profiles and bids, so a re-run reproduces the ranking.
 	const clamp = (value: number) => Math.max(0, Math.min(100, value));
 
 	/**
-	 * The share of a vendor's bids made on projects in this sector, 0-100: the
-	 * record `sectorShareByVendor` reads back. A vendor with no bids at all has
-	 * no record, which is the case the run answers from the profile text; the
-	 * fixtures give every vendor bids, so an empty history is a fixture bug and
-	 * fails here rather than seeding a fit score the run would not produce.
+	 * The share of a vendor's bids in this sector, 0-100, as `sectorShareByVendor` reads it back.
+	 * Every vendor has bids, so an empty history is a fixture bug and fails here.
 	 */
 	function technicalFitOf(vendorEmail: string, sector: string): number {
 		const bids = bidHistory.filter((bid) => bid.vendorEmail === vendorEmail);
@@ -1903,11 +1789,8 @@ function buildVolumeFixtures(): string[] {
 		};
 	}
 
-	// Every tender a vendor can see is scored, so no opportunity card renders
-	// unscored, and every project a company can rank is scored too: an awarded
-	// tender without a ranking behind it reads as a project that was never
-	// matched. Each target carries the sector, location and risk score its own
-	// project row carries, so the ranking and the project agree.
+	// Every tender a vendor can see is scored, and every project a company can rank: an awarded
+	// tender without a ranking reads as a project that was never matched.
 	const scoreTargets: Array<{
 		title: string;
 		sector: string;
@@ -1932,9 +1815,8 @@ function buildVolumeFixtures(): string[] {
 			location: round.location,
 			risk: riskScoreOf(round.title),
 		})),
-		// The story's own projects, with the sector, location and risk their rows
-		// carry: a company past procurement still shows the ranking it awarded out
-		// of.
+		// The story's own projects, with the sector, location and risk their rows carry: a company
+		// past procurement still shows the ranking it awarded out of.
 		{
 			title: "Textile Factory Retrofit",
 			sector: "Textile",
@@ -1997,9 +1879,8 @@ function buildVolumeFixtures(): string[] {
 		},
 	];
 
-	// The rows are written after the procurement web below, because every one of
-	// them keys off a project by name: a project inserted later would leave its
-	// ranking unattributed.
+	// The rows are written after the procurement web below, because every one of them keys off a
+	// project by name: a project inserted later would leave its ranking unattributed.
 	const matchScoreStatements: string[] = [];
 
 	for (const target of scoreTargets) {
@@ -2048,21 +1929,14 @@ function buildVolumeFixtures(): string[] {
 		});
 	}
 
-	// ── the procurement web: tenders, bids, revisions and awards ──
-	// Written after the scores, because an awarded round goes to the best-ranked
-	// vendor that bid: the ranking the company chose out of and the pool it chose
-	// from have to tell the same story. Each round also carries the history the
-	// screens read beside a bid (the revision notes, the negotiation rounds) and
-	// each awarded round hands its winner milestones and reporting periods, so
-	// the vendor's own project view has work in it.
+	// The procurement web's rows, written after the scores because an awarded round goes to the
+	// best-ranked vendor that bid; each round carries the history the screens read beside a bid.
 	const NEGOTIATION_FIELDS =
 		'["Total Project Price","Unit & Service Warranty Period","Implementation Timeline"]';
 
 	/**
-	 * Where the company marked the bidder's proposal when it asked for the first
-	 * revision. Fractions of the proposal page the API renders, measured against
-	 * the seeded technical scope, so a mark lands on the figure it is about and
-	 * the vendor reads the same circles the company drew.
+	 * Where the company marked the bidder's proposal when it asked for the first revision:
+	 * fractions of the proposal page, so a mark lands on the figure it is about.
 	 */
 	const REVISION_MARKS = JSON.stringify([
 		{
@@ -2087,17 +1961,15 @@ function buildVolumeFixtures(): string[] {
 
 		out.push(
 			...projectStatements(round.params),
-			// A round is past verification either way, so it carries the document a
-			// bidder reads beside the tender: the awarded round's is published, the
-			// open one's is validated and waiting on the bids.
+			// A round is past verification either way, so it carries the document a bidder reads
+			// beside the tender: the awarded round's is published, the open one's validated.
 			...(round.awarded
 				? [blueprintStatement(round.title, "published", opened - 6)]
 				: [blueprintStatement(round.title, "validated", opened + 1)]),
 			`INSERT INTO tenders (project_id, method, status, budget_min, budget_max, deadline_at, created_at, updated_at)
 	VALUES (${projectId(round.title)}, '${round.method}', '${round.awarded ? "awarded" : "open"}', ${Math.round(round.budget * 0.78)}, ${round.budget}, ${round.awarded ? nowTs(-opened + 10) : nowTs(10 + (round.risk % 9))}, ${nowTs(-opened)}, ${nowTs(round.awarded ? -6 : -1)});`,
-			// The company's matchmaking choice, which is what opened the tender: an
-			// open one invites every verified vendor, a closed one only the three it
-			// was offered.
+			// The company's matchmaking choice, which is what opened the tender: an open one invites
+			// every verified vendor, a closed one only the three it was offered.
 			`INSERT INTO vendor_assignments (project_id, vendor_id, vendor_name, method, created_at, updated_at)
 	VALUES (${projectId(round.title)}, ${vendorProfileId(accountField(round.awarded ? winner : (ranked[0] as string), "companyName"))}, '${accountField(round.awarded ? winner : (ranked[0] as string), "companyName")}', '${round.method}', ${nowTs(-opened - 1)}, ${nowTs(-opened - 1)});`,
 		);
@@ -2105,11 +1977,8 @@ function buildVolumeFixtures(): string[] {
 		round.bidders.forEach((vendorEmail, bidder) => {
 			const amount = Math.round(round.budget * (0.82 + bidder * 0.035));
 			const accepted = round.awarded && vendorEmail === winner;
-			/* An awarded tender is decided, so its bids are too: the winner is
-			   `accepted` and every other bid was rejected when it was awarded,
-			   which is what `awardBid` writes. An open round keeps one bidder at
-			   each stage instead, because that is what the screens have to show
-			   while the decision is still open. */
+			/* An awarded tender is decided, so its bids are: the winner is `accepted` and the rest
+			   rejected, which is what `awardBid` writes. An open round keeps one bidder per stage. */
 			const status = round.awarded
 				? accepted
 					? "accepted"
@@ -2182,17 +2051,11 @@ function buildVolumeFixtures(): string[] {
 		}
 	}
 
-	// ── the rankings, once every project they rank exists ─────
+	// The rankings, pushed last: every project they rank must exist first.
 	out.push(...matchScoreStatements);
 
-	// ── predictive-analytics periods ──────────────────────────
-	// One forecast per project per month ahead, with the held-out accuracy
-	// metrics the model was scored on. Forward looking: a forecast describes the
-	// periods that have not happened yet, which is what the vendor sees alongside
-	// the reported actuals.
-	//
-	// Covers every project in delivery, including the story fixtures, so the
-	// vendor's active-project view always has a forecast rather than an empty card.
+	// Predictive-analytics periods: one forecast per project per month ahead, with the held-out
+	// metrics the model was scored on, covering every project in delivery including the story's.
 	const forecastTargets: Array<{ title: string; seed: number }> = [
 		...Array.from({ length: STAGE_PROJECTS }, (_, j) => ({
 			title: generatedTitle(10 + j),

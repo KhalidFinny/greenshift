@@ -1,12 +1,11 @@
 import { eq } from "drizzle-orm";
+import type { CompanyDocumentScan } from "../../../contracts";
 import type { GreenShiftDb } from "../../../db";
 import { auditLogs, users, vendors } from "../../../db/schema";
 
 /**
- * The profile fields a save may carry. Everything past the company name is
- * optional and an absent key keeps its stored value: the registration writes the
- * legal identity, and a later save of the company name from one form must not
- * clear the rest of the profile.
+ * The profile fields a save may carry: an absent key keeps its stored value, so
+ * saving the company name cannot clear the legal identity registration wrote.
  */
 export interface VendorProfileValues {
 	companyName: string;
@@ -15,6 +14,7 @@ export interface VendorProfileValues {
 	location?: string | null;
 	nib?: string | null;
 	npwp?: string | null;
+	tdp?: string | null;
 	certifications?: string[];
 	portfolio?: string[];
 }
@@ -54,9 +54,8 @@ export async function findVendorIdByUser(db: GreenShiftDb, userId: number) {
 	return existing;
 }
 
-// Atomic upsert: conflicts on the unique user_id index, so two first-time
-// saves racing cannot create duplicate profiles (single statement). On conflict
-// only the keys the save carried are written.
+// Atomic upsert: conflicts on the unique user_id index, so two first-time saves
+// racing cannot create duplicate profiles. Only the keys the save carried are written.
 export async function upsertVendorProfile(
 	db: GreenShiftDb,
 	userId: number,
@@ -72,6 +71,7 @@ export async function upsertVendorProfile(
 			location: values.location ?? null,
 			nib: values.nib ?? null,
 			npwp: values.npwp ?? null,
+			tdp: values.tdp ?? null,
 			certifications: values.certifications ?? [],
 			portfolio: values.portfolio ?? [],
 		})
@@ -88,6 +88,7 @@ export async function upsertVendorProfile(
 				...(values.location !== undefined ? { location: values.location } : {}),
 				...(values.nib !== undefined ? { nib: values.nib } : {}),
 				...(values.npwp !== undefined ? { npwp: values.npwp } : {}),
+				...(values.tdp !== undefined ? { tdp: values.tdp } : {}),
 				...(values.certifications !== undefined
 					? { certifications: values.certifications }
 					: {}),
@@ -124,4 +125,32 @@ export async function syncCompanyNameAndRecordAudit(
 			metadata: { companyName: params.companyName },
 		}),
 	]);
+}
+
+/**
+ * Stores one filed certificate on the profile. A re-file clears the reason the
+ * profile was turned down: that verdict was about the file it replaces.
+ */
+export async function saveVendorCertificate(
+	db: GreenShiftDb,
+	vendorId: number,
+	input: {
+		fileName: string;
+		fileKey: string;
+		contentType: string | null;
+		scan: CompanyDocumentScan | null;
+	},
+) {
+	const [saved] = await db
+		.update(vendors)
+		.set({
+			certificateName: input.fileName,
+			certificateKey: input.fileKey,
+			certificateScan: input.scan,
+			verificationRejectionReason: null,
+		})
+		.where(eq(vendors.id, vendorId))
+		.returning({ id: vendors.id });
+
+	return saved;
 }

@@ -23,10 +23,8 @@ export async function findTargetTender(db: GreenShiftDb, vendorId: number) {
 }
 
 /**
- * One named tender, with the vendor's own proposal on it when it has one. A
- * project screen names the tender it is showing, so the standings it renders are
- * that tender's rather than whichever tender the vendor happens to be bidding on
- * elsewhere.
+ * One named tender, with the vendor's own proposal on it when it has one, so a
+ * project screen renders that tender's standings rather than another's.
  */
 export async function findTenderTarget(
 	db: GreenShiftDb,

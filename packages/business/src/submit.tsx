@@ -1,8 +1,5 @@
-/* The wizard shell: it owns the four steps' state, the draft (autosave,
- * resume, submit) and everything derived from the values, then composes the
- * chrome and the step views. The steps render the form they are handed and report changes
- * back; the payload shapes, the risk model and the score model live in `lib/`.
- */
+/* The wizard shell: it owns the four steps' state, the draft (autosave, resume,
+ * submit) and the values derived from it. Payload shapes and the models live in `lib/`. */
 
 import { useStore, useToast } from "@greenshift/ui";
 import { useNavigate } from "@tanstack/react-router";
@@ -29,8 +26,7 @@ import { Step2View } from "./views/step-2";
 import { Step3View } from "./views/step-3";
 import { WizardHeader } from "./views/wizard-header";
 
-/* The slot vocabulary a resumed file is matched against, taken from the
-   checklist itself so neither can drift from the other. */
+/* The slot vocabulary a resumed file is matched against, taken from the checklist. */
 const STEP1_SLOT_IDS = REQUIRED_DOCS.map((doc) => doc.id);
 
 export function BusinessSubmit() {
@@ -39,36 +35,31 @@ export function BusinessSubmit() {
 	const { toast } = useToast();
 	const navigate = useNavigate();
 
-	/* ADR-006: wizard shell state: the active step and whether Save and continue
-	   has been pressed on it. */
+	/* ADR-006: shell state — the active step, and whether Save and continue was pressed. */
 	const [activeStep, setActiveStep] = useState(0);
-	/* Save and continue is what re-runs every rule of the step with its messages
-	   on; step 2 also asks for its document count, which no field owns. */
+	/* Save and continue re-runs the step's rules with their messages on; step 2 also asks its document
+	 * count. */
 	const [step2Attempted, setStep2Attempted] = useState(false);
-	/* Step 1 documents (ADR-003): slot to the name shown, and slot to the
-	   document id submit sends. Uploads are imperative, not form fields. */
+	/* Step 1 documents (ADR-003): slot to name shown, slot to document id. Uploads are imperative, not
+	 * form fields. */
 	const [uploaded, setUploaded] = useState<Record<string, string>>({});
 	const [uploadedIds, setUploadedIds] = useState<Record<string, string>>({});
 
-	/* Step 2 documents (ADR-004). One list, because an upload and its id only
-	   ever appear and disappear together. */
+	/* Step 2 documents (ADR-004): one list, since an upload and its id appear and disappear
+	 * together. */
 	const [finFiles, setFinFiles] = useState<WizardFile[]>([]);
 	const finFileIds = useMemo(() => finFiles.map((file) => file.id), [finFiles]);
 
-	/* Draft persistence. A stored draft seeds every step in one reset, which the
-	   hook applies before it arms autosave, so the seeded values are never written
-	   over the stored ones. The stored files are seeded too: an autosave that sent
-	   an empty list back would detach every upload. */
+	/* Draft persistence: a stored draft seeds every step in one reset before autosave
+	   arms. Stored files are seeded too — an empty list would detach every upload. */
 	const readyToSave = useRef(false);
 	const draft = useBusinessDraft((resume) => {
-		// `useForm` re-applies the caller's blank `defaultValues` on every render
-		// while the form is untouched, which replaces whatever the store holds. The
-		// seeded values therefore must not become the form's defaults:
-		// `keepDefaultValues` is what makes them survive the render that follows.
+		// `useForm` re-applies the caller's blank `defaultValues` while the form is
+		// untouched, so seeded values must not become defaults: `keepDefaultValues` fixes it.
 		form.reset(resumeValues(resume), { keepDefaultValues: true });
 
-		// The blocks hold file ids, so the files themselves come from the resume's
-		// own list: without it a resumed step would count files it cannot name.
+		// The blocks hold file ids, so the files come from the resume list; otherwise a
+		// resumed step would count files it cannot name.
 		const files = resumeFiles(resume.documents, resume.step2?.fileIds ?? []);
 		const step1Files = slotFiles(files.bySlot, STEP1_SLOT_IDS);
 		setFinFiles(files.step2);
@@ -79,29 +70,22 @@ export function BusinessSubmit() {
 		if (resume.step != null && resume.step > 1) {
 			setActiveStep(Math.min(resume.step, 3) - 1);
 		}
-		// Last statement: autosave may only start once the stored draft is in the
-		// form, so a blank patch can never race it.
+		// Last statement: autosave may only start once the stored draft is in the form.
 		readyToSave.current = true;
 	});
 
-	// A draft that was never saved has nothing to wait for, so the load settling
-	// is what arms autosave there.
+	// A draft that was never saved has nothing to wait for, so the load settling arms autosave.
 	useEffect(() => {
 		if (!draft.loading) readyToSave.current = true;
 	}, [draft.loading]);
 
-	/** The payload step for the screen the user is on. */
 	const draftStep: 1 | 2 | 3 | 4 = (activeStep + 1) as 1 | 2 | 3 | 4;
 
-	/**
-	 * One autosave, built from the values the form holds at the moment it is
-	 * called. A snapshot captured in an effect belongs to the render that took it,
-	 * so it both misses later edits and can send `null` over a value the server
-	 * already holds; reading the store here cannot go stale.
-	 */
+	/** One autosave, built from the values the form holds when it is called: a snapshot
+	 * taken in an effect misses later edits and can send `null` over a stored value. */
 	const saveDraft = useCallback(() => {
-		// Nothing may be written before the stored draft has been applied: a blank
-		// patch sent first would be the last word on a draft that already has data.
+		// Nothing may be written before the stored draft is applied: a blank patch would
+		// be the last word on a draft that already has data.
 		if (!readyToSave.current) return;
 		const live = form.state.values;
 		if (draftStep === 1) {
@@ -116,20 +100,20 @@ export function BusinessSubmit() {
 			draft.saveStep({ step: 3, step3: step3Patch(live) });
 			return;
 		}
-		// The review step holds no block of its own: uploads are stored as they
-		// happen, and the two declarations belong to submit.
+		// The review step holds no block: uploads are stored as they happen, and the
+		// declarations belong to submit.
 		draft.saveStep({ step: 4 });
 	}, [draft.saveStep, draftStep, finFileIds]);
 
-	// The form's own change notification drives autosave. The hook debounces, and
-	// it stays quiet until the resume above has been applied.
+	// The form's change notification drives autosave; the hook debounces and stays quiet
+	// until the resume above has been applied.
 	useEffect(() => {
 		const subscription = form.store.subscribe(saveDraft);
 		return () => subscription.unsubscribe();
 	}, [form, saveDraft]);
 
-	// An upload changes no form value, so the new file list nudges the same save;
-	// so does landing on a step whose block has not been written yet.
+	// An upload changes no form value, so the new file list nudges the same save; so does
+	// landing on a step whose block has not been written yet.
 	useEffect(() => {
 		saveDraft();
 	}, [saveDraft]);
@@ -161,13 +145,12 @@ export function BusinessSubmit() {
 		capex: capexNum,
 		tenor: tenorNum,
 		saving: savingNum,
-		// The draft's attached documents, which a resume restores by id; the file
-		// names shown come back with the same resume.
+		// The draft's attached documents, which a resume restores by id, names included.
 		docsDone: finFileIds.length,
 		docsTotal: STEP2_DOC_TARGET,
 	});
 
-	/* ---- the review's derived risk (ADR-006.7: Step 1 trio + Step 2 files) ---- */
+	/* The review's derived risk (ADR-006.7: Step 1 trio + Step 2 files). */
 	const riskDocsDone = docsDone + finFileIds.length;
 	const riskDocsTotal = REQUIRED_DOCS.length + STEP2_DOC_TARGET;
 	const riskInputsEmpty =
@@ -187,8 +170,8 @@ export function BusinessSubmit() {
 				docsTotal: riskDocsTotal,
 			});
 
-	/* The current step's rules over live form values. One map drives the field
-	   messages, the step gate and the banner count, so they cannot disagree. */
+	/* The step's rules over live values; one map drives field messages, the step gate and
+	   the banner count, so they cannot disagree. */
 	const step1Messages = validateStep1(step1Values(values));
 	const step2Messages = validateStep2(step2Values(values, finFileIds.length));
 	const step3Messages = validateStep3(step3Values(values));
@@ -233,12 +216,10 @@ export function BusinessSubmit() {
 		setFinFiles((prev) => prev.filter((file) => file.id !== id));
 	}
 
-	/* ---- Shell navigation (ADR-006.1 + 006.6) ----
-	   The strip's rule needs no bookkeeping: a step only advances on an empty rule
-	   map, so every step behind the active one has been completed and is a link,
-	   and every step ahead of it is inert until the wizard arrives there. */
+	/* Shell navigation (ADR-006.1 + 006.6): a step only advances on an empty rule map, so
+	   every step behind is a link and every step ahead is inert. */
 
-	/** Names how many fields of the step are still open, under each of them. */
+	/** Says how many fields of the step are still open. */
 	function reportStep(messages: Record<string, unknown>) {
 		const count = Object.keys(messages).length;
 		toast({
@@ -251,14 +232,8 @@ export function BusinessSubmit() {
 		});
 	}
 
-	/**
-	 * Save and continue. Every message the step's rules produce is shown at once,
-	 * so one press reports the whole step rather than one field at a time, and the
-	 * step only advances on an empty map. The review carries no data rules.
-	 *
-	 * The refusal itself is a toast: the page carries the message under each field
-	 * it is about, and the count of them is a response rather than page content.
-	 */
+	/** Save and continue: every message the step's rules produce is shown at once, and
+	 * the step only advances on an empty map. The refusal itself is a toast. */
 	async function handleNext() {
 		if (activeStep === 0) {
 			await form.validateAllFields("change");
@@ -295,13 +270,11 @@ export function BusinessSubmit() {
 		setActiveStep((step) => Math.max(0, step - 1));
 	}
 
-	/**
-	 * Sends the draft. The server revalidates, scores it and returns the created
-	 * project, so nothing here decides the outcome.
-	 */
+	/** Sends the draft: the server revalidates, scores it and returns the project, so
+	 * nothing here decides the outcome. */
 	async function handleSubmitProject() {
-		// The client rules run again, so a value that went missing fails here
-		// instead of being sent as a zero.
+		// The client rules run again, so a value that went missing fails here instead of
+		// being sent as a zero.
 		if (
 			Object.keys(step1Messages).length > 0 ||
 			Object.keys(step2Messages).length > 0 ||
@@ -369,10 +342,8 @@ export function BusinessSubmit() {
 	}
 
 	return (
-		/* The shell's content wrapper has no padding (moved into an inner flex
-		   wrapper), so the scrollport starts at the shell header's bottom. The
-		   negative margin on this root cancels the inner wrapper's pt-6/pt-8,
-		   putting the bar flush under the header at rest and while scrolling. */
+		/* The shell's content wrapper has no padding, so this root cancels the inner
+		   wrapper's pt-6/pt-8 to keep the bar flush under the header while scrolling. */
 		<div className="flex flex-col -mt-6 space-y-6 sm:-mt-8 sm:space-y-8">
 			<WizardHeader
 				activeStep={activeStep}

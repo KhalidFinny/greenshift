@@ -19,7 +19,6 @@ export async function listBlueprints(
 	return rows;
 }
 
-/** Full blueprint row, used to evaluate the gatekeeper workflow. */
 export async function findBlueprintForTransition(db: GreenShiftDb, id: number) {
 	const [blueprint] = await db
 		.select()
@@ -71,7 +70,6 @@ export async function applyBlueprintTransition(
 	]);
 }
 
-/** Minimal project projection used when a blueprint gets published. */
 export async function findProjectStatus(db: GreenShiftDb, id: number) {
 	const [project] = await db
 		.select({ id: projects.id, status: projects.status })
@@ -81,7 +79,6 @@ export async function findProjectStatus(db: GreenShiftDb, id: number) {
 	return project;
 }
 
-/** Publication opens pre-funding projects for investment. */
 export async function promoteProjectToFunding(
 	db: GreenShiftDb,
 	id: number,

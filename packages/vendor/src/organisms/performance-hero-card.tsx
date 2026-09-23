@@ -31,7 +31,7 @@ export function PerformanceHeroCard({
 						</div>
 					</div>
 
-					<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+					<div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
 						<div className="rounded-lg bg-muted/50 p-3">
 							<p className="text-sm font-medium text-muted-foreground">
 								Completion
@@ -54,14 +54,6 @@ export function PerformanceHeroCard({
 							</p>
 							<p className="mt-1 text-xl font-bold text-emerald-700">
 								{performanceMetrics.energySavingAchievementPercent}%
-							</p>
-						</div>
-						<div className="rounded-lg bg-muted/50 p-3">
-							<p className="text-sm font-medium text-muted-foreground">
-								Satisfaction
-							</p>
-							<p className="mt-1 text-xl font-bold text-foreground">
-								{performanceMetrics.clientApprovalRatePercent}%
 							</p>
 						</div>
 					</div>

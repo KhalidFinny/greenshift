@@ -39,8 +39,7 @@ interface RoleShellProps {
 	showHeaderTitle?: boolean;
 }
 
-/** Roles with a real notification feed. The others get no bell at all, since a
- * control with nothing behind it is worse than no control. */
+/** Only these roles have a notification feed; the others get no bell at all. */
 const ROLES_WITH_FEED: Record<string, true> = {
 	vendor: true,
 	broker: true,
@@ -164,9 +163,8 @@ export function RoleShell({
 		queryKey: ["shell-notifications", role],
 		enabled: hasFeed,
 		staleTime: 60 * 1000,
-		// Events the company is waiting on (a submission's verification) are
-		// written after the request that caused them, so the feed polls for them
-		// rather than only loading when the shell mounts.
+		// Events the company waits on are written after the request that causes
+		// them, so the feed polls rather than loading only on mount.
 		refetchInterval: 10 * 1000,
 		queryFn: async (): Promise<ShellNotification[]> => {
 			if (role === "vendor") {
@@ -215,12 +213,8 @@ export function RoleShell({
 	const notifications = notificationsQuery.data ?? [];
 	const unreadCount = notifications.filter((n) => !n.read).length;
 
-	/**
-	 * Reading is a write, so the hub marks as it goes: opening an item marks that
-	 * one, and the header's action marks the whole feed. Both patch the cached
-	 * list first, so the badge clears as the request leaves rather than after the
-	 * next poll.
-	 */
+	/** Reading is a write, so the hub marks as it goes and patches the cached list
+	 * first: the badge clears as the request leaves, not on the next poll. */
 	const queryClient = useQueryClient();
 	const notificationsKey = ["shell-notifications", role];
 
@@ -263,8 +257,7 @@ export function RoleShell({
 			);
 	}
 
-	// Settings replaces the old standalone profile page, and only exists for the
-	// roles that actually have one.
+	// Settings replaces the old standalone profile page; only some roles have one.
 	const settingsPath =
 		role === "vendor"
 			? "/vendor/settings"
@@ -274,10 +267,8 @@ export function RoleShell({
 					? "/business/settings"
 					: null;
 
-	// Mobile navigation. The sidebar stays ONE element at every width: below `lg`
-	// it slides in over the content rather than being duplicated into a second
-	// copy, which would give two elements the same view-transition name and
-	// break the page transition.
+	// The sidebar stays ONE element at every width: a duplicate would give two
+	// elements the same view-transition name and break the page transition.
 	const [sidebarOpen, setSidebarOpen] = useState(false);
 
 	// Navigating closes it: the drawer covers the page the user just chose.
@@ -296,8 +287,8 @@ export function RoleShell({
 
 	return (
 		<div className="fixed inset-0 flex w-full overflow-hidden overscroll-none">
-			{/* Dimming layer for the mobile drawer. Below `lg` only, and it is the
-			    only place the sidebar can be dismissed by tapping outside it. */}
+			{/* Dimming layer for the mobile drawer, below `lg`: the only way to dismiss the sidebar by
+			    tapping outside it. */}
 			{sidebarOpen ? (
 				<button
 					type="button"
@@ -361,14 +352,12 @@ export function RoleShell({
 			<main className="flex min-w-0 flex-1 flex-col overflow-hidden">
 				<header
 					data-shell-header
-					/* Above the wizard's own sticky bar (z-20): the notification
-					   and account panels hang from this row, and a bar that outranks
-					   it would cut them off. Still under the mobile sidebar (z-40). */
+					/* Above the wizard's sticky bar (z-20) so it cannot cut the panels
+					   off; still under the mobile sidebar (z-40). */
 					className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-border bg-background px-3 py-2 sm:gap-3 sm:px-6 sm:py-4"
 				>
 					<div className="flex min-w-0 items-center gap-1 sm:gap-2">
-						{/* Labelled rather than a bare icon: a hamburger with no word
-						    assumes the user knows what hides behind it. */}
+						{/* Labelled rather than a bare icon: a hamburger with no word assumes the user knows what hides behind it. */}
 						<button
 							type="button"
 							onClick={() => setSidebarOpen(true)}
@@ -388,8 +377,8 @@ export function RoleShell({
 						)}
 					</div>
 					<div className="flex items-center gap-3">
-						{/* Notifications. Only roles with a real feed get the bell; for the
-						    rest it would be a control with nothing behind it. */}
+						{/* Only roles with a real feed get the bell; for the rest it would be a control with nothing
+						    behind it. */}
 						{hasFeed ? (
 							<div ref={notifRef} className="relative">
 								<button
@@ -522,8 +511,7 @@ export function RoleShell({
 													const rowClass =
 														"block w-full p-3 text-left no-underline transition-colors hover:bg-muted/50";
 
-													// Opening an item is what reads it: the row marks
-													// itself read and follows its link.
+													// Opening an item is what reads it: the row marks itself read and follows its link.
 													return (
 														<li key={item.id}>
 															{item.link ? (
@@ -582,10 +570,8 @@ export function RoleShell({
 									className="size-8"
 									fallbackClassName="bg-foreground/10 font-semibold text-foreground"
 								/>
-								{/* The person, then the organization they are acting as: a
-								    shared screen has to say which entity the reader is in.
-								    An account with no organization (an administrator) shows
-								    the name alone rather than repeating it. */}
+								{/* The person, then the organization they act as; an account
+								    with no organization shows the name alone. */}
 								<span className="hidden min-w-0 flex-col text-left sm:flex">
 									<span className="max-w-40 truncate text-base font-medium leading-tight text-foreground">
 										{name || "Pengguna"}

@@ -1,33 +1,47 @@
 # GreenShift
 
-**MRV platform for green financing.** GreenShift validates industrial energy-efficiency projects, builds a
-*Green Project Blueprint*, and connects projects to green funding through licensed SCF partners.
-
-The application is a role-based microfrontend monorepo that compiles into a single Cloudflare Worker: one
-build, one deploy, one API, one database.
+**MRV platform for green financing in Indonesia.** A company submits an industrial energy-efficiency
+project, GreenShift scores it, the company matches it with a vendor, and the verified project becomes a
+Green Project Blueprint that a licensed securities partner funds. Everything runs as one Cloudflare Worker:
+one build, one deploy, one API, one D1 database.
 
 ## Surfaces
 
 | Surface | Route | Who | What it does |
 |---|---|---|---|
-| Landing | `/` | public | Marketing site: hero, how it works, ecosystem, FAQ, contact. |
-| Bond catalog | `/bonds` | public | Verified bond listings (`GET /api/investor/market`). Bonds are sold via brokers, so there is no buy/portfolio flow. |
-| Business dashboard | `/business` | role `business` | Placeholder shell: project intake, assessment results and tendering are not implemented yet. |
-| Vendor dashboard | `/vendor` | role `vendor` | Discover open tenders, submit proposals, respond to revision requests, track procurement and delivery. |
-| Broker dashboard | `/broker` | role `broker` | Prepare verified projects for bond issuance, request company documents, file monthly reports. |
-| Admin console | `/admin` | role `admin` | Verify users/vendors, drive the project and blueprint lifecycle, pay out ROI, review the audit trail and the anomaly console. |
+| Landing | `/` | public | Product site: hero, how it works, ecosystem, FAQ, contact. |
+| Bond catalog | `/bonds` | public | Verified projects offered as bonds (`GET /api/investor/market`). The buy button opens a partner securities app (Trima+, with IPOT as the alternative); GreenShift issues, settles and pays nothing itself. |
+| Company dashboard | `/business` | role `business` | Verification pack, project submission wizard, project records, vendor matchmaking, tender and award. |
+| Vendor dashboard | `/vendor` | role `vendor` | Open tenders, proposals and revision rounds, active projects and milestones, portfolio, profile. |
+| Broker dashboard | `/broker` | role `broker` | Assigned projects, company document requests, monthly monitoring reports with PDF export. |
+| Admin console | `/admin` | role `admin` | Account and vendor verification, project and blueprint lifecycle, ROI payouts, analytics, anomaly console, audit trail. |
 
-An `investor` account exists for demo purposes; its home is the public bond catalog.
+Account gates sit in front of the work. A company files its pack (details, NIB and NPWP, deed of
+incorporation, trading licence) and the document scan accepts or rejects it; until then every other `/business`
+screen redirects to the verification step. A vendor files NIB, NPWP, TDP and an ESCO or ISO certificate, and an
+administrator verifies the profile before the vendor can bid. A broker profile must be verified too before it
+can receive assignments.
 
 ## Quick start
 
 ```bash
 bun install
-bun run dev            # everything on http://localhost:3000
+bun run dev     # http://localhost:3000
 ```
 
-Seeded logins (password `12345678`) — run `bun run db:setup` once after the dev server has created the local
-database:
+The dev server creates the local D1 database on its first start. In another shell, apply the migrations and
+load the demo fixtures:
+
+```bash
+bunx wrangler d1 migrations apply greenshift-db --local
+bunx tsx scripts/seed.ts > scripts/seed.sql
+bunx wrangler d1 execute greenshift-db --local --file=scripts/seed.sql
+```
+
+The seed is destructive: it resets every table it owns before inserting. Never point it at a deployed
+database.
+
+Seeded logins, password `12345678` (the login form takes the username or the full email):
 
 | Username | Role |
 |---|---|
@@ -35,38 +49,45 @@ database:
 | `vendor1` | vendor |
 | `broker1` | broker |
 | `admin1` | admin |
-| `investor1` | investor |
 
-Full instructions (role-scoped dev servers, database workflow, deployment, troubleshooting) are in
+The same seed writes `business1` to `business10`, `vendor1` to `vendor10` and `broker1` to `broker5`, plus
+`investor1`, which exists only so the investment fixtures have a user to join on: the platform has no
+investor surface.
+
+Full instructions (role-scoped dev servers, the database workflow, deployment, troubleshooting) are in
 [INSTALLATION.md](INSTALLATION.md).
 
 ## Documentation
 
 | Document | Contents |
 |---|---|
-| [INSTALLATION.md](INSTALLATION.md) | Requirements, install, running (full app and role-scoped dev servers), accounts, database setup, build and deploy, configuration, troubleshooting. |
-| [TECH_STACK.md](TECH_STACK.md) | Technology stack: every framework and library, its version, why it was chosen, and where it lives. |
-| [TECHNICAL_DOCUMENTATION.md](TECHNICAL_DOCUMENTATION.md) | Architecture, package boundaries, request lifecycle, auth, security, HTTP API reference, data model, data-access conventions, verification. |
+| [INSTALLATION.md](INSTALLATION.md) | Requirements, install, running, demo accounts, database workflow, build and deploy, configuration, troubleshooting. |
+| [TECH_STACK.md](TECH_STACK.md) | Every runtime, framework and library with its version and where it lives. |
+| [TECHNICAL_DOCUMENTATION.md](TECHNICAL_DOCUMENTATION.md) | Architecture, package boundaries, request lifecycle, auth and verification, HTTP API reference, data model, migrations, UI conventions. |
+| [docs/adr/](docs/adr/) | Architecture decision records, oldest first. |
 | [docs/BROKERROLE.md](docs/BROKERROLE.md) | Broker role specification: responsibilities, financial boundary, document and reporting flows. |
 | [docs/VENDORROLE.md](docs/VENDORROLE.md) | Vendor role specification: participation rules, tender and proposal lifecycle, delivery obligations. |
-| [agent.md](agent.md) | UI rules for the design system (components, typography, icons, layout, tokens). |
+| [docs/GLOSSARY-ajukan-proyek.md](docs/GLOSSARY-ajukan-proyek.md) | The submission wizard step by step, with the Indonesian labels it was written in. |
+| [DESIGN.md](DESIGN.md) | Design direction: palette, type, motif. |
+| [CLAUDE.md](CLAUDE.md) | Project context for coding agents: stack, layout, roles, auth, seed accounts. |
+| [agent.md](agent.md) | UI rules for the design system: components, typography, icons, layout, tokens. |
 
 ## Repository layout
 
 ```
-apps/api/            Backend: Hono API, Drizzle schema, auth/sessions (no React)
-packages/ui/         Design system: shadcn + react-aria components, RoleShell, charts, form bundle
-packages/core/       Shared frontend contract: useAuth, guards, role nav/home, typed API client, query
-packages/landing/    Landing page
-packages/business/   Business dashboard
+apps/api/            Backend: Hono API, Drizzle schema, sessions, PDF writer (no React)
+packages/ui/         Design system: shadcn components on radix primitives, RoleShell, charts, form bundle
+packages/core/       Shared frontend contract: auth, guards, role nav/home, typed API client, partner registry
+packages/landing/    Landing page sections
+packages/business/   Company dashboard and submission wizard
 packages/vendor/     Vendor dashboard
 packages/broker/     Broker dashboard
-packages/admin/      Admin dashboard
+packages/admin/      Admin console
 packages/investor/   Public bond catalog
 src/                 Web app: TanStack Start routes, router, Worker entry (src/server.ts)
 drizzle/             Generated D1 migrations
-docs/                Role specifications
-scripts/             Demo user seeder and seed-fixture generator
+docs/                Role specifications, ADRs, glossary
+scripts/             Demo accounts and the seed-fixture generator
 ```
 
 ## Quality checks

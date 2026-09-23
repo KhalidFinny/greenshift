@@ -16,8 +16,7 @@ export function VendorTenderDetailPage({ tenderId }: { tenderId?: string }) {
 	const { isLoading, proposals, negotiations, submitNegotiationResponse } =
 		useVendorData();
 
-	// The list row carries only a summary. The technical and commercial fields
-	// live on the detail endpoint, so they are fetched rather than guessed.
+	// The list row carries only a summary; the technical and commercial fields live on the detail endpoint.
 	const summary =
 		proposals.find((item) => item.tenderId === tenderId) ?? proposals[0];
 

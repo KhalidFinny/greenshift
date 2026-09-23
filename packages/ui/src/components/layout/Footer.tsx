@@ -7,8 +7,7 @@ export default function Footer() {
 	const isHome = useIsHome();
 	const year = new Date().getFullYear();
 
-	// Role pages have no footer; the public landing keeps it even when logged
-	// in (same exception as the header).
+	// Role pages have no footer; the landing keeps it even when logged in.
 	if (user && !isHome) return null;
 
 	return (
@@ -87,8 +86,7 @@ export default function Footer() {
 
 			<div className="border-t border-white/15">
 				<div className="page-wrap flex flex-col items-center justify-between gap-2 py-6 text-base text-white/80 sm:flex-row">
-					{/* A span, not `small`: the element's own 0.8em would put the line
-					    under the 14px floor the rest of the interface holds. */}
+					{/* A span, not `small`: the element's own 0.8em would put the line under the 14px floor. */}
 					<span>&copy; {year} GreenShift. All rights reserved.</span>
 					<span>An MRV Platform for Green Financing</span>
 				</div>

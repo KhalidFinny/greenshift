@@ -2,11 +2,8 @@ import { and, eq, inArray } from "drizzle-orm";
 import type { GreenShiftDb } from "../../../db";
 import { draftDocuments, drafts } from "../../../db/schema";
 
-/**
- * The company's own draft. Scoping the lookup to the company makes another
- * company's id indistinguishable from one that does not exist, so a cross
- * company read can only ever answer "not found".
- */
+// Scoped to the company, so another company's id is indistinguishable from a
+// missing one: a cross-company read can only answer "not found".
 export async function findDraft(
 	db: GreenShiftDb,
 	draftId: string,
@@ -35,10 +32,8 @@ export async function draftIdExists(
 	return row !== undefined;
 }
 
-/**
- * Creates the draft on first save and merges on every later one. One statement,
- * so two autosaves racing cannot both try to insert.
- */
+// Creates the draft on first save and merges on every later one. One statement,
+// so two autosaves racing cannot both try to insert.
 export async function upsertDraft(
 	db: GreenShiftDb,
 	params: {
@@ -77,7 +72,6 @@ export async function listDraftDocuments(db: GreenShiftDb, draftId: string) {
 		.orderBy(draftDocuments.uploadedAt);
 }
 
-/** How many of the given ids actually belong to this draft. */
 export async function countOwnedDocuments(
 	db: GreenShiftDb,
 	draftId: string,

@@ -60,8 +60,7 @@ export function PendingActionsCard({
 	actions,
 	loading = false,
 }: PendingActionsCardProps) {
-	// The audit log is the way out of this card whether it is loading, empty, or
-	// full, so exactly one control points at it in every state.
+	// The audit log is the way out of this card in every state, so exactly one control points at it.
 	const hasActions = actions.length > 0;
 
 	return (

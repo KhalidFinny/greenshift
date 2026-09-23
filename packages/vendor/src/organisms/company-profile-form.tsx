@@ -20,24 +20,23 @@ interface CompanyProfileFormProps {
 	description?: string;
 	serviceCategory?: string | null;
 	location?: string | null;
+	tdp?: string | null;
 	onSave: (data: {
 		companyName: string;
 		description: string;
 		serviceCategory: string;
 		location: string;
+		tdp: string;
 	}) => void;
 }
 
-/**
- * Company profile form. Only the fields the API stores on the vendor profile are
- * editable: the company's own details, what it delivers, and where it works from
- * (proximity is part of the matchmaking score).
- */
+/** Company profile form. Only the fields the API stores on the vendor profile are editable; location matters because proximity is part of the matchmaking score. */
 export function CompanyProfileForm({
 	companyName: initialCompanyName,
 	description: initialDescription,
 	serviceCategory: initialServiceCategory,
 	location: initialLocation,
+	tdp: initialTdp,
 	onSave,
 }: CompanyProfileFormProps) {
 	const [companyName, setCompanyName] = useState(initialCompanyName ?? "");
@@ -46,6 +45,7 @@ export function CompanyProfileForm({
 		initialServiceCategory ?? "",
 	);
 	const [location, setLocation] = useState(initialLocation ?? "");
+	const [tdp, setTdp] = useState(initialTdp ?? "");
 
 	// The profile arrives asynchronously; adopt it once it lands.
 	useEffect(() => {
@@ -61,10 +61,13 @@ export function CompanyProfileForm({
 	useEffect(() => {
 		if (initialLocation !== undefined) setLocation(initialLocation ?? "");
 	}, [initialLocation]);
+	useEffect(() => {
+		if (initialTdp !== undefined) setTdp(initialTdp ?? "");
+	}, [initialTdp]);
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		onSave({ companyName, description, serviceCategory, location });
+		onSave({ companyName, description, serviceCategory, location, tdp });
 	};
 
 	return (
@@ -130,6 +133,18 @@ export function CompanyProfileForm({
 								value={location}
 								onChange={(e) => setLocation(e.target.value)}
 								placeholder="City, province"
+							/>
+						</div>
+
+						<div className="space-y-1.5 sm:col-span-2">
+							<Label htmlFor="cp-tdp" className="text-sm font-semibold">
+								Company Registration Number (TDP):
+							</Label>
+							<Input
+								id="cp-tdp"
+								value={tdp}
+								onChange={(e) => setTdp(e.target.value)}
+								placeholder="As written on the TDP"
 							/>
 						</div>
 					</div>

@@ -1,7 +1,5 @@
-/**
- * Global top progress bar shown during route transitions.
- * Indeterminate: slides across until the navigation settles.
- */
+/** Global top progress bar shown during route transitions. Indeterminate: it
+ * slides across until the navigation settles. */
 export function ProgressLoader() {
 	return (
 		<div

@@ -24,7 +24,6 @@ function NotificationList({
 	emptyDescription: string;
 	onMarkRead?: (id: string) => void;
 }) {
-	// The list pages whatever the active tab filtered down to.
 	const paged = usePagedRows(notifications);
 
 	if (notifications.length === 0) {

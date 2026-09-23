@@ -33,12 +33,8 @@ export type RegisterResult =
 	  }
 	| { status: "email-taken" };
 
-/**
- * Creates the account and the organization it represents, then opens the
- * session, so one submission leaves a usable account of the chosen type: a
- * company with its sector on file, a vendor with an unverified profile it can
- * complete and be verified against.
- */
+// Creates the account and the organization it represents, then opens the session,
+// so one submission leaves a usable account of the chosen type.
 export async function registerUser(
 	env: Env,
 	input: RegisterInput,

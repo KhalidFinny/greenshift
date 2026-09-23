@@ -10,8 +10,8 @@ export type ChangeProjectStatusResult =
 	| { ok: false; reason: "not_found" };
 
 /**
- * Moves a project to a new lifecycle status, stamping `completedAt` when it
- * completes, and records the transition in the audit trail.
+ * Moves a project to a new lifecycle status, stamping `completedAt` on
+ * completion, and records the transition in the audit trail.
  */
 export async function changeProjectStatus(
 	db: GreenShiftDb,

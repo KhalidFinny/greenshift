@@ -54,7 +54,6 @@ export function VendorDealsPage() {
 	const negotiationsPage = usePagedRows(negotiations);
 	const activeProjectsPage = usePagedRows(activeProjects);
 
-	// Real counts drive the stage strip, so the pipeline reads at a glance.
 	const STAGES = [
 		{
 			key: "live" as const,
@@ -115,16 +114,14 @@ export function VendorDealsPage() {
 					</Link>
 				</div>
 
-				{/* The active stage's meaning, stated once rather than repeated
-				    under every tab. */}
+				{/* The active stage's meaning, stated once rather than under every tab. */}
 				{activeStage ? (
 					<p className="mt-3 text-sm text-muted-foreground">
 						{activeStage.blurb}
 					</p>
 				) : null}
 
-				{/* 1. Live bidding. Standings render only for the tender the
-				    leaderboard endpoint actually reports on. */}
+				{/* Standings render only for the tender the leaderboard endpoint actually reports on. */}
 				<TabsContent value="live" className="mt-6 space-y-4">
 					{!isLoading && openBiddingProposals.length === 0 ? (
 						<EmptyState
@@ -284,8 +281,7 @@ export function VendorDealsPage() {
 					)}
 				</TabsContent>
 
-				{/* 4. Execution. Selecting a project opens its own page rather than
-				    nesting a second detail view inside this tab. */}
+				{/* Selecting a project opens its own page rather than nesting a detail view inside this tab. */}
 				<TabsContent value="execution" className="mt-6 space-y-4">
 					{!isLoading && activeProjects.length === 0 ? (
 						<EmptyState

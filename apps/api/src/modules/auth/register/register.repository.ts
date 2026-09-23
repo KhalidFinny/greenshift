@@ -36,17 +36,8 @@ export interface RegisterAccountValues {
 	hashedPassword: string;
 }
 
-/**
- * Writes the account, the organization it represents, and the audit entry in
- * one batch, which D1 runs as one transaction: a vendor account without its
- * profile would be an account that cannot bid, so the two cannot be split.
- *
- * The profile and audit rows reference the account this same batch inserts,
- * which is why they carry the email as a subquery rather than an id: the id
- * exists only once the batch has run, and the email is the account's handle.
- * Drizzle types an integer column as `number`, so the subquery is cast to it;
- * SQLite resolves it to the account's id at execution.
- */
+// Account, organization and audit entry go in one D1 batch (one transaction): the
+// rows join the account by email subquery, since its id exists only after the batch.
 export async function insertRegisteredAccount(
 	db: GreenShiftDb,
 	values: RegisterAccountValues,

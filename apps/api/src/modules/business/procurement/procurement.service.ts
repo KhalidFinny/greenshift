@@ -91,12 +91,8 @@ export type TenderResult =
 	| { outcome: "tender_locked"; status: string }
 	| { outcome: "deadline_invalid" };
 
-/**
- * Starts, or re-shapes, the tender the company's choice implies. One project
- * runs one tender at a time; while it is open the company may still move the
- * deadline, but once evaluation has begun the terms are frozen — the bids were
- * made against them.
- */
+// Starts, or re-shapes, the tender the company's choice implies. One project runs one
+// tender at a time; once evaluation begins the terms are frozen, since bids were made on them.
 export async function openTender(
 	db: GreenShiftDb,
 	companyId: number,
@@ -218,17 +214,8 @@ export type AwardResult =
 	| { outcome: "tender_open" }
 	| { outcome: "revision_open" };
 
-/**
- * Awards the tender to one bid. Appointment and contract are separate steps in
- * this flow, so the losing bids are marked rejected while the winner stays
- * `accepted` for the contract to be approved next.
- *
- * A bid is only a bid once every revision round on it is done: awarding one the
- * vendor is still revising would accept terms neither side has settled, so it
- * is refused until the vendor answers or the company rejects the bid. Deciding
- * the tender closes the rounds either way: `AGREED` on the winner, `LOCKED` on
- * every bid it turned down.
- */
+// Awards the tender to one bid. A bid is only awardable once every revision round is
+// done; deciding closes them, `AGREED` on the winner and `LOCKED` on the rest.
 export async function awardBid(
 	db: GreenShiftDb,
 	companyId: number,
@@ -266,7 +253,8 @@ export async function awardBid(
 	if (!updated) return { outcome: "not_found" };
 
 	const awarded = await repository.findBid(db, tender.id, proposalId);
-	return { outcome: "ok", tender: updated, proposal: awarded!.proposal };
+	if (!awarded) return { outcome: "not_found" };
+	return { outcome: "ok", tender: updated, proposal: awarded.proposal };
 }
 
 export type ReviewResult =
@@ -276,19 +264,8 @@ export type ReviewResult =
 	| { outcome: "revision_limit_reached" }
 	| { outcome: "revision_pending" };
 
-/**
- * The company's verdict on one bid: ask for a revision, or reject it. Accepting
- * is not a separate act: it is the award, which accepts the winning bid and
- * rejects the rest, so there is one place the company decides who carries the
- * work rather than two that can disagree.
- *
- * Asking for a revision opens a negotiation iteration carrying the company's
- * note and the marks it drew on the proposal, which is what the vendor's
- * Revisi & Negosiasi tab reads; the vendor answers it and the revision count
- * only advances when they resubmit. The 3-iteration cap is the same constant
- * the vendor's update path enforces, and a round that is still open blocks the
- * next verdict: the bid is mid-revision until the vendor answers it.
- */
+// The company's verdict on one bid: revision or reject. Accepting is the award, not a
+// separate act. A revision opens a negotiation iteration carrying the note and marks.
 export async function reviewBid(
 	db: GreenShiftDb,
 	companyId: number,

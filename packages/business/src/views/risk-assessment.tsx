@@ -1,10 +1,5 @@
-/* How an assessment is presented: the tone chips, the two readings the figures
- * support, Eleanor's note, and the three bodies the detail view can take.
- *
- * Shared by the wizard's review step and the projects list, so one assessment
- * reads the same wherever it is opened. The variant const is the only switch;
- * once one body is picked the other two go.
- */
+/* How an assessment is presented: the tone chips, the two readings the figures support,
+ * Eleanor's note, and the bodies the detail view can take. Shared by both surfaces. */
 
 import { faCircleCheck } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -117,10 +112,8 @@ function listLabels(labels: string[]): string {
 	return `${labels.slice(0, -1).join(", ")} and ${labels[labels.length - 1]}`;
 }
 
-/**
- * What the four area readings add up to. An unscored area is named as unscored
- * rather than counted as low risk.
- */
+/** What the four area readings add up to: an unscored area is named as unscored rather
+ * than counted as low risk. */
 export function areaReading(ranked: ProjectRiskBreakdown[]): string {
 	const scored = ranked.filter((row) => row.tone !== null);
 	const unscored = ranked.filter((row) => row.tone === null);
@@ -153,8 +146,7 @@ export function areaReading(ranked: ProjectRiskBreakdown[]): string {
 	return sentences.join(" ");
 }
 
-/** What the tone of each reading means for the submission, rather than a repeat
- * of the labels beside it. */
+/** What the tone of each reading means for the submission, not a repeat of the labels. */
 export function meaningReading(risk: ProjectRiskResult): string {
 	const high = risk.breakdown
 		.filter((row) => row.tone === "High")
@@ -185,11 +177,8 @@ export function meaningReading(risk: ProjectRiskResult): string {
 	return sentences.join(" ");
 }
 
-/**
- * Eleanor's half of a risk view: her reading of the assessment, then the work
- * that moves it. Both halves are capped by the caller, because a detail view
- * wants the whole note and a summary wants its opening.
- */
+/** Eleanor's half of a risk view: her reading of the assessment, then the work that moves
+ * it. Both halves are capped by the caller, since a summary wants only the opening. */
 export function EleanorNote({
 	state,
 	tips,
@@ -279,8 +268,7 @@ function sourceLabel(insight: BusinessRiskInsight | null): string {
 		: "Composed from the assessment";
 }
 
-/** The assessment as a report: the figures and their readings, with Eleanor's
- * note closing it. */
+/** The assessment as a report: the figures and their readings, with Eleanor's note closing it. */
 function ReportBody({
 	risk,
 	state,
@@ -336,11 +324,8 @@ function ReportBody({
 	);
 }
 
-/**
- * The assessment as the detail view draws it. `insight` is only passed when the
- * caller already holds a reading: an assessment the API returned carries its
- * own, and the wizard fetches one for the figures it derived.
- */
+/** The assessment as the detail view draws it. `insight` is only passed when the caller
+ * already holds a reading: an assessment the API returned carries its own. */
 export function RiskAssessmentBody({
 	risk,
 	insight,

@@ -3,7 +3,6 @@ import type { BlueprintDocument } from "../../../contracts";
 import type { GreenShiftDb } from "../../../db";
 import { auditLogs, blueprints } from "../../../db/schema";
 
-/** The blueprint a project already carries, if it has one. */
 export async function findBlueprintIdForProject(
 	db: GreenShiftDb,
 	projectId: number,
@@ -18,11 +17,8 @@ export async function findBlueprintIdForProject(
 	return row?.id ?? null;
 }
 
-/**
- * The project's blueprint row, document included, or null while it has none.
- * Read by the company that owns the project, which reads its own document at
- * whatever stage it has reached.
- */
+// The project's blueprint row, document included, or null while it has none. Read
+// by the owning company at whatever stage it has reached.
 export async function findBlueprintForProject(
 	db: GreenShiftDb,
 	projectId: number,
@@ -37,18 +33,8 @@ export async function findBlueprintForProject(
 	return row ?? null;
 }
 
-/**
- * Writes the generated blueprint and its audit entry.
- *
- * The row is written as `validated`: LVV GRK is the body that verified the
- * project, so the document it is generated from has already been through the
- * gate the audit stage stands for. An admin can still publish it, which is the
- * step that opens the project for funding.
- *
- * The audit entry is written after the row because it names it: the admin
- * console reads a blueprint's history by entity id, so an entry without one
- * would be invisible there.
- */
+// The row is written `validated`: LVV GRK already gated the project, and an admin
+// still has to publish it. The audit entry is written after the row, which names it.
 export async function insertValidatedBlueprint(
 	db: GreenShiftDb,
 	input: {

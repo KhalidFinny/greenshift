@@ -2,12 +2,8 @@ import { useEffect, useRef } from "react";
 import { publishToast } from "../toast-bus";
 import { useAuth } from "./use-auth";
 
-/**
- * Client-side inactivity window for authenticated sessions. Mirrors the
- * server default in apps/api/src/lib/session.ts: keep both in sync. The
- * server value can be shortened via the SESSION_IDLE_MINUTES env var for
- * demo/testing; the server check then enforces earlier than this watcher.
- */
+/** Mirrors the server default in apps/api/src/lib/session.ts: keep in sync.
+ * SESSION_IDLE_MINUTES can shorten the server check below this watcher. */
 export const SESSION_IDLE_MS = 15 * 60 * 1000;
 
 const ACTIVITY_EVENTS = [
@@ -18,12 +14,8 @@ const ACTIVITY_EVENTS = [
 	"scroll",
 ] as const;
 
-/**
- * Logs the user out after SESSION_IDLE_MS without activity and bounces to
- * /login. Also expires immediately when the tab regains focus/visibility
- * after having been away past the window (covers "came back to a stale
- * session"). Mount once inside the authenticated area (src/routes/_auth.tsx).
- */
+/** Logs out after SESSION_IDLE_MS of inactivity, including a tab returning
+ * to focus past the window. Mount once in src/routes/_auth.tsx. */
 export function useIdleSessionExpiry(): void {
 	const { logout } = useAuth();
 	const lastActiveRef = useRef<number>(Date.now());
@@ -45,12 +37,8 @@ export function useIdleSessionExpiry(): void {
 		const expire = async () => {
 			if (expiringRef.current) return;
 			expiringRef.current = true;
-			// Logout is silent here: the request layer's generic "Signed out
-			// successfully" toast would be misleading for an expiry kick. On success
-			// the router invalidate (inside logout) re-runs the guards and
-			// redirects to /login as an SPA transition, so this toast and the
-			// page state survive. Hard navigation only when the server is
-			// unreachable / the session is already gone.
+			// Silent: the request layer's "Signed out" toast would be misleading for
+			// a kick. Invalidate redirects in-app; hard nav only if the API is gone.
 			try {
 				await logoutRef.current(true);
 			} catch {
@@ -75,8 +63,8 @@ export function useIdleSessionExpiry(): void {
 
 		document.addEventListener("visibilitychange", onVisibility);
 		window.addEventListener("focus", checkIdle);
-		// Poll as a backstop (interval timers are throttled in background
-		// tabs, so the visibility handler does the heavy lifting there).
+		// Poll backstop: background tabs throttle interval timers, so the
+		// visibility handler does the work there.
 		const timer = window.setInterval(checkIdle, 10_000);
 
 		return () => {

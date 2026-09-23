@@ -1,12 +1,5 @@
-/**
- * Minimal PDF writer for the monthly report export.
- *
- * Workers cannot run the usual PDF libraries, and the reports are plain text
- * tables, so the generator emits a valid PDF 1.4 by hand: one catalogue, one
- * page tree, two base-14 fonts (Helvetica / Helvetica-Bold) and one content
- * stream per page. Base-14 fonts use WinAnsi encoding, so text is transliterated
- * to ASCII before it is written.
- */
+// Minimal PDF writer for the monthly report export: workers cannot run the usual
+// PDF libraries, so it emits a valid PDF 1.4 by hand with base-14 fonts.
 
 const PAGE_WIDTH = 595.28; // A4 portrait, points
 const PAGE_HEIGHT = 841.89;
@@ -141,11 +134,8 @@ function paginate(lines: PdfLine[]): PdfLine[][] {
 	return pages.filter((page) => page.length > 0);
 }
 
-/**
- * Render the document. Every glyph is ASCII (see toAscii), so the returned
- * string is byte-identical to its UTF-8 encoding: the xref offsets computed
- * here stay valid when the string is sent as the response body.
- */
+// Every glyph is ASCII (see toAscii), so the returned string is byte-identical
+// to its UTF-8 encoding and the xref offsets stay valid as a response body.
 export function renderTextPdf(lines: PdfLine[]): string {
 	const pages = paginate(lines.length > 0 ? lines : [{ text: " " }]);
 

@@ -73,10 +73,8 @@ export interface ChartStatFlowProps {
 	icon?: ReactNode;
 }
 
-/**
- * Shared value + label stack using NumberFlow (same layout as pie / ring centers).
- * Parent should provide flex alignment and sizing when needed.
- */
+/** Shared value + label stack using NumberFlow (same layout as pie / ring centers).
+ * The parent provides flex alignment and sizing. */
 export function ChartStatFlow({
 	value,
 	label,

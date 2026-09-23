@@ -20,18 +20,13 @@ export type PieCenterShellProps = Omit<PieCenterProps, "children"> & {
 	contextSize: number;
 	/** Inner radius in px: must be > 0 so `PieCenter` renders */
 	innerRadiusPx: number;
-	/**
-	 * When true (default), the first paint uses `0` then updates to `centerValue`
-	 * on the next frame so NumberFlow can run an entrance transition. Subsequent
-	 * `centerValue` updates animate as usual.
-	 */
+	/** When true (default), first paint uses `0` then updates next frame so NumberFlow runs an
+	 * entrance transition; later updates animate as usual. */
 	animateEntrance?: boolean;
 };
 
-/**
- * Renders {@link PieCenter} with a minimal {@link PieProvider} so you can reuse
- * the same center layout as a donut pie without mounting slices or a full {@link PieChart}.
- */
+/** Renders {@link PieCenter} with a minimal {@link PieProvider}: same center layout as a donut pie
+ * without slices or a full {@link PieChart}. */
 export function PieCenterShell({
 	centerValue,
 	contextSize,

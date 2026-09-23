@@ -14,10 +14,11 @@ import {
 	CardContent,
 	CardHeader,
 	CardTitle,
+	cn,
 	Input,
 	Label,
 } from "@greenshift/ui";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { formatDate } from "../lib/format";
 import type { CompanyVerificationDetails } from "../lib/types";
 
@@ -25,14 +26,33 @@ interface VerificationStatusCardProps {
 	verification: CompanyVerificationDetails;
 	/** Saves the legal identity the administrator verifies against. */
 	onSave: (nib: string, npwp: string) => void;
+	/** Files the ESCO or ISO certificate. */
+	onUploadCertificate: (file: File) => void;
+	uploading: boolean;
+}
+
+/** What the administrator reads before verifying, in the order it is checked. */
+function missingPackItems(verification: CompanyVerificationDetails): string[] {
+	const missing: string[] = [];
+	if (!verification.npwp) missing.push("Tax identification number (NPWP)");
+	if (!verification.tdp) missing.push("Company registration number (TDP)");
+	if (verification.certifications.length === 0)
+		missing.push("At least one certification entry");
+	if (!verification.certificateName) missing.push("The certificate file");
+	return missing;
 }
 
 export function VerificationStatusCard({
 	verification,
 	onSave,
+	onUploadCertificate,
+	uploading,
 }: VerificationStatusCardProps) {
 	const [nib, setNib] = useState(verification.nib ?? "");
 	const [npwp, setNpwp] = useState(verification.npwp ?? "");
+	const inputRef = useRef<HTMLInputElement | null>(null);
+	const missing = missingPackItems(verification);
+	const scan = verification.certificateScan;
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -76,10 +96,19 @@ export function VerificationStatusCard({
 				</CardHeader>
 				<CardContent className="space-y-4 text-sm">
 					<p className="text-muted-foreground">
-						An administrator verifies your vendor profile from the legal
-						identity on file. Until then you can browse opportunities, but not
-						bid.
+						An administrator verifies your vendor profile from the documents on
+						file: your tax number, your company registration number, your
+						certifications, and the certificate itself. Until then you can
+						browse opportunities, but not bid.
 					</p>
+
+					{verification.status === "REJECTED" &&
+					verification.rejectionReason ? (
+						<div className="space-y-1 rounded-xl border border-red-300 bg-red-50 p-4 text-red-950">
+							<p className="font-bold">What has to be corrected</p>
+							<p className="leading-6">{verification.rejectionReason}</p>
+						</div>
+					) : null}
 
 					{verification.status === "VERIFIED" && (
 						<div className="space-y-2 rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-emerald-950">
@@ -138,8 +167,9 @@ export function VerificationStatusCard({
 						</div>
 
 						<p className="text-muted-foreground">
+							The company registration number (TDP) is on the Profile tab.
 							Industry certifications (ESCO, ISO) are listed under
-							Certifications. Document files are not collected in this build.
+							Certifications.
 						</p>
 
 						<div className="flex justify-end pt-2">
@@ -152,6 +182,103 @@ export function VerificationStatusCard({
 							</Button>
 						</div>
 					</form>
+
+					<div className="space-y-3 border-t border-border pt-4">
+						<h4 className="text-sm font-bold text-foreground">
+							Industry Certificate
+						</h4>
+						<p className="text-muted-foreground">
+							File your ESCO licence or your ISO energy management certificate.
+							It is read automatically, and the reading is shown here and to the
+							administrator reviewing your profile.
+						</p>
+
+						<div className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-border p-4">
+							<div className="min-w-0">
+								<p className="text-sm font-semibold">
+									{verification.certificateName ?? "Nothing filed yet."}
+								</p>
+								{scan ? (
+									<p className="mt-0.5 text-sm text-muted-foreground">
+										Read as {scan.documentType ?? "an unreadable document"}
+										{scan.companyName ? `, naming ${scan.companyName}` : ""}.
+									</p>
+								) : null}
+							</div>
+							{scan ? (
+								<Badge
+									className={cn(
+										"shrink-0",
+										scan.verdict === "PASSED"
+											? "bg-emerald-700 text-white"
+											: scan.verdict === "MISMATCH"
+												? "bg-red-700 text-white"
+												: "bg-amber-700 text-white",
+									)}
+								>
+									{scan.verdict === "PASSED"
+										? "Read and matched"
+										: scan.verdict === "MISMATCH"
+											? "Did not match"
+											: "Could not be read"}
+								</Badge>
+							) : null}
+						</div>
+
+						{scan ? (
+							<div className="rounded-lg bg-muted/50 px-3 py-2">
+								<p className="text-sm leading-6">{scan.note}</p>
+							</div>
+						) : null}
+
+						<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+							<input
+								ref={inputRef}
+								type="file"
+								accept=".pdf,.jpg,.jpeg,.png,.webp"
+								className="sr-only"
+								onChange={(event) => {
+									const file = event.target.files?.[0];
+									if (file) onUploadCertificate(file);
+									event.target.value = "";
+								}}
+							/>
+							<Button
+								type="button"
+								variant="outline"
+								size="sm"
+								disabled={uploading}
+								onClick={() => inputRef.current?.click()}
+							>
+								<FontAwesomeIcon icon={faUpload} aria-hidden />
+								{verification.certificateName
+									? "Replace the certificate"
+									: "File the certificate"}
+							</Button>
+							{verification.certificateName && verification.certificateUrl ? (
+								<a
+									href={verification.certificateUrl}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="text-sm font-medium text-blue-700 hover:underline"
+								>
+									Open the filed certificate
+								</a>
+							) : null}
+						</div>
+
+						{verification.status !== "VERIFIED" && missing.length > 0 ? (
+							<p className="text-muted-foreground">
+								Still needed before an administrator can verify:{" "}
+								{missing.join(", ")}.
+							</p>
+						) : null}
+						{verification.status !== "VERIFIED" && missing.length === 0 ? (
+							<p className="font-medium text-emerald-700">
+								Your pack is complete and waiting for an administrator.
+							</p>
+						) : null}
+					</div>
 				</CardContent>
 			</Card>
 

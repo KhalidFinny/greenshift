@@ -23,14 +23,8 @@ export interface PaginationBarProps {
 	label: string;
 }
 
-/**
- * The one pagination control: `DataTable` and the lists that render their own
- * rows both put this under their content, so a table and a card grid page the
- * same way and read the same way.
- *
- * It renders nothing for a single page: a control that can only say "Page 1 of
- * 1" is noise, and the list it would sit under is already complete.
- */
+/** The one pagination control, shared by `DataTable` and self-paged lists. It
+ * renders nothing for a single page, where it could only say "Page 1 of 1". */
 export function PaginationBar({
 	pageIndex,
 	pageSize,
@@ -43,10 +37,8 @@ export function PaginationBar({
 }: PaginationBarProps) {
 	if (pageCount <= 1) return null;
 
-	/* The select has to be able to show the size actually in use: a list that
-	   pages five at a time gets 5 in its options rather than a trigger with no
-	   matching item. A size that is standing in for "all" is left out, since the
-	   value shown is already "all". */
+	/* The select must be able to show the size in use, so a non-standard page size
+	   is added to its options; a size standing in for "all" is left out. */
 	const sizes = [
 		...new Set([...pageSizeOptions, pageSize >= total ? null : pageSize]),
 	]

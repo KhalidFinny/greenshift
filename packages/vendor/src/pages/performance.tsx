@@ -9,8 +9,7 @@ import { PerformanceTrendCard } from "../organisms/performance-trend-card";
 export function VendorPerformancePage() {
 	const { performanceMetrics } = useVendorData();
 
-	// Every score below is derived from completed project work, so an account
-	// with none has nothing to plot rather than a page of zeroes.
+	// Every score is derived from completed project work, so an account with none has nothing to plot rather than a page of zeroes.
 	const hasVerifiedWork =
 		performanceMetrics.totalCompletedProjects > 0 ||
 		performanceMetrics.historicalTrend.length > 0;

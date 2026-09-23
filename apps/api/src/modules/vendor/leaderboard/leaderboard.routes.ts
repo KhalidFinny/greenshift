@@ -14,8 +14,8 @@ leaderboardRoutes.get(
 	...factory.createHandlers(async (c) => {
 		const db = createDb(c.env.DB);
 
-		// A project screen names the tender it is showing; the deals and tenders
-		// screens leave it out and read the vendor's own live open bidding.
+		// A project screen names the tender it shows; the deals and tenders screens
+		// leave it out and read the vendor's own live open bidding.
 		const raw = c.req.query("tenderId");
 		if (
 			raw !== undefined &&

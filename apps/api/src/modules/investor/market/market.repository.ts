@@ -29,15 +29,8 @@ export async function listPublishedBlueprints(db: GreenShiftDb) {
 		.orderBy(desc(blueprints.id));
 }
 
-/**
- * What the MRV periods add up to, per project: the tonnes the verified reports
- * account for, how many periods there are, the latest of them, and whether any
- * period deviated from its baseline.
- *
- * This is the figure the public listing reports. The money a project raised
- * belongs to the SCF partner, so the marketplace's own number is the emission
- * reduction it can stand behind.
- */
+// Per project: verified tonnes, period count, latest period, and whether any
+// period deviated from baseline. This is the figure the public listing reports.
 export async function listEmissionMonitoring(db: GreenShiftDb) {
 	return db
 		.select({
@@ -52,10 +45,8 @@ export async function listEmissionMonitoring(db: GreenShiftDb) {
 		.groupBy(emissionReports.projectId);
 }
 
-/**
- * Bond codes that have actually been issued, keyed by project. A bond with no
- * assignment or no serial has not been issued yet, so it carries no code.
- */
+// Bond codes that have actually been issued, keyed by project. A bond with no
+// assignment or no serial has not been issued yet, so it carries no code.
 export async function listIssuedBondCodes(db: GreenShiftDb) {
 	return db
 		.select({

@@ -6,7 +6,6 @@ import { detectAnomalies } from "./anomalies.service";
 
 export const anomalyRoutes = new Hono<ApiEnv>();
 
-// Read-only rule engine: admin monitors, never mutates operational state.
 anomalyRoutes.get(
 	"/anomalies",
 	...factory.createHandlers(async (c) => {

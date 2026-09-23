@@ -10,11 +10,8 @@ import {
 	vendors,
 } from "../../../db/schema";
 
-/**
- * Each project's tender state and the vendor it was awarded to. The list needs
- * both to send a project whose vendor is decided straight to its bids, and to
- * name the vendor there rather than in a second request per row.
- */
+// Each project's tender state and its awarded vendor, so the list can name the
+// vendor without a second request per row.
 export async function listTenderOutcomes(db: GreenShiftDb, companyId: number) {
 	const rows = await db
 		.select({
@@ -65,7 +62,6 @@ export async function findAssignment(
 	return row ?? null;
 }
 
-/** The scored vendors for a project, best rank first, with their profile. */
 export async function listScoredVendors(db: GreenShiftDb, projectId: number) {
 	return db
 		.select({ score: vendorMatchScores, profile: vendors })
@@ -96,10 +92,8 @@ export async function findScoredVendor(
 	return row ?? null;
 }
 
-/**
- * Records the choice. One row per project: a second save replaces the first,
- * so the company can change its mind before the tender opens.
- */
+// One row per project: a second save replaces the first, so the company can change
+// its mind before the tender opens.
 export async function upsertAssignment(
 	db: GreenShiftDb,
 	values: {

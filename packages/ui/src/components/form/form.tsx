@@ -34,24 +34,12 @@ function toMessage(error: unknown): string | null {
 /** Puts a dot after every third digit from the right. */
 const THOUSANDS = /\B(?=(\d{3})+(?!\d))/g;
 
-/** Digits, grouped in threes from the right. */
 function groupDigits(digits: string): string {
 	return digits.replace(THOUSANDS, ".");
 }
 
-/**
- * A numeric entry in the app's Indonesian convention, the one `parseIdNumber`
- * reads: dots group the integer part in threes, and a comma starts the decimals.
- * Four decimals is the ceiling, which is past any field here.
- *
- * This runs on every keystroke, so it reads intent rather than normalising a
- * finished value: a dot already sitting in a grouping position is the grouping
- * this field produced, a dot in a small number (`0.85`, `12.5`) is a decimal
- * point the user typed, and anything else (a digit added after a grouped number,
- * an edit in the middle of one) leaves the dots as grouping, which is what they
- * mean in this convention. The result is what the field shows and what it
- * stores, and it parses back to the number the user meant.
- */
+/** A numeric entry in the app's Indonesian convention, the one `parseIdNumber`
+ * reads: dots group in threes, a comma opens the decimals, four decimals max. */
 function regroupNumber(raw: string): string {
 	const cleaned = raw.replace(/[^0-9.,]/g, "");
 	if (!cleaned) return "";
@@ -63,8 +51,7 @@ function regroupNumber(raw: string): string {
 			.slice(comma + 1)
 			.replace(/[.,]/g, "")
 			.slice(0, 4);
-		// A comma with nothing after it is the user starting the decimals, so it
-		// stays: the next digit lands where they meant it to.
+		// A trailing comma is the user starting the decimals, so it stays.
 		if (cleaned.endsWith(",")) return `${whole},`;
 		return decimals ? `${whole},${decimals}` : whole;
 	}
@@ -79,8 +66,7 @@ function regroupNumber(raw: string): string {
 		const oneDot = dot === cleaned.lastIndexOf(".");
 		if (oneDot && whole.length <= 2 && decimals.length <= 2) {
 			const grouped = groupDigits(whole);
-			// A dot typed at the end reads as the decimal point being started, so
-			// it becomes the comma that opens the decimals.
+			// A trailing dot becomes the comma that opens the decimals.
 			if (cleaned.endsWith(".")) return `${grouped},`;
 			return decimals ? `${grouped},${decimals}` : grouped;
 		}
@@ -90,11 +76,8 @@ function regroupNumber(raw: string): string {
 	return groupDigits(cleaned);
 }
 
-/**
- * Where the caret belongs after regrouping: after the same digit it was after
- * before, counted ignoring the grouping dots the field itself inserted, so
- * typing in the middle of a number does not jump to the end.
- */
+/** Where the caret belongs after regrouping: after the same digit as before,
+ * counted ignoring the dots the field inserted, so mid-number typing holds. */
 function caretAfterRegrouping(
 	raw: string,
 	grouped: string,
@@ -113,10 +96,7 @@ function caretAfterRegrouping(
 	return grouped.length;
 }
 
-/**
- * What a field says underneath its control. One element for both, so a message
- * never lands above the control in some fields and below it in others.
- */
+/** The description or error under a control; one element so placement never varies. */
 function FieldMessages({
 	id,
 	description,
@@ -166,7 +146,6 @@ function FieldShell({
 	);
 }
 
-/** The id of whatever currently describes the control, or nothing. */
 function describes(
 	id: string,
 	error: string | null,
@@ -230,14 +209,8 @@ export interface NumberFieldProps
 	max?: number;
 }
 
-/**
- * Numeric input bound to the nearest field. The value is the string the field
- * shows, Indonesian grouping included, so what is stored is what is on screen
- * and callers parse it at the edge. Grouping is applied on every keystroke
- * rather than on blur, because the point of it is reading the number while
- * typing it. The unit sits outside the input, so it can never be mistaken for
- * part of the number.
- */
+/** Numeric input bound to the nearest field: the value is the grouped string on
+ * screen (callers parse it at the edge), and the unit sits outside the input. */
 function NumberField({
 	label,
 	description,
@@ -256,9 +229,8 @@ function NumberField({
 	/* Where the caret belongs once the regrouped value has been committed. */
 	const caretRef = useRef<number | null>(null);
 
-	// Re-rendering a controlled value drops the caret to the end of it, so the
-	// position worked out on the keystroke is restored after the commit and
-	// before the browser paints.
+	// A re-render drops the caret to the end of a controlled value, so the
+	// position worked out on the keystroke is restored before the browser paints.
 	useLayoutEffect(() => {
 		const caret = caretRef.current;
 		if (caret === null) return;
@@ -303,14 +275,9 @@ function NumberField({
 					onChange={(event) => {
 						const input = event.target;
 						const caret = input.selectionStart ?? input.value.length;
-						// A number field takes numbers, and it groups them as they are
-						// typed: everything that is not a digit, a dot or a comma is
-						// dropped, and the dots are placed in threes so the entry reads
-						// at a glance from thousands to millions.
+						// Everything but digits, dots and commas is dropped; the dots group in threes.
 						const regrouped = regroupNumber(input.value);
-						// Always written back, even when the text already reads as
-						// grouped: the value is controlled, so this is also what strips
-						// a character the field does not take.
+						// Always written back: the controlled value is also what strips a rejected character.
 						caretRef.current = caretAfterRegrouping(
 							input.value,
 							regrouped,
@@ -453,10 +420,8 @@ export interface CheckboxFieldProps
 	description?: string;
 }
 
-/**
- * Boolean consent box bound to the nearest field. The label is the click target,
- * so the whole sentence is what the user aims at, not the 16px box.
- */
+/** Boolean consent box bound to the nearest field. The label is the click target,
+ * so the whole sentence is what the user aims at, not the 16px box. */
 function CheckboxField({
 	label,
 	description,
@@ -531,8 +496,7 @@ export const { useAppForm, withForm } = createFormHook({
 });
 
 // Role packages import only from `@greenshift/ui`, so the reactive store reader
-// the wizard needs to derive values from live form state is re-exported here
-// rather than reached for directly.
+// the wizard needs is re-exported here rather than reached for directly.
 export { useStore };
 
 export { fieldContext, formContext, useFieldContext, useFormContext };

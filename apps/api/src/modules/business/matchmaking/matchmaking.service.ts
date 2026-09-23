@@ -70,12 +70,8 @@ function subtitleFor(profile: VendorRow): string {
 	return `${profile.totalProjects ?? 0} projects delivered`;
 }
 
-/**
- * Why a vendor ranks where it does. The criterion it stands out on is the one it
- * sits furthest above the pool on, not the one it scores highest on outright:
- * every vendor in a pool shares its strongest line, so only the gap separates
- * them. When it beats the pool nowhere, its own best line is the reason left.
- */
+// The criterion a vendor stands out on is the one it beats the pool on, not its
+// highest outright: every vendor shares its strongest line. Best own line if none.
 function whyRank(
 	criteria: VendorCriterionReading[],
 	profile: VendorRow,
@@ -104,17 +100,13 @@ function whyRank(
 	return reasons;
 }
 
-/**
- * How the scored vendor pool sits on each criterion: the mean across the ranked
- * rows, so the bars describe this project's market rather than one vendor's
- * strongest line, and the share each criterion actually carried in the score.
- */
+// The pool's mean on each criterion, so the bars describe this project's market,
+// and the share each criterion actually carried in the score.
 function poolFactors(scored: ScoreRow[]): BusinessMatchFactor[] {
 	if (scored.length === 0) return [];
 
-	// The same rule the run applies, over the stored rows: a criterion the whole
-	// pool scores the same on was left out of the total, so the weight shown here
-	// is the one the score was actually built from.
+	// The run's own rule over the stored rows: a criterion the whole pool ties on
+	// was left out, so the weight shown is the one the score was built from.
 	const applied = separatingCriteria(
 		scored.map((row) => ({
 			technicalFit: pct(row.technicalFit),
@@ -203,7 +195,6 @@ export type SelectionResult =
 	| { outcome: "deadline_invalid" }
 	| { outcome: "tender_locked"; status: string };
 
-/** The company's projects, each with the vendor it has already chosen. */
 export async function listMatchmaking(
 	db: GreenShiftDb,
 	companyId: number,
@@ -217,7 +208,6 @@ export async function listMatchmaking(
 	return rows.map((row) => toProjectRow(row, outcomes.get(row.id) ?? null));
 }
 
-/** Everything the detail screen renders for one project. */
 export async function readMatchmakingDetail(
 	db: GreenShiftDb,
 	companyId: number,
@@ -269,11 +259,8 @@ export async function readMatchmakingDetail(
 	};
 }
 
-/**
- * Records the company's choice and opens the tender it implies. Choosing the
- * route is what starts procurement: from here the project is in its tendering
- * phase, the deadline is running, and the invited vendors can bid.
- */
+// Records the choice and opens the tender it implies: from here the project is
+// tendering, the deadline is running, and invited vendors can bid.
 export async function saveSelection(
 	db: GreenShiftDb,
 	companyId: number,
@@ -296,10 +283,8 @@ export async function saveSelection(
 	const method = PROCUREMENT_METHODS.find((m) => m.id === body.method);
 	if (!method) return { outcome: "unknown_method" };
 
-	// The direct route is the one that appoints a single vendor up front, so it is
-	// the only route that has to name one before the tender opens. The open and
-	// closed routes invite their own pool, and the vendor a project ends up with
-	// is whichever bid the company awards on the bidding page.
+	// The direct route is the only one that names a vendor before the tender opens;
+	// open and closed invite their own pool and decide on the bidding page.
 	const rawVendorId = Number(body.vendorId);
 	const namedVendorId =
 		Number.isInteger(rawVendorId) && rawVendorId > 0 ? rawVendorId : null;
@@ -354,7 +339,6 @@ export async function saveSelection(
 	};
 }
 
-/** A budget bound as the API reads it: absent, or a finite number. */
 function numberOrNull(value: unknown): number | null {
 	const parsed = Number(value);
 	return value === null ||

@@ -1,20 +1,16 @@
 import type { Env } from "../env";
 
 export const SESSION_COOKIE = "__Host-greenshift_session";
-// Absolute cap (cookie Max-Age + KV TTL). OWASP guidance: even low-risk
-// apps should cap at 4–8h; finance-facing data at 1–2h. 8h balances demo
-// usability with the "no infinite sessions" control.
+// Absolute cap (cookie Max-Age + KV TTL). 8h sits inside the OWASP 4-8h band for
+// low-risk apps and still balances demo usability.
 const SESSION_TTL_SECONDS = 8 * 60 * 60;
 const SESSION_MAX_MS = SESSION_TTL_SECONDS * 1000;
 const SESSION_PREFIX = "greenshift:session:";
 export const STEP_UP_TTL_MS = 10 * 60 * 1000;
-// Idle window: a session is dropped when no authenticated request has been
-// seen for this long (checked on every session read, SSR included).
-// OWASP idle range for low-risk apps is 15–30 min: 15 min is the default
-// (demo/testing can shorten via SESSION_IDLE_MINUTES).
+// Idle window: a session is dropped when no authenticated request has been seen
+// for this long. 15 min is the low end of the OWASP 15-30 min range.
 export const SESSION_IDLE_MS_DEFAULT = 15 * 60 * 1000;
-// Refresh the stored lastActiveAt at most this often to keep the session
-// sliding without paying a KV write on every request.
+// Refresh lastActiveAt at most this often: sliding session without a KV write per request.
 const SESSION_REFRESH_MS = 60 * 1000;
 
 export interface SessionPayload {

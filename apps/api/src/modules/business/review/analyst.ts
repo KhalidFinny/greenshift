@@ -9,6 +9,7 @@
 
 import type { BusinessRiskInsight } from "../../../contracts";
 import type { Env } from "../../../env";
+import { aiAnswerText } from "../../../lib/ai-answer";
 
 /** Small and fast, and on the free Workers AI allowance. */
 const MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
@@ -30,14 +31,11 @@ export const ANALYST_VOICE = [
 ].join("\n");
 
 /**
- * Instruct models answer under `response`. Anything else, an empty string
- * included, counts as a miss the caller falls back from.
+ * The reading, or null when the model answered with nothing usable. Anything
+ * over the length cap counts as a miss the caller falls back from.
  */
 function readModelText(result: unknown): string | null {
-	if (typeof result !== "object" || result === null) return null;
-	const { response } = result as { response?: unknown };
-	if (typeof response !== "string") return null;
-	const text = response.trim();
+	const text = aiAnswerText(result);
 	return text && text.length <= MAX_READING_CHARS ? text : null;
 }
 

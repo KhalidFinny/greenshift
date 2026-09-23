@@ -12,10 +12,8 @@ export function niceYDomain(domain: YDomain): YDomain {
 	return [niceDomain[0] ?? domain[0], niceDomain[1] ?? domain[1]];
 }
 
-/**
- * Skip Y tween when both endpoints move less than the threshold relative to span.
- * When in doubt callers should tween: beauty wins over micro-optimization.
- */
+/** Skip the Y tween when both endpoints move less than the threshold relative to span; when in
+ * doubt, tween. */
 export function shouldTweenYDomain(from: YDomain, to: YDomain): boolean {
 	const span = Math.max(
 		Math.abs(to[1] - to[0]),

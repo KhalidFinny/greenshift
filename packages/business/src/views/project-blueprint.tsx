@@ -1,21 +1,5 @@
-/* The Green Project Blueprint, as the company that owns the project reads it.
- *
- * It is the document verification produces: the funding structure the bond is
- * issued against, the emission targets the project was cleared on, and the
- * projections behind them. The project's page shows it beside the summary it
- * was generated from, because the two are the same case at two stages: the
- * summary is what the company filed, the blueprint is what LVV GRK verified.
- *
- * The projection chart plots each case's own `recoveryRp` series, which the
- * forecast engine writes as part of the scenario: the running total of the
- * discounted savings against the capital, crossing zero in the year that case
- * repays it. The page does no arithmetic of its own on the money, so what the
- * chart draws is what the document carries.
- *
- * One document, two readers: this shows the company its own at whatever stage
- * it has reached, and the vendor's read waits for validation (`ProjectBlueprintView`
- * is the same shape for both).
- */
+/* The Green Project Blueprint as its company reads it: the document verification
+ * produces. The chart plots each case's `recoveryRp` series; the page does no arithmetic. */
 
 import { faFileShield } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -39,7 +23,6 @@ import {
 	formatYears,
 } from "../lib/project-display";
 
-/** The stage the document reached, in the company's own words. */
 const STATUS_LABEL: Record<string, string> = {
 	draft: "Draft",
 	audit: "In audit",
@@ -48,7 +31,7 @@ const STATUS_LABEL: Record<string, string> = {
 	rejected: "Rejected by the auditor",
 };
 
-/** The stage's own tone: the two live stages amber, the cleared ones emerald. */
+/** The stage's tone: live stages amber, cleared ones emerald. */
 const STATUS_PILL: Record<string, string> = {
 	draft: "bg-muted text-muted-foreground",
 	audit: "bg-amber-50 text-amber-700",
@@ -67,7 +50,6 @@ function Figure({ label, value }: { label: string; value: string }) {
 	);
 }
 
-/** One line of a key/value section. */
 function Row({
 	label,
 	value,
@@ -84,11 +66,8 @@ function Row({
 	);
 }
 
-/**
- * The projection: what each case has recovered by the end of each year, against
- * the capital it spent at year zero. The zero line is the capital repaid, so
- * where a case's line crosses it is that case's payback in present-value terms.
- */
+/** The projection: what each case recovered by the end of each year, against the
+ * capital spent at year zero. Where a line crosses zero is that case's payback. */
 function ProjectionChart({ blueprint }: { blueprint: ProjectBlueprintView }) {
 	const points = Math.max(
 		...blueprint.scenarios.map((scenario) => scenario.recoveryRp.length),

@@ -34,7 +34,6 @@ export async function listCompanyProjects(
 
 export type NewProject = typeof projects.$inferInsert;
 
-/** Moves one project along its lifecycle. Returns the row, or undefined. */
 export async function setProjectStatus(
 	db: GreenShiftDb,
 	projectId: number,
@@ -49,10 +48,8 @@ export async function setProjectStatus(
 	return row;
 }
 
-/**
- * Writes the submitted project and its risk assessment together, so a project
- * can never exist without the assessment that justified it.
- */
+// Writes the submitted project and its risk assessment together, so a project can
+// never exist without the assessment that justified it.
 export async function insertProjectWithRisk(
 	db: GreenShiftDb,
 	values: NewProject,
@@ -81,10 +78,8 @@ export async function insertProjectWithRisk(
 	return project;
 }
 
-/**
- * Records that a draft became a project, so a replay can be answered with the
- * project it already created.
- */
+// Records that a draft became a project, so a replay can be answered with the
+// project it already created.
 export async function attachProjectToDraft(
 	db: GreenShiftDb,
 	draftId: string,
@@ -107,11 +102,8 @@ export async function findRiskInsight(db: GreenShiftDb, projectId: number) {
 	return row ?? null;
 }
 
-/**
- * Stores the reading beside the assessment it was written about. Called once per
- * project: a read that finds nothing asks for one, and every read after that is
- * served from the row.
- */
+// Stores the reading beside the assessment it was written about. Called once per
+// project: a read that finds nothing asks for one, later reads are served from the row.
 export async function writeRiskInsight(
 	db: GreenShiftDb,
 	projectId: number,

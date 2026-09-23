@@ -58,7 +58,6 @@ export async function selectAnomalousEmissionReports(db: GreenShiftDb) {
 		.limit(100);
 }
 
-/** Payout integrity: failed payments. */
 export async function selectFailedRoiPayments(db: GreenShiftDb) {
 	return db
 		.select({
@@ -85,7 +84,6 @@ export async function selectPaidRoiPayments(db: GreenShiftDb) {
 		.limit(500);
 }
 
-/** Funding integrity: investments exceeding the project budget. */
 export async function selectOverfundedProjects(db: GreenShiftDb) {
 	return db
 		.select({
@@ -102,7 +100,6 @@ export async function selectOverfundedProjects(db: GreenShiftDb) {
 		.limit(50);
 }
 
-/** Bond serials not matching the GS-* convention. */
 export async function selectBadBondSerials(db: GreenShiftDb) {
 	return db
 		.select({
@@ -122,7 +119,6 @@ export async function selectBadBondSerials(db: GreenShiftDb) {
 		.limit(100);
 }
 
-/** Proposal revision limit breached (max 3 revisions). */
 export async function selectOverRevisedProposals(db: GreenShiftDb) {
 	return db
 		.select({
@@ -137,7 +133,6 @@ export async function selectOverRevisedProposals(db: GreenShiftDb) {
 		.limit(100);
 }
 
-/** Tenders still open past their deadline. */
 export async function selectStaleTenders(db: GreenShiftDb) {
 	return db
 		.select({
@@ -157,7 +152,6 @@ export async function selectStaleTenders(db: GreenShiftDb) {
 		.limit(100);
 }
 
-/** Accounts: business/vendor operating unverified. */
 export async function selectUnverifiedUsers(db: GreenShiftDb) {
 	return db
 		.select()
@@ -172,7 +166,6 @@ export async function selectUnverifiedUsers(db: GreenShiftDb) {
 		.limit(100);
 }
 
-/** Vendors without a vendor profile. */
 export async function selectVendorsWithoutProfile(db: GreenShiftDb) {
 	return db
 		.select({ user: users })
@@ -182,7 +175,6 @@ export async function selectVendorsWithoutProfile(db: GreenShiftDb) {
 		.limit(100);
 }
 
-/** Funded/monitoring projects with no MRV reports at all. */
 export async function selectProjectsWithoutMrv(db: GreenShiftDb) {
 	return db
 		.select({ project: projects })

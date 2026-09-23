@@ -3,12 +3,8 @@ import { useMouseParallax } from "../../hooks/useMouseParallax";
 import { useStepper } from "../../hooks/useStepper";
 import PartnerAppsShowcase from "../molecules/PartnerAppsShowcase";
 
-/**
- * What a step shows beside its copy: a real screen of the product, or the
- * partners the step happens with. The monitoring step is the second kind: the
- * bond is issued and held outside GreenShift, so that step names the apps
- * instead of showing a dashboard the platform does not own.
- */
+/** What a step shows beside its copy: a product screen, or the partner apps the
+ * step happens with, since the bond is issued and held outside GreenShift. */
 type StepVisual =
 	| {
 			kind: "image";
@@ -32,10 +28,8 @@ const steps: Array<{
 		title: "Start with Ease",
 		description:
 			"Simply fill in your company profile and upload supporting documents such as electricity bills, energy audits, and other operational data. Our system validates every piece of information automatically so the process stays fast, transparent, and hassle-free.",
-		// Each step shows the real screen it describes: the submission wizard, its
-		// review step, and the catalog the funding reaches. All three are 16:9,
-		// and the stored size is declared so the frame keeps its height while a
-		// swapped image is still loading.
+		// Each step shows the real screen it describes. All three are 16:9, and the size
+		// is declared so the frame keeps its height while a swapped image is still loading.
 		visual: {
 			kind: "image",
 			src: "/wizard-project-profile.webp",

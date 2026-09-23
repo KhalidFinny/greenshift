@@ -32,9 +32,8 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  /* The three brand greens recorded in CLAUDE.md, so the hex literals the role
-     pages carry and the token layer resolve to the same colour: brand green for
-     primary actions and the focus ring, the accent for the motif band. */
+  /* Brand green (CLAUDE.md) for primary actions and the focus ring, so the hex
+     literals the role pages carry and this token layer resolve to one colour. */
   --primary: #00712D;
   --primary-foreground: #FFFFFF;
   --secondary: oklch(0.967 0.001 286.375);
@@ -111,20 +110,15 @@
 html {
 	min-height: 100%;
 }
-/* The role shell positions itself `fixed inset-0` and scrolls its own content,
-   so while it is mounted the document behind it must not scroll or rubber-band.
-   Scoped to the shell with :has() rather than applied globally: the landing
-   page and the public bond catalog scroll the document, and a global lock froze
-   both of them. It also froze the landing header, whose compact state is driven
-   by a scroll listener that could then never fire. */
+/* The role shell is `fixed inset-0` and scrolls its own content, so the document
+   behind it must not scroll. Scoped with :has(): a global lock froze the landing. */
 html:has([data-shell-sidebar]) {
 	height: 100%;
 	overflow: hidden;
 	overscroll-behavior: none;
 }
-/* No global scroll-behavior:smooth: it turns the router's per-navigation
-   scroll reset into a glide that makes the header and page "race" during
-   page transitions. Section scrolling is smoothed explicitly in JS. */
+/* No global scroll-behavior:smooth: it turns the router's per-navigation reset
+   into a glide that races the header; section scrolling is smoothed in JS. */
 [id] {
   scroll-margin-top: 6rem;
 }
@@ -176,33 +170,14 @@ body {
   }
 }
 
-/* ── Landing hero composition ───────────────────────────────────────
-   The hero fills the viewport and stacks absolutely positioned layers, so
-   its content cannot reflow. Instead it is laid out on a design canvas of
-   1920 wide - the viewport the hero is authored against, i.e. the size at
-   which `--u` is exactly 1px and every element renders at the pixel values
-   written in the components. `--u` is one canvas pixel at the current
-   viewport, every content size in the hero is a multiple of it and
-   positions stay in percentages of the stage, so the composition scales as
-   one rigid unit: identical framing, identical spacing, at every window
-   size, aspect ratio and browser zoom level, with nothing pushed into
-   anything else. It also makes the hero zoom-invariant, since browser zoom
-   scales the CSS viewport and `--u` with it (80% zoom -> viewport and
-   `--u` x1.25 -> the same hero, drawn 1.25x).
-   The two height terms keep the composition from ever colliding: the title
-   block needs its 150px floor (raised from 96px to give the headline real
-   air under the header) plus 249u of content above the bottom-anchored
-   dashboard, which itself needs 504u, plus ~40u of air. Below u = 1 the
-   title offset is pinned to its 150px floor, so the hero needs at least
-   150px + 800u; at and above u = 1 the offset scales too and the whole stack
-   is 900u. */
+/* The hero fills the viewport and stacks absolutely positioned layers, so it is
+   laid out on a 1920-wide canvas: `--u` is one canvas pixel at the current viewport. */
 #hero {
   --u: min(100vw / 1920, (100vh - 150px) / 800, 100vh / 900);
 }
 
-/* Below the desktop layout the hero keeps its own stacked, responsive
-   sizing, so the canvas pixel falls back to a plain pixel: parallax offsets
-   measured in `--u` stay the same length they have always been. */
+/* Below the desktop layout the hero falls back to a plain pixel, so parallax
+   offsets measured in `--u` keep the length they have always had. */
 @media (width < 1024px) {
   #hero {
     --u: 1px;
@@ -233,12 +208,8 @@ body {
   animation-delay: 1.5s;
 }
 
-/* ── Route view-transition variants ─────────────────────────────────
-   Default (no data-vt) is a STAGGERED fade: the old page fully fades
-   out before the new one fades in, so the two pages never overlap.
-   The image-heavy hero (home) can't "race" against the white bond
-   page, even without relying on attribute-selector support.
-   Override with ?vt=slide-fade|zoom-fade (set on <html> in __root).   */
+/* Default (no data-vt) is a staggered fade: the old page fully fades out before
+   the new one fades in. Override with ?vt=slide-fade|zoom-fade on <html>. */
 
 @keyframes vt-fade-out {
   to { opacity: 0; }
@@ -270,21 +241,8 @@ body {
   animation: vt-fade-in 220ms ease-out 140ms backwards;
 }
 
-/* ── Shell chrome holds still; only the page content fades ───────────
-   The sidebar and the header outlive a route change: navigation swaps the
-   page inside them, so they are the same pixels before and after. They were
-   fading because the whole document is captured as the `root` group. Naming
-   each one lifts it out of that snapshot, which leaves the page content as
-   the only thing `root` still fades.
-
-   Each named group then keeps the incoming frame and drops the outgoing one.
-   `animation: none` on its own is not enough: the default `plus-lighter`
-   blend adds the two frames together, so two identical frames at full
-   opacity double-expose into a washed-out bar. Dropping the stale frame and
-   blending normally shows the new state at its true colour.
-
-   Named for both transition kinds: these same-document rules, and the
-   cross-document @view-transition at the end of this file.                */
+/* The sidebar and header outlive a route change, so naming each lifts it out of
+   the `root` snapshot: `plus-lighter` on two identical frames double-exposes. */
 [data-shell-sidebar] {
   view-transition-name: shell-sidebar;
 }
@@ -350,13 +308,8 @@ body {
 	}
 }
 
-/*
- * Same-origin cross-document view transitions (Chromium): when a real page
- * load does happen (manual refresh / hard navigation), the outgoing page is
- * cross-faded to the incoming one instead of flashing white. Combined with
- * the toast's synchronous sessionStorage rehydrate (no re-entry animation)
- * a visible toast reads as continuous across the reload.
- */
+/* Same-origin cross-document view transitions (Chromium): a real page load
+   cross-fades instead of flashing white, keeping a visible toast continuous. */
 @media (prefers-reduced-motion: no-preference) {
   @view-transition {
     navigation: auto;

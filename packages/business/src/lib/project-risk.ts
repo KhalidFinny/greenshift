@@ -1,8 +1,5 @@
-/* ADR-006.7: the project risk assessment is derived, not stored.
- * Score 0-100 = the mean of four contributions (Financial/Technical/
- * Implementation from the Step 1 tones, plus Financing from the Step 2 credit
- * score). All inputs empty -> null, never an invented number.
- */
+/* ADR-006.7: the project risk assessment is derived, not stored. Score 0-100, the mean of the
+ * Financial/Technical/Implementation tones and the Step 2 credit score; empty inputs -> null. */
 
 export type ProjectRiskTone = "Low" | "Medium" | "High" | null;
 
@@ -24,11 +21,8 @@ export interface Step1RiskTones {
 	implementasi: ProjectRiskTone;
 }
 
-/**
- * ADR-003: the Step 1 tones are derived from the inputs, never stored. They feed
- * both the Step 1 risk preview and, through `projectRisk`, the assessment the
- * review step shows, so the derivation lives here rather than in either view.
- */
+/** ADR-003: the Step 1 tones are derived, never stored; the Step 1 preview and
+ * `projectRisk` both read this derivation. */
 export function step1RiskTones(input: {
 	biaya: number | null;
 	konsumsi: number | null;
@@ -83,13 +77,8 @@ export interface ProjectRiskResult {
 	factors: string[];
 	mitigations: string[];
 	summary: string;
-	/**
-	 * Eleanor's written reading.
-	 *
-	 * Absent on an assessment the wizard composes from the form, because she
-	 * writes about a submitted record: the API returns one with every project it
-	 * reads back, and the review step shows the payload's own prose until then.
-	 */
+	/** Eleanor's written reading; absent on a wizard-composed assessment. The API returns one with
+	 * every project it reads back, and the review step shows that prose until then. */
 	insight?: { text: string; source: "ai" | "model" } | null;
 }
 

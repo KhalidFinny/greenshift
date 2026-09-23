@@ -49,9 +49,6 @@ function formatRupiah(amount: number) {
 	}).format(amount);
 }
 
-{
-	/* Modal Create Document Request to Company */
-}
 function CreateDocumentRequestModal({
 	projectId,
 	companyName,
@@ -243,9 +240,8 @@ export function BrokerProjectDetailPage({ projectId }: { projectId?: string }) {
 		? projects.find((p) => p.id === targetId)
 		: projects[0];
 
-	// Both document lists are scoped to this project; the hooks page the rows
-	// the cards already filtered, and the control sits under each list. They
-	// run before the not-found return so the hook order stays fixed.
+	// These hooks page the rows the cards already filtered; they run before the
+	// not-found return so the hook order stays fixed.
 	const projectDocs = project
 		? documentRequests.filter((d) => d.projectId === project.id)
 		: [];

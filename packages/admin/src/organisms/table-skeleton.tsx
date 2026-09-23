@@ -8,14 +8,8 @@ interface TableSkeletonProps {
 	rows?: number;
 }
 
-/**
- * Loading frame for a `DataTable`.
- *
- * Same search field, header row, and column count as the table it stands in
- * for, with shimmering cells where the rows go. The headers are passed in
- * rather than guessed, so the skeleton stays aligned with the real columns
- * instead of collapsing into a generic stack of bars.
- */
+/** Loading frame for a `DataTable`: same search field, header row, and column count as the table it stands in for, with shimmering cells where the rows go.
+ * The headers are passed in rather than guessed, so the skeleton stays aligned with the real columns. */
 export function TableSkeleton({
 	headers,
 	search = false,

@@ -16,13 +16,8 @@ const EMPTY: VendorLeaderboardResponse = {
 };
 
 /**
- * Ranking for one open tender: the lowest amount leads, and the vendor's own row
- * is flagged so the UI can show "rank N of M".
- *
- * `tenderId` names the tender a project screen is showing. Without it the
- * ranking is the vendor's own live open-bidding tender, which is what the deals
- * and tenders screens carry. Only open bidding has standings: a closed or direct
- * tender's offers are sealed, so it answers empty rather than leaking them.
+ * Ranking for one open tender: the lowest amount leads and the vendor's own row
+ * is flagged. A closed or direct tender's offers are sealed, so it answers empty.
  */
 export async function getVendorLeaderboard(
 	db: GreenShiftDb,

@@ -8,3 +8,4 @@ export * from "./project-record";
 export * from "./settings";
 export * from "./submit";
 export * from "./submit-confirmation";
+export * from "./verification";

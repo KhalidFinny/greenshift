@@ -1,7 +1,5 @@
-// workerd rejects PBKDF2 iteration counts above 100,000 ("iteration counts above
-// 100000 are not supported"), so this ceiling is the strongest PBKDF2-HMAC-SHA256
-// setting that can run in production - well below the 600k the OWASP Password
-// Storage Cheat Sheet asks for, which the runtime cannot derive at all.
+// workerd rejects PBKDF2 iteration counts above 100,000, so this is the strongest
+// PBKDF2-HMAC-SHA256 setting that runs in production (OWASP asks for 600k).
 const ITERATIONS = 100_000;
 const STORED_HASH_RE = /^pbkdf2\$(\d+)\$([0-9a-f]{32})\$([0-9a-f]{64})$/;
 
@@ -29,9 +27,8 @@ function parseStoredHash(stored: string) {
 	if (!match) return null;
 	const iterations = Number(match[1]);
 	if (!Number.isInteger(iterations) || iterations <= 0) return null;
-	// A stored count above the platform ceiling cannot be derived at all on
-	// workerd, so the hash is unusable rather than merely expensive: report it as
-	// invalid instead of letting WebCrypto throw on every login attempt.
+	// Above the platform ceiling the hash cannot be derived at all on workerd, so
+	// report it as invalid instead of letting WebCrypto throw on every login.
 	if (iterations > ITERATIONS) return null;
 	return {
 		iterations,

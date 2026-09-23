@@ -118,9 +118,8 @@ registerRoutes.post(
 		if (!PHONE_RE.test(phone)) {
 			return apiError(c, "VALIDATION", "Enter a phone number");
 		}
-		// The two lists are the vocabulary the rest of the platform compares
-		// against: a vendor's category and a company's sector have to be values
-		// some surface can act on, not free text.
+		// The two lists are the vocabulary the rest of the platform compares against:
+		// a vendor's category and a company's sector must be values some surface can act on.
 		const sectors: readonly string[] =
 			accountType === "vendor" ? vendorServiceCategories : industrySectors;
 		if (!sectors.includes(industry)) {

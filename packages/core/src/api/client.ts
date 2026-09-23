@@ -3,6 +3,7 @@ import type {
 	AdminAnomalyResponse,
 	AdminBlueprint,
 	AdminBroker,
+	AdminCompanyVerification,
 	AdminInvestment,
 	AdminProject,
 	AdminRoiPayment,
@@ -54,6 +55,9 @@ import type {
 	BusinessSubmitBody,
 	BusinessSubmitResponse,
 	BusinessTender,
+	CompanyDocumentSlot,
+	CompanyVerificationBody,
+	CompanyVerificationResponse,
 	CsrfResponse,
 	HealthResponse,
 	LoginBody,
@@ -89,7 +93,7 @@ import { apiRoutes } from "@greenshift/api/contracts";
 import type { AuthUser } from "../auth/types";
 import { request } from "./http";
 
-/** Build a query string from defined params ("?role=admin&limit=50"). */
+/** Defined params as a query string ("?role=admin&limit=50"); undefined entries dropped. */
 function query(params?: Record<string, string | number | undefined>) {
 	const search = new URLSearchParams();
 	for (const [key, value] of Object.entries(params ?? {})) {
@@ -99,11 +103,7 @@ function query(params?: Record<string, string | number | undefined>) {
 	return encoded ? `?${encoded}` : "";
 }
 
-/**
- * Typed client for the single GreenShift API.
- * Paths, methods, and body shapes come from the shared contract in
- * @greenshift/api: nothing API-related is hardcoded here.
- */
+/** Typed client for the single API: paths, methods and bodies come from @greenshift/api. */
 export const api = {
 	auth: {
 		login: (email: string, password: string) =>
@@ -142,18 +142,45 @@ export const api = {
 			request<{ avatarKey: null }>(apiRoutes.accountAvatarDelete.path, {
 				method: apiRoutes.accountAvatarDelete.method,
 			}),
-		/**
-		 * The picture URL, keyed on the stored object so a replacement shows up
-		 * immediately instead of being served from cache.
-		 */
+		/** Picture URL keyed on the stored object, so a replacement is not served from cache. */
 		avatarPath: (key: string) =>
 			`${apiRoutes.accountAvatar.path}?v=${encodeURIComponent(key)}`,
 	},
 	business: {
-		/**
-		 * Autosave. Silent: this fires while the user types, and a toast per
-		 * save would be noise. The server merges the patch over the stored draft.
-		 */
+		/** The one endpoint set an unverified company can reach: the work that gets it verified. */
+		verification: () =>
+			request<CompanyVerificationResponse>(apiRoutes.businessVerification.path),
+		saveVerification: (body: CompanyVerificationBody) =>
+			request<CompanyVerificationResponse>(
+				apiRoutes.businessSaveVerification.path,
+				{
+					method: apiRoutes.businessSaveVerification.method,
+					body: JSON.stringify(body satisfies CompanyVerificationBody),
+				},
+			),
+		/** Multipart: the certificate is a file, not a JSON body. */
+		uploadVerificationDocument: (slot: CompanyDocumentSlot, file: File) => {
+			const body = new FormData();
+			body.set("file", file);
+			return request<CompanyVerificationResponse>(
+				apiRoutes.businessVerificationDocument.path.replace(":slot", slot),
+				{ method: apiRoutes.businessVerificationDocument.method, body },
+			);
+		},
+		removeVerificationDocument: (slot: CompanyDocumentSlot) =>
+			request<CompanyVerificationResponse>(
+				apiRoutes.businessRemoveVerificationDocument.path.replace(
+					":slot",
+					slot,
+				),
+				{ method: apiRoutes.businessRemoveVerificationDocument.method },
+			),
+		submitVerification: () =>
+			request<CompanyVerificationResponse>(
+				apiRoutes.businessSubmitVerification.path,
+				{ method: apiRoutes.businessSubmitVerification.method },
+			),
+		/** Autosave: silent so typing does not fire a toast per save; the server merges the patch. */
 		saveDraft: (draftId: string, body: BusinessDraftBody) =>
 			request<BusinessDraftResponse>(
 				apiRoutes.businessDraft.path.replace(
@@ -301,27 +328,17 @@ export const api = {
 			request<BusinessRiskResponse>(
 				apiRoutes.businessProjectRisk.path.replace(":id", String(id)),
 			),
-		/**
-		 * The project's own Green Project Blueprint, or null while it has none:
-		 * the document is written at verification.
-		 */
+		/** The project's Green Project Blueprint, or null until verification writes it. */
 		blueprint: (id: number) =>
 			request<BusinessProjectBlueprintResponse>(
 				apiRoutes.businessProjectBlueprint.path.replace(":id", String(id)),
 			),
-		/**
-		 * What Sistem Registri answers about the project: registered or not, which
-		 * is what tells the page a company did it there and has not started
-		 * verification here.
-		 */
+		/** What Sistem Registri answers: registered or not, which tells the page a company did it there, not here. */
 		registry: (id: number) =>
 			request<BusinessProjectRegistryResponse>(
 				apiRoutes.businessProjectRegistry.path.replace(":id", String(id)),
 			),
-		/**
-		 * The company marks the project registered at the registry and its LVV
-		 * body appointed, which starts verification.
-		 */
+		/** Marks the project registered at the registry and its LVV body appointed, which starts verification. */
 		startLvv: (id: number) =>
 			request<BusinessProjectResponse>(
 				apiRoutes.businessStartLvv.path.replace(":id", String(id)),
@@ -378,13 +395,21 @@ export const api = {
 			request<{ users: AdminUser[] }>(
 				apiRoutes.adminUsers.path + query(params),
 			),
-		verifyUser: (id: number, verified: boolean) =>
+		verifyUser: (id: number, verified: boolean, rejectionReason?: string) =>
 			request<OkResponse>(
 				apiRoutes.adminVerifyUser.path.replace(":id", String(id)),
 				{
 					method: apiRoutes.adminVerifyUser.method,
-					body: JSON.stringify({ verified } satisfies VerifyUserBody),
+					body: JSON.stringify({
+						verified,
+						...(rejectionReason === undefined ? {} : { rejectionReason }),
+					} satisfies VerifyUserBody),
 				},
+			),
+		/** The pack an administrator's verdict is about, with the scan's reading. */
+		userVerification: (id: number) =>
+			request<{ verification: AdminCompanyVerification }>(
+				apiRoutes.adminUserVerification.path.replace(":id", String(id)),
 			),
 		projects: (params?: { status?: string; limit?: number }) =>
 			request<{ projects: AdminProject[] }>(
@@ -438,12 +463,15 @@ export const api = {
 			request<{ vendors: AdminVendor[] }>(
 				apiRoutes.adminVendors.path + query(params),
 			),
-		verifyVendor: (id: number, verified: boolean) =>
+		verifyVendor: (id: number, verified: boolean, rejectionReason?: string) =>
 			request<OkResponse>(
 				apiRoutes.adminVerifyVendor.path.replace(":id", String(id)),
 				{
 					method: apiRoutes.adminVerifyVendor.method,
-					body: JSON.stringify({ verified } satisfies VerifyVendorBody),
+					body: JSON.stringify({
+						verified,
+						rejectionReason,
+					} satisfies VerifyVendorBody),
 				},
 			),
 		brokers: (params?: { limit?: number }) =>
@@ -490,6 +518,18 @@ export const api = {
 				method: apiRoutes.vendorSaveProfile.method,
 				body: JSON.stringify(body satisfies VendorProfileBody),
 			}),
+		/** Multipart: the ESCO or ISO certificate is a file, not a JSON body. */
+		uploadCertificate: (file: File) => {
+			const body = new FormData();
+			body.set("file", file);
+			return request<{ profile: VendorProfile }>(
+				apiRoutes.vendorCertificate.path,
+				{
+					method: apiRoutes.vendorCertificate.method,
+					body,
+				},
+			);
+		},
 		proposals: (params?: { limit?: number }) =>
 			request<{ proposals: ProposalSummary[] }>(
 				apiRoutes.vendorProposals.path + query(params),
@@ -498,11 +538,7 @@ export const api = {
 			request<{ proposal: ProposalDetail }>(
 				apiRoutes.vendorProposalDetail.path.replace(":id", String(id)),
 			),
-		/**
-		 * Multipart: the bid and the proposal document are one filing. The
-		 * document is required, so the offer and the case for it are sent
-		 * together and the server writes them as one row.
-		 */
+		/** Multipart: the bid and its required proposal document are one filing, written as one row. */
 		submitProposal: (fields: ProposalDraftBody, file: File) => {
 			const body = new FormData();
 			body.set("tenderId", String(fields.tenderId));
@@ -604,7 +640,6 @@ export const api = {
 				{ method: apiRoutes.vendorPortfolioDocument.method, body },
 			);
 		},
-		/** Where a filed portfolio document is served from. */
 		portfolioDocumentPath: (id: number) =>
 			apiRoutes.vendorPortfolioDocumentFile.path.replace(":id", String(id)),
 		addMilestoneEvidence: (

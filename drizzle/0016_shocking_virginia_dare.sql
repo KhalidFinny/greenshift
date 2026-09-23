@@ -1,0 +1,1 @@
+ALTER TABLE `vendor_profiles` ADD `verification_rejection_reason` text;

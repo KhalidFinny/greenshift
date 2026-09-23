@@ -225,9 +225,7 @@ export function ProjectDetailDialog({
 					</div>
 				</DialogHeader>
 
-				{/* The project itself is already in hand, so its facts and lifecycle
-				    render real. Only the blueprint and audit-trail sections depend on
-				    their own queries, and each shimmers inside its own frame. */}
+				{/* The project is already in hand, so its facts and lifecycle render real; only the blueprint and audit-trail sections shimmer. */}
 				<div className="flex-1 divide-y divide-border overflow-y-auto px-6">
 					{actionError && (
 						<p className="py-5 text-base text-destructive">{actionError}</p>

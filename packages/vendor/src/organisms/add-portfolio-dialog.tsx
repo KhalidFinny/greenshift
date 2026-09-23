@@ -55,8 +55,7 @@ export function AddPortfolioDialog({ onAdd }: AddPortfolioDialogProps) {
 			location,
 			description,
 			projectValue: Number(projectValue) || 0,
-			// Every figure below is left empty when the vendor did not enter one.
-			// Filling in a plausible number would put our estimate in their record.
+			// Every figure is left empty when the vendor did not enter one; a plausible number would be our estimate in their record.
 			durationMonths: durationMonths ? Number(durationMonths) : null,
 			servicesProvided: "",
 			energySavingKwh: null,
@@ -75,8 +74,7 @@ export function AddPortfolioDialog({ onAdd }: AddPortfolioDialogProps) {
 		try {
 			await onAdd(newItem, file);
 		} catch {
-			// The shared client already reported the failure as a toast; the
-			// dialog stays open so the vendor can retry.
+			// The shared client already reported the failure as a toast; the dialog stays open so the vendor can retry.
 			return;
 		} finally {
 			setIsSubmitting(false);
@@ -226,8 +224,7 @@ export function AddPortfolioDialog({ onAdd }: AddPortfolioDialogProps) {
 							verification documents.
 						</p>
 						<div className="rounded-lg border-2 border-dashed border-border p-6 text-center transition-colors hover:border-emerald-500/50 hover:bg-emerald-50/50">
-							{/* Visually hidden but focusable: the label is the control a
-							    pointer sees, the input is what the keyboard reaches. */}
+							{/* Visually hidden but focusable: the label is the control a pointer sees, the input what the keyboard reaches. */}
 							<input
 								ref={fileInputRef}
 								type="file"

@@ -1,20 +1,8 @@
-/**
- * Credit and risk scoring, ported line for line from the frontend's
- * `credit-score.ts` and `project-risk.ts`.
- *
- * The server owns these numbers. The frontend keeps its own copy so the wizard
- * can preview them live, which is why both sides must agree: the vectors in the
- * test beside this file are the same ones the frontend suite asserts against.
- *
- * Parameter names deliberately match the frontend lib rather than the wire
- * contract, so the two implementations can be diffed directly. The handlers map
- * the contract's field names onto these.
- */
+// Scoring mirrors the frontend's `credit-score.ts` and `project-risk.ts`; the
+// two must agree, so parameters match the frontend lib, not the wire contract.
 
-// ── credit score ──────────────────────────────────────────
-// ADR-004.4: a derived score, never a fake one. 0-100 from a debt-service
-// proxy (annual saving / (CAPEX / tenor), capped) plus document completeness.
-// Missing inputs yield null rather than a fabricated number.
+// ADR-004.4: 0-100 from a debt-service proxy (annual saving / (CAPEX / tenor),
+// capped) plus document completeness; missing inputs yield null, never a guess.
 export interface CreditScoreInput {
 	capex: number | null;
 	tenor: number | null;
@@ -28,10 +16,7 @@ export interface CreditScoreResult {
 	rating: string | null;
 }
 
-/**
- * Rating bands (ADR-004.4): >= 85 AAA, 75-84 AA, 65-74 A, 55-64 BBB+, 45-54
- * BBB, 35-44 BB, < 35 B.
- */
+/** Rating bands per ADR-004.4. */
 export function ratingForScore(score: number): string {
 	if (score >= 85) return "AAA";
 	if (score >= 75) return "AA";
@@ -58,10 +43,8 @@ export function creditScore(input: CreditScoreInput): CreditScoreResult {
 	return { score, rating: ratingForScore(score) };
 }
 
-// ── project risk ──────────────────────────────────────────
-// ADR-006.7: 0-100, the mean of four risk contributions. Finansial, Teknis and
-// Implementasi come from Step 1; Pembiayaan comes from the credit score above.
-// All inputs empty yields null, never a fabricated figure.
+// ADR-006.7: 0-100, the mean of four contributions. Finansial, Teknis and
+// Implementasi come from Step 1, Pembiayaan from the credit score; empty yields null.
 export type ProjectRiskTone = "Low" | "Medium" | "High" | null;
 
 export type ProjectRiskLevel = "Low" | "Medium" | "High";
@@ -191,9 +174,8 @@ export function projectRisk(input: ProjectRiskInput): ProjectRiskResult | null {
 	};
 }
 
-// ── tones from the wizard's Step 1 thresholds ─────────────
-// The bands the frontend uses to colour each field. Money above 5M is high and
-// above 1M is medium; consumption above 10k is high and above 2k is medium.
+// Bands the frontend uses to colour each field: money above 5M is high and above
+// 1M medium; consumption above 10k is high and above 2k medium.
 const BIAYA_TINGGI = 5_000_000;
 const BIAYA_SEDANG = 1_000_000;
 const KONSUMSI_TINGGI = 10_000;
@@ -216,11 +198,8 @@ export function teknisTone(konsumsiMwh: number | null): ProjectRiskTone {
 	return "Low";
 }
 
-/**
- * Implementation risk from how soon the project lands. A quarter inside the
- * next year is high risk, inside three years medium, later low. An unparseable
- * or missing quarter is unknown rather than assumed.
- */
+// Risk from how soon the project lands: inside a year high, inside three years
+// medium, later low; an unparseable quarter is unknown, not assumed.
 export function implementasiTone(
 	timelineQuarter: string | null,
 	now: Date = new Date(),

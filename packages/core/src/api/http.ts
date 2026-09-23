@@ -55,11 +55,8 @@ async function fetchCsrfToken(signal?: AbortSignal): Promise<string | null> {
 	}
 }
 
-/**
- * Shared network helper for the single GreenShift API (same origin).
- * Throws ApiError with the API's error message on non-2xx responses, and a
- * 504 ApiError when the request exceeds REQUEST_TIMEOUT_MS.
- */
+/** Shared fetch helper for the single same-origin API: throws ApiError with the
+ * API's message on non-2xx, and a 504 one past REQUEST_TIMEOUT_MS. */
 export async function request<T>(
 	path: string,
 	init?: RequestOptions,
@@ -70,8 +67,8 @@ export async function request<T>(
 	try {
 		const method = (init?.method ?? "GET").toUpperCase();
 		const headers = new Headers(init?.headers);
-		// FormData must keep the browser-generated multipart boundary, so the
-		// JSON default is skipped for it.
+		// FormData keeps the browser's multipart boundary, so skip the JSON
+		// default for it.
 		const isFormData =
 			typeof FormData !== "undefined" && init?.body instanceof FormData;
 		if (!isFormData && !headers.has("Content-Type") && !SAFE_METHODS[method]) {
@@ -91,15 +88,15 @@ export async function request<T>(
 		if (!res.ok) {
 			const body = (await res.json().catch(() => null)) as ErrorBody;
 			const message = errorMessageFor(res.status, body);
-			// 428 step-up has its own confirmation dialog; surfacing a toast
-			// alongside it would be noise.
+			// 428 step-up has its own confirmation dialog; a toast beside it is
+			// noise.
 			if (res.status !== 428 && shouldToast(method, init)) {
 				publishToast({ tone: "error", message });
 			}
 			throw new ApiError(res.status, message);
 		}
 		// Mutations carry the toast copy in the body; reads stay silent because
-		// their loading and error states live in the page.
+		// their states live in the page.
 		const body = (await res.json()) as T & { message?: string };
 		if (shouldToast(method, init) && body.message) {
 			publishToast({ tone: "success", message: body.message });

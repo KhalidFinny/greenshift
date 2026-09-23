@@ -21,6 +21,10 @@ export function authUserFrom(user: typeof users.$inferSelect): AuthUser {
 		role: user.role,
 		companyName: user.companyName,
 		avatarKey: user.avatar,
+		// Null for the roles the platform does not verify this way: a vendor is
+		// verified through its profile, an administrator is not verified at all.
+		companyVerification:
+			user.role === "business" ? user.verificationState : null,
 	};
 }
 
@@ -58,6 +62,27 @@ export function requireRole(...roles: AuthUser["role"][]) {
 		await next();
 	});
 }
+
+// Company gate: an unverified company cannot work the platform (business router,
+// verification routes exempt). Vendors are gated per action instead.
+export const requireVerifiedCompany = createMiddleware<ApiEnv>(
+	async (c: Context<ApiEnv>, next: Next) => {
+		const user = c.get("user");
+		if (user.role === "business" && user.companyVerification !== "VERIFIED") {
+			throw new ApiFailure(
+				"COMPANY_NOT_VERIFIED",
+				user.companyVerification === "PENDING"
+					? "Your company verification is with an administrator. You can use the platform once it has been reviewed."
+					: user.companyVerification === "NEEDS_RESCAN"
+						? "A certificate could not be read. File a clearer scan of it and submit the pack again."
+						: user.companyVerification === "REJECTED"
+							? "Your company verification could not be confirmed. Read the reading, correct the details and file the documents again."
+							: "Verify your company before using the platform. Confirm your details and file the legal documents.",
+			);
+		}
+		await next();
+	},
+);
 
 export const requireRecentStepUp = createMiddleware<ApiEnv>(
 	async (c: Context<ApiEnv>, next: Next) => {

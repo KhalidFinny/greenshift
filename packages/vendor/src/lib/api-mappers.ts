@@ -31,24 +31,27 @@ import type {
 	VendorProjectCardData,
 } from "./types";
 
-// ── Verification Status ──────────────────────────────────
 export function mapVerificationStatus(
 	profile: VendorProfile,
 ): CompanyVerificationDetails {
 	return {
-		status: profile.verified ? "VERIFIED" : "NOT_VERIFIED",
+		status: profile.verified
+			? "VERIFIED"
+			: profile.rejectionReason
+				? "REJECTED"
+				: "NOT_VERIFIED",
 		certifications: profile.certifications ?? [],
 		nib: profile.nib ?? undefined,
 		npwp: profile.npwp ?? undefined,
-		legalDocUrl: undefined,
-		escoCertificationUrl: profile.certifications[0] ?? undefined,
-		isoCertificationUrl: profile.certifications[1] ?? undefined,
-		submittedAt: profile.createdAt ?? undefined,
+		tdp: profile.tdp ?? undefined,
+		certificateName: profile.certificateName ?? undefined,
+		certificateUrl: profile.certificateUrl ?? undefined,
+		certificateScan: profile.certificateScan ?? null,
+		rejectionReason: profile.rejectionReason ?? undefined,
 		verifiedAt: profile.verifiedAt ?? undefined,
 	};
 }
 
-// ── Project Card Data (for Opportunities page) ───────────
 export function mapProjectToCardData(
 	project: VendorProjectListItem,
 ): VendorProjectCardData {
@@ -85,7 +88,6 @@ export function mapProjectToCardData(
 	};
 }
 
-// ── Active Project (from myProjects with an awarded proposal) ─
 export function mapToActiveProject(
 	myProject: VendorMyProject,
 ): ActiveVendorProject | null {
@@ -131,8 +133,7 @@ export function mapToActiveProject(
 		agreedBudget: proposal.amount,
 		overallProgressPercent: progress,
 		currentMilestoneTitle: current?.title ?? "Not started",
-		// No scheduled milestone and no submission time means the date is genuinely
-		// unknown. Returning today's date here would invent a commitment.
+		// No due date and no submission time means the date is genuinely unknown; today's date would invent a commitment.
 		deadlineDate:
 			milestones[milestones.length - 1]?.dueDate ??
 			proposal.submittedAt ??
@@ -146,8 +147,7 @@ export function mapToActiveProject(
 		milestones,
 		monthlyReports,
 		forecasts,
-		// The blueprint target is not part of this contract yet, so the
-		// expected savings stay at 0 until the project exposes them.
+		// The blueprint target is not part of this contract yet, so expected savings stay at 0.
 		expectedEnergySavingsPercent: 0,
 		actualEnergySavingsPercent: actualSavingsPercent,
 		expectedCarbonReductionTons: project.targetEmissionReduction ?? 0,
@@ -155,11 +155,7 @@ export function mapToActiveProject(
 	};
 }
 
-// ── Portfolio Item (from AGREED projects) ────────────────
-/**
- * An awarded project as a track-record entry. Every figure comes from the award
- * record or the project itself; nothing is filled in to look complete.
- */
+/** An awarded project as a track-record entry: every figure comes from the award record or the project itself. */
 export function mapToPortfolioItem(
 	myProject: VendorMyProject,
 ): VendorPortfolioItem | null {
@@ -191,12 +187,7 @@ export function mapToPortfolioItem(
 	};
 }
 
-// ── Structured Proposal ──────────────────────────────────
-/**
- * List-row shape. Carries only what the proposals list endpoint actually
- * returns; the technical and cost figures live on the detail endpoint and are
- * left null here rather than filled with plausible-looking constants.
- */
+/** List-row shape: only what the proposals list endpoint returns, with the detail-only figures left null rather than filled with plausible constants. */
 export function mapToStructuredProposal(
 	proposal: ProposalSummary,
 ): StructuredProposal {
@@ -205,8 +196,7 @@ export function mapToStructuredProposal(
 		tenderId: String(proposal.tenderId ?? 0),
 		projectId: String(proposal.projectId ?? 0),
 		projectTitle: proposal.projectTitle ?? "",
-		// The summary carries the vendor's own company, not the client's, so the
-		// client is left empty until the detail is fetched.
+		// The summary carries the vendor's own company, so the client is left empty until the detail is fetched.
 		companyName: "",
 		procurementMethod: "OPEN_BIDDING",
 		status: mapProposalStatus(proposal.status),
@@ -247,7 +237,6 @@ export function mapProposalDetail(detail: ProposalDetail): StructuredProposal {
 	};
 }
 
-// ── Performance Metrics (derived from profile + projects) ─
 export function derivePerformanceMetrics(
 	profile: VendorProfile,
 	myProjects: VendorMyProject[],
@@ -256,7 +245,6 @@ export function derivePerformanceMetrics(
 		isAwardedProposal(p.proposal.status),
 	);
 
-	// Delivery state across the awarded projects.
 	const milestones = awarded.flatMap((p) => p.milestones ?? []);
 	const settled = milestones.filter(
 		(m) => m.status === "COMPLETED" || m.status === "APPROVED",
@@ -277,8 +265,7 @@ export function derivePerformanceMetrics(
 			)
 		: 0;
 
-	// MRV: measured savings and carbon against the project targets the API
-	// exposes on each awarded project.
+	// MRV: measured savings and carbon against the project targets the API exposes on each awarded project.
 	const reports = awarded.flatMap((p) => p.monthlyReports ?? []);
 	const baseline = reports.reduce(
 		(sum, report) => sum + (report.baselineConsumption ?? 0),
@@ -306,8 +293,7 @@ export function derivePerformanceMetrics(
 	return {
 		completionRatePercent,
 		onTimeCompletionPercent,
-		// The platform rating (0-5, set when an admin verifies the vendor)
-		// is the only quality signal the API stores.
+		// The platform rating (0-5, set when an admin verifies the vendor) is the only quality signal the API stores.
 		technicalPerformanceScore: Math.round((profile.rating ?? 0) * 20),
 		energySavingAchievementPercent: baseline
 			? Math.round((saved / baseline) * 1000) / 10
@@ -323,14 +309,12 @@ export function derivePerformanceMetrics(
 					(m) => m.status === "COMPLETED" || m.status === "APPROVED",
 				),
 		).length,
-		// No endorsement source in the API yet.
-		clientApprovalRatePercent: 0,
+		// The API stores no per-period history, so the trend starts empty.
 		historicalTrend: [],
 		bastRating: profile.rating ?? 0,
 	};
 }
 
-// ── Helpers ──────────────────────────────────────────────
 function mapProcurementMethod(method?: string | null): ProcurementMethod {
 	switch (method?.toLowerCase()) {
 		case "closed":
@@ -365,7 +349,6 @@ export function isAwardedProposal(status: string): boolean {
 	return normalized === "accepted" || normalized === "agreed";
 }
 
-// ── Notifications ────────────────────────────────────────
 const NOTIFICATION_CATEGORY: Record<string, VendorNotification["category"]> = {
 	negotiation: "Negotiation",
 	deadline: "Tenders",
@@ -387,7 +370,6 @@ export function mapNotification(row: ApiNotification): VendorNotification {
 	};
 }
 
-// ── Negotiations ─────────────────────────────────────────
 export function mapNegotiation(row: ApiNegotiation): NegotiationRequest {
 	return {
 		id: String(row.id),
@@ -412,7 +394,6 @@ export function mapNegotiation(row: ApiNegotiation): NegotiationRequest {
 	};
 }
 
-// ── Open-bid leaderboard ─────────────────────────────────
 export interface LeaderboardView {
 	entries: OpenBidLeaderboardEntry[];
 	tenderId: string | null;
@@ -441,7 +422,6 @@ export function mapLeaderboard(response: ApiLeaderboard): LeaderboardView {
 	};
 }
 
-// ── Portfolio entries authored by the vendor ─────────────
 export function mapPortfolioItem(row: ApiPortfolioItem): VendorPortfolioItem {
 	return {
 		id: String(row.id),
@@ -462,7 +442,6 @@ export function mapPortfolioItem(row: ApiPortfolioItem): VendorPortfolioItem {
 	};
 }
 
-// ── Delivery (milestones + MRV reports) ──────────────────
 export function mapMilestone(row: ApiMilestone): ProjectMilestone {
 	return {
 		id: String(row.id),
@@ -511,13 +490,7 @@ export function mapEnergyForecast(row: ApiEnergyForecast): EnergyForecast {
 	};
 }
 
-// ── Green Project Blueprint ──────────────────────────────
-/**
- * The blueprint a bidder reads on the procurement detail. The API only sends
- * it once LVV GRK has validated it, so a blueprint here is one that was
- * verified; the status travels anyway so the card can say which stage it
- * reached.
- */
+/** The blueprint a bidder reads on the procurement detail. The API only sends it once LVV GRK has validated it, so a blueprint here is verified; the status travels so the card can name the stage it reached. */
 export function mapBlueprint(blueprint: ProjectBlueprintView): VendorBlueprint {
 	return {
 		status: blueprint.status,

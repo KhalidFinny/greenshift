@@ -6,9 +6,13 @@ import type { ApiEnv } from "../../../env";
 import { requireRecentStepUp } from "../../../lib/authz";
 import { iso, parseLimit } from "../../../lib/format";
 import { apiError, apiNotFound, apiSuccess } from "../../../lib/response";
+import {
+	isCompanyDocumentSlot,
+	readCompanyDocumentForAdmin,
+} from "../../business/verification/verification.service";
 import { factory } from "../admin.shared";
 import { listUsers } from "./users.repository";
-import { verifyUser } from "./users.service";
+import { readUserVerification, verifyUser } from "./users.service";
 
 export const userRoutes = new Hono<ApiEnv>();
 
@@ -35,6 +39,8 @@ userRoutes.get(
 				serviceCategory: vendorServiceCategory,
 				address: user.address,
 				verifiedAt: iso(user.verifiedAt),
+				verificationState:
+					user.role === "business" ? user.verificationState : null,
 				vendorProfile: vendorId !== null,
 				createdAt: iso(user.createdAt),
 			}),
@@ -63,13 +69,63 @@ userRoutes.patch(
 			id,
 			verified: body.verified,
 			actorId: c.get("user").id,
+			rejectionReason: body.rejectionReason ?? null,
 		});
 		if (!result.ok) {
 			if (result.reason === "not_found") {
 				return apiNotFound(c, "User");
 			}
+			if (result.reason === "pack_not_filed") {
+				return apiError(
+					c,
+					"INVALID_STATE",
+					"This company has not filed its verification pack yet, so there is nothing to verify.",
+				);
+			}
 			return apiError(c, "FORBIDDEN", "Admin account cannot be unverified");
 		}
 		return apiSuccess(c, { ok: true }, "User verification updated");
+	}),
+);
+
+// The pack a verification verdict is about.
+userRoutes.get(
+	"/users/:id/verification",
+	...factory.createHandlers(async (c) => {
+		const id = Number(c.req.param("id"));
+		if (!Number.isInteger(id) || id <= 0) {
+			return apiError(c, "INVALID_ID");
+		}
+
+		const db = createDb(c.env.DB);
+		const verification = await readUserVerification(db, id);
+		if (!verification) return apiNotFound(c, "User");
+		return c.json({ verification });
+	}),
+);
+
+userRoutes.get(
+	"/users/:id/verification/documents/:slot",
+	...factory.createHandlers(async (c) => {
+		const id = Number(c.req.param("id"));
+		const slot = c.req.param("slot");
+		if (!Number.isInteger(id) || id <= 0) {
+			return apiError(c, "INVALID_ID");
+		}
+		if (!isCompanyDocumentSlot(slot)) {
+			return apiError(c, "VALIDATION", "Unknown document slot.");
+		}
+
+		const db = createDb(c.env.DB);
+		const result = await readCompanyDocumentForAdmin(db, c.env, id, slot);
+		if (result.outcome === "not_found") return apiNotFound(c, "Certificate");
+
+		return new Response(result.body, {
+			headers: {
+				"Content-Type": result.contentType,
+				"Content-Disposition": `inline; filename="${result.fileName.replace(/["\\]/g, "")}"`,
+				"Cache-Control": "private, no-store",
+			},
+		});
 	}),
 );

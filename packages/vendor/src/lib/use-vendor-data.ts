@@ -41,20 +41,12 @@ const EMPTY_LEADERBOARD: LeaderboardView = {
 	myRank: null,
 };
 
-/**
- * Everything the vendor dashboard renders comes from `/api/vendor/*`.
- * Bookmarks are the one exception: saving a project is client-side UI state
- * with no endpoint yet.
- *
- * The detail endpoint is read only when a screen names a project: the market
- * list is enough for the cards, and the detail carries what only one project
- * needs, such as the validated blueprint.
- */
+/** Everything the vendor dashboard renders comes from `/api/vendor/*`; bookmarks are local UI state with no endpoint.
+ * The detail endpoint is read only when a screen names a project, since the market list is enough for the cards. */
 export function useVendorData(options: { projectId?: string } = {}) {
 	const queryClient = useQueryClient();
 	const projectId = options.projectId;
 
-	// ── Local-only UI state ─────────────────────────────────
 	const [savedProjects, setSavedProjects] = useState<Set<string>>(() => {
 		if (typeof window !== "undefined") {
 			const saved = localStorage.getItem("vendor_saved_projects");
@@ -63,7 +55,6 @@ export function useVendorData(options: { projectId?: string } = {}) {
 		return new Set();
 	});
 
-	// ── Queries ─────────────────────────────────────────────
 	const { data: profileData, isLoading: profileLoading } = useQuery({
 		queryKey: ["vendor", "profile"],
 		queryFn: () => api.vendor.profile(),
@@ -100,12 +91,8 @@ export function useVendorData(options: { projectId?: string } = {}) {
 		staleTime: REFRESH_FAST,
 	});
 
-	/* A ranking belongs to one tender. A screen that names a project reads the
-	   ranking for that project's own tender; the screens that carry the vendor's
-	   live open bidding read the default one. `null` means the project's tender
-	   is not known yet, which is the only case that holds the read back: ranking
-	   another tender under this project's heading would be a wrong answer, not a
-	   slow one. */
+	/* A ranking belongs to one tender: a screen that names a project reads that project's own tender, others read the default.
+	   `null` means the project's tender is not known yet, and holds the read back rather than ranking another tender under this heading. */
 	const scopedTenderId = useMemo(() => {
 		if (projectId === undefined || projectId === "") return undefined;
 		const project = (marketProjectsData?.projects ?? []).find(
@@ -134,7 +121,6 @@ export function useVendorData(options: { projectId?: string } = {}) {
 		staleTime: REFRESH_SLOW,
 	});
 
-	// ── Derived data ────────────────────────────────────────
 	const profile = profileData?.profile;
 	const myProjects = myProjectsData?.projects ?? [];
 
@@ -159,8 +145,7 @@ export function useVendorData(options: { projectId?: string } = {}) {
 			.filter((p): p is ActiveVendorProject => p !== null);
 	}, [myProjects]);
 
-	// Portfolio = awarded projects from the API plus the references the vendor
-	// authored in the portfolio tab.
+	// Portfolio = awarded projects from the API plus references the vendor authored in the portfolio tab.
 	const apiPortfolio: VendorPortfolioItem[] = useMemo(() => {
 		return myProjects
 			.map(mapToPortfolioItem)
@@ -199,10 +184,8 @@ export function useVendorData(options: { projectId?: string } = {}) {
 				carbonReductionAchievementPercent: 0,
 				averageProjectValue: 0,
 				totalCompletedProjects: 0,
-				clientApprovalRatePercent: 0,
 				historicalTrend: [],
 				bastRating: 0,
-				retentionRate: "Unknown",
 			};
 		}
 		return derivePerformanceMetrics(profile, myProjects);
@@ -222,11 +205,9 @@ export function useVendorData(options: { projectId?: string } = {}) {
 			: EMPTY_LEADERBOARD;
 	}, [leaderboardData]);
 
-	// ── Mutations ───────────────────────────────────────────
 	const { mutate: markRead } = useMutation({
 		mutationFn: (id: number) => api.vendor.readNotification(id),
-		// The card stops reading as unread the moment it is marked, and the refetch
-		// below confirms it rather than being what makes it happen.
+		// Marked optimistically: the refetch below confirms it rather than being what makes it happen.
 		onMutate: async (id: number) => {
 			await queryClient.cancelQueries({
 				queryKey: ["vendor", "notifications"],
@@ -270,8 +251,7 @@ export function useVendorData(options: { projectId?: string } = {}) {
 		},
 	});
 
-	// Revising an open bid writes the new amount on the proposal itself, and
-	// replaces the proposal document when a new one is chosen.
+	// Revising an open bid rewrites the amount on the proposal, and replaces its document when a new one is chosen.
 	const { mutateAsync: reviseBid } = useMutation({
 		mutationFn: async (input: {
 			proposalId: number;
@@ -291,10 +271,8 @@ export function useVendorData(options: { projectId?: string } = {}) {
 		},
 	});
 
-	// Both awaitable: the bid dialog only closes on a filed bid, so a rejection
-	// keeps the vendor's entry in front of them instead of discarding it. The
-	// document goes with the bid in the same request, so a bid cannot exist
-	// without the case it is made on.
+	// Both awaitable: the bid dialog closes only on a filed bid, so a rejection keeps the vendor's entry in front of them.
+	// The document travels in the same request as the bid, so a bid cannot exist without the case it is made on.
 	const { mutateAsync: submitProposal } = useMutation({
 		mutationFn: (input: {
 			fields: {
@@ -331,8 +309,7 @@ export function useVendorData(options: { projectId?: string } = {}) {
 			queryClient.invalidateQueries({ queryKey: ["vendor", "portfolio"] }),
 	});
 
-	// The file is a second request: a document is keyed to the record's id, so
-	// the record has to exist first.
+	// The file is a second request: a document is keyed to the record's id, so the record must exist first.
 	const { mutateAsync: filePortfolioDocument } = useMutation({
 		mutationFn: ({ id, file }: { id: number; file: File }) =>
 			api.vendor.uploadPortfolioDocument(id, file),
@@ -369,12 +346,14 @@ export function useVendorData(options: { projectId?: string } = {}) {
 			description: string;
 			serviceCategory?: string;
 			location?: string;
+			tdp?: string;
 		}) =>
 			api.vendor.saveProfile({
 				companyName: body.companyName,
 				description: body.description,
 				serviceCategory: body.serviceCategory,
 				location: body.location,
+				tdp: body.tdp,
 				certifications: profile?.certifications ?? [],
 				portfolio: profile?.portfolio ?? [],
 			}),
@@ -382,23 +361,27 @@ export function useVendorData(options: { projectId?: string } = {}) {
 			queryClient.invalidateQueries({ queryKey: ["vendor", "profile"] }),
 	});
 
-	/**
-	 * The legal identity a vendor is verified against. It saves onto the same
-	 * profile as everything else, so a vendor registered without NIB or NPWP can
-	 * add them here without touching the rest of the record.
-	 */
+	/** The legal identity a vendor is verified against; saves onto the same profile, so NIB or NPWP can be added without touching the rest of the record. */
 	const { mutate: saveVerificationDetails } = useMutation({
-		mutationFn: (body: { nib: string; npwp: string }) =>
+		mutationFn: (body: { nib: string; npwp: string; tdp?: string }) =>
 			api.vendor.saveProfile({
 				companyName: profile?.companyName ?? "",
 				nib: body.nib,
 				npwp: body.npwp,
+				...(body.tdp !== undefined ? { tdp: body.tdp } : {}),
 			}),
 		onSuccess: () =>
 			queryClient.invalidateQueries({ queryKey: ["vendor", "profile"] }),
 	});
 
-	// ── Actions ─────────────────────────────────────────────
+	/** The ESCO or ISO certificate the profile is verified against. */
+	const { mutate: uploadCertificate, isPending: uploadingCertificate } =
+		useMutation({
+			mutationFn: (file: File) => api.vendor.uploadCertificate(file),
+			onSuccess: () =>
+				queryClient.invalidateQueries({ queryKey: ["vendor", "profile"] }),
+		});
+
 	const toggleSaveProject = (projectId: string) => {
 		setSavedProjects((prev) => {
 			const next = new Set(prev);
@@ -457,11 +440,7 @@ export function useVendorData(options: { projectId?: string } = {}) {
 		});
 	};
 
-	/**
-	 * Creates the record, then files the chosen document on it. A failure in
-	 * either request rejects, so the caller can hold its dialog open; the shared
-	 * client has already raised the toast.
-	 */
+	/** Creates the record, then files the chosen document on it; either request failing rejects, so the caller can hold its dialog open. */
 	const addPortfolioItem = async (
 		item: VendorPortfolioItem,
 		file: File | null,
@@ -514,6 +493,8 @@ export function useVendorData(options: { projectId?: string } = {}) {
 		portfolioDocumentPath: api.vendor.portfolioDocumentPath,
 		deletePortfolioItem,
 		saveVerificationDetails,
+		uploadCertificate,
+		uploadingCertificate,
 		markNotificationRead,
 		saveProfile,
 	};

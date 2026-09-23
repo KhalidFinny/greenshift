@@ -95,7 +95,6 @@ export default function EcosystemSection() {
 	const selected = actors[active];
 	const Icon = selected.icon;
 
-	// Orbital animation loop (static under prefers-reduced-motion)
 	useEffect(() => {
 		if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
@@ -119,7 +118,6 @@ export default function EcosystemSection() {
 		return () => cancelAnimationFrame(raf);
 	}, []);
 
-	// Detect when ball crosses a node
 	useEffect(() => {
 		const crossed = detectCrossing(prevBallAngleRef.current, ballAngle, active);
 		if (crossed !== active) {
@@ -128,7 +126,6 @@ export default function EcosystemSection() {
 		prevBallAngleRef.current = ballAngle;
 	}, [ballAngle, active]);
 
-	// Pause on user click, resume after delay
 	const handleNodeClick = useCallback((i: number) => {
 		setActive(i);
 		setBallAngle(actors[i].angle);
@@ -144,14 +141,12 @@ export default function EcosystemSection() {
 		}, RESUME_DELAY);
 	}, []);
 
-	// Cleanup timer on unmount
 	useEffect(() => {
 		return () => {
 			if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
 		};
 	}, []);
 
-	// Ball position
 	const rad = (ballAngle * Math.PI) / 180;
 	const bx = Math.cos(rad) * RADIUS;
 	const by = Math.sin(rad) * RADIUS;
@@ -163,9 +158,8 @@ export default function EcosystemSection() {
 			className="relative overflow-hidden bg-white"
 		>
 			<div className="page-wrap relative z-10 py-24">
-				{/* Wide enough for the headline to hold one line at its 36px size:
-				    the string measures 854px in DM Sans Bold, which `max-w-2xl`
-				    (672px) split in two. */}
+				{/* Wide enough for the headline to hold one line at 36px: it measures
+				    854px in DM Sans Bold, which `max-w-2xl` (672px) split in two. */}
 				<header className="mb-16 max-w-4xl">
 					<p className="text-sm font-bold uppercase tracking-[0.2em] text-[#03442C]">
 						Ecosystem
@@ -180,9 +174,8 @@ export default function EcosystemSection() {
 						isVisible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
 					}`}
 				>
-					{/* Left: Circular ecosystem. `--o` is one design pixel of the
-					    orbit, capped at a real pixel: the ring shrinks with its
-					    column instead of overflowing the grid track. */}
+					{/* Left: circular ecosystem. `--o` is one design pixel of the orbit, capped
+					    at a real pixel, so the ring shrinks with its column instead of overflowing. */}
 					<div className="hidden lg:flex lg:justify-center [container-type:inline-size]">
 						<div
 							className="relative"
@@ -194,7 +187,6 @@ export default function EcosystemSection() {
 								} as CSSProperties
 							}
 						>
-							{/* Orbit ring */}
 							<div
 								className="absolute inset-0 m-auto rounded-full border border-[#E1E9E6]"
 								style={{
@@ -204,7 +196,6 @@ export default function EcosystemSection() {
 								aria-hidden="true"
 							/>
 
-							{/* SVG connecting lines + orbiting ball */}
 							<svg
 								className="absolute inset-0 h-full w-full"
 								viewBox={`0 0 ${ORBIT} ${ORBIT}`}
@@ -230,7 +221,6 @@ export default function EcosystemSection() {
 										/>
 									);
 								})}
-								{/* Orbiting ball */}
 								<circle
 									cx={RADIUS + 60 + bx}
 									cy={RADIUS + 60 + by}
@@ -247,7 +237,6 @@ export default function EcosystemSection() {
 								/>
 							</svg>
 
-							{/* Outer nodes */}
 							{actors.map((actor, i) => {
 								const actorRad = (actor.angle * Math.PI) / 180;
 								const x = Math.cos(actorRad) * RADIUS;
@@ -295,7 +284,6 @@ export default function EcosystemSection() {
 								);
 							})}
 
-							{/* Center logo */}
 							<div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
 								<div className="flex h-[calc(var(--o)*100)] w-[calc(var(--o)*100)] items-center justify-center rounded-full border border-[#CDDAD5] bg-white">
 									<img
@@ -308,7 +296,6 @@ export default function EcosystemSection() {
 						</div>
 					</div>
 
-					{/* Right: Selected node detail */}
 					<article className="flex flex-col gap-8">
 						<div className="flex items-center gap-4">
 							<div className="flex h-[52px] w-[52px] items-center justify-center rounded-full border border-[#CDDAD5] bg-[#F2F6F4]">

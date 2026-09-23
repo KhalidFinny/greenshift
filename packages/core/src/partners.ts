@@ -1,17 +1,5 @@
-/**
- * The partner apps a bond is issued and held in.
- *
- * GreenShift never settles a trade itself: the instrument is issued, sold and
- * held by a licensed securities partner, and this registry is the hand-off to
- * those apps. It lives in core because two surfaces point at it: the public
- * listing, which opens the app to buy, and the landing page, which names the
- * partners a project is monitored through.
- *
- * Every link below was verified against the official listings:
- *   - Play listing "Trima+", publisher PT. Trimegah Sekuritas Indonesia Tbk
- *   - Play listing "IPOT", publisher PT Indopremier Sekuritas
- * The icons are the ones those listings publish.
- */
+/** The partner apps a bond is issued and held in: GreenShift settles nothing
+ * itself, so the catalog and the landing hand the trade to these apps. */
 
 export interface PartnerApp {
 	/** Stable key, used in deep links and copy payloads. */
@@ -25,19 +13,8 @@ export interface PartnerApp {
 	playUrl: string;
 	/** The app's icon, as the store publishes it. */
 	logoUrl: string;
-	/**
-	 * Best-effort Android URL scheme used to open the installed app.
-	 *
-	 * VERIFY BEFORE DEMO: neither the Play listing nor Trimegah's product page
-	 * documents a public scheme, so this is a placeholder derived from the app
-	 * id. Launching fails safe: if the scheme is wrong or the app is not
-	 * installed, the Android intent resolves nothing and we fall back to the
-	 * Play listing. To confirm, open this URL on a device with Trima+
-	 * installed and check the app opens instead of Play.
-	 *
-	 * `null` means "no known scheme": the UI then skips the launch attempt and
-	 * goes straight to Play, so we never fire a dead intent.
-	 */
+	/** Best-effort scheme, unverified against the store listings; a wrong or
+	 * absent app just falls back to Play. Null skips the launch attempt. */
 	deepLinkScheme: string | null;
 }
 

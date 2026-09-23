@@ -2,7 +2,6 @@ import { and, desc, eq } from "drizzle-orm";
 import type { GreenShiftDb } from "../../../db";
 import { notifications } from "../../../db/schema";
 
-/** One notification for one user, written where the event happens. */
 export async function insertNotification(
 	db: GreenShiftDb,
 	entry: {
@@ -29,7 +28,6 @@ export async function listNotifications(
 		.limit(limit);
 }
 
-// Mark one notification read (owner-scoped, idempotent).
 export async function markNotificationRead(
 	db: GreenShiftDb,
 	id: number,
@@ -44,11 +42,8 @@ export async function markNotificationRead(
 	return updated;
 }
 
-/**
- * Mark every notification of one account read, so a feed that has been read can
- * be cleared in one move rather than one row at a time. Answers with how many
- * rows it changed, which is 0 when there was nothing unread.
- */
+// Marks every notification of one account read, so a read feed clears in one move.
+// Answers with the number of rows changed, 0 when there was nothing unread.
 export async function markAllNotificationsRead(
 	db: GreenShiftDb,
 	userId: number,

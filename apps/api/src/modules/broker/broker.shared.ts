@@ -23,10 +23,8 @@ import type { ApiEnv } from "../../env";
 import { iso } from "../../lib/format";
 import { ApiFailure } from "../../lib/response";
 
-/**
- * A broker that is not verified cannot receive or process projects (§6, rule 1).
- * Applied to every broker route that exposes project data.
- */
+// A broker that is not verified cannot receive or process projects (§6, rule 1).
+// Applied to every broker route that exposes project data.
 export const requireVerifiedBroker = createMiddleware<ApiEnv>(
 	async (c, next) => {
 		const db = createDb(c.env.DB);
@@ -46,7 +44,7 @@ export const requireVerifiedBroker = createMiddleware<ApiEnv>(
 	},
 );
 
-// ── risk (§14, read-only for the broker) ─────────────────
+// Risk is read-only for the broker (§14).
 /** Scores are stored 0-100 where higher means more risk. */
 export function riskLevel(score: number | null): string | null {
 	if (score === null) return null;
@@ -133,7 +131,6 @@ export async function notify(
 	});
 }
 
-// ── assignment lookup ────────────────────────────────────
 export interface AssignmentRow {
 	assignment: typeof brokerAssignments.$inferSelect;
 	project: typeof projects.$inferSelect;
@@ -165,7 +162,6 @@ export async function getAssignment(
 	return row ?? null;
 }
 
-// ── monthly report composition (§30-§34) ─────────────────
 function clampPercent(value: number): number {
 	return Math.max(0, Math.min(100, Math.round(value)));
 }
@@ -194,12 +190,8 @@ interface ReportExtras {
 	overallConclusion?: string;
 }
 
-/**
- * Compose the official monthly report for one MRV row. Progress is derived from
- * the project's milestones, energy and carbon from the MRV measurement, and the
- * remaining figures come from the report payload the Company and Vendor
- * published (reportData) - nothing is invented.
- */
+// Compose the official monthly report for one MRV row: progress from milestones,
+// energy and carbon from the MRV measurement, the rest from reportData.
 export function composeReport(source: ReportSource): BrokerMonthlyReport {
 	const {
 		report,

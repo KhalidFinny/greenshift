@@ -35,7 +35,6 @@ function proposalSummary(
 	};
 }
 
-// ── proposals ─────────────────────────────────────────────
 export async function listVendorProposals(
 	db: GreenShiftDb,
 	userId: number,
@@ -87,8 +86,7 @@ export type SubmitProposalResult =
 
 /**
  * Files a bid: the document goes to R2 first and the row is written with it, so
- * the bid exists complete or not at all. A write that does not land (the tender
- * closed in between, or the vendor bid twice) takes the object back with it.
+ * the bid exists complete or not at all. A write that does not land removes the object.
  */
 export async function submitProposal(
 	db: GreenShiftDb,
@@ -172,10 +170,7 @@ export type WithdrawProposalResult =
 /** The proposal document: a PDF the bidder files with the bid. 10 MB is generous. */
 export const MAX_PROPOSAL_DOCUMENT_BYTES = 10 * 1024 * 1024;
 
-/**
- * A proposal document is a PDF, and only a PDF: it is the bid's written case, and
- * the company reads it in the browser's own viewer.
- */
+/** A proposal document is a PDF, and only a PDF: the company reads it in the browser's viewer. */
 export function isProposalPdf(file: File): boolean {
 	return (
 		file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")
@@ -190,8 +185,7 @@ export type AttachProposalDocumentResult =
 
 /**
  * Files the proposal PDF on one of the vendor's own bids. The row is written
- * before the object is replaced, so a failed write leaves the previous document
- * in place rather than a key pointing at nothing.
+ * before the object is replaced, so a failed write leaves the old one in place.
  */
 export async function attachProposalDocument(
 	db: GreenShiftDb,
@@ -273,8 +267,7 @@ export async function readVendorProposalDocument(
 
 /**
  * The same document as the company that owns the project reads it: the bidder's
- * written case is part of what the company evaluates, so it is readable on the
- * company's side of the tender and by nobody else.
+ * written case is part of what the company evaluates, and nobody else reads it.
  */
 export async function readProjectProposalDocument(
 	db: GreenShiftDb,

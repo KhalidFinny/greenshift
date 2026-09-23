@@ -1,11 +1,5 @@
-/* Step 3 of the wizard: the scope of work the tender is bid against.
- *
- * Both lists are open-ended, because the number of requirements a project has is
- * the project's own rather than a fixed set of fields, so each is one entry per
- * line. What the entries are for is the reason the step exists at all: the key
- * technical requirements are part of the vocabulary the matching model reads, and
- * the deliverables are what every bidder is shown beside the scope of work.
- */
+/* Step 3: the scope of work the tender is bid against. Both lists are open-ended, one
+ * entry per line; the matching model reads the technical requirements. */
 
 import type { WizardForm } from "../lib/use-project-wizard-form";
 import { step3Validator } from "../lib/wizard-rules";

@@ -1,11 +1,5 @@
-/* Eleanor's reading for the assessment the wizard derived from the form.
- *
- * The wizard has no project row to store a reading on, so the figures travel to
- * the endpoint that composes it. The request is keyed by the figures themselves:
- * the same assessment is asked for once, and an edit that changes the score is a
- * different question. An assessment the API sent already carries its reading, so
- * that one is used as it stands and nothing is requested.
- */
+/* Eleanor's reading for the assessment the wizard derived; the figures travel because the wizard
+ * has no project row. An assessment the API sent already carries its reading and asks for none. */
 
 import {
 	type AnalystReadingMode,

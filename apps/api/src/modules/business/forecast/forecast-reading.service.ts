@@ -1,11 +1,5 @@
-/* Eleanor's reading of the ROI forecast.
- *
- * The scenarios are arithmetic and are computed by the engine; this is what
- * they mean, in the analyst's words, for the company that is about to submit
- * them. Written from the computed forecast rather than from the Step 2 figures,
- * so she reads the same numbers the charts plot and the blueprint will carry,
- * and every sentence traces back to one of them.
- */
+/* Eleanor's reading of the ROI forecast: what the computed scenarios mean for the
+ * company, written from the forecast itself so every sentence traces to a figure. */
 
 import type {
 	BusinessRiskInsight,
@@ -37,7 +31,6 @@ function percent(value: number): string {
 	return `${Math.round(value)} per cent`;
 }
 
-/** The scenarios that recover the capital in present value, and those that do not. */
 function partitionByRecovery(forecast: RoiForecast): {
 	recovered: ForecastScenario[];
 	short: ForecastScenario[];
@@ -48,7 +41,6 @@ function partitionByRecovery(forecast: RoiForecast): {
 	};
 }
 
-/** One scenario's assumptions and what they produce, as a sentence. */
 function stated(scenario: ForecastScenario): string {
 	const projectReturn =
 		scenario.irrPct === null
@@ -66,11 +58,8 @@ function stated(scenario: ForecastScenario): string {
 	return `${scenario.label} assumes ${percent(scenario.savingPct)} of the plan, ${rupiah(scenario.firstYearSavingRp)} in the first year, with the saving growing at ${percent(scenario.inflationPct)} a year against ${percent(scenario.degradationPct)} of wear: ${presentValue}, ${projectReturn}, and ${payback}.`;
 }
 
-/**
- * The reading composed from the forecast alone, in the analyst's voice. Every
- * sentence traces back to a computed figure, which is what makes it safe to
- * show when the model is unavailable.
- */
+// The reading composed from the forecast alone, in the analyst's voice. Every
+// sentence traces to a computed figure, so it is safe to show when the model is down.
 export function composeForecastReading(forecast: RoiForecast): string {
 	const { capexRp, discountRatePct, horizonYears, scenarios } = forecast;
 	const { recovered, short } = partitionByRecovery(forecast);
@@ -125,11 +114,8 @@ function forecastReadingSignature(forecast: RoiForecast): string {
 	].join("|");
 }
 
-/**
- * The forecast as a brief, derived values included: the model is told what the
- * engine already worked out, so it reasons about the case instead of recomputing
- * it, and cannot mistake a scenario's share for an input.
- */
+// The forecast as a brief, derived values included, so the model reasons about the
+// case instead of recomputing it and cannot mistake a share for an input.
 function asBrief(forecast: RoiForecast): string {
 	const lines = [
 		`Capital: ${rupiah(forecast.capexRp)}.`,

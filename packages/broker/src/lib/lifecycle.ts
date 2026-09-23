@@ -3,10 +3,7 @@ import type {
 	ExternalBondIssuanceStatus,
 } from "./types";
 
-/**
- * The broker lifecycle (§20) is separate from the GreenShift project
- * lifecycle: it describes the broker's own bond-preparation progress.
- */
+/** The broker lifecycle (§20) is separate from the GreenShift project lifecycle. */
 export const WORKFLOW_LABELS: Record<BrokerProjectWorkflowStatus, string> = {
 	ASSIGNED: "Assigned",
 	DECLINED: "Declined",

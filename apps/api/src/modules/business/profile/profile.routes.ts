@@ -42,9 +42,7 @@ profileRoutes.get(
 );
 
 // The company's own record: the organization it registers as and the person who
-// represents it. The sign-in email is the account's identity and is not writable
-// here, and the account row is written whole, so the name lists show for the
-// company cannot drift from the one settings shows.
+// represents it. The sign-in email is identity, not writable here.
 profileRoutes.put(
 	"/profile",
 	mutationLimit,

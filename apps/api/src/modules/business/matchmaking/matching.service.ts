@@ -1,15 +1,5 @@
 /* The matching run: after verification, score the vendor pool for a project and
- * write the ranked rows the matchmaking screen reads.
- *
- * Every criterion is derived from fields the platform already holds, and each
- * derivation is stated beside it. The model's own tables, the five criterion
- * weights and the provinces the location term reads, live in `scoring.ts`, so
- * the seed that has to produce a reproducible ranking reads them too.
- *
- * Project risk is a property of the project rather than of the vendor, so it
- * moves every vendor's total the same way and the read renormalises it away. That
- * is the seam a vendor-level risk model would fill.
- */
+ * write the ranked rows the matchmaking screen reads. Model tables live in scoring.ts. */
 
 import type { GreenShiftDb } from "../../../db";
 import { matchShortlistSize } from "../../../db/schema";
@@ -60,14 +50,8 @@ function tokens(...texts: Array<string | null | undefined>): Set<string> {
 	return out;
 }
 
-/**
- * Technical fit, in two branches, because the platform holds two kinds of
- * evidence: a vendor that has bid before is scored on that record, the share of
- * its bids made on projects in this project's sector; a vendor with no history is
- * scored on how much of this project's own vocabulary its certifications,
- * portfolio and description already use. Neither the sector nor any words to
- * compare leaves nothing to measure, which reads as neutral rather than zero.
- */
+// A vendor with bid history is scored on its sector share; one without, on how much
+// of the project's vocabulary it uses. With neither to measure, neutral, not zero.
 function technicalFit(
 	projectWords: Set<string>,
 	vendorWords: Set<string>,
@@ -90,16 +74,8 @@ function historicalPerformance(rating: number | null): number {
 	return clamp(((rating ?? 0) / MAX_RATING) * 100);
 }
 
-/**
- * Price & value. What a vendor is worth is not only its price: the platform
- * scores the value signals it holds before anyone has quoted, which are the
- * vendor's own record (its rating and the volume it has delivered) and how close
- * it works to the project (distance is freight, travel and response time).
- *
- * All three are linear: rating and delivered volume are straight proportions,
- * and proximity is the province term in `scoring.ts`. No bids are needed, so the
- * criterion is available to every vendor from the first run.
- */
+// Price & value scores the signals held before any quote: the vendor's own record
+// (rating, delivered volume) and how close it works to the project. All linear.
 function priceValue(input: {
 	rating: number | null;
 	totalProjects: number | null;
@@ -116,10 +92,8 @@ function priceValue(input: {
 	);
 }
 
-/**
- * Project risk: the assessment the platform already stored, inverted so that a
- * lower-risk project scores higher. Same for every vendor.
- */
+// The stored assessment, inverted so a lower-risk project scores higher. Same for
+// every vendor.
 function projectRisk(riskScore: number | null): number {
 	return clamp(100 - (riskScore ?? 0));
 }
@@ -129,20 +103,13 @@ function clamp(value: number): number {
 }
 
 export interface MatchingResult {
-	/** How many verified vendors were scored. */
 	scored: number;
 	/** Their ranks, best first; the shortlist is the first matchShortlistSize. */
 	shortlist: Array<{ vendorId: number; name: string; score: number }>;
 }
 
-/**
- * Scores the project's vendor pool and stores the ranking. The pool is the
- * verified vendors: an unverified profile cannot bid, so ranking it would offer
- * the company a vendor that is not actually available.
- *
- * Re-running replaces the project's rows, so a second pass over the same project
- * cannot leave two rankings behind.
- */
+// Scores the project's verified pool (an unverified profile cannot bid) and stores
+// the ranking. Re-running replaces the project's rows, never stacking two rankings.
 export async function runMatching(
 	db: GreenShiftDb,
 	projectId: number,
@@ -161,9 +128,8 @@ export async function runMatching(
 		return { scored: 0, shortlist: [] };
 	}
 
-	/* The project's own vocabulary: what it is, and what it asks a bidder to
-	   meet. The key technical requirements are the company's statement of the
-	   work, so they are part of what the fit is measured against. */
+	/* The project's own vocabulary: what it is and what it asks a bidder to meet.
+	   The technical requirements are the company's statement of the work. */
 	const projectWords = tokens(
 		project.industrySector,
 		project.title,
@@ -172,9 +138,8 @@ export async function runMatching(
 	);
 	const risk = projectRisk(project.riskScore);
 
-	// The sector record decides technical fit only while it separates the pool:
-	// when no vendor has ever bid in this sector it says nothing about any of
-	// them, and the profile text is the better evidence.
+	// The sector record decides technical fit only while it separates the pool: with
+	// no bid in this sector it says nothing, and the profile text is better evidence.
 	const sectorShares = pool.map(
 		(vendor) => sectorHistory.get(vendor.id) ?? null,
 	);
@@ -214,14 +179,8 @@ export async function runMatching(
 		})
 		.sort((a, b) => a.vendorId - b.vendorId);
 
-	/*
-	 * A criterion the whole pool scores the same on cannot separate the vendors,
-	 * so it is left out of the total and the remaining weights are renormalised
-	 * over it. Without this, a criterion with no evidence behind it (price value
-	 * before anyone has bid, technical fit before anyone has bid in this sector)
-	 * would drag every score down by its own weight without telling the company
-	 * anything about the difference between the vendors.
-	 */
+	/* A criterion the whole pool ties on cannot separate vendors, so it is dropped and
+	   the rest renormalised; otherwise an evidence-less criterion drags every score down. */
 	const separating = separatingCriteria(scored.map((row) => row.criteria));
 
 	const weightTotal = separating.reduce(

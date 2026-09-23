@@ -1,11 +1,5 @@
-/* The ROI forecast for the project summary.
- *
- * The figures travel and the scenarios come back: the same engine the Green
- * Project Blueprint is generated with answers both the review step, before
- * there is a project to read, and the project's own page, from the stored
- * figures. The request is keyed by the figures themselves, so an edit that
- * changes them is a different question and an unchanged one is asked once.
- */
+/* The ROI forecast for the project summary: the same engine that generates the Green Project
+ * Blueprint answers the review step and the project page, keyed by the figures. */
 
 import type { RoiForecast } from "@greenshift/core";
 import { api } from "@greenshift/core";

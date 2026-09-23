@@ -16,6 +16,7 @@ import {
 	CardDescription,
 	CardHeader,
 	CardTitle,
+	DistrictCombobox,
 	EmptyState,
 	Input,
 	Label,
@@ -30,7 +31,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 
-/** The date the company record was last written, read from the API's own stamp. */
+/** When the company record was last written, from the API's own stamp. */
 function savedLabel(updatedAt: string | null): string | null {
 	if (!updatedAt) return null;
 	return new Date(updatedAt).toLocaleDateString("en-GB", {
@@ -40,10 +41,8 @@ function savedLabel(updatedAt: string | null): string | null {
 	});
 }
 
-/**
- * The company record behind every project the account submits. The sign-in email
- * is the account's identity and is not editable here; the picture is, above it.
- */
+/** The company record behind every project the account submits. The sign-in email
+ * is the account's identity and is not editable here; the picture is, above it. */
 export function CompanySettingsPage() {
 	const { user } = useAuth();
 
@@ -127,8 +126,7 @@ function CompanyProfileForm({ profile }: { profile: BusinessProfile }) {
 			await queryClient.invalidateQueries({
 				queryKey: ["business", "profile"],
 			});
-			// The shell and the photo card read the representative's name from the
-			// session context, not from this query.
+			// The shell and the photo card read the name from session context, not this query.
 			await router.invalidate();
 		},
 	});
@@ -198,12 +196,16 @@ function CompanyProfileForm({ profile }: { profile: BusinessProfile }) {
 
 				<div className="space-y-2 md:col-span-2">
 					<Label htmlFor="company-address">Registered address</Label>
-					<Input
+					<DistrictCombobox
 						id="company-address"
-						maxLength={registerLimits.address}
 						value={address}
-						onChange={(event) => setAddress(event.target.value)}
+						onChange={setAddress}
 					/>
+					<p className="text-sm text-muted-foreground">
+						The district the company is registered in, from the national
+						district dataset, so it can be compared with the projects you
+						submit.
+					</p>
 				</div>
 			</div>
 

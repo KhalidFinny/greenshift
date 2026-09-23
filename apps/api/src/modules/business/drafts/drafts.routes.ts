@@ -17,9 +17,8 @@ export const draftsRoutes = new Hono<ApiEnv>();
 /** Autosave fires per editing pause, so its bucket is sized for typing. */
 const AUTOSAVE_PER_WINDOW = 120;
 
-// ── autosave ──────────────────────────────────────────────
-// Silent on success: this fires while the user types, and a toast per save
-// would be noise. Failures still carry a message and a `fields` map.
+// Silent on success: this fires while the user types, and a toast per save would
+// be noise. Failures still carry a message and a `fields` map.
 draftsRoutes.put(
 	"/drafts/:draftId",
 	mutationRateLimit("business", "draft", AUTOSAVE_PER_WINDOW),
@@ -53,7 +52,6 @@ draftsRoutes.put(
 	}),
 );
 
-// ── resume ────────────────────────────────────────────────
 draftsRoutes.get(
 	"/drafts/:draftId",
 	...factory.createHandlers(async (c) => {

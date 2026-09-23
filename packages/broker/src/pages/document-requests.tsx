@@ -31,9 +31,6 @@ import { useState } from "react";
 import type { BrokerDocumentRequest, DocumentCategory } from "../lib/types";
 import { useBrokerData } from "../lib/use-broker-data";
 
-{
-	/* Modal Reject Document with mandatory reason */
-}
 function RejectDocumentModal({
 	request,
 	onReject,
@@ -113,9 +110,6 @@ function RejectDocumentModal({
 	);
 }
 
-{
-	/* Modal Create Document Request */
-}
 function GlobalCreateDocumentRequestModal({
 	projects,
 	onCreateRequest,
@@ -299,11 +293,7 @@ function GlobalCreateDocumentRequestModal({
 	);
 }
 
-/**
- * One tab's request list. The tab has already narrowed the rows (status filter)
- * and the page has searched them, so the hook pages the filtered list and the
- * control sits directly under it.
- */
+/** One tab's request list: hook pages the filtered, searched rows, control under it. */
 function PagedRequestList({
 	requests,
 	label,

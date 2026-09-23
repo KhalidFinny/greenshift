@@ -39,40 +39,29 @@ export interface ChartTooltipProps {
 	dotScale?: number;
 	/** Ring stroke width in pixels. Default: 1.5 for ring variant */
 	dotStrokeWidth?: number;
-	/**
-	 * Color for the crosshair/indicator line. When a function, receives the hovered point
-	 * (e.g. for candlestick: match candle color from close vs open). Default: --chart-crosshair.
-	 */
+	/** Crosshair color; a function receives the hovered point (e.g. candlestick matches candle color).
+	 * Default: --chart-crosshair. */
 	indicatorColor?: string | ((point: Record<string, unknown>) => string);
-	/** Custom content renderer for the tooltip box */
 	content?: (props: {
 		point: Record<string, unknown>;
 		index: number;
 	}) => React.ReactNode;
-	/** Custom row renderer - return array of TooltipRow */
 	rows?: (point: Record<string, unknown>) => TooltipRow[];
-	/**
-	 * Override tooltip dot fill. When omitted and `rows` is set, dot colors match row colors.
-	 * When a function, receives the hovered point and line config.
-	 */
+	/** Override tooltip dot fill; omitted with `rows` set means dot colors match row colors. A
+	 * function receives the hovered point and line config. */
 	dotColor?:
 		| string
 		| ((point: Record<string, unknown>, line: LineConfig) => string);
 	/** Additional content to show below rows (e.g., markers) */
 	children?: React.ReactNode;
-	/** Custom class name */
 	className?: string;
 	/** Per-chart override for the crosshair / dot / date-pill spring. */
 	springConfig?: SpringConfig;
-	/**
-	 * When `true`, the floating panel uses the crosshair spring and stays in sync.
-	 * Default `false`: panel follow uses `damping` (`20`).
-	 */
+	/** When `true`, the floating panel uses the crosshair spring and stays in
+	 * sync. Default `false`: panel follow uses `damping` (`20`). */
 	matchCrosshair?: boolean;
-	/**
-	 * Spring damping for the floating tooltip panel when `matchCrosshair` is `false`.
-	 * `0` disables spring motion (instant). Default: `20`.
-	 */
+	/** Spring damping for the floating tooltip panel when `matchCrosshair` is `false`; `0` is instant.
+	 * Default: `20`. */
 	damping?: number;
 	/** SVG stroke dash pattern for the crosshair. Omit for solid. */
 	indicatorDasharray?: string;
@@ -84,10 +73,8 @@ export interface ChartTooltipProps {
 	boxSpringConfig?: SpringConfig;
 	/** Inline styles for the tooltip panel (background, blur, etc.). */
 	panelStyle?: React.CSSProperties;
-	/**
-	 * Tooltip panel background color (CSS variable or color value).
-	 * Default: `var(--chart-tooltip-background)`.
-	 */
+	/** Tooltip panel background (CSS variable or color value). Default:
+	 * `var(--chart-tooltip-background)`. */
 	backgroundColor?: string;
 }
 
@@ -185,7 +172,7 @@ const ChartTooltipInner = memo(function ChartTooltipInner({
 	const x = tooltipData?.x ?? 0;
 	const xWithMargin = x + margin.left;
 
-	// For horizontal charts, get the y position from the first line's yPosition (center of bar)
+	// Horizontal charts: bar center is the first line's yPosition
 	const firstLineDataKey = lines[0]?.dataKey;
 	const firstLineY = firstLineDataKey
 		? (tooltipData?.yPositions[firstLineDataKey] ?? 0)
@@ -201,7 +188,6 @@ const ChartTooltipInner = memo(function ChartTooltipInner({
 			return rowsRenderer(tooltipData.point);
 		}
 
-		// Default: generate rows from registered lines
 		return lines.map((line) => ({
 			color: line.stroke,
 			label: line.dataKey,
@@ -226,7 +212,6 @@ const ChartTooltipInner = memo(function ChartTooltipInner({
 		};
 	}, [dotColorProp, rowsRenderer, tooltipData, tooltipRows]);
 
-	// Resolve indicator color (static or from hovered point)
 	const indicatorColor = useMemo(() => {
 		if (indicatorColorProp == null) {
 			return chartCssVars.crosshair;
@@ -239,22 +224,18 @@ const ChartTooltipInner = memo(function ChartTooltipInner({
 		return indicatorColorProp;
 	}, [indicatorColorProp, tooltipData]);
 
-	// Title from date or category
 	const title = useMemo(() => {
 		if (!tooltipData) {
 			return undefined;
 		}
-		// For bar charts (horizontal or vertical), use the category name
 		if (barXAccessor) {
 			return barXAccessor(tooltipData.point);
 		}
-		// For line/area charts, use the date
 		return weekdayDateFmt.format(xAccessor(tooltipData.point));
 	}, [tooltipData, barXAccessor, xAccessor]);
 
 	const tooltipContent = (
 		<>
-			{/* Crosshair indicator - rendered as SVG overlay */}
 			{showCrosshair && (
 				<svg
 					aria-hidden="true"
@@ -283,7 +264,6 @@ const ChartTooltipInner = memo(function ChartTooltipInner({
 				</svg>
 			)}
 
-			{/* Dots on bars/lines - show for vertical charts only */}
 			{showDots && visible && !isHorizontal && (
 				<svg
 					aria-hidden="true"
@@ -313,7 +293,6 @@ const ChartTooltipInner = memo(function ChartTooltipInner({
 				</svg>
 			)}
 
-			{/* Tooltip Box */}
 			<TooltipBox
 				animate={boxMotion.animate}
 				backgroundColor={backgroundColor}
@@ -340,7 +319,6 @@ const ChartTooltipInner = memo(function ChartTooltipInner({
 						)}
 			</TooltipBox>
 
-			{/* Date/Category Ticker - only show for vertical charts */}
 			<DatePillTracker
 				currentIndex={tooltipData?.index ?? 0}
 				discreteInteraction={discreteInteraction}
@@ -385,8 +363,8 @@ interface DatePillTrackerProps {
 	springConfig?: SpringConfig;
 }
 
-// Inner-only-on-visible so `useSpring` initializes at the real cursor x
-// instead of `margin.left` on first hover.
+// Inner-only-on-visible so `useSpring` initializes at the real cursor x, not `margin.left`, on
+// first hover.
 function DatePillTracker(props: DatePillTrackerProps) {
 	if (!(props.enabled && props.visible && props.labels.length > 0)) {
 		return null;

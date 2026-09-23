@@ -10,7 +10,6 @@ export interface SpringConfig {
 export interface ChartConfigValue {
 	/** Crosshair indicator, tooltip dot, date pill. */
 	tooltipSpring: SpringConfig;
-	/** Floating tooltip panel. */
 	tooltipBoxSpring: SpringConfig;
 	/** Line/area hover-highlight band (x + width). */
 	highlightSpring: SpringConfig;

@@ -1,5 +1,3 @@
-// Lib
-
 export * from "./lib/format";
 export * from "./lib/labels";
 export * from "./lib/types";
@@ -36,12 +34,10 @@ export * from "./organisms/tender-technical-proposal-card";
 export * from "./organisms/vendor-kpi-row";
 export * from "./organisms/vendor-project-card";
 export * from "./organisms/vendor-welcome-card";
-// Organisms
 export * from "./organisms/verification-banner";
 export * from "./organisms/verification-status-card";
 export * from "./pages/active-project-detail";
 export * from "./pages/active-projects";
-// Pages
 export * from "./pages/dashboard";
 export * from "./pages/deals";
 export * from "./pages/notifications";

@@ -35,9 +35,8 @@ export async function findProposalWithTender(
 	return row;
 }
 
-// Atomic gate: the status + revision cap are re-checked inside the
-// UPDATE ... WHERE, so concurrent responses cannot double-claim the next
-// revision slot. The service's pre-check only provides nicer errors.
+// Atomic gate: status and revision cap are re-checked inside the UPDATE ... WHERE,
+// so concurrent responses cannot double-claim the next revision slot.
 export async function claimRevision(
 	db: GreenShiftDb,
 	params: {

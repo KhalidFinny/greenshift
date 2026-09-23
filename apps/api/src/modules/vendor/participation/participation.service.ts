@@ -16,7 +16,6 @@ import {
 } from "../vendor.shared";
 import * as repository from "./participation.repository";
 
-// ── projects the vendor participates in ───────────────────
 export async function listMyProjects(
 	db: GreenShiftDb,
 	userId: number,
@@ -27,8 +26,7 @@ export async function listMyProjects(
 
 	const rows = await repository.listVendorProposalRows(db, vendorId, limit);
 
-	// One row per project, keeping the latest proposal when a project
-	// was tendered more than once.
+	// One row per project, keeping the latest proposal when a project was tendered twice.
 	const byProject = new Map<number, VendorMyProject>();
 	for (const { proposal, tender, project, companyName } of rows) {
 		if (byProject.has(project.id)) continue;
@@ -62,8 +60,7 @@ export async function listMyProjects(
 		});
 	}
 
-	// Delivery data for the projects in this page, so the active-project
-	// views do not need one request per project.
+	// Delivery data for this page's projects, so the views need no request per project.
 	const projects_ = [...byProject.values()];
 	const projectIds = projects_.map((item) => item.project.id);
 	if (projectIds.length) {
@@ -117,8 +114,7 @@ export async function getMyProject(
 
 	const revisions = await repository.listProposalRevisions(db, row.proposal.id);
 
-	// Delivery state: milestones with their evidence, plus the MRV reports
-	// the vendor filed for this project.
+	// Delivery state: milestones with their evidence, plus the MRV reports the vendor filed.
 	const milestoneRows = await repository.listProjectMilestones(db, [
 		row.project.id,
 	]);
@@ -174,7 +170,6 @@ export async function getMyProject(
 	};
 }
 
-// ── procurement status (proposal-centric pipeline) ────────
 export async function listProcurementStatus(
 	db: GreenShiftDb,
 	userId: number,

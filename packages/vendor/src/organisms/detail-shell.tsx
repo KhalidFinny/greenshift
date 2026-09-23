@@ -2,12 +2,7 @@ import { Button, ShimmerBlock } from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
-/**
- * The shared shape of every vendor detail page: a back control, one brand band
- * carrying the record's identity and headline figures, then a reading column
- * with a sticky action rail beside it. Detail pages differ in their data, not
- * in their composition.
- */
+/** The shared shape of every vendor detail page: a back control, one brand band with the record's identity and headline figures, then a reading column with a sticky action rail. */
 
 /** Destinations a detail page can return to. Typed so a typo cannot ship. */
 type DetailBackTarget =
@@ -98,7 +93,6 @@ interface DetailShellProps {
 	backTo: DetailBackTarget;
 	backLabel: string;
 	hero: ReactNode;
-	/** The reading column. */
 	children: ReactNode;
 	/** Sticky action rail. Omit for a record with nothing to act on. */
 	aside?: ReactNode;

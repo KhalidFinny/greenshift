@@ -14,8 +14,7 @@ export const MAX_PORTFOLIO_DOCUMENT_BYTES = 10 * 1024 * 1024;
 
 /**
  * What a portfolio document may be. Extensions are checked alongside the MIME
- * type because browsers report Word files inconsistently, often as
- * `application/octet-stream`.
+ * type because browsers report Word files inconsistently, as octet-stream.
  */
 const ALLOWED_DOCUMENT_EXTENSIONS: readonly string[] = [
 	"pdf",
@@ -179,8 +178,7 @@ export type AttachDocumentResult =
 
 /**
  * Files the supporting document on one of the vendor's own records. The row is
- * written first and the object after it, so a failed write leaves the previous
- * document in place rather than a key pointing at nothing.
+ * written first, the object after, so a failed write leaves the old file in place.
  */
 export async function attachVendorPortfolioDocument(
 	db: GreenShiftDb,

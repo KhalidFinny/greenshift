@@ -14,12 +14,8 @@ const factory = createFactory<ApiEnv>();
 
 export const riskRoutes = new Hono<ApiEnv>();
 
-// ── risk read ─────────────────────────────────────────────
-// Mirrors the frontend's `ProjectRiskResult`, so the assessment card renders it
-// without a mapper in between. Eleanor's reading travels with it: served from
-// the row once a project has one, composed from the same figures when it does
-// not, and written out of band so this read never waits on a model and the next
-// one finds it stored.
+// Mirrors the frontend's `ProjectRiskResult`, so the card renders it without a mapper.
+// Eleanor's reading travels with it: from the row, or composed and written out of band.
 riskRoutes.get(
 	"/projects/:id/risk",
 	...factory.createHandlers(async (c) => {
@@ -50,17 +46,8 @@ riskRoutes.get(
 	}),
 );
 
-// ── insight preview (the wizard, before a project exists) ──
-/**
- * The assessment the wizard derived, answered with Eleanor's reading of it. The
- * wizard has no project row to store a reading on and no way to compose one
- * itself, so this is the same analyst the review of a submitted project reads,
- * over the figures the wizard already computed. Nothing is written: the reading
- * is cached against the figures it was written about.
- *
- * The body is checked against the model's own vocabularies rather than trusted,
- * because the score and the band decide what the prose is allowed to claim.
- */
+// The assessment the wizard derived, answered with Eleanor's reading of it. Nothing is
+// written: the reading is cached against the figures it was written about.
 const RISK_LEVELS = ["Low", "Medium", "High"] as const;
 type RiskLevelValue = (typeof RISK_LEVELS)[number];
 /** Four areas, one per contribution to the score. */
@@ -110,11 +97,8 @@ function readMode(
 	return value === "brief" || value === "full" ? value : undefined;
 }
 
-/**
- * The assessment as this route will hand it on, or null when it is not one.
- * Every field is read as `unknown` and narrowed here: the score and the band
- * decide what the prose is allowed to claim, so they cannot be taken on trust.
- */
+// The assessment as this route will hand it on, or null when it is not one. Every
+// field is narrowed here: the score and band decide what the prose may claim.
 function readInsightRequest(raw: unknown): BusinessRiskInsightRequest | null {
 	const score = readField(raw, "score");
 	const level = readField(raw, "level");

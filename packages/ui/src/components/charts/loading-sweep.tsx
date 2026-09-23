@@ -17,17 +17,9 @@ import {
 	LOADING_LABEL_EXIT_S,
 } from "./line-loading-timing";
 
-/**
- * Shared "sweep" loading visuals. A soft diagonal shimmer band travels across a
- * self-contained skeleton silhouette on a loop, painted via an SVG mask. The
- * silhouette re-randomizes between passes (held steady during a pass, re-rolled
- * once the band clears the right edge) so it reads as live and still loading,
- * without warping mid-sweep. Used as the `loadingStyle="sweep"` alternative to
- * the traveling pulse on `<Line>` and `<Area>`, and as the skeleton for
- * `<BarChart status="loading">`.
- */
+/** Sweep loading visuals: a soft diagonal shimmer band loops across a self-contained
+ * skeleton silhouette painted via an SVG mask; `loadingStyle="sweep"` uses it. */
 
-// CurveFactory type - simplified version compatible with visx
 // biome-ignore lint/suspicious/noExplicitAny: d3 curve factory type
 type CurveFactory = any;
 
@@ -51,11 +43,8 @@ const AREA_FILL_BOTTOM_OPACITY = 0.02;
 /** Bar width as a fraction of its band (the rest is the inter-bar gap). */
 const DEFAULT_BAR_FRACTION = 0.7;
 
-// ─── Pure, SSR-safe helpers ──────────────────────────────────────────────
-// Heights come from a deterministic hash of (index, seed), never
-// `Math.random()`, so the first server render and first client render agree
-// (no Next.js hydration mismatch). Re-randomizing only bumps the numeric seed
-// on the client, after a sweep completes.
+// Heights come from a deterministic hash of (index, seed), never `Math.random()`,
+// so server and client first renders agree (no hydration mismatch).
 
 /** Cheap deterministic hash to a fractional part in [0, 1). */
 function hashFract(n: number): number {
@@ -100,8 +89,6 @@ function generateEasedGradientStops(
 		};
 	});
 }
-
-// ─── Shared mask defs (`${chartId}-mask` is the mask id) ─────────────────────
 
 function LoadingSweepMask({
 	chartId,
@@ -177,17 +164,14 @@ function LoadingSweepMask({
 	);
 }
 
-// ─── Line / Area loading sweep (its own re-randomizing silhouette) ───────────
-
 export interface LineLoadingSweepProps {
 	/** Curve factory from the host `<Line>` / `<Area>`, so the silhouette matches
 	 * the chart's interpolation (step, smooth, linear, …). */
 	curve: CurveFactory;
 	/** Fill the silhouette as an area (for `<Area>`); otherwise stroke only. */
 	withArea?: boolean;
-	/** Loading phase: `"loop"` (steady), `"exit"` (loading → ready), or `"enter"`
-	 * (ready → loading). Exit/enter fade the silhouette and then signal the chart
-	 * to continue its reveal. Default: `"loop"`. */
+	/** Loading phase: `"loop"`, `"exit"` (loading → ready) or `"enter"` (ready → loading);
+	 * exit/enter fade the silhouette then signal the chart to continue its reveal. */
 	mode?: "loop" | "exit" | "enter";
 	/** Fired when an exit/enter transition finishes, to advance the chart phase. */
 	onTransitionComplete?: () => void;
@@ -198,11 +182,8 @@ export interface LineLoadingSweepProps {
 	durationSeconds?: number;
 }
 
-/**
- * Renders a placeholder line/area silhouette (its own, not the chart's skeleton)
- * with the shimmer sweeping across it. The silhouette re-randomizes between
- * passes. Reads inner dimensions from chart context.
- */
+/** Placeholder line/area silhouette with the shimmer sweeping across it, re-randomizing
+ * between passes. Reads inner dimensions from chart context. */
 export function LineLoadingSweep({
 	curve,
 	withArea = false,
@@ -350,8 +331,6 @@ export function LineLoadingSweep({
 
 LineLoadingSweep.displayName = "LineLoadingSweep";
 
-// ─── Bar loading skeleton (seeded bars under the sweep, inner coords) ─────────
-
 function SkeletonBars({
 	heights,
 	signs,
@@ -419,11 +398,8 @@ export interface BarLoadingSkeletonProps {
 	durationSeconds?: number;
 }
 
-/**
- * Skeleton bars masked by the shimmer sweep, re-randomizing between passes.
- * Rendered in the chart's inner coordinate space (origin at the inner top-left),
- * so a `BarChart` drops it inside its margin-translated group.
- */
+/** Skeleton bars masked by the shimmer sweep, re-randomizing between passes. Rendered
+ * in the chart's inner coordinate space, so a `BarChart` drops it inside its group. */
 export function BarLoadingSkeleton({
 	innerWidth,
 	innerHeight,

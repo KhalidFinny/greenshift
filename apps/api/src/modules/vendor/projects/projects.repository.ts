@@ -12,8 +12,7 @@ import {
 } from "../../../db/schema";
 
 // Every project that currently has a tender, open tenders first. The matching
-// model's score for the calling vendor rides along, so the list can rank and
-// explain each opportunity without a second request.
+// model's score for the calling vendor rides along, so the list ranks without a second request.
 export async function listProjectTenders(
 	db: GreenShiftDb,
 	vendorId: number,
@@ -45,8 +44,7 @@ export async function listProjectTenders(
 		.leftJoin(vendorAssignments, eq(vendorAssignments.projectId, projects.id))
 		.$dynamic();
 	// Open bidding is open to every verified vendor. Closed bidding and direct
-	// selection are private to the vendors the project was opened for: those the
-	// matching model scored, and the one the company appointed.
+	// selection are private to the vendors the project was opened for.
 	query.where(
 		and(
 			...(tenderStatus ? [eq(tenders.status, tenderStatus)] : []),

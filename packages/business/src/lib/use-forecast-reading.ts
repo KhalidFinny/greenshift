@@ -1,10 +1,5 @@
-/* Eleanor's reading of the ROI forecast the summary shows.
- *
- * Asked for separately from the forecast itself: the scenarios are arithmetic
- * and land at once, while she takes a moment to write about them, so the charts
- * are not held up by the prose. The request is keyed by the figures, so an edit
- * that changes them is a different question and an unchanged one is asked once.
- */
+/* Eleanor's reading of the ROI forecast, asked for separately so the arithmetic scenarios land at
+ * once instead of waiting on the prose; keyed by the figures, so an edit asks a new question. */
 
 import { api } from "@greenshift/core";
 import { useQuery } from "@tanstack/react-query";

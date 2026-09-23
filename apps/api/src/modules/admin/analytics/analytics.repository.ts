@@ -10,20 +10,15 @@ import {
 } from "../../../db/schema";
 
 /**
- * Grouping key of a timestamp column as `YYYY-MM` in UTC.
- *
- * Timestamps are stored as epoch milliseconds, so the value is scaled to seconds
- * before `strftime` reads it. The same expression is used for grouping and for
- * the selected key, which keeps both in lockstep.
+ * Grouping key of a timestamp column as `YYYY-MM` in UTC. Timestamps are stored
+ * as epoch milliseconds, so the value is scaled to seconds before `strftime` reads it.
  */
 function monthKey(source: AnySQLiteColumn | SQL) {
 	return sql<string>`strftime('%Y-%m', ${source} / 1000, 'unixepoch')`;
 }
 
-/** An account counts as an organization once it carries a company name. */
 const hasCompany = sql<number>`sum(case when ${users.companyName} is not null then 1 else 0 end)`;
 
-/** Registered accounts per month. */
 export async function selectUsersByMonth(db: GreenShiftDb) {
 	return db
 		.select({ month: monthKey(users.createdAt), value: count() })
@@ -31,7 +26,6 @@ export async function selectUsersByMonth(db: GreenShiftDb) {
 		.groupBy(monthKey(users.createdAt));
 }
 
-/** Registered accounts carrying a company name, per month. */
 export async function selectOrganizationsByMonth(db: GreenShiftDb) {
 	return db
 		.select({ month: monthKey(users.createdAt), value: hasCompany })
@@ -39,7 +33,6 @@ export async function selectOrganizationsByMonth(db: GreenShiftDb) {
 		.groupBy(monthKey(users.createdAt));
 }
 
-/** Projects submitted per month. */
 export async function selectProjectsByMonth(db: GreenShiftDb) {
 	return db
 		.select({ month: monthKey(projects.createdAt), value: count() })
@@ -47,7 +40,6 @@ export async function selectProjectsByMonth(db: GreenShiftDb) {
 		.groupBy(monthKey(projects.createdAt));
 }
 
-/** Bond money taken in per month. */
 export async function selectInvestmentsByMonth(db: GreenShiftDb) {
 	return db
 		.select({
@@ -58,7 +50,6 @@ export async function selectInvestmentsByMonth(db: GreenShiftDb) {
 		.groupBy(monthKey(investments.createdAt));
 }
 
-/** ROI actually paid out per month. */
 export async function selectRoiPaidByMonth(db: GreenShiftDb) {
 	return db
 		.select({
@@ -71,8 +62,8 @@ export async function selectRoiPaidByMonth(db: GreenShiftDb) {
 }
 
 /**
- * Measured emission reduction per month, dated to the end of the reporting
- * period (falling back to the upload date when a report has no period end).
+ * Measured emission reduction per month, dated to the period end (upload date
+ * when a report has none).
  */
 export async function selectCarbonReductionByMonth(db: GreenShiftDb) {
 	const period = sql`coalesce(${emissionReports.periodEnd}, ${emissionReports.createdAt})`;
@@ -85,7 +76,6 @@ export async function selectCarbonReductionByMonth(db: GreenShiftDb) {
 		.groupBy(monthKey(period));
 }
 
-/** Tonnes of CO2e every project on the platform targets in total. */
 export async function selectCarbonReductionTarget(db: GreenShiftDb) {
 	const rows = await db
 		.select({

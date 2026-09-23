@@ -58,8 +58,7 @@ export function RecommendedProjectsPreview({
 				<div className="flex gap-4 overflow-x-auto pb-4 scrollbar-none">
 					{slots.map((proj, i) => {
 						const frameClass =
-							// The fixed width is the carousel's point: the next card has to
-							// peek in, so a card is deliberately narrower than the track.
+							// The fixed width is the carousel's point: a card is deliberately narrower than the track so the next one peeks in.
 							"flex w-[320px] shrink-0 flex-col rounded-xl border border-border bg-card p-5 transition-all";
 
 						const body = (

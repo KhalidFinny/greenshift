@@ -15,10 +15,8 @@ export interface TooltipDotProps {
 	strokeWidth?: number;
 	/** Dot fill or transparent ring around the hovered mark. Default: "dot" */
 	variant?: "dot" | "ring";
-	/**
-	 * Ring corner radius as a fraction of side length (0 = square, 0.5 = circle).
-	 * Same semantics as bar square radius.
-	 */
+	/** Ring corner radius as a fraction of side length (0 = square, 0.5 = circle); same semantics as
+	 * bar square radius. */
 	cornerRadiusFraction?: number;
 	/** Per-chart override; falls back to `ChartConfigProvider.tooltipSpring`. */
 	springConfig?: SpringConfig;

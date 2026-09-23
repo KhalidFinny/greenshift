@@ -1,7 +1,5 @@
-/* The reading the review step opens with, for the project as the company has
- * entered it so far. Same shape as the risk insight: the figures travel,
- * the analyst's words come back.
- */
+/* The reading the review step opens with, for the project as entered so far. Same
+ * shape as the risk insight: the figures travel, the analyst's words come back. */
 
 import { Hono } from "hono";
 import { createFactory } from "hono/factory";
@@ -48,7 +46,6 @@ function readOptionalNumber(
 	return undefined;
 }
 
-/** The body as this route will hand it on, or null when it is not one. */
 function readReadingRequest(
 	raw: unknown,
 ): BusinessProjectReadingRequest | null {

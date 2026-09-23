@@ -4,11 +4,8 @@ import { auditLogs, users } from "../../../db/schema";
 
 export type CompanyProfileRow = typeof users.$inferSelect;
 
-/**
- * A save of the company settings. Only the company name is required; the other
- * keys are written when the request carried them, so a form that changes one
- * field leaves the registration values of the rest in place.
- */
+// Only the company name is required; the other keys are written when the request
+// carried them, so a form that changes one field keeps the rest as registered.
 export interface CompanyProfileValues {
 	companyName: string;
 	representative?: string;

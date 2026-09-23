@@ -103,8 +103,7 @@ export function MatchmakingDeepDive({
 
 					<div className="flex-1 space-y-4">
 						{MATCH_CRITERIA.map((criterion) => {
-							// The stored criteria are unrounded; the screen shows whole
-							// percentages, the same way the total reads.
+							// Stored criteria are unrounded; the screen shows whole percentages, the way the total reads.
 							const score = Math.round(matchmaking[criterion.key]);
 							return (
 								<div key={criterion.key} className="space-y-1.5">

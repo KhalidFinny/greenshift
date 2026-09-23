@@ -34,13 +34,11 @@ export function VendorOpportunitiesPage() {
 	const [selectedMethod, setSelectedMethod] =
 		useState<ProcurementFilter>("ALL");
 
-	// Project IDs the vendor has already applied to
 	const appliedProjectIds = new Set(proposals.map((p) => p.projectId));
 	const currentVendorId = user ? String(user.id) : undefined;
 
-	// Available projects = unapplied open tenders matching search & filters
 	const availableProjects = projects.filter((p) => {
-		// Do not show already-applied projects in Opportunities (tracked in My Deals)
+		// Applied projects live in My Deals, not here.
 		if (appliedProjectIds.has(p.id)) {
 			return false;
 		}
@@ -62,7 +60,6 @@ export function VendorOpportunitiesPage() {
 		return matchesQuery && matchesMethod;
 	});
 
-	// Recommended = high match (≥90) among available unapplied tenders
 	const recommended = availableProjects.filter((p) =>
 		isTopMatch(p.matchmaking),
 	);

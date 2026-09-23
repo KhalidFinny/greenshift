@@ -1,17 +1,5 @@
-/* The bidding phase for one project: the tender a route choice opened, the bids
- * on it, and the company's verdict on each.
- *
- * A bid is read as the vendor's proposal document, which is what the company
- * marks when it asks for a revision: the marks are stored in the proposal page's
- * own coordinates, so the vendor opens the same document with the same circles
- * on it. Every round of that exchange is on the row, because the request and its
- * answer are one thread rather than two screens.
- *
- * There is one way to settle a tender, and it is the award: it accepts the
- * winning bid and rejects the rest. A separate "accept" would leave a bid
- * accepted on a tender that is still open, which is a state the company would
- * then have to resolve twice.
- */
+/* Bidding phase for one project: the tender, its bids, the verdicts. A bid is the
+ * vendor's proposal doc, marks in page coordinates; a tender settles only by award. */
 
 import {
 	faCircleCheck,
@@ -56,7 +44,6 @@ import {
 	stageSummary,
 } from "./matchmaking-shared";
 
-/** What each state of a bid reads as on its row. */
 const BID_STATUS_LABEL: Record<string, string> = {
 	submitted: "Submitted",
 	reviewed: "Reviewed",
@@ -65,7 +52,6 @@ const BID_STATUS_LABEL: Record<string, string> = {
 	rejected: "Rejected",
 };
 
-/** Months of warranty, or an honest blank. */
 function warrantyLabel(months: number | null): string {
 	return months === null ? "Not stated" : `${months} months`;
 }
@@ -88,7 +74,7 @@ function toProposal(
 	};
 }
 
-/** One round of the exchange: what the company asked, and what came back. */
+/** One round: the company's ask and the vendor's answer. */
 function RevisionRound({
 	round,
 	onViewMarks,
@@ -187,17 +173,13 @@ function BidRow({
 	const [revisionOpen, setRevisionOpen] = useState(false);
 	const [reading, setReading] = useState<ProposalAnnotation[] | null>(null);
 
-	// A bid can carry any number of rounds, so the thread pages like every other
-	// record list rather than growing the card without a bound.
+	// A bid can carry any number of rounds, so the thread pages like every other record list.
 	const rounds = usePagedRows(bid.negotiations);
 
 	const proposal = toProposal(bid, projectTitle);
 
-	/* A round the vendor has not answered yet holds the bid: accepting it would
-	   take terms neither side has settled, and asking for another round on top of
-	   an open one would leave the vendor two asks behind. The API refuses both,
-	   so the controls say the same thing here rather than offering a button that
-	   can only fail. */
+	/* A round the vendor has not answered holds the bid: the API refuses both
+	   accepting it and asking for another, so the controls do the same. */
 	const openRound = bid.negotiations.find(
 		(round) => round.status === "PENDING_VENDOR_RESPONSE",
 	);
@@ -280,8 +262,7 @@ function BidRow({
 				</p>
 			)}
 
-			{/* The bidder's written case, which is the document the vendor filed
-			    with the bid. Absent when the bid carried none. */}
+			{/* The bidder's written case: the document filed with the bid, absent when there was none. */}
 			{bid.documentUrl ? (
 				<a
 					href={bid.documentUrl}
@@ -369,8 +350,8 @@ function BidRow({
 				)}
 			</div>
 
-			{/* Reading: the proposal with whatever marks are being read, and no
-			    drawing tools, because this reader is not the one asking. */}
+			{/* Reading: the marked proposal, no drawing tools, because this reader is not the one
+			    asking. */}
 			<Dialog
 				open={reading !== null}
 				onOpenChange={(open) => {
@@ -392,7 +373,6 @@ function BidRow({
 				</DialogContent>
 			</Dialog>
 
-			{/* Asking: the same document, with the tools to mark it. */}
 			<Dialog
 				open={revisionOpen}
 				onOpenChange={(open) => {
@@ -464,8 +444,7 @@ export function MatchmakingBidding({ projectId }: { projectId: string }) {
 		queryFn: async () => api.business.matchmakingDetail(id),
 	});
 
-	// The bids are a record list like any other: it pages even though the pool is
-	// invited, because nothing bounds how many of them bid.
+	// The bids are a record list like any other: it pages because nothing bounds how many bid.
 	const bidPage = usePagedRows(detailQuery.data?.bids ?? []);
 
 	async function act(action: () => Promise<unknown>) {
@@ -510,8 +489,7 @@ export function MatchmakingBidding({ projectId }: { projectId: string }) {
 	const detail = detailQuery.data;
 	const tender = detail.tender;
 
-	// No tender means the ranking page has not opened one yet, so there is
-	// nothing to bid on and this page says so rather than showing an empty list.
+	// No tender means the ranking page has not opened one; nothing to bid on here.
 	if (!tender) {
 		return (
 			<div className="space-y-6">
@@ -548,8 +526,7 @@ export function MatchmakingBidding({ projectId }: { projectId: string }) {
 						{detail.project.name}
 					</p>
 				</div>
-				{/* Once the tender is awarded, matchmaking is settled: the ranking has
-				    nothing left to decide, so the way back is the list of projects. */}
+				{/* Once awarded, matchmaking is settled: the way back is the list of projects. */}
 				{tender.status === "awarded" ? (
 					<Button variant="outline" asChild>
 						<Link to="/business/matchmaking">Back to my matchmaking</Link>
@@ -592,8 +569,7 @@ export function MatchmakingBidding({ projectId }: { projectId: string }) {
 			<section className="space-y-3">
 				<div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
 					<h2 className="text-lg font-semibold">Bids</h2>
-					{/* The order is the amount, which the row shows, so the list needs no
-					    second scoring model to explain itself. */}
+					{/* The order is the amount, which the row shows; no second scoring model needed. */}
 					<p className="text-sm text-muted-foreground">Lowest bid first</p>
 				</div>
 

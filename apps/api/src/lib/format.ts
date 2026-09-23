@@ -1,7 +1,3 @@
-/**
- * Formatting and parsing helpers shared by every module.
- */
-
 export function iso(date: Date | null): string | null {
 	return date?.toISOString() ?? null;
 }
@@ -40,10 +36,8 @@ export function invalidText(value: unknown, max: number): boolean {
 	);
 }
 
-/**
- * Strict variant for bodies where an explicit JSON null is malformed rather
- * than absent (the broker endpoints validate this way).
- */
+// Strict variant for bodies where an explicit JSON null is malformed rather
+// than absent (the broker endpoints validate this way).
 export function invalidOptionalText(value: unknown, max: number): boolean {
 	return (
 		value !== undefined && (typeof value !== "string" || value.length > max)
@@ -58,7 +52,7 @@ export function invalidOptionalNumber(
 	return invalidNumber(value === null ? Number.NaN : value, opts);
 }
 
-/** Max length of a stored text field, used by validation guards. */
+/** Max length of a stored text field. */
 export const MAX_TEXT = 2000;
 export const MAX_SHORT_TEXT = 300;
 export const MAX_NAME = 200;

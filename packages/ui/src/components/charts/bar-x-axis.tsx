@@ -96,7 +96,6 @@ const BarXAxisInner = memo(function BarXAxisInner({
 	const { margin, tooltipData, barScale, bandWidth, barXAccessor, data } =
 		useChart();
 
-	// Generate labels for each bar
 	const labelsToShow = useMemo(() => {
 		if (!(barScale && bandWidth && barXAccessor)) {
 			return [];
@@ -105,17 +104,14 @@ const BarXAxisInner = memo(function BarXAxisInner({
 		const allLabels = data.map((d) => {
 			const label = barXAccessor(d);
 			const bandX = barScale(label) ?? 0;
-			// Center the label under the bar group
 			const x = bandX + bandWidth / 2 + margin.left;
 			return { label, x };
 		});
 
-		// If showAllLabels is true or we have fewer than maxLabels, show all
 		if (showAllLabels || allLabels.length <= maxLabels) {
 			return allLabels;
 		}
 
-		// Otherwise, skip some labels to avoid crowding
 		const step = Math.ceil(allLabels.length / maxLabels);
 		return allLabels.filter((_, i) => i % step === 0);
 	}, [

@@ -21,11 +21,8 @@ interface AccountAvatarProps {
 	size?: "default" | "sm" | "lg";
 }
 
-/**
- * The account picture with initials behind it. The fallback is rendered by
- * Radix whenever there is no picture or the image fails to load, so the avatar
- * is never empty.
- */
+/** The account picture with initials behind it. Radix renders the fallback
+ * whenever there is no picture or the image fails, so the avatar is never empty. */
 export function AccountAvatar({
 	name,
 	avatarKey,

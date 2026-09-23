@@ -45,8 +45,7 @@ export function VendorProjectDetailPage({ projectId }: { projectId?: string }) {
 	}
 
 	const isVerified = verification.status === "VERIFIED";
-	// The vendor's own bid on this tender, if it has filed one: the same record
-	// decides whether the action card offers a bid or a revision.
+	// The vendor's own bid on this tender, if filed: the same record decides whether the action card offers a bid or a revision.
 	const myProposal = project
 		? (proposals.find((proposal) => proposal.projectId === project.id) ?? null)
 		: null;

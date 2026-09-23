@@ -9,14 +9,12 @@ import {
 	useMemo,
 } from "react";
 
-// CSS variable references for ring chart theming
 export const ringCssVars = {
 	background: "var(--chart-background)",
 	foreground: "var(--chart-foreground)",
 	foregroundMuted: "var(--chart-foreground-muted)",
 	label: "var(--chart-label)",
 	ringBackground: "var(--border)",
-	// Default ring colors from chart palette
 	ring1: "var(--chart-1)",
 	ring2: "var(--chart-2)",
 	ring3: "var(--chart-3)",
@@ -24,7 +22,6 @@ export const ringCssVars = {
 	ring5: "var(--chart-5)",
 };
 
-// Default ring color palette
 export const defaultRingColors = [
 	ringCssVars.ring1,
 	ringCssVars.ring2,
@@ -34,9 +31,7 @@ export const defaultRingColors = [
 ];
 
 export interface RingData {
-	/** Display label for the ring */
 	label: string;
-	/** Current value */
 	value: number;
 	/** Maximum value (determines progress percentage) */
 	maxValue: number;
@@ -50,42 +45,31 @@ export interface RingHoverContextValue {
 }
 
 export interface RingStableContextValue {
-	// Data
 	data: RingData[];
 
-	// Dimensions
 	size: number;
 	center: number;
 	strokeWidth: number;
 	ringGap: number;
 	baseInnerRadius: number;
 
-	// Animation state
 	animationKey: number;
 	isLoaded: boolean;
 	enterTransition?: Transition;
 	enterStaggerScale: number;
 
-	// Container ref for portals
 	containerRef: RefObject<HTMLDivElement | null>;
 
-	// Computed values
 	totalValue: number;
 
-	// Get color for a ring index
 	getColor: (index: number) => string;
 
-	// Get ring radii for an index
 	getRingRadii: (index: number) => { innerRadius: number; outerRadius: number };
 
-	// Arc angle range
 	startAngle: number;
 	endAngle: number;
 
-	/**
-	 * Studio geometry scrub: skip Motion path morphing and use plain SVG paths.
-	 * @default false
-	 */
+	/** Studio geometry scrub: skip Motion path morphing, use plain SVG paths. Default: false */
 	geometryScrubbing: boolean;
 }
 

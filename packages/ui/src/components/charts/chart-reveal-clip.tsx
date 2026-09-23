@@ -23,10 +23,8 @@ export interface ChartRevealClipProps {
 	onComplete?: () => void;
 }
 
-/**
- * Left-to-right clip reveal for cartesian series.
- * Grows clip rect width from 0 → full (true LTR; scaleX is avoided: it reveals from center).
- */
+/** Left-to-right clip reveal for cartesian series: clip width grows 0 → full.
+ * scaleX is avoided because it reveals from the center. */
 export function ChartRevealClip({
 	clipPathId,
 	height,

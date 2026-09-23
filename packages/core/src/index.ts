@@ -1,9 +1,7 @@
-// Upload constraints live with the API contract; role packages read them here
-// rather than reaching into @greenshift/api directly.
-
-// Same reason: the business package needs these shapes but may only import
-// from core, so they are re-exported rather than reached for directly.
+// Role packages may import only from core, so the API contract's shapes and
+// lists are re-exported here instead of reached for through @greenshift/api.
 export type {
+	AdminCompanyVerification,
 	AnalystReadingMode,
 	BlueprintDocument,
 	BlueprintEmissionTargets,
@@ -43,6 +41,11 @@ export type {
 	BusinessStep3Patch,
 	BusinessSubmittedProject,
 	BusinessTender,
+	CompanyDocument,
+	CompanyDocumentSlot,
+	CompanyVerification,
+	CompanyVerificationBody,
+	CompanyVerificationStatus,
 	ForecastScenario,
 	ForecastScenarioKey,
 	OrganizationType,
@@ -52,6 +55,9 @@ export type {
 } from "@greenshift/api/contracts";
 export {
 	avatarLimits,
+	companyDocumentLabels,
+	companyDocumentSlots,
+	companyVerificationStatuses,
 	credentialLimits,
 	forecastScenarioKeys,
 	industrySectors,
@@ -63,6 +69,7 @@ export * from "./api/client";
 export * from "./api/errors";
 export * from "./api/http";
 export * from "./auth";
+export * from "./geo/districts";
 export * from "./partners";
 export { default as TanStackQueryDevtools } from "./query/devtools";
 export { getContext } from "./query/root-provider";

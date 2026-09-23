@@ -11,15 +11,8 @@ import { Link } from "@tanstack/react-router";
 import { Eye, EyeOff, FileText, Leaf, LineChart, Shield } from "lucide-react";
 import { type ComponentProps, type ReactNode, useState } from "react";
 
-/**
- * The chrome both auth pages share: background decoration, the brand column and
- * the card the form sits in.
- *
- * Extracted rather than copied so /login and /register cannot drift apart, and
- * so the responsive behaviour is decided once. The layout reflows below `lg`:
- * the brand column stacks under the card, and the decorative building is
- * dropped (it is a desktop composition, not content).
- */
+// Chrome shared by /login and /register: background decoration, brand column, card.
+// Reflows below `lg`: the brand stacks under the card and the building image is dropped.
 
 /** Brand pillars. Static copy: they describe the product, not the current user. */
 const FEATURES = [
@@ -30,13 +23,9 @@ const FEATURES = [
 ] as const;
 
 interface AuthLayoutProps {
-	/** Card heading. */
 	title: string;
-	/** Optional line under the heading. */
 	description?: string;
-	/** The form, and anything else that belongs inside the card. */
 	children: ReactNode;
-	/** The switch link, rendered under the card. */
 	footer: ReactNode;
 }
 
@@ -117,7 +106,6 @@ export function AuthLayout({
 						</div>
 					</div>
 
-					{/* Card */}
 					<div className="relative z-20 mx-auto w-full max-w-[560px] rounded-2xl border border-[#E5EBE8] bg-white p-5 shadow-[0_20px_60px_rgba(18,61,55,0.08)] sm:p-6 lg:justify-self-end lg:p-8">
 						<h2 className="text-2xl font-semibold tracking-[-0.03em] text-[#123D38] sm:text-3xl">
 							{title}
@@ -149,6 +137,9 @@ const FIELD_CLASS =
 	"h-11 w-full rounded-xl border border-[#82928B] bg-[#FBFCFB] px-4 text-[#123D38] outline-none transition placeholder:text-[#667570] focus:border-[#07815F] focus:ring-2 focus:ring-[#07815F]/10 sm:h-12";
 
 const LABEL_CLASS = "mb-1.5 block text-sm font-medium text-[#244D47]";
+
+/** The auth field label, exported for the fields that are not `AuthInput`. */
+export const AUTH_LABEL_CLASS = LABEL_CLASS;
 
 function FieldError({ id, error }: { id: string; error?: unknown }) {
 	if (!error) return null;
@@ -240,10 +231,7 @@ interface AuthSelectProps {
 	disabled?: boolean;
 }
 
-/**
- * Select matching `AuthInput`, for a field whose values come from a fixed
- * vocabulary rather than from the user's own words.
- */
+/** Select matching `AuthInput`, for values drawn from a fixed vocabulary. */
 export function AuthSelect({
 	id,
 	label,
@@ -288,7 +276,7 @@ interface AuthTextareaProps extends ComponentProps<"textarea"> {
 	error?: unknown;
 }
 
-/** Multi-line input matching `AuthInput`, for text that is not a single line. */
+/** Multi-line input matching `AuthInput`. */
 export function AuthTextarea({
 	id,
 	label,
@@ -324,9 +312,7 @@ export function AuthSubmit({
 	disabled = false,
 }: {
 	children: ReactNode;
-	/** Shows the working state: the request is in flight. */
 	pending?: boolean;
-	/** Blocks the action: the form is not ready to be submitted. */
 	disabled?: boolean;
 }) {
 	return (

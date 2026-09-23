@@ -11,6 +11,7 @@ import {
 	vendorServiceCategories,
 } from "@greenshift/core";
 import {
+	DistrictCombobox,
 	RadioGroup,
 	RadioGroupItem,
 	useAppForm,
@@ -19,6 +20,7 @@ import {
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import {
+	AUTH_LABEL_CLASS,
 	AuthInput,
 	AuthLayout,
 	AuthPasswordInput,
@@ -46,11 +48,7 @@ const PHONE_RE = /^[+()\d][+()\d\s-]*$/;
 /** NIB and NPWP as they are written on the document; format is not enforced. */
 const LEGAL_ID_RE = /^[\d.\-\s]+$/;
 
-/**
- * The two organizations a person can register, with what each one does on the
- * platform. The copy is the role's job, not a label: it is what tells the two
- * options apart.
- */
+/** The two organizations a person can register; the summary copy is what tells them apart. */
 const ACCOUNT_TYPES: readonly {
 	value: OrganizationType;
 	label: string;
@@ -81,7 +79,8 @@ function RegisterPage() {
 			phone: "",
 			organizationName: "",
 			industry: "",
-			address: "",
+			district: "",
+			street: "",
 			businessInfo: "",
 			nib: "",
 			npwp: "",
@@ -97,7 +96,11 @@ function RegisterPage() {
 					phone: value.phone,
 					organizationName: value.organizationName,
 					industry: value.industry,
-					address: value.address,
+					// One address on the wire: the street line the user typed, then the
+					// district they picked from the dataset the platform knows.
+					address: [value.street.trim(), value.district.trim()]
+						.filter(Boolean)
+						.join(", "),
 					// Blank optionals are left out rather than sent empty, so the
 					// server stores nothing for a field the user skipped.
 					...(value.businessInfo.trim()
@@ -106,9 +109,8 @@ function RegisterPage() {
 					...(value.nib.trim() ? { nib: value.nib } : {}),
 					...(value.npwp.trim() ? { npwp: value.npwp } : {}),
 				});
-				// SPA transition: register() invalidates the router and the
-				// register route's beforeLoad redirects to the role home with the
-				// fresh session: no full page load, so toasts stay visible.
+				// SPA transition: register() invalidates the router and beforeLoad redirects
+				// to the role home with the fresh session, so the toast survives.
 			} catch (err) {
 				setError(
 					err instanceof ApiError
@@ -365,19 +367,41 @@ function RegisterPage() {
 					</form.AppField>
 
 					<form.AppField
-						name="address"
+						name="district"
 						validators={{
 							onChange: ({ value }) =>
-								value.trim() ? undefined : "Address is required",
+								value.trim() ? undefined : "Choose the registered district",
 						}}
 					>
 						{(field) => (
+							<div className="space-y-2">
+								<label htmlFor="district" className={AUTH_LABEL_CLASS}>
+									{isVendor ? "Business district" : "Registered district"}
+								</label>
+								<DistrictCombobox
+									id="district"
+									value={field.state.value}
+									onChange={field.handleChange}
+									onBlur={field.handleBlur}
+									error={field.state.meta.errors[0]}
+								/>
+								<p className="text-sm text-[#5A6B66]">
+									Search the district the organization is registered in. The
+									list is the national district dataset, so the address can be
+									compared with the projects you work on.
+								</p>
+							</div>
+						)}
+					</form.AppField>
+
+					<form.AppField name="street">
+						{(field) => (
 							<AuthInput
-								id="address"
-								label={isVendor ? "Business address" : "Registered address"}
-								maxLength={registerLimits.address}
+								id="street"
+								label="Street, building, number"
+								maxLength={120}
 								autoComplete="street-address"
-								placeholder="Street, city, province"
+								placeholder="Jl. Soekarno Hatta 12"
 								value={field.state.value}
 								onBlur={field.handleBlur}
 								onChange={(event) => field.handleChange(event.target.value)}

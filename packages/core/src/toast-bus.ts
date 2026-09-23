@@ -1,9 +1,5 @@
-/**
- * Framework-agnostic toast channel. The API client (core) publishes
- * success/failure messages here; the shared ToastProvider in @greenshift/ui
- * subscribes and renders them. Keeping the bus in core (not ui) lets the
- * request layer emit toasts without a UI dependency.
- */
+/** Toast channel between the API client and the @greenshift/ui ToastProvider;
+ * it lives here so the request layer emits toasts without a UI dependency. */
 export type ToastTone = "success" | "error" | "info";
 
 export interface ToastMessage {
@@ -15,15 +11,11 @@ export interface ToastMessage {
 
 type ToastListener = (toast: ToastMessage) => void;
 
-/**
- * Where the provider keeps the toasts that have not been dismissed yet, so a
- * full page load does not wipe one mid-flight. A toast can name a project, a
- * proposal or an amount, so the store is cleared when the session ends: the next
- * person to sign in on the same tab must not read the last one's messages.
- */
+/** Survives a page load so an undismissed toast is not lost mid-flight; cleared
+ * at sign-out because the queue can name a project, a proposal or an amount. */
 export const TOAST_STORAGE_KEY = "greenshift:toasts";
 
-/** Drops the persisted queue. Called on sign-out, before the router reloads. */
+/** Drops the persisted queue before the router reloads on sign-out. */
 export function clearStoredToasts(): void {
 	try {
 		window.sessionStorage.removeItem(TOAST_STORAGE_KEY);
@@ -38,7 +30,7 @@ export function publishToast(toast: ToastMessage): void {
 	for (const listener of listeners) listener(toast);
 }
 
-/** Returns an unsubscribe function. Called by the toast provider. */
+/** Returns the unsubscribe the toast provider calls on unmount. */
 export function subscribeToasts(listener: ToastListener): () => void {
 	listeners.add(listener);
 	return () => {

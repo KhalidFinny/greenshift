@@ -57,23 +57,18 @@ const FALLBACK_LOADING_BARS = 12;
 export type BarOrientation = "vertical" | "horizontal";
 
 export interface BarChartProps {
-	/** Data array - each item should have an x-axis key and numeric values */
 	data: Record<string, unknown>[];
 	/** Key in data for the categorical axis. Default: "name" */
 	xDataKey?: string;
-	/** Chart margins */
 	margin?: Partial<Margin>;
 	/** Animation duration in milliseconds. Default: 1100 */
 	animationDuration?: number;
-	/** CSS easing for bar grow transitions. */
 	animationEasing?: string;
-	/** Motion enter transition (spring or cubic-bezier tween). */
 	enterTransition?: Transition;
 	/** Signature of motion URL state: triggers enter replay when it changes. */
 	revealSignature?: string;
 	/** Aspect ratio as "width / height". Default: "2 / 1" */
 	aspectRatio?: string;
-	/** Additional class name for the container */
 	className?: string;
 	/** Gap between bar groups as a fraction of band width (0-1). Default: 0.2 */
 	barGap?: number;
@@ -99,7 +94,6 @@ export interface BarChartProps {
 
 const DEFAULT_MARGIN: Margin = { top: 40, right: 40, bottom: 40, left: 40 };
 
-// Extract bar configs from children synchronously
 function extractBarConfigs(children: ReactNode): LineConfig[] {
 	const configs: LineConfig[] = [];
 
@@ -109,9 +103,8 @@ function extractBarConfigs(children: ReactNode): LineConfig[] {
 			name?: string;
 			__isBarDepthLayer?: boolean;
 		};
-		// Bar-depth surface layers (BarDepthBack/Front, BarPulse) carry a
-		// `dataKey` to pair with a Bar but are not series themselves: skip them
-		// so they don't inflate the series count and shrink the real bars.
+		// Bar-depth surface layers carry a `dataKey` to pair with a Bar but are not
+		// series: skip them so they don't inflate the series count.
 		if (childType.__isBarDepthLayer) {
 			return;
 		}
@@ -127,8 +120,7 @@ function extractBarConfigs(children: ReactNode): LineConfig[] {
 			(props && typeof props.dataKey === "string" && props.dataKey.length > 0);
 
 		if (isBarComponent && props?.dataKey) {
-			// Use stroke for tooltip dot color if provided, otherwise fall back to fill
-			// This allows gradient/pattern fills to have a solid dot color
+			// Fall back to fill so gradient/pattern fills still get a solid dot color.
 			const dotColor =
 				props.stroke || props.fill || "var(--chart-line-primary)";
 			configs.push({
@@ -202,13 +194,11 @@ const ChartCore = memo(function ChartCore({
 
 	const isHorizontal = orientation === "horizontal";
 
-	// Extract bar configs synchronously from children
 	const lines = useMemo(() => extractBarConfigs(children), [children]);
 
 	const innerWidth = width - margin.left - margin.right;
 	const innerHeight = height - margin.top - margin.bottom;
 
-	// Category accessor function - returns string for categorical scale
 	const categoryAccessor = useCallback(
 		(d: Record<string, unknown>): string => {
 			const value = d[xDataKey];
@@ -220,7 +210,6 @@ const ChartCore = memo(function ChartCore({
 		[xDataKey],
 	);
 
-	// For compatibility with ChartContext, provide a Date-based xAccessor
 	const xAccessorDate = useCallback(
 		(d: Record<string, unknown>): Date => {
 			const value = d[xDataKey];
@@ -232,7 +221,6 @@ const ChartCore = memo(function ChartCore({
 		[xDataKey],
 	);
 
-	// Category scale (band) - for the categorical axis
 	const categoryScale = useMemo(() => {
 		const domain = data.map((d) => categoryAccessor(d));
 		const range: [number, number] = isHorizontal
@@ -245,13 +233,10 @@ const ChartCore = memo(function ChartCore({
 		});
 	}, [innerWidth, innerHeight, data, categoryAccessor, barGap, isHorizontal]);
 
-	// Band width for bars - use prop if provided, otherwise use scale's bandwidth
 	const bandWidth = barWidthProp ?? categoryScale.bandwidth();
 
-	// Compute max value considering stacking
 	const maxValue = useMemo(() => {
 		if (stacked) {
-			// For stacked bars, sum all values at each data point
 			let max = 0;
 			for (const d of data) {
 				let sum = 0;
@@ -267,7 +252,6 @@ const ChartCore = memo(function ChartCore({
 			}
 			return max || 100;
 		}
-		// For grouped bars, find max single value
 		let max = 0;
 		for (const line of lines) {
 			for (const d of data) {
@@ -280,7 +264,6 @@ const ChartCore = memo(function ChartCore({
 		return max || 100;
 	}, [data, lines, stacked]);
 
-	// Value scale (linear) - for the value axis
 	const valueScale = useMemo(() => {
 		const range = isHorizontal ? [0, innerWidth] : [innerHeight, 0];
 		return scaleLinear({
@@ -315,7 +298,6 @@ const ChartCore = memo(function ChartCore({
 
 	const primaryYScale = getPrimaryYScale(yScales, valueScale);
 
-	// Compute stack offsets for stacked bars
 	const stackOffsets = useMemo(() => {
 		if (!stacked) {
 			return undefined;
@@ -340,7 +322,6 @@ const ChartCore = memo(function ChartCore({
 		return offsets;
 	}, [data, lines, stacked]);
 
-	// Column width for tooltip indicator
 	const columnWidth = useMemo(() => {
 		if (data.length < 1) {
 			return 0;
@@ -348,13 +329,11 @@ const ChartCore = memo(function ChartCore({
 		return isHorizontal ? innerHeight / data.length : innerWidth / data.length;
 	}, [innerWidth, innerHeight, data.length, isHorizontal]);
 
-	// Pre-compute labels for ticker animation
 	const dateLabels = useMemo(
 		() => data.map((d) => categoryAccessor(d)),
 		[data, categoryAccessor],
 	);
 
-	// Create a fake time scale for compatibility with ChartContext
 	const fakeTimeScale = useMemo(() => {
 		const now = Date.now();
 		const start = now - data.length * 24 * 60 * 60 * 1000;
@@ -368,7 +347,6 @@ const ChartCore = memo(function ChartCore({
 		return scale;
 	}, [categoryScale, innerWidth, data.length]);
 
-	// Animation timing: replay when motion settings change
 	useEffect(() => {
 		setRevealEpoch((n) => n + 1);
 		setIsLoaded(false);
@@ -388,7 +366,6 @@ const ChartCore = memo(function ChartCore({
 		onPhaseChange?.(isLoaded ? "ready" : "revealing");
 	}, [isLoaded, onPhaseChange]);
 
-	// Mouse move handler
 	const handleMouseMove = useCallback(
 		(event: React.MouseEvent<SVGGElement>) => {
 			const point = localPoint(event);
@@ -398,7 +375,6 @@ const ChartCore = memo(function ChartCore({
 
 			const pos = isHorizontal ? point.y - margin.top : point.x - margin.left;
 
-			// Find which band the mouse is over
 			const bandIndex = Math.floor(pos / columnWidth);
 			const clampedIndex = Math.max(0, Math.min(data.length - 1, bandIndex));
 			const d = data[clampedIndex];
@@ -407,13 +383,11 @@ const ChartCore = memo(function ChartCore({
 				return;
 			}
 
-			// Calculate positions for each bar
 			const yPositions: Record<string, number> = {};
 			const xPositions: Record<string, number> = {};
 			const barPos = categoryScale(categoryAccessor(d)) ?? 0;
 
 			if (isHorizontal) {
-				// Horizontal bars: dots at end of bar (x = value), centered vertically in band
 				const seriesCount = lines.length;
 				const groupGap = seriesCount > 1 ? 4 : 0;
 				const individualBarHeight =
@@ -422,7 +396,6 @@ const ChartCore = memo(function ChartCore({
 						: bandWidth;
 
 				if (stacked) {
-					// Stacked horizontal: all bars same y, x at cumulative end
 					let cumulative = 0;
 					for (const line of lines) {
 						const value = d[line.dataKey];
@@ -435,7 +408,6 @@ const ChartCore = memo(function ChartCore({
 						}
 					}
 				} else {
-					// Grouped horizontal: each bar at its own y position
 					lines.forEach((line, idx) => {
 						const value = d[line.dataKey];
 						if (typeof value === "number") {
@@ -450,7 +422,6 @@ const ChartCore = memo(function ChartCore({
 					});
 				}
 			} else if (stacked) {
-				// Vertical stacked bars
 				let cumulative = 0;
 				let seriesIdx = 0;
 				for (const line of lines) {
@@ -465,7 +436,6 @@ const ChartCore = memo(function ChartCore({
 					}
 				}
 			} else {
-				// Vertical grouped bars
 				const seriesCount = lines.length;
 				const groupGap = seriesCount > 1 ? 4 : 0;
 				const individualBarWidth =
@@ -502,10 +472,8 @@ const ChartCore = memo(function ChartCore({
 				});
 			}
 
-			// Tooltip position: for horizontal, position at max bar end; for vertical, center of band
 			let tooltipX: number;
 			if (isHorizontal) {
-				// Position tooltip at the end of the longest bar
 				const maxX = Math.max(...Object.values(xPositions), 0);
 				tooltipX = maxX;
 			} else {
@@ -547,7 +515,6 @@ const ChartCore = memo(function ChartCore({
 
 	const canInteract = isLoaded;
 
-	// Separate children into defs, pre-overlay, and post-overlay
 	const defsChildren: ReactElement[] = [];
 	const clipExcludedChildren: ReactElement[] = [];
 	const underlayChildren: ReactElement[] = [];
@@ -608,7 +575,6 @@ const ChartCore = memo(function ChartCore({
 		revealEpoch,
 		xAccessor: xAccessorDate,
 		dateLabels,
-		// Bar-specific properties
 		barScale: categoryScale,
 		bandWidth,
 		hoveredBarIndex,
@@ -627,7 +593,6 @@ const ChartCore = memo(function ChartCore({
 				height={height}
 				width={width}
 			>
-				{/* Gradient and pattern definitions */}
 				{defsChildren.length > 0 && <defs>{defsChildren}</defs>}
 
 				<rect fill="transparent" height={height} width={width} x={0} y={0} />
@@ -639,7 +604,6 @@ const ChartCore = memo(function ChartCore({
 					style={{ cursor: canInteract ? "crosshair" : "default" }}
 					transform={`translate(${margin.left},${margin.top})`}
 				>
-					{/* Background rect for mouse event detection */}
 					<rect
 						fill="transparent"
 						height={innerHeight}

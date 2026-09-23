@@ -31,7 +31,10 @@ import { ExportMenu } from "../organisms/export-menu";
 import { MetricCard } from "../organisms/metric-card";
 import { StepUpDialog } from "../organisms/step-up-dialog";
 import { TableSkeleton } from "../organisms/table-skeleton";
-import { VendorDetailDialog } from "../organisms/vendor-detail-dialog";
+import {
+	missingVendorPackItems,
+	VendorDetailDialog,
+} from "../organisms/vendor-detail-dialog";
 import { VendorPerformanceDialog } from "../organisms/vendor-performance-dialog";
 
 /** Column labels for the loading frame, in table order. */
@@ -122,11 +125,17 @@ const vendorColumns = (
 		enableSorting: false,
 		cell: ({ row }) => {
 			const verified = row.original.verifiedAt !== null;
+			const missing = missingVendorPackItems(row.original);
 			return (
 				<Button
 					variant={verified ? "outline" : "default"}
 					onClick={() => onVerify(row.original, !verified)}
-					disabled={isPending}
+					disabled={isPending || (!verified && missing.length > 0)}
+					title={
+						!verified && missing.length > 0
+							? `Still to file: ${missing.join(", ")}`
+							: undefined
+					}
 				>
 					{verified ? "Revoke verification" : "Verify"}
 				</Button>
@@ -182,8 +191,7 @@ export function AdminVendors() {
 		);
 	}
 
-	// Cached vendors survive a refetch, so the page keeps its real frames and
-	// each part shimmers only its own values.
+	// Cached vendors survive a refetch, so each part shimmers only its own values.
 	const loading = vendorsQuery.isPending;
 	const vendors = vendorsQuery.data?.vendors ?? [];
 	const totalVendors = vendors.length;

@@ -1,15 +1,7 @@
 import { PARTNER_APPS } from "@greenshift/core";
 
-/**
- * The partner apps a project's bond is issued and held in.
- *
- * This stands where the monitoring step used to show a dashboard: the money
- * around a bond is handled outside GreenShift, by a licensed securities
- * partner, so the step names those partners instead of implying the platform
- * holds the instrument. The logos are the ones the partners publish on their
- * own store listings, so the panel shows the same apps an investor would find
- * there.
- */
+/** The partner apps a bond is issued and held in: the money is handled outside
+ * GreenShift, and the logos are the ones the partners publish on their store listings. */
 export default function PartnerAppsShowcase() {
 	return (
 		<figure className="m-0">

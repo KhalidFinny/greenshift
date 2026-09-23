@@ -12,7 +12,6 @@ export async function listBrokers(db: GreenShiftDb, limit: number) {
 		.limit(limit);
 }
 
-/** Minimal projection used by the licence-verification guard. */
 export async function findBrokerForVerification(db: GreenShiftDb, id: number) {
 	const [broker] = await db
 		.select({ id: brokerProfiles.id, verifiedAt: brokerProfiles.verifiedAt })

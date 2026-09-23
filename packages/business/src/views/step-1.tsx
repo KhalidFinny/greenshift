@@ -1,16 +1,11 @@
-/* Step 1 of the wizard: the project profile, its current energy situation,
- * targets, overview and the document trio, with the emission-reduction donut
- * and the risk preview in the rail. The step reads the form it is given and
- * reports file changes back; the shell owns the draft and the risk model.
- */
+/* Step 1: the project profile, its current energy situation, targets, overview and the
+ * document trio, with the donut and risk preview in the rail. The shell owns the draft. */
 
 import {
-	faChevronDown,
 	faCloudArrowUp,
 	faCoins,
 	faFileLines,
 	faGaugeHigh,
-	faLocationDot,
 	faMoneyBillWave,
 	faScrewdriverWrench,
 	faTrash,
@@ -24,24 +19,20 @@ import {
 	CardDescription,
 	CardHeader,
 	CardTitle,
-	cn,
-	Input,
+	DistrictCombobox,
 	Label,
 	PieChart,
 	PieSlice,
 	useStore,
 } from "@greenshift/ui";
-import { useMemo, useRef, useState } from "react";
-import { loadDistricts } from "../lib/districts";
+import { useRef } from "react";
 import { formatId, parseIdNumber } from "../lib/number-format";
 import type { ProjectRiskTone, Step1RiskTones } from "../lib/project-risk";
 import type { WizardForm } from "../lib/use-project-wizard-form";
 import { step1Validator } from "../lib/wizard-rules";
 
-/**
- * The Step 1 checklist. Its slots are also what a resumed file is matched
- * against, and its count is the `docsTotal` the risk model reads.
- */
+/** The Step 1 checklist. Its slots are also what a resumed file is matched against, and
+ * its count is the `docsTotal` the risk model reads. */
 export const REQUIRED_DOCS = [
 	{
 		id: "tagihan",
@@ -58,32 +49,6 @@ const SEKTOR_OPTIONS = [
 	"Industrial",
 	"Public",
 	"Agriculture",
-];
-
-const LOKASI_OPTIONS = [
-	"Cikarang, Jawa Barat",
-	"Karawang, Jawa Barat",
-	"Bekasi, Jawa Barat",
-	"Bogor, Jawa Barat",
-	"Bandung, Jawa Barat",
-	"Cilegon, Banten",
-	"Tangerang, Banten",
-	"Jakarta Utara, DKI Jakarta",
-	"Jakarta Timur, DKI Jakarta",
-	"Jakarta Barat, DKI Jakarta",
-	"Jakarta Selatan, DKI Jakarta",
-	"Semarang, Jawa Tengah",
-	"Solo, Jawa Tengah",
-	"Yogyakarta, DI Yogyakarta",
-	"Surabaya, Jawa Timur",
-	"Sidoarjo, Jawa Timur",
-	"Gresik, Jawa Timur",
-	"Medan, Sumatera Utara",
-	"Palembang, Sumatera Selatan",
-	"Batam, Kepulauan Riau",
-	"Balikpapan, Kalimantan Timur",
-	"Makassar, Sulawesi Selatan",
-	"Denpasar, Bali",
 ];
 
 /* Rolling quarter options (12 = 3 years from Jan of current year). */
@@ -109,184 +74,6 @@ function riskVariant(tone: ProjectRiskTone) {
 	}
 }
 
-/**
- * The district picker. `SelectField` cannot host it: the list is fetched on the
- * first open, filtered as the user types, and cut to 100 rows with a count
- * underneath. It is an ordinary form field, so it wires its own value, blur and
- * message and repeats the label stack the field bundle draws.
- */
-function LokasiField({
-	value,
-	onChange,
-	onBlur,
-	error,
-}: {
-	value: string;
-	onChange: (value: string) => void;
-	onBlur: () => void;
-	/** The field's message, which exists only once the field has been validated. */
-	error?: unknown;
-}) {
-	const [open, setOpen] = useState(false);
-	const [query, setQuery] = useState("");
-	const [districts, setDistricts] = useState<string[] | null>(null);
-	const [failed, setFailed] = useState(false);
-	const message = typeof error === "string" ? error : undefined;
-
-	function load() {
-		setFailed(false);
-		void loadDistricts()
-			.then(setDistricts)
-			.catch(() => setFailed(true));
-	}
-
-	function openList() {
-		setOpen(true);
-		if (districts === null) load();
-	}
-
-	const source = districts ?? LOKASI_OPTIONS;
-	const matches = useMemo(() => {
-		const needle = query.trim().toLowerCase();
-		const found = needle
-			? source.filter((option) => option.toLowerCase().includes(needle))
-			: source;
-		return { total: found.length, shown: found.slice(0, 100) };
-	}, [source, query]);
-
-	return (
-		<div className="space-y-2">
-			<Label htmlFor="lokasi">Location</Label>
-			<div className="relative">
-				<FontAwesomeIcon
-					icon={faLocationDot}
-					className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-				/>
-				<Input
-					id="lokasi"
-					role="combobox"
-					aria-expanded={open}
-					aria-controls="lokasi-listbox"
-					aria-autocomplete="list"
-					aria-invalid={message ? true : undefined}
-					aria-describedby={message ? "lokasi-error" : undefined}
-					value={open ? query : value}
-					onFocus={() => {
-						setQuery("");
-						openList();
-					}}
-					onClick={() => {
-						if (open) return;
-						setQuery("");
-						openList();
-					}}
-					onChange={(event) => {
-						setQuery(event.target.value);
-						openList();
-					}}
-					onBlur={onBlur}
-					onKeyDown={(event) => {
-						if (event.key === "Escape") setOpen(false);
-					}}
-					placeholder="Type a district…"
-					autoComplete="off"
-					className="pr-12 pl-9"
-				/>
-				<button
-					type="button"
-					tabIndex={-1}
-					aria-label="Open location options"
-					onMouseDown={(event) => event.preventDefault()}
-					onClick={() => {
-						setQuery("");
-						openList();
-					}}
-					className="absolute top-1/2 right-1 flex size-8 -translate-y-1/2 items-center justify-center rounded text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring max-sm:size-11"
-				>
-					<FontAwesomeIcon icon={faChevronDown} className="size-4" />
-				</button>
-				{open && (
-					<>
-						<button
-							type="button"
-							tabIndex={-1}
-							aria-label="Close location options"
-							onClick={() => setOpen(false)}
-							className="fixed inset-0 z-40 cursor-default"
-						/>
-						<div className="absolute inset-x-0 top-full z-50 mt-1 overflow-hidden rounded-md border border-border bg-popover text-popover-foreground shadow-md">
-							<div
-								role="listbox"
-								id="lokasi-listbox"
-								aria-label="District list"
-								className="max-h-64 overflow-y-auto p-1"
-							>
-								{districts === null && !failed && (
-									<p className="px-3 py-2 text-sm text-muted-foreground">
-										Loading 7,000+ districts…
-									</p>
-								)}
-								{failed && (
-									<div className="px-3 py-2">
-										<p className="text-sm text-destructive">
-											Could not load the full list. Showing a short list.
-										</p>
-										<button
-											type="button"
-											onClick={load}
-											className="mt-1 rounded text-sm font-medium text-primary underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
-										>
-											Try again
-										</button>
-									</div>
-								)}
-								{matches.shown.map((option) => (
-									<button
-										key={option}
-										type="button"
-										role="option"
-										aria-selected={option === value}
-										onClick={() => {
-											onChange(option);
-											setOpen(false);
-										}}
-										className={cn(
-											"block w-full truncate rounded px-3 py-2 text-left text-sm",
-											option === value
-												? "bg-muted font-semibold"
-												: "hover:bg-muted",
-										)}
-									>
-										{option}
-									</button>
-								))}
-								{(districts !== null || failed) && matches.total === 0 && (
-									<div className="px-3 py-2">
-										<p className="text-sm font-medium">No location found</p>
-										<p className="mt-1 text-sm text-muted-foreground">
-											Try another keyword.
-										</p>
-									</div>
-								)}
-							</div>
-							{matches.total > 100 && (
-								<p className="border-t border-border px-3 py-2 text-sm tabular-nums text-muted-foreground">
-									100 of {formatId(matches.total)}. Keep typing.
-								</p>
-							)}
-						</div>
-					</>
-				)}
-			</div>
-			{message && (
-				<p id="lokasi-error" role="alert" className="text-sm text-destructive">
-					{message}
-				</p>
-			)}
-		</div>
-	);
-}
-
 export interface Step1ViewProps {
 	form: WizardForm;
 	/** The three tones the risk model reads, derived by the shell from these fields. */
@@ -309,9 +96,8 @@ export function Step1View({
 
 	const docsDone = REQUIRED_DOCS.filter((doc) => uploaded[doc.id]).length;
 
-	/* The donut reflects the target the user has actually typed. With none set it
-	   shows nothing achieved, rather than a stand-in figure that would read as the
-	   project's own number. */
+	/* The donut reflects the target the user typed: with none set it shows nothing
+	   achieved, rather than a stand-in figure that would read as the project's own number. */
 	const targetNum = parseIdNumber(values.targetPct);
 	const targetValid = targetNum !== null && targetNum >= 0 && targetNum <= 100;
 	const donutPct = targetValid ? targetNum : 0;
@@ -363,12 +149,20 @@ export function Step1View({
 							validators={{ onChange: step1Validator(form, "lokasi") }}
 						>
 							{(field) => (
-								<LokasiField
-									value={field.state.value}
-									onChange={field.handleChange}
-									onBlur={field.handleBlur}
-									error={field.state.meta.errors[0]}
-								/>
+								<div className="space-y-2">
+									<Label htmlFor="lokasi">Location</Label>
+									<DistrictCombobox
+										id="lokasi"
+										value={field.state.value}
+										onChange={field.handleChange}
+										onBlur={field.handleBlur}
+										error={
+											typeof field.state.meta.errors[0] === "string"
+												? field.state.meta.errors[0]
+												: undefined
+										}
+									/>
+								</div>
 							)}
 						</form.AppField>
 						<form.AppField

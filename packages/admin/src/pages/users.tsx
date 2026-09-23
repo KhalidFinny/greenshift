@@ -16,6 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useState } from "react";
 import { formatDateTime } from "../lib/format";
+import { CompanyVerificationDialog } from "../organisms/company-verification-dialog";
 import { ExportMenu } from "../organisms/export-menu";
 import { TableSkeleton } from "../organisms/table-skeleton";
 
@@ -37,9 +38,27 @@ const ROLE_OPTIONS = [
 ] as const;
 
 /** Column labels for the loading frame, in table order. */
-const USER_HEADERS = ["User", "Role", "Company", "Verification", "Registered"];
+const USER_HEADERS = [
+	"User",
+	"Role",
+	"Company",
+	"Verification",
+	"Registered",
+	"Actions",
+];
 
-const userColumns: ColumnDef<AdminUser>[] = [
+/** The state as the roster reads it, so a pending company is not simply "no". */
+const STATE_LABEL: Record<string, string> = {
+	NOT_VERIFIED: "Not verified",
+	NEEDS_RESCAN: "Clearer scan asked for",
+	PENDING: "Waiting on a reviewer",
+	REJECTED: "Turned down",
+	VERIFIED: "Verified",
+};
+
+const userColumns = (
+	onReview: (user: AdminUser) => void,
+): ColumnDef<AdminUser>[] => [
 	{
 		id: "user",
 		accessorFn: (user) => user.name,
@@ -68,8 +87,7 @@ const userColumns: ColumnDef<AdminUser>[] = [
 		header: "Company",
 		meta: { className: "max-w-64" },
 		cell: ({ row }) => {
-			// A company carries a sector, a vendor a service category: the same
-			// fact about two kinds of organization, so the line reads as one.
+			// A company carries a sector, a vendor a service category: the same fact about two kinds of organization.
 			const category =
 				row.original.industrySector ?? row.original.serviceCategory;
 			const detail = [category, row.original.address]
@@ -88,16 +106,19 @@ const userColumns: ColumnDef<AdminUser>[] = [
 	{
 		id: "verification",
 		accessorFn: (user) =>
-			user.verifiedAt !== null ? "Verified" : "Not verified",
+			user.verificationState ??
+			(user.verifiedAt !== null ? "VERIFIED" : "NOT_VERIFIED"),
 		header: "Verification",
 		cell: ({ row }) => {
-			const verified = row.original.verifiedAt !== null;
+			const state =
+				row.original.verificationState ??
+				(row.original.verifiedAt !== null ? "VERIFIED" : "NOT_VERIFIED");
 			return (
 				<Badge
-					variant={verified ? "default" : "destructive"}
+					variant={state === "VERIFIED" ? "default" : "destructive"}
 					className="text-base px-3 !h-8"
 				>
-					{verified ? "Verified" : "Not verified"}
+					{STATE_LABEL[state] ?? state}
 				</Badge>
 			);
 		},
@@ -108,10 +129,22 @@ const userColumns: ColumnDef<AdminUser>[] = [
 		header: "Registered",
 		cell: ({ row }) => formatDateTime(row.original.createdAt),
 	},
+	{
+		id: "actions",
+		header: "Actions",
+		enableSorting: false,
+		cell: ({ row }) =>
+			row.original.role === "business" ? (
+				<Button variant="outline" onClick={() => onReview(row.original)}>
+					Review the pack
+				</Button>
+			) : null,
+	},
 ];
 
 export function AdminUsers() {
 	const [role, setRole] = useState<string>("all");
+	const [reviewing, setReviewing] = useState<AdminUser | null>(null);
 
 	const usersQuery = useQuery({
 		queryKey: ["admin", "users", role],
@@ -121,6 +154,7 @@ export function AdminUsers() {
 
 	const loading = usersQuery.isPending;
 	const users = usersQuery.data?.users ?? [];
+	const columns = userColumns(setReviewing);
 
 	return (
 		<div className="space-y-6">
@@ -203,7 +237,7 @@ export function AdminUsers() {
 			) : (
 				<Card>
 					<DataTable
-						columns={userColumns}
+						columns={columns}
 						data={users}
 						getRowId={(user) => String(user.id)}
 						ariaLabel="User list"
@@ -212,6 +246,16 @@ export function AdminUsers() {
 					/>
 				</Card>
 			)}
+
+			{reviewing ? (
+				<CompanyVerificationDialog
+					user={reviewing}
+					open
+					onOpenChange={(open) => {
+						if (!open) setReviewing(null);
+					}}
+				/>
+			) : null}
 		</div>
 	);
 }

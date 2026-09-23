@@ -58,15 +58,10 @@ const EMPTY_PROFILE: BrokerProfileDetails = {
 	address: "",
 };
 
-/**
- * Everything the broker dashboard renders comes from `/api/broker/*`:
- * assigned projects, the document requests raised against them, the official
- * monthly monitoring reports, the notification feed and the firm profile.
- */
+/** All broker data is read from `/api/broker/*`; the hook only maps the wire shapes. */
 export function useBrokerData() {
 	const queryClient = useQueryClient();
 
-	// ── Queries ─────────────────────────────────────────────
 	const profileQuery = useQuery({
 		queryKey: ["broker", "profile"],
 		queryFn: () => api.broker.profile(),
@@ -97,7 +92,6 @@ export function useBrokerData() {
 		staleTime: REFRESH_FAST,
 	});
 
-	// ── Derived view models ─────────────────────────────────
 	const profile = profileQuery.data?.profile;
 
 	const verification: BrokerVerificationDetails = useMemo(
@@ -130,7 +124,6 @@ export function useBrokerData() {
 		[notificationsQuery.data],
 	);
 
-	// ── Mutations ───────────────────────────────────────────
 	const invalidateProjects = () =>
 		queryClient.invalidateQueries({ queryKey: ["broker", "projects"] });
 	const invalidateRequests = () =>
@@ -273,7 +266,7 @@ export function useBrokerData() {
 		onSuccess: () => invalidateNotifications(),
 	});
 
-	// ── Workload metrics (§9) ───────────────────────────────
+	// Workload metrics (§9).
 	const metrics = useMemo(() => {
 		const openStatuses = projects.filter(
 			(project) =>

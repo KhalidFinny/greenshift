@@ -1,11 +1,8 @@
 import { ApiError } from "@greenshift/core";
 import { useCallback, useRef, useState } from "react";
 
-/**
- * Wraps an admin action that the API gates with step-up (428 STEP_UP_REQUIRED).
- * On 428 the step-up dialog opens; the caller's promise stays pending and only
- * resolves after the action succeeds on retry. Other errors are re-thrown.
- */
+/** Wraps an admin action the API gates with step-up (428 STEP_UP_REQUIRED): the step-up dialog opens and the
+ * caller's promise stays pending until the retried action succeeds. Other errors are re-thrown. */
 export function useStepUpAction<Args extends unknown[]>(
 	action: (...args: Args) => Promise<unknown>,
 	onSuccess?: () => void,

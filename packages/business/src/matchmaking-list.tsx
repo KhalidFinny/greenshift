@@ -28,24 +28,13 @@ import {
 	STATUS_PILL,
 } from "./lib/project-display";
 
-/** The two states the vendor filter offers, beyond "all". */
 const VENDOR_FILTERS = [
 	{ value: "chosen", label: "Vendor chosen" },
 	{ value: "unchosen", label: "No vendor yet" },
 ] as const;
 
-/**
- * The projects a company can match vendors against, with the vendor it has
- * already chosen where it has one. Search and the two filters narrow the list
- * in the browser: the endpoint returns the company's projects whole, and every
- * filter option is read off the rows, so a select can never offer a status no
- * project has.
- */
-/**
- * Whether this project is past matchmaking. Bidding closed means the route is
- * chosen and the terms are frozen, so the proposals are the page with the work
- * left in it: reading the bids, asking for revisions, awarding.
- */
+/** Past matchmaking: bidding closed means the route is chosen and the terms are
+ * frozen, so the proposals are the page with the work left in it. */
 function decided(project: BusinessMatchmakingProject): boolean {
 	return (
 		project.tenderStatus === "evaluation" ||
@@ -87,16 +76,14 @@ export function MatchmakingList() {
 		() => [
 			{
 				id: "project",
-				// The vendor is part of what the search matches, so typing a company
-				// name finds the project it is appointed to.
+				// The vendor is part of the search, so typing a company name finds its project.
 				accessorFn: (project) =>
 					`${project.name} ${project.location ?? ""} ${project.sector ?? ""} ${
 						project.awardedVendor ?? ""
 					}`,
 				header: "Project",
-				// The chosen vendor and, below `md`, the Submitted and CAPEX columns
-				// fold into this cell, so it is the one cell allowed to wrap, and to
-				// break a long token rather than widen the table past its container.
+				// The chosen vendor and, below `md`, the Submitted and CAPEX columns fold
+				// into this cell, so it may wrap rather than widen the table past its container.
 				meta: { className: "max-md:whitespace-normal max-md:wrap-anywhere" },
 				cell: ({ row }) => (
 					<>
@@ -149,8 +136,7 @@ export function MatchmakingList() {
 				id: "status",
 				accessorFn: (project) => project.status,
 				header: "Status",
-				// On phones the project cell's own line carries the status, so the
-				// column would only take width off the address.
+				// On phones the project cell carries the status, so this column would only take width.
 				meta: { className: "max-md:hidden", headClassName: "max-md:hidden" },
 				cell: ({ row }) => (
 					<span
@@ -166,13 +152,11 @@ export function MatchmakingList() {
 				id: "actions",
 				header: "Actions",
 				cell: ({ row }) => (
-					// Below `md` the button is its icon alone behind a 44px target: the
-					// label would take enough width to squeeze the project cell, and
-					// the aria-label keeps it nameable.
+					// Below `md` the button is its icon alone behind a 44px target: the label
+					// would squeeze the project cell, and the aria-label keeps it nameable.
 					<div className="flex flex-wrap items-center gap-2">
 						{decided(row.original) ? (
-							// Past bidding, matchmaking is settled: the page that matters is
-							// the one holding the proposals and the revision requests.
+							// Past bidding, matchmaking is settled: the page that matters holds the proposals.
 							<Button
 								variant="outline"
 								asChild
@@ -209,8 +193,8 @@ export function MatchmakingList() {
 		<div className="space-y-6">
 			{/* No page title: the shell names the section, and the table is the page. */}
 
-			{/* The filters are page controls, so they sit on the background; the
-			    card below holds only the table and its search box. */}
+			{/* The filters are page controls, so they sit on the background; the card holds only the
+			    table. */}
 			<div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
 				<Select
 					value={statusFilter}

@@ -94,8 +94,8 @@ export async function listEmissionReports(
 }
 
 /**
- * Predictive-analytics periods for the projects, newest first. Read-only: the
- * forecast is produced by the model, never by the vendor or the company.
+ * Predictive-analytics periods for the projects, newest first. Read-only:
+ * produced by the model, never by the vendor or the company.
  */
 export async function listEnergyForecasts(
 	db: GreenShiftDb,

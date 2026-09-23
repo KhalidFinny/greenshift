@@ -2,11 +2,8 @@ import { createMiddleware } from "hono/factory";
 import type { ApiEnv } from "../env";
 import { ApiFailure, apiErrorCodes } from "./response";
 
-/**
- * One JSON access-log line per API request. The status comes from the response
- * the handler produced, or from the failure it raised, so a request that fails
- * before a response exists is still logged with its real status.
- */
+// One JSON access-log line per API request. The status comes from the response or
+// the raised failure, so a request that fails before a response is still logged.
 export const requestLogger = createMiddleware<ApiEnv>(async (c, next) => {
 	const startedAt = performance.now();
 	let status = c.res.status;

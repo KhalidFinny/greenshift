@@ -23,9 +23,8 @@ export const portfolioRoutes = new Hono<ApiEnv>();
 const MAX_TEXT_LENGTH = 2000;
 
 /**
- * What the multipart envelope around one file costs: the boundaries and the
- * part headers. The declared length covers the envelope too, so the gate has to
- * allow for it or a file exactly at the limit would be refused.
+ * What the multipart envelope around one file costs: the boundaries and part
+ * headers. The gate has to allow for it or a file at the limit is refused.
  */
 const MULTIPART_ENVELOPE_SLACK = 8 * 1024;
 
@@ -130,8 +129,7 @@ portfolioRoutes.delete(
 	}),
 );
 
-// ── file the supporting document ──────────────────────────
-// Multipart, like every upload: `requireJsonBody` is not on this router, so the
+// Multipart, like every upload: this router carries no `requireJsonBody`, so the
 // JSON mutations guard themselves and this route takes the file as it is.
 portfolioRoutes.post(
 	"/portfolio/:id/document",
@@ -142,10 +140,8 @@ portfolioRoutes.post(
 			return apiError(c, "INVALID_ID");
 		}
 
-		// The declared length is read before the body is: `parseBody` buffers the
-		// whole request, so a file over the limit has to be turned away before it
-		// is materialized in the isolate. The file's own size stays the authority
-		// afterwards, for a request that arrives with no declared length.
+		// The declared length is read before the body is: `parseBody` buffers the whole
+		// request, so an oversized file is turned away before it is materialized.
 		const declared = Number(c.req.header("content-length") ?? "0");
 		if (
 			Number.isFinite(declared) &&
@@ -193,7 +189,6 @@ portfolioRoutes.post(
 	}),
 );
 
-// ── read the filed document ───────────────────────────────
 portfolioRoutes.get(
 	"/portfolio/:id/document",
 	...factory.createHandlers(async (c) => {
@@ -214,8 +209,7 @@ portfolioRoutes.get(
 		return new Response(result.body, {
 			headers: {
 				"Content-Type": result.contentType,
-				// Shown rather than downloaded: the point of the document is to be
-				// read, and the browser's own viewer is the one to read it in.
+				// Shown rather than downloaded: the browser's own viewer is the one to read it in.
 				"Content-Disposition": `inline; filename="${result.fileName.replace(/["\\]/g, "")}"`,
 				"Cache-Control": "private, no-store",
 			},

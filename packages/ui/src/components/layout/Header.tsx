@@ -16,11 +16,8 @@ const navLinks = [
 const compactBar =
 	"fixed left-1/2 top-3 z-50 -translate-x-1/2 -translate-y-2 w-[90%] rounded-xl bg-[#03442C] shadow-lg transition-all duration-500 opacity-60 hover:opacity-100 hover:translate-y-0 scale-[0.97] hover:scale-100";
 
-/**
- * Scroll to a landing section while it is being mounted (cross-page entry):
- * navigate to "/" first, then glide to the section once it exists instead of
- * letting the router hard-jump to the hash.
- */
+/** Cross-page entry: navigate to "/" first, then glide to the section once it
+ * exists, instead of letting the router hard-jump to the hash. */
 function smoothScrollToSection(href: string) {
 	const id = href.replace(/^#/, "");
 	const startedAt = Date.now();
@@ -46,9 +43,8 @@ export default function Header() {
 function LandingHeader() {
 	const [scrolled, setScrolled] = useState(false);
 
-	// A transparent header lives over the hero and scrolls away with it; once
-	// the viewport reaches the hero's fade-to-white bridge the compact green
-	// bar fades in, shrinking to ~68% of the viewport width.
+	// The transparent header lives over the hero; once the viewport reaches the
+	// hero's fade-to-white bridge the compact green bar fades in.
 	useEffect(() => {
 		const onScroll = () =>
 			setScrolled(window.scrollY > window.innerHeight * 0.8);
@@ -59,14 +55,14 @@ function LandingHeader() {
 
 	return (
 		<>
-			{/* The hero is full-bleed, so the bar sits clear of the viewport edge
-			    rather than in it: the logo's own top edge lands 24px down. */}
+			{/* The hero is full-bleed: the bar sits clear of the viewport edge, so the logo's top edge lands
+			    24px down. */}
 			<header className="absolute inset-x-0 top-4 z-40 border-b border-transparent bg-transparent">
 				<HeaderNav onDark />
 			</header>
 
-			{/* Compact floating header: brand green so the white logo works on
-				both landing headers (hero + compact), no logo swap needed. */}
+			{/* Compact floating header: brand green so the white logo works on both landing headers, no logo
+			    swap. */}
 			<header
 				aria-hidden={!scrolled}
 				style={{
@@ -88,7 +84,6 @@ function HeaderNav({ onDark }: { onDark: boolean }) {
 	const navigate = useNavigate();
 	const [activeSection, setActiveSection] = useState("#hero");
 
-	// Track scroll position to highlight active section
 	useEffect(() => {
 		if (!isHome) return;
 
@@ -136,9 +131,8 @@ function HeaderNav({ onDark }: { onDark: boolean }) {
 								? "bg-[#00712D]/10 text-[#00712D]"
 								: "text-[#5A6B66] hover:text-[#1C1C1C] hover:bg-[#00712D]/5",
 					);
-					// On the landing page these are in-page anchors; from any
-					// other page they navigate back to the matching section so
-					// home and the public pages link to each other.
+					// In-page anchors on the landing; from other pages they
+					// navigate back to the matching section.
 					return isHome ? (
 						<li key={link.label}>
 							<a
@@ -196,8 +190,8 @@ function HeaderNav({ onDark }: { onDark: boolean }) {
 				>
 					Login
 				</Link>
-				{/* On a phone the compact bar has room for the brand and one action,
-				    and the hero's own "Get Started Free" is the signup path there. */}
+				{/* On a phone the compact bar has room for the brand and one action; the hero's own "Get
+				    Started Free" is the signup path there. */}
 				<Link
 					to="/register"
 					className={cn(

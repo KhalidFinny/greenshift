@@ -1,7 +1,4 @@
-/**
- * Presentation labels for backend statuses. Kept free of data so pages can
- * import them without pulling fixtures along.
- */
+/** Presentation labels for backend statuses, kept free of data so pages can import them without pulling fixtures along. */
 export const BLUEPRINT_META: Record<
 	string,
 	{

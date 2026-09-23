@@ -131,7 +131,6 @@ export function OpenBidLeaderboard({
 			})
 		: null;
 
-	// Anonymize competitor names: Vendor A, Vendor B, etc. Keep (You) for current vendor
 	let competitorIndex = 0;
 	const formattedLeaderboard = leaderboard.map((item) => {
 		if (item.isCurrentVendor) {
@@ -140,13 +139,11 @@ export function OpenBidLeaderboard({
 				: `${item.vendorName.replace(/\s*\(You\)/i, "")} (You)`;
 			return { ...item, displayName: name };
 		}
-		// Anonymized competitor label
 		const letter = String.fromCharCode(65 + competitorIndex);
 		competitorIndex++;
 		return { ...item, displayName: `Vendor ${letter}` };
 	});
 
-	// The standings page the anonymized rows.
 	const paged = usePagedRows(formattedLeaderboard);
 
 	return (

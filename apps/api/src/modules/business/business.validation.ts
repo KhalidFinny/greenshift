@@ -9,19 +9,8 @@ import {
 	scopeEntries,
 } from "./business.shared";
 
-/**
- * The wizard's per-step rules, mirroring the frontend's `validators.ts`.
- *
- * The messages are the ones the UI shows, so they are copied rather than
- * paraphrased. The KEYS are the wire contract's field names, so the `fields`
- * map in an error response applies straight to the payload the client sent.
- *
- * `partial` is the autosave mode: only the keys the client actually sent are
- * checked, because an autosave is not a submission. An absent key means the
- * field was untouched and an explicit null means it was cleared; neither is an
- * error until submit. Autosave also skips the ringkasan minimum, which is a
- * submission requirement rather than a sanity check.
- */
+// Mirrors the frontend's `validators.ts`: messages are copied verbatim and the
+// keys are the wire contract's field names, so `error.fields` applies directly.
 
 /** Field name to message, as returned in `error.fields`. */
 export type FieldErrors = Record<string, string>;
@@ -46,7 +35,6 @@ function isFiniteNumber(value: unknown): value is number {
 	return typeof value === "number" && Number.isFinite(value);
 }
 
-/** Money and energy are non-negative finite numbers. */
 function isNonNegative(value: unknown): value is number {
 	return isFiniteNumber(value) && value >= 0;
 }
@@ -58,10 +46,8 @@ export function isJaminan(value: unknown): boolean {
 	);
 }
 
-/**
- * Whether a field is worth checking: always on submit, and on autosave only
- * when the client actually sent a value (sent-but-null means cleared).
- */
+// Whether a field is worth checking: always on submit, and on autosave only
+// when the client actually sent a value (sent-but-null means cleared).
 function checker(partial: boolean) {
 	return (value: Record<string, unknown>, key: string) =>
 		!partial || (value[key] !== undefined && value[key] !== null);
@@ -119,10 +105,8 @@ export function step1Errors(
 	return errors;
 }
 
-/**
- * Step 2 rules. `fileCount` is the number of documents attached to the draft;
- * the minimum of one is only enforced on submit.
- */
+// Step 2 rules. `fileCount` is the number of documents attached to the draft;
+// the minimum of one is only enforced on submit.
 export function step2Errors(
 	value: BusinessStep2Patch,
 	partial = false,
@@ -161,11 +145,8 @@ export function step2Errors(
 	return errors;
 }
 
-/**
- * Step 3 rules: the scope of work. Both lists are open-ended, so the rule counts
- * the entries that carry text rather than reading any one of them, and an empty
- * list is only an error on submit: a draft is allowed to be incomplete.
- */
+// Scope of work. Both lists are open-ended, so the rule counts entries carrying
+// text; an empty list is only an error on submit, since a draft may be incomplete.
 export function step3Errors(
 	value: BusinessStep3Patch,
 	partial = false,
@@ -193,7 +174,6 @@ export function step3Errors(
 	return errors;
 }
 
-/** Why a scope list is not usable, or null when it is. */
 function scopeListProblem(
 	value: unknown,
 	noun: string,
@@ -217,10 +197,8 @@ function scopeListProblem(
 	return null;
 }
 
-/** Both declaration flags must be ticked before a draft can be submitted. */
 export const CONSENT_MESSAGE = "Both boxes must be ticked to submit.";
 
-/** The summary shown with a validation failure, singular or plural. */
 export function validationSummary(count: number): string {
 	return count === 1
 		? "1 field is not valid."

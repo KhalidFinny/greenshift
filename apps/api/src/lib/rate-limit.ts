@@ -8,9 +8,8 @@ export interface RateLimitResult {
 	retryAfter: number;
 }
 
-// Fixed-window counter in KV. KV is eventually consistent, so this is a
-// coarse throttle that slows brute force and registration abuse, not a hard
-// security boundary: appropriate for auth endpoints.
+// Fixed-window counter in KV. KV is eventually consistent, so this is a coarse
+// throttle for brute force and registration abuse, not a hard security boundary.
 export async function checkRateLimit(
 	env: Env,
 	key: string,
@@ -33,17 +32,14 @@ export async function checkRateLimit(
 }
 
 export function clientIp(request: Request): string {
-	// Only trust Cloudflare's header; X-Forwarded-For is attacker-controlled
-	// wherever CF-Connecting-IP is absent. Untraceable requests share one
-	// bounded "unknown" bucket instead of minting unbounded keys.
+	// Only trust Cloudflare's header; X-Forwarded-For is attacker-controlled where
+	// it is absent. Untraceable requests share one bounded "unknown" bucket.
 	const ip = request.headers.get("cf-connecting-ip");
 	return ip && /^[\d.a-fA-F:]+$/.test(ip) ? ip : "unknown";
 }
 
-/**
- * Counts one request against the bucket and fails the request once it is over
- * the limit, carrying the retry delay for the `Retry-After` header.
- */
+// Counts one request against the bucket, failing over the limit with the retry
+// delay the Retry-After header carries.
 export async function enforceRateLimit(
 	env: Env,
 	key: string,

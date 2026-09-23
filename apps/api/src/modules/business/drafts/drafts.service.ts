@@ -20,7 +20,6 @@ import {
 } from "../business.validation";
 import * as repository from "./drafts.repository";
 
-/** Message for a `fileId` that is not attached to the draft being written. */
 const UNKNOWN_FILE = "This document is not attached to the draft.";
 
 export type DraftResult =
@@ -28,16 +27,12 @@ export type DraftResult =
 	| { outcome: "not_found" }
 	| { outcome: "invalid"; fields: FieldErrors };
 
-/**
- * A resume returns the draft with the files attached to it, or reports it
- * missing. It never validates: the draft's blocks reference those files by id,
- * so without them a resumed step can only show the ids it cannot name.
- */
+// A resume returns the draft with its files. It never validates: the blocks
+// reference those files by id, so without them a resumed step can only show ids.
 export type LoadDraftResult =
 	| { outcome: "ok"; draft: BusinessDraft; documents: BusinessDraftDocument[] }
 	| { outcome: "not_found" };
 
-/** Every `fileId` the payload references, de-duplicated. */
 function referencedFileIds(body: BusinessDraftBody): string[] {
 	const ids = new Set<string>();
 	for (const id of body.step2?.fileIds ?? []) {
@@ -46,14 +41,8 @@ function referencedFileIds(body: BusinessDraftBody): string[] {
 	return [...ids];
 }
 
-/**
- * Merges one autosave into the stored draft.
- *
- * An absent key means the field was untouched and an explicit null means it was
- * cleared, which is why the patch is spread over the stored block rather than
- * replacing it. Validation runs against the patch only: a draft is allowed to
- * be incomplete, and refusing a partial save would make autosave useless.
- */
+// An absent key means untouched and null means cleared, so the patch spreads over
+// the stored block rather than replacing it; validation runs against the patch only.
 export async function saveDraft(
 	db: GreenShiftDb,
 	companyId: number,
@@ -107,7 +96,6 @@ export async function saveDraft(
 	return { outcome: "ok", draft: draftEntry(row) };
 }
 
-/** Resumes a draft with its files, or reports it missing (including another company's). */
 export async function loadDraft(
 	db: GreenShiftDb,
 	companyId: number,

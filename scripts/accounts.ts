@@ -73,13 +73,36 @@ export function emailFor(username: string): string {
 }
 
 /**
+ * The legal identity a seeded company is verified against. Deterministic, so a
+ * reseed produces the same numbers, and shaped like the real documents: a
+ * 13-digit business identification number and a 15-digit tax number.
+ */
+function legalIdentityFor(account: DemoAccount): { nib: string; npwp: string } {
+	const index = DEMO_ACCOUNTS.indexOf(account) + 1;
+	const nib = `9120${String(index).padStart(4, "0")}${String(100000 + index).slice(-6)}`.slice(
+		0,
+		13,
+	);
+	const npwp = `01.${String(200 + index).padStart(3, "0")}.${String(300 + index).padStart(3, "0")}.${String(index % 9)}-${String(400 + index).padStart(3, "0")}.000`;
+	return { nib, npwp };
+}
+
+/**
  * One account row as SQL. Idempotent (`ON CONFLICT(email) DO NOTHING`), so the
  * same statement creates a missing login and never touches an existing one, so the same statement
  * locally through `bun run db:setup`, remotely through
  * `bun scripts/seed-accounts.ts > scripts/accounts.sql` piped into
  * `wrangler d1 execute --remote`.
+ *
+ * A seeded company is a company that has already been through the gate: its
+ * pack is on file and an administrator has verified it, which is what the
+ * procurement fixtures behind it assume. A newly registered company starts at
+ * the verification step instead, and the platform holds it there until an
+ * administrator has looked at the same pack.
  */
 export function accountStatement(account: DemoAccount, hash: string): string {
+	const company = account.role === "business";
+	const identity = company ? legalIdentityFor(account) : null;
 	const values = [
 		`'${emailFor(account.username)}'`,
 		`'${account.role}'`,
@@ -88,10 +111,15 @@ export function accountStatement(account: DemoAccount, hash: string): string {
 		account.companyName ? `'${account.companyName}'` : "NULL",
 		account.industrySector ? `'${account.industrySector}'` : "NULL",
 		account.address ? `'${account.address}'` : "NULL",
+		identity ? `'${identity.nib}'` : "NULL",
+		identity ? `'${identity.npwp}'` : "NULL",
+		company ? "'VERIFIED'" : "'NOT_VERIFIED'",
+		company ? "(strftime('%s','now') - 30*86400)*1000" : "NULL",
+		company ? "(strftime('%s','now') - 29*86400)*1000" : "NULL",
 		"(strftime('%s','now')*1000)",
 		"(strftime('%s','now')*1000)",
 	].join(", ");
-	return `INSERT INTO users (email, role, name, hashed_password, company_name, industry_sector, address, created_at, updated_at) VALUES (${values}) ON CONFLICT(email) DO NOTHING;`;
+	return `INSERT INTO users (email, role, name, hashed_password, company_name, industry_sector, address, nib, npwp, verification_state, legal_docs_submitted_at, verified_at, created_at, updated_at) VALUES (${values}) ON CONFLICT(email) DO NOTHING;`;
 }
 
 /** Every demo account as SQL, with a fresh password hash per row. */

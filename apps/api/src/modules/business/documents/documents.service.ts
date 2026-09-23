@@ -22,17 +22,13 @@ export type DocumentResult =
 	| { outcome: "unsupported" }
 	| { outcome: "invalid_slot" };
 
-/** Lowercase extension without the dot, or "" when there is none. */
 function extensionOf(fileName: string): string {
 	const dot = fileName.lastIndexOf(".");
 	return dot === -1 ? "" : fileName.slice(dot + 1).toLowerCase();
 }
 
-/**
- * Browsers report spreadsheet types inconsistently (often as
- * `application/octet-stream`), so a file passes on either a known MIME type or
- * a known extension. Both are allowlists.
- */
+// Browsers report spreadsheet types inconsistently (often as
+// `application/octet-stream`), so a file passes on a known MIME type or extension.
 function isAcceptedType(file: File): boolean {
 	const extension = extensionOf(file.name);
 	const byExtension = (
@@ -105,10 +101,8 @@ export async function listProjectDocuments(
 	return rows.map((row) => projectDocumentEntry(row, projectId));
 }
 
-/**
- * The stored object for a project document, ready to stream. Refuses while OCR
- * is still running, because the file is not readable yet at that point.
- */
+// The stored object for a project document, ready to stream. Refuses while OCR
+// is still running, because the file is not readable yet at that point.
 export type ProjectDocumentStream =
 	| {
 			outcome: "ok";

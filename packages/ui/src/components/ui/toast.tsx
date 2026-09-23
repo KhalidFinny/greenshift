@@ -23,12 +23,8 @@ import {
 import { cn } from "#/lib/utils";
 import { Button } from "./button";
 
-/**
- * Toasts are persisted in sessionStorage so they survive full page loads:
- * login/register/logout navigate with window.location.assign, which would
- * otherwise wipe an in-memory-only toast mid-flight. sessionStorage is
- * per-tab, so nothing lingers after the tab closes.
- */
+/** Toasts persist in sessionStorage: login/register/logout navigate with
+ * window.location.assign, which would otherwise wipe an in-memory toast. */
 const STORAGE_KEY = TOAST_STORAGE_KEY;
 
 interface ToastItem extends ToastMessage {
@@ -36,10 +32,7 @@ interface ToastItem extends ToastMessage {
 	tone: ToastTone;
 	/** Epoch ms when the toast should dismiss itself. */
 	expiresAt: number;
-	/**
-	 * Restored from sessionStorage after a page load: renders in place
-	 * without the slide-in entry so it reads as continuous, not re-arriving.
-	 */
+	/** Restored after a page load: skips the slide-in so it reads as continuous. */
 	animateIn?: boolean;
 }
 
@@ -155,16 +148,11 @@ function ToastCard({
 	);
 }
 
-/**
- * Global toast surface. Mount once at the app root: it subscribes to the
- * core toast bus (where the API client publishes every mutation outcome),
- * renders stacked notifications top-center, and survives page navigation
- * by persisting pending toasts to sessionStorage.
- */
+/** Global toast surface: mount once at the app root. It subscribes to the core
+ * toast bus (every API mutation outcome) and persists toasts to sessionStorage. */
 export function ToastProvider({ children }: { children: ReactNode }) {
-	// Server and first client render must match: start empty, then rehydrate
-	// persisted toasts in an effect. Otherwise the client may render a stored
-	// toast that the server never sent, which triggers a hydration mismatch.
+	// Server and first client render must match: start empty and rehydrate in an
+	// effect, or a stored toast the server never sent trips hydration.
 	const [items, setItems] = useState<ToastItem[]>([]);
 	const itemsRef = useRef<ToastItem[]>([]);
 	itemsRef.current = items;
@@ -184,8 +172,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 	}, []);
 
 	useEffect(() => {
-		// Rehydrate after mount: keep unexpired toasts from a previous page
-		// load and schedule their remaining lifetime (no timer restart).
+		// Rehydrate after mount: keep unexpired toasts and schedule their remaining lifetime.
 		const stored = readStored();
 		const valid = stored.filter((item) => item.expiresAt > Date.now());
 		itemsRef.current = valid;
@@ -229,10 +216,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 			{children}
 			<div
 				aria-live="polite"
-				// The shell's header owns the top-right corner: its bell and profile
-				// card are the same 56-80px strip, and a toast over them both hides
-				// the controls and swallows the clicks aimed at them. The stack sits
-				// below that strip instead.
+				// The shell header owns the top-right 56-80px strip (bell, profile),
+				// so the stack sits below it rather than hiding and blocking them.
 				className="pointer-events-none fixed top-20 right-0 z-[100] flex flex-col items-end gap-2 px-4"
 			>
 				{items.map((item) => (

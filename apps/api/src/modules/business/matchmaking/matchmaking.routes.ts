@@ -23,13 +23,11 @@ const PROCUREMENT_LABEL: Record<string, string> = {
 
 export const matchmakingRoutes = new Hono<ApiEnv>();
 
-/** The path id is the project id, so it has the same shape check as everywhere. */
 function projectId(c: { req: { param: (key: string) => string | undefined } }) {
 	const raw = c.req.param("projectId");
 	return raw && /^\d+$/.test(raw) ? Number(raw) : null;
 }
 
-// ── list ──────────────────────────────────────────────────
 matchmakingRoutes.get(
 	"/matchmaking",
 	...factory.createHandlers(async (c) => {
@@ -44,7 +42,6 @@ matchmakingRoutes.get(
 	}),
 );
 
-// ── detail ────────────────────────────────────────────────
 matchmakingRoutes.get(
 	"/matchmaking/:projectId",
 	...factory.createHandlers(async (c) => {
@@ -59,7 +56,6 @@ matchmakingRoutes.get(
 	}),
 );
 
-// ── matching run ──────────────────────────────────────────
 // The pool moves as vendor profiles are verified, so the company can ask for the
 // ranking again rather than living with the one its verification produced.
 matchmakingRoutes.post(
@@ -86,7 +82,6 @@ matchmakingRoutes.post(
 	}),
 );
 
-// ── selection ─────────────────────────────────────────────
 matchmakingRoutes.post(
 	"/matchmaking/:projectId/selection",
 	mutationRateLimit("business", "selection"),

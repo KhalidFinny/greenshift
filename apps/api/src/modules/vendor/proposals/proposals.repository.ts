@@ -64,12 +64,8 @@ export async function findProposalIdByTenderVendor(
 	return duplicate;
 }
 
-// Single atomic statement: the tender is re-checked (open + inside its
-// deadline) inside the INSERT ... SELECT, and the unique
-// (tender_id, vendor_id) index turns a duplicate bid into a no-op via
-// ON CONFLICT DO NOTHING. The service's pre-checks only give nicer errors.
-// Drizzle requires the select to mirror every table column, in
-// declaration order; `id` is null so SQLite assigns the rowid.
+// Atomic: the tender is re-checked (open + inside deadline) inside the INSERT ...
+// SELECT and a duplicate bid is a no-op. Drizzle needs every column mirrored in order.
 export async function insertProposalAtomically(
 	db: GreenShiftDb,
 	input: {
@@ -167,7 +163,6 @@ export async function findProposalWithTender(
 	return row;
 }
 
-/** Files a document on one of the vendor's own proposals. */
 export async function setProposalDocument(
 	db: GreenShiftDb,
 	proposalId: number,
@@ -205,9 +200,8 @@ export async function findVendorProposalDocument(
 }
 
 /**
- * One proposal's filed document, scoped to a company: the proposal has to sit
- * on a tender of one of that company's own projects, so a bid's document is not
- * readable by another company's account.
+ * One proposal's filed document, scoped to a company: the proposal must sit on
+ * a tender of one of that company's projects, so no other company reads it.
  */
 export async function findProjectProposalDocument(
 	db: GreenShiftDb,

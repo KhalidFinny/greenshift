@@ -1,3 +1,4 @@
+import type { CompanyDocumentScan } from "@greenshift/api/contracts";
 import type { ProposalAnnotation } from "@greenshift/ui";
 
 export type VerificationStatus =
@@ -11,20 +12,18 @@ export interface CompanyVerificationDetails {
 	certifications: string[];
 	nib?: string;
 	npwp?: string;
-	legalDocUrl?: string;
-	escoCertificationUrl?: string;
-	isoCertificationUrl?: string;
+	/** Company registration number, filed with the NPWP. */
+	tdp?: string;
+	/** The ESCO or ISO certificate on file, and what the scan read off it. */
+	certificateName?: string;
+	certificateUrl?: string;
+	certificateScan?: CompanyDocumentScan | null;
+	/** Why an administrator turned the profile down. */
 	rejectionReason?: string;
-	submittedAt?: string;
 	verifiedAt?: string;
 }
 
-/**
- * The matching model's output for one project, as the API returns it. Every
- * score is 0-100 and `projectRisk` is inverted, so a higher number always means
- * a better outcome. The criterion wording lives with the component that renders
- * it (`lib/matchmaking.ts`); only the scores are data.
- */
+/** Matching model output for one project. Scores are 0-100 and `projectRisk` is inverted, so higher is always better; the criterion wording lives in `lib/matchmaking.ts`. */
 export interface MatchmakingBreakdown {
 	technicalFit: number;
 	relevantExperience: number;
@@ -168,12 +167,8 @@ export interface MonthlyEnergyReport {
 	submittedAt: string;
 }
 
-/**
- * One predictive-analytics period: what the model expects the site to consume
- * and save, with the accuracy metrics it was scored on. Periods run forward from
- * the last reported month, so they are directly comparable with the actuals
- * above.
- */
+/** One predictive-analytics period: expected consumption and savings with the accuracy metrics it was scored on.
+ * Periods run forward from the last reported month, so they are directly comparable with the actuals above. */
 export interface EnergyForecast {
 	id: string;
 	period: string; // e.g. "2026-10"
@@ -220,12 +215,7 @@ export interface VendorPortfolioItem {
 	/** Null when the record has no figure. Never defaulted to a plausible one. */
 	durationMonths: number | null;
 	servicesProvided: string;
-	/**
-	 * Two different quantities share this record type. An awarded project reports
-	 * the saving in kWh/yr from the project itself; a vendor-authored record
-	 * reports a percentage the vendor entered. Keeping them apart stops the
-	 * kWh figure from being printed with a percent sign.
-	 */
+	/** Two quantities share this record type: an awarded project reports kWh/yr saved, a vendor-authored one a percentage the vendor entered. */
 	energySavingKwh: number | null;
 	energySavingPercent: number | null;
 	carbonReductionTons: number | null;
@@ -243,10 +233,8 @@ export interface VendorPerformanceMetrics {
 	carbonReductionAchievementPercent: number; // e.g. 106%
 	averageProjectValue: number;
 	totalCompletedProjects: number;
-	clientApprovalRatePercent: number;
 	historicalTrend: { period: string; score: number }[];
 	bastRating?: number;
-	retentionRate?: string;
 }
 
 export interface VendorNotification {
@@ -286,7 +274,6 @@ export interface VendorProjectCardData {
 	deliverables: string[];
 }
 
-// ── Green Project Blueprint (what a bidder reads) ────────
 /** One of the three scenarios the blueprint's financial projections carry. */
 export interface BlueprintScenario {
 	key: "conservative" | "base" | "optimistic";
@@ -318,11 +305,7 @@ export interface BlueprintEmissions {
 	energySavingKwh: number;
 }
 
-/**
- * The Green Project Blueprint as a bidder reads it while the tender is open:
- * the projections LVV GRK cleared, the funding structure behind them, and the
- * emission targets the project was verified on.
- */
+/** The Green Project Blueprint a bidder reads while the tender is open: the projections LVV GRK cleared, the funding structure behind them, and the emission targets the project was verified on. */
 export interface VendorBlueprint {
 	status: string;
 	validatedAt: string | null;

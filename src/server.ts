@@ -7,10 +7,8 @@ import {
 
 const startHandler = createStartHandler(defaultStreamHandler);
 
-// Applied to every response (API + SSR). Prod is strict about script
-// *origins* but must allow inline: TanStack Start's streaming SSR emits an
-// inline stream-barrier script that is not nonce-aware. React escapes all
-// dynamic text, so there is no inline-injection vector today.
+// Applied to every response (API + SSR). Prod must allow inline scripts: TanStack
+// Start's streaming SSR emits a nonce-less stream-barrier script, and React escapes dynamic text.
 const SECURITY_HEADERS: Record<string, string> = import.meta.env.DEV
 	? {
 			// Dev relaxes script/style and allows the Vite HMR websocket + devtools.

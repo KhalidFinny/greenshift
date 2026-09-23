@@ -24,13 +24,8 @@ export async function findTenderByProject(db: GreenShiftDb, projectId: number) {
 	return row ?? null;
 }
 
-/**
- * The tender one company's project runs, or null.
- *
- * The owner check is part of the query rather than a filter applied after the
- * fetch, so another company's project id reads as missing: nothing downstream
- * can forget it and act on a row that was never theirs.
- */
+// The owner check is part of the query, so another company's project id reads as
+// missing: nothing downstream can forget it and act on a row that was never theirs.
 export async function findCompanyTender(
 	db: GreenShiftDb,
 	companyId: number,
@@ -58,7 +53,6 @@ export async function findTenderById(db: GreenShiftDb, id: number) {
 	return row ?? null;
 }
 
-/** Every tender the company runs, newest first. */
 export async function listTendersForCompany(
 	db: GreenShiftDb,
 	companyId: number,
@@ -111,7 +105,6 @@ export async function updateTenderStatus(
 	return row ?? null;
 }
 
-/** Moves the project into the phase its tender belongs to. */
 export async function setProjectStatus(
 	db: GreenShiftDb,
 	projectId: number,
@@ -173,7 +166,6 @@ export async function vendorNamesFor(
 	return new Map(rows.map((row) => [row.id, row.name]));
 }
 
-/** Marks one bid accepted, rejected, or back in revision. */
 export async function setProposalStatus(
 	db: GreenShiftDb,
 	proposalId: number,
@@ -192,7 +184,6 @@ export async function setProposalStatus(
 	return row ?? null;
 }
 
-/** How many revision rounds this bid has already been through. */
 export async function countNegotiations(
 	db: GreenShiftDb,
 	proposalId: number,
@@ -205,10 +196,8 @@ export async function countNegotiations(
 	return rows.length;
 }
 
-/**
- * Every revision round on the given bids, oldest first. Read in one query for
- * the whole tender: the bidding screen shows each bid's thread beside it.
- */
+// Every revision round on the given bids, oldest first, read in one query: the bidding
+// screen shows each bid's thread beside it.
 export async function listNegotiationsForProposals(
 	db: GreenShiftDb,
 	proposalIds: number[],
@@ -230,11 +219,8 @@ export async function insertNegotiation(
 	return row;
 }
 
-/**
- * The revision round the vendor has not answered yet, if the bid has one. A bid
- * in this state is not a bid to accept: the round is still open, so its terms
- * are not settled.
- */
+// The revision round the vendor has not answered yet, if the bid has one. A bid in this
+// state is not one to accept: the round is still open, so its terms are not settled.
 export async function findPendingNegotiation(
 	db: GreenShiftDb,
 	proposalId: number,
@@ -253,12 +239,8 @@ export async function findPendingNegotiation(
 	return row ?? null;
 }
 
-/**
- * Closes every round on a bid once the bid has been decided: `AGREED` for the
- * bid the company took, `LOCKED` for one it turned down or rejected. Without
- * this the rounds stay open forever, and a vendor's screen keeps asking for an
- * answer to a tender that has already been awarded.
- */
+// Closes every round on a decided bid: `AGREED` for the one the company took, `LOCKED`
+// otherwise. Without this a vendor's screen keeps asking about an awarded tender.
 export async function closeNegotiations(
 	db: GreenShiftDb,
 	proposalId: number,

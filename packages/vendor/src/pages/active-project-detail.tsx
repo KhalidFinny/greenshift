@@ -35,7 +35,6 @@ export function VendorActiveProjectDetailPage({
 		);
 	}
 
-	// Delivery split, counted from the milestone list itself.
 	const milestones = project?.milestones ?? [];
 	const done = milestones.filter(
 		(m) => m.status === "COMPLETED" || m.status === "APPROVED",

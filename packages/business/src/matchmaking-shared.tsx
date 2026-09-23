@@ -1,8 +1,5 @@
-/* What both matchmaking pages show: the project's facts, the scoring model as a
- * panel, one vendor's criteria, and the labels the tender's states read under.
- * Shared so the ranking page and the bidding page cannot describe the same
- * figures two different ways.
- */
+/* What both matchmaking pages show: project facts, the scoring model, one vendor's
+ * criteria, the tender-state labels. Shared so the two pages read the same figures. */
 
 import {
 	faBuilding,
@@ -21,7 +18,6 @@ import type {
 import { Card, CardContent, cn } from "@greenshift/ui";
 import { formatRupiah, formatSubmittedAt } from "./lib/project-display";
 
-/** Fourteen days is the bidding window a company gets offered by default. */
 export const DEFAULT_TENDER_DAYS = 14;
 
 const pad = (value: number) => String(value).padStart(2, "0");
@@ -39,10 +35,8 @@ export function defaultDeadline(): string {
 	);
 }
 
-/**
- * How long is left of the bidding window, as a duration a sentence can take:
- * "13 days", "4 hours", "38 minutes", or "passed".
- */
+/** How long is left of the bidding window, as a duration a sentence can take:
+ * "13 days", "4 hours", "38 minutes", or "passed". */
 export function timeLeftLabel(deadlineAt: string | null): string {
 	if (!deadlineAt) return "open-ended";
 	const diff = new Date(deadlineAt).getTime() - Date.now();
@@ -73,7 +67,6 @@ export const TENDER_STATUS_PILL: Record<string, string> = {
 	awarded: "bg-emerald-50 text-emerald-700",
 };
 
-/** The stage the project's procurement is at, and what it means for the reader. */
 export const STAGES = ["Route", "Bidding", "Evaluation", "Awarded"] as const;
 
 export function stageIndex(
@@ -86,7 +79,6 @@ export function stageIndex(
 	return 3;
 }
 
-/** One line saying where the project stands, from the tender's own state. */
 export function stageSummary(
 	tender: BusinessTender | null,
 	vendorName: string | null,
@@ -218,10 +210,8 @@ export function StageBand({
 	);
 }
 
-/**
- * The scoring model as a table: what each criterion is worth in the score shown,
- * and how this project's vendor pool scores on it.
- */
+/** The scoring model as a table: what each criterion is worth, and how this
+ * project's vendor pool scores on it. */
 export function CriteriaPanel({ factors }: { factors: BusinessMatchFactor[] }) {
 	return (
 		<dl className="space-y-3">
@@ -285,11 +275,8 @@ export function ModelCard({
 	);
 }
 
-/**
- * One vendor's own reading on each criterion, as a bar list. This is what the
- * comparison shows beside its record: the same five criteria, at that vendor's
- * numbers rather than the pool's.
- */
+/** One vendor's reading on each criterion, as a bar list: the same five criteria,
+ * at that vendor's numbers rather than the pool's. */
 export function VendorCriteria({
 	vendor,
 }: {
@@ -317,7 +304,6 @@ export function VendorCriteria({
 	);
 }
 
-/** A vendor's on-record facts: what the platform holds about it. */
 export function VendorRecord({
 	vendor,
 }: {

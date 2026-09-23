@@ -22,8 +22,8 @@ export function useAuth() {
 
 	async function logout(silent = false): Promise<void> {
 		await api.auth.logout(silent);
-		// The queue outlives the page on purpose, so it is dropped here rather
-		// than left for whoever signs in next on this tab.
+		// The queue outlives the page, so sign-out drops it before the next
+		// account signs in on this tab.
 		clearStoredToasts();
 		await router.invalidate();
 	}

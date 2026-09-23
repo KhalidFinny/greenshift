@@ -7,13 +7,8 @@ import { ApiFailure } from "./response";
 const MUTATION_LIMIT = 30;
 const MUTATION_WINDOW_SECONDS = 600;
 
-/**
- * Coarse per-module throttle for mutations: one bucket per client IP and one
- * per authenticated user, both scoped to the module and the operation.
- *
- * The defaults suit discrete user actions. A debounced autosave is not one, so
- * a scope that autosaves passes its own numbers rather than raising everyone's.
- */
+// Coarse per-module mutation throttle: one bucket per client IP and one per user,
+// both scoped to module and operation. A debounced autosave passes its own numbers.
 export function mutationRateLimit(
 	module: string,
 	scope: string,

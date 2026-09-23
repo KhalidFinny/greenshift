@@ -55,16 +55,8 @@ async function copyText(value: string): Promise<boolean> {
 	}
 }
 
-/**
- * Best-effort app launch on Android.
- *
- * We navigate to the app's URL scheme and watch for the page being backgrounded
- * (`visibilitychange`/`pagehide`). If neither fires before the timeout the app
- * is missing or the scheme does not resolve, so the caller sends the investor to
- * Google Play instead of leaving them on a dead screen.
- *
- * Returns true when the hand-off was detected.
- */
+/** Best-effort Android launch: fires the URL scheme, then watches for the page being
+ * backgrounded. True when the hand-off happened; false sends the caller to Play. */
 function launchApp(
 	scheme: string,
 	timeoutMs = LAUNCH_TIMEOUT_MS,
@@ -89,8 +81,8 @@ function launchApp(
 			window.removeEventListener("pagehide", onPageHide);
 		};
 
-		// Timers are throttled in background tabs, but a backgrounded page is
-		// exactly the success case (handled by the listeners above).
+		// Background tabs throttle timers; a backgrounded page is the success case,
+		// handled by the listeners above.
 		const timer = window.setTimeout(() => finish(false), timeoutMs);
 
 		document.addEventListener("visibilitychange", onHidden);
@@ -113,14 +105,8 @@ function openPlay(platform: PartnerApp) {
 	window.open(platform.playUrl, "_blank", "noopener,noreferrer");
 }
 
-/**
- * The "buy bond" hand-off on each verified card.
- *
- * Priority order:
- *   1. Open the broker app via Android deep link (Trima+ first).
- *   2. Deep link failed / unsupported -> Google Play listing.
- *   3. Always: "Copy Code" so the code can be searched manually in any broker.
- */
+/** The "buy bond" hand-off: the Android deep link first, else the Play listing,
+ * plus a "Copy Code" that works in any broker app. */
 export function BondPurchaseActions({ project }: BondPurchaseActionsProps) {
 	const code = bondCodeFor(project);
 	const [launch, setLaunch] = useState<LaunchState>("idle");
@@ -152,7 +138,6 @@ export function BondPurchaseActions({ project }: BondPurchaseActionsProps) {
 			setLaunch("launched");
 			return;
 		}
-		// App not installed or scheme unsupported -> Play listing.
 		setLaunch("fallback");
 		openPlay(target);
 	}, []);
@@ -199,7 +184,6 @@ export function BondPurchaseActions({ project }: BondPurchaseActionsProps) {
 					: `Buy on ${PRIMARY_PARTNER.name}`}
 			</Button>
 
-			{/* Deep link failed or the platform has no scheme: Play is the exit. */}
 			{launch === "fallback" && (
 				<div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3">
 					<p className="text-sm font-medium">

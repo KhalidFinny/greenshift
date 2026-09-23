@@ -9,12 +9,8 @@ import { useState } from "react";
 import { cn } from "../lib/utils";
 import { Button } from "./ui/button";
 
-/**
- * A mark drawn on a proposal. Coordinates are fractions of the proposal page,
- * never pixels: the company marks the document on its own screen and the vendor
- * reads the same mark on theirs, so the two have to agree on something that does
- * not depend on either screen's width.
- */
+/** A mark drawn on a proposal: coordinates are fractions of the page, never
+ * pixels, so a mark drawn on one screen reads the same on the other. */
 export type ProposalMarkKind = "highlight" | "circle";
 
 export interface ProposalAnnotation {
@@ -29,12 +25,8 @@ export interface ProposalAnnotation {
 /** What the reader is holding: one of the two marks, or the eraser. */
 type MarkTool = ProposalMarkKind | "erase";
 
-/**
- * The proposal as the document both sides read: the figures the vendor bid, in
- * the order the tender asked for them. Deliberately not the API's own shape —
- * the business and vendor surfaces each map their own bid onto it, so the page
- * is rendered once and looks the same wherever it is opened.
- */
+/** The document both sides read: deliberately not the API's shape, so each
+ * surface maps its own bid onto it and the page renders identically everywhere. */
 export interface ProposalDocumentData {
 	/** What the work is, so the page names the thing being bid on. */
 	title: string;
@@ -50,12 +42,8 @@ export interface ProposalDocumentData {
 	revisionCount: number;
 }
 
-/**
- * The page is rendered at a fixed width on purpose. Marks are stored as
- * fractions of this box, so a page that reflowed to the reader's screen would
- * put the company's circle on a different line for the vendor. A narrow screen
- * scrolls the sheet instead.
- */
+/** Fixed width on purpose: marks are fractions of this box, so a reflowing page
+ * would put a mark on a different line for the other side. Narrow screens scroll. */
 const PAGE_WIDTH = 720;
 
 /** What the reader can hold, in the order the toolbar offers them. */
@@ -99,11 +87,8 @@ function FigureRow({ label, value }: { label: string; value: string }) {
 	);
 }
 
-/**
- * The marks over the page, and — when the reader may draw — the layer that
- * takes the pointer. The page itself is underneath and never moves, so a mark
- * lands where it was drawn.
- */
+/** The marks over the page, plus the pointer layer when the reader may draw; the
+ * page underneath never moves, so a mark lands where it was drawn. */
 function MarkLayer({
 	marks,
 	pending,
@@ -130,8 +115,7 @@ function MarkLayer({
 					: "pointer-events-none",
 			)}
 			onPointerDown={(event) => {
-				// The eraser's own guard lives with the tool: a box never starts
-				// while it is held.
+				// The eraser's own guard lives in the tool, so no box starts while it is held.
 				if (!editable) return;
 				event.currentTarget.setPointerCapture(event.pointerId);
 				const box = event.currentTarget.getBoundingClientRect();
@@ -177,15 +161,8 @@ function MarkLayer({
 	);
 }
 
-/**
- * One vendor's proposal, as the document a revision is asked about.
- *
- * Read-only when `onMarksChange` is absent — that is the vendor's copy, which
- * shows where the company drew. With it, the reader draws: a highlight bands
- * the text they mean, a circle rings it, and the eraser takes a mark back. The
- * marks are handed back in the page's own fractions, so the caller stores them
- * as they are and both sides read the same coordinates.
- */
+/** One vendor's proposal. Read-only when `onMarksChange` is absent (the vendor's
+ * copy); marks are handed back in the page's own fractions, so callers store them. */
 export function AnnotatedProposal({
 	proposal,
 	marks,
@@ -241,8 +218,7 @@ export function AnnotatedProposal({
 		const { kind, ...drag } = pending;
 		const box = boxOf(drag);
 		setPending(null);
-		// A tap is not a mark: below this the reader clicked, and a stray dot on
-		// the page would read as a note they did not make.
+		// A tap is not a mark: a stray dot would read as a note they did not make.
 		if (box.w < 0.02 || box.h < 0.01) return;
 		onMarksChange([...marks, { id: crypto.randomUUID(), kind, ...box }]);
 	}

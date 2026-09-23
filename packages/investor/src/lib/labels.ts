@@ -1,10 +1,8 @@
 /** Badge variants accepted by the ui Badge component. */
 export type StatusTone = "default" | "secondary" | "destructive" | "outline";
 
-/**
- * Table/status badge sizing used across admin: enlarged from the DS default
- * so status chips read at the same size as table text.
- */
+/** Table/status badge sizing used across admin: enlarged from the DS default so
+ * status chips read at the same size as table text. */
 export const STATUS_BADGE_CLASS = "!h-8 rounded-md px-3 text-base";
 
 export const INVEST_STATUS_LABEL: Record<string, string> = {

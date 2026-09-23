@@ -203,8 +203,7 @@ export function AdminAnalytics() {
 		);
 	}
 
-	// Each query keeps its cached data across a refetch, so the page renders its
-	// real cards and each one shimmers only its own values.
+	// Each query keeps its cached data across a refetch, so each card shimmers only its own values.
 	const loading =
 		statsQuery.isPending || analyticsQuery.isPending || projectsQuery.isPending;
 
@@ -221,11 +220,9 @@ export function AdminAnalytics() {
 	const totalProjects = stats
 		? Object.values(stats.projects).reduce((a, b) => a + b, 0)
 		: 0;
-	// Bond funding status: the same public bond data surfaced on the
-	// public dashboard, aggregated here for admin without any per-investor rows.
+	// The same public bond data the public dashboard shows, aggregated here without any per-investor rows.
 	const funding: FundingRow[] = stats?.funding ?? [];
-	// Ranked by money raised, highest first: the table pages the whole field
-	// rather than hiding all but the top few.
+	// Ranked by money raised, highest first: the table pages the whole field rather than hiding all but the top few.
 	const rankedBonds: FundingRow[] = [...funding].sort(
 		(a, b) => (b.funded ?? 0) - (a.funded ?? 0),
 	);
@@ -293,8 +290,7 @@ export function AdminAnalytics() {
 			sub: `${stats?.companies ?? 0} organizations`,
 		},
 	];
-	// Every series comes from the analytics endpoint: the 12 trailing months,
-	// zero-filled, so the charts share one x-axis.
+	// Every series comes from the analytics endpoint: 12 trailing months, zero-filled, so the charts share one x-axis.
 	const growthData = (analytics?.monthly ?? []).map((point) => ({
 		label: formatMonth(point.month),
 		users: point.users,

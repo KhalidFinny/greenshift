@@ -28,7 +28,7 @@ export interface PatternPresetOptions {
 	tileBackground?: string;
 }
 
-/** Presets rendered with @visx/pattern `PatternCircles`. */
+/** Circle presets render with @visx/pattern `PatternCircles`. */
 export function isCirclePattern(preset: PatternPresetId): boolean {
 	return preset === "circles" || preset === "dots";
 }

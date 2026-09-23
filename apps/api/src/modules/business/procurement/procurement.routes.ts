@@ -18,15 +18,13 @@ const factory = createFactory<ApiEnv>();
 
 export const procurementRoutes = new Hono<ApiEnv>();
 
-/** The path id is the project id, so it has the same shape check as everywhere. */
 function projectId(c: { req: { param: (key: string) => string | undefined } }) {
 	const raw = c.req.param("projectId");
 	return raw && /^\d+$/.test(raw) ? Number(raw) : null;
 }
 
-// ── close bidding ─────────────────────────────────────────
-// Bidding ends when the company says so, not when the clock runs out: a tender
-// whose deadline has passed still needs its bids read before it is shut.
+// Bidding ends when the company says so, not when the clock runs out: a tender whose
+// deadline has passed still needs its bids read before it is shut.
 procurementRoutes.patch(
 	"/procurement/:projectId/tender",
 	mutationRateLimit("business", "procurement"),
@@ -67,7 +65,6 @@ procurementRoutes.patch(
 	}),
 );
 
-// ── award a bid ───────────────────────────────────────────
 procurementRoutes.post(
 	"/procurement/:projectId/award",
 	mutationRateLimit("business", "procurement"),
@@ -121,7 +118,6 @@ procurementRoutes.post(
 	}),
 );
 
-// ── review one bid ────────────────────────────────────────
 procurementRoutes.post(
 	"/procurement/:projectId/proposals/:proposalId/review",
 	mutationRateLimit("business", "procurement"),
@@ -198,9 +194,8 @@ procurementRoutes.post(
 	}),
 );
 
-// ── read a bid's document ─────────────────────────────────
-// The bidder's written case is part of what the company evaluates, so it is
-// readable on the company's side of its own tender and by nobody else.
+// The bidder's written case is part of what the company evaluates, so it is readable
+// on the company's side of its own tender and by nobody else.
 procurementRoutes.get(
 	"/procurement/:projectId/proposals/:proposalId/document",
 	...factory.createHandlers(async (c) => {

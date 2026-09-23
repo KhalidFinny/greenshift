@@ -1,14 +1,7 @@
 import { useMemo, useState } from "react";
 
-/**
- * Pagination for a list a page renders itself: the rows are a slice of what the
- * caller passed, and the state is the page's own.
- *
- * `DataTable` pages itself through TanStack's row model, so this exists for the
- * lists that are not tables: card grids, feeds, document rows. Both surfaces
- * read the same control (`PaginationBar`), so a list and a table page the same
- * way.
- */
+/** Pagination for a list a page renders itself. `DataTable` pages through
+ * TanStack's row model, so this covers card grids, feeds and document rows. */
 export interface PagedRows<T> {
 	/** The rows of the current page, in the order they were given. */
 	pageRows: T[];
@@ -27,8 +20,7 @@ export function usePagedRows<T>(rows: T[], initialPageSize = 10): PagedRows<T> {
 	const [pageSize, setPageSize] = useState(initialPageSize);
 
 	// A filter that shortens the list can leave the current page past its end,
-	// so the index is clamped on read rather than corrected in an effect: the
-	// slice and the control always agree on the page being shown.
+	// so the index is clamped on read rather than corrected in an effect.
 	const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
 	const current = Math.min(pageIndex, pageCount - 1);
 

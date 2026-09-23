@@ -158,8 +158,7 @@ export function AdminProjects() {
 		queryFn: () => api.admin.stats(),
 	});
 
-	// Keep the sheet's project in sync with fresh list data (status changes,
-	// filter moves the row out of view) and reflect mutation responses.
+	// Keep the sheet's project in sync with fresh list data, so a status change or a filter that moves the row out of view still reflects.
 	const freshSelected = projectsQuery.data?.projects.find(
 		(p) => p.id === selected?.id,
 	);
@@ -195,8 +194,7 @@ export function AdminProjects() {
 		);
 	}
 
-	// Cached project rows survive a refetch, so the page keeps its real frames
-	// and each part shimmers only its own values.
+	// Cached project rows survive a refetch, so each part shimmers only its own values.
 	const loading = projectsQuery.isPending || statsQuery.isPending;
 
 	const stats = statsQuery.data;

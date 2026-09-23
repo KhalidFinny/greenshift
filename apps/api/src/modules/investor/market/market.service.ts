@@ -11,16 +11,8 @@ import {
 	listPublishedBlueprints,
 } from "./market.repository";
 
-/**
- * Public bond catalog: every project that is at least in assessment, grouped
- * by whether its blueprint has been published (verified) or is still being
- * processed.
- *
- * The listing reports emissions rather than money. Issuance, placement and
- * settlement happen in the SCF partner's app, so what GreenShift can stand
- * behind here is what its own MRV periods measured, and the code an investor
- * searches for in that partner's app.
- */
+// Public bond catalog: projects at least in assessment, split by whether their
+// blueprint is published. Reports emissions; money lives in the SCF partner's app.
 export async function listBondListings(
 	db: GreenShiftDb,
 ): Promise<BondListing[]> {

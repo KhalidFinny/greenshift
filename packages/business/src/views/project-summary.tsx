@@ -1,19 +1,5 @@
-/* The project summary: the financial case, the files and the risk assessment,
- * written once and read by two surfaces.
- *
- * The wizard's review step renders it from the form, before there is a project
- * to read, and the project's own page renders it from the stored record, which
- * is the same summary the company submitted. The Green Project Blueprint is
- * generated from these figures, so the two surfaces cannot be allowed to drift
- * apart: this component is what makes them the same summary rather than two
- * renderings of one.
- *
- * Only the framing differs, and `context` is what says which framing: the
- * review step numbers its areas and speaks of steps and drafts, the record
- * names them plainly and reads as the stored case. The verification pack is the
- * one body the record hands to another section, because it is what the company
- * uploads at the registry rather than what the vendor prices from.
- */
+/* The project summary: the financial case, the files and the risk assessment, written
+ * once and read by the review step and the record. `context` says which framing. */
 
 import { faCircleCheck, faEye } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -62,7 +48,6 @@ export interface SummaryProject {
 	jaminan: string | null;
 }
 
-/** One file of a checklist: its slot, its label, and the file behind it. */
 export interface SummaryDocumentRow {
 	id: string;
 	label: string;
@@ -91,11 +76,8 @@ interface PlanFigures {
 	revenue: number | null;
 }
 
-/**
- * What the figures say when they are read against each other. Every value here
- * is arithmetic over the two steps, so the summary states a relationship rather
- * than repeating a number the user already typed.
- */
+/** What the figures say when read against each other: arithmetic over the two steps, so
+ * the summary states a relationship rather than repeating a number the user typed. */
 interface PlanReadings {
 	/** CAPEX over the tenor: what the loan asks for each year. */
 	annualRepayment: number | null;
@@ -128,8 +110,7 @@ function readPlan(figures: PlanFigures): PlanReadings {
 	};
 }
 
-/** The chart the summary leans on: the three annual figures against the
- * capital, in the rupiah the user entered. */
+/** The chart the summary leans on: the three annual figures against the capital, in rupiah. */
 function ComparisonChart({ figures }: { figures: PlanFigures }) {
 	const bars = [
 		{ label: "CAPEX", value: figures.capex },
@@ -157,8 +138,7 @@ function ComparisonChart({ figures }: { figures: PlanFigures }) {
 	);
 }
 
-/** The saving against the repayment it has to cover: the ratio the whole
- * funding case turns on, so it gets its own bar. */
+/** The saving against the repayment it has to cover, the ratio the funding case turns on. */
 function CoverageMeter({ readings }: { readings: PlanReadings }) {
 	const { coveragePct, annualRepayment, paybackYears } = readings;
 	if (coveragePct === null || annualRepayment === null) {
@@ -214,7 +194,6 @@ function ReadingPanel({ state }: { state: RiskInsightState }) {
 	);
 }
 
-/** One line of a case's column: the figure, and whether it falls short. */
 function Figure({
 	label,
 	value,
@@ -236,12 +215,8 @@ function Figure({
 	);
 }
 
-/**
- * One case as a column of the report: its name and the share of the plan it
- * assumes, what that produces, and the assumptions that separate it from the
- * other two. The money only means something against what was assumed to
- * produce it, so the two never come apart.
- */
+/** One case as a column of the report: its name, the share of the plan it assumes, what
+ * that produces, and the assumptions behind it — the two never come apart. */
 function ScenarioColumn({
 	scenario,
 	first,
@@ -290,11 +265,8 @@ function ScenarioColumn({
 	);
 }
 
-/**
- * What each case gets back, in today's money, as a share of what the capital
- * cost: the hundred per cent mark is the capital repaid, and it is the line the
- * funding case turns on.
- */
+/** What each case gets back, in today's money, as a share of the capital: the hundred
+ * per cent mark is the capital repaid, the line the funding case turns on. */
 function RecoveryChart({ forecast }: { forecast: RoiForecast }) {
 	const bars = forecast.scenarios.map((scenario) => ({
 		label: scenario.label,
@@ -337,17 +309,8 @@ function PaybackChart({ forecast }: { forecast: RoiForecast }) {
 	);
 }
 
-/**
- * The ROI forecast, computed from the Step 2 figures by the same engine the
- * Green Project Blueprint is generated with: the company reviews the three
- * cases before it submits, and the project's own page shows the same cases
- * afterwards.
- *
- * Eleanor reads the cases first and the numbers follow her, the way the rest of
- * the summary is ordered: she says what the three mean for the decision, the
- * charts show the two things the decision turns on, and the columns carry the
- * figures the blueprint will use.
- */
+/** The ROI forecast, from the Step 2 figures by the same engine that generates the
+ * blueprint. Eleanor reads the cases first and the numbers follow her. */
 function RoiForecastPanel({
 	state,
 	reading,
@@ -433,8 +396,7 @@ function RoiForecastPanel({
 	);
 }
 
-/** How A reads the project and its figures back: the analyst's reading on one
- * side, the charts behind it on the other. */
+/** How A reads the project and its figures back: the reading on one side, the charts behind it. */
 function SummarySection({
 	funding,
 	readings,
@@ -469,8 +431,7 @@ function SummarySection({
 	);
 }
 
-/** The tick only appears when a file is really there, and the state is spelled
- * out beside it. */
+/** The tick appears only when a file is really there, and the state is spelled out beside it. */
 function DocumentState({ name }: { name?: string }) {
 	if (!name) {
 		return (
@@ -566,8 +527,7 @@ export function DocumentGroup({
 	);
 }
 
-/** B2: the risk number on one side, Eleanor's reading of it on the other, with
- * the whole assessment a click away. */
+/** B2: the risk number on one side, Eleanor's reading on the other, the assessment a click away. */
 function RiskPair({
 	risk,
 	insight,
@@ -580,8 +540,7 @@ function RiskPair({
 	const ranked = [...risk.breakdown].sort((a, b) => b.pct - a.pct);
 
 	return (
-		/* Half and half: the number and its areas on one side, her reading on the
-		   other, so neither reads as the lesser column. */
+		/* Half and half: the number and its areas on one side, her reading on the other. */
 		<div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
 			<div className="space-y-4 lg:pr-8">
 				<p className="flex items-baseline gap-1.5">
@@ -623,11 +582,8 @@ function AreaHeading({ title, subtitle }: { title: string; subtitle: string }) {
 	);
 }
 
-/**
- * The two Step 3 lists, in the words a bidder reads them under. Each list is its
- * own labelled group rather than a paragraph under one heading, so a reader can
- * tell which entries are requirements and which are deliverables.
- */
+/** The two Step 3 lists, in the words a bidder reads them under: each its own labelled
+ * group, so a reader can tell requirements from deliverables. */
 function ScopeLists({ scope }: { scope: ProjectSummaryProps["scope"] }) {
 	const groups = [
 		{
@@ -680,8 +636,7 @@ export function ProjectSummary({
 	const review = context === "review";
 	const [isRiskOpen, setIsRiskOpen] = useState(false);
 
-	/* Two readings of the same assessment: the summary panel holds the two
-	   sentences, the detail view the whole note. */
+	/* Two readings of the same assessment: the panel holds two sentences, the detail the note. */
 	const brief = useRiskInsight(risk, "brief");
 	const full = useRiskInsight(risk, "full");
 	const reading = useProjectReading({ ...project, ...funding });
@@ -787,8 +742,7 @@ export function ProjectSummary({
 						</Dialog>
 					</>
 				) : (
-					/* The record carries the whole assessment rather than a door to
-					   it: the project's page is where it is read, so it is one page. */
+					/* The record carries the whole assessment rather than a door to it. */
 					<RiskAssessmentBody insight={full} risk={risk} />
 				)}
 			</section>

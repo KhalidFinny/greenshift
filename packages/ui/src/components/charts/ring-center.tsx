@@ -19,35 +19,23 @@ export interface RingCenterProps {
 	defaultLabel?: string;
 	/** Format options for NumberFlow. Default: standard notation */
 	formatOptions?: ChartStatFlowFormat;
-	/** Custom render function for complete control over center content */
 	children?: (props: {
 		value: number;
 		label: string;
 		isHovered: boolean;
 		data: { label: string; value: number; maxValue: number; color?: string };
 	}) => ReactNode;
-	/** Additional class name for the container */
 	className?: string;
 	/** Class name for the value text. Scales with center size via container queries. */
 	valueClassName?: string;
 	/** Class name for the label text. Scales with center size via container queries. */
 	labelClassName?: string;
-	/** Prefix to show before the number (e.g., "$") */
 	prefix?: string;
-	/** Suffix to show after the number (e.g., "%") */
 	suffix?: string;
 }
 
-/**
- * RingCenter displays content in the center of the ring chart.
- *
- * This component renders as pure HTML (not inside SVG foreignObject) to avoid
- * Safari's WebKit bug #23113 where HTML content with CSS transforms/opacity
- * inside foreignObject renders at incorrect positions.
- *
- * The parent RingChart uses CSS Grid stacking to overlay this HTML content
- * on top of the SVG rings.
- */
+/** Renders as pure HTML, not inside SVG foreignObject: avoids Safari WebKit #23113 mispositioning.
+ * RingChart overlays it with CSS Grid stacking. */
 export function RingCenter({
 	defaultLabel = "Total",
 	formatOptions = defaultChartStatFlowFormat,
@@ -65,11 +53,9 @@ export function RingCenter({
 	const displayValue = hoveredData ? hoveredData.value : totalValue;
 	const displayLabel = hoveredData ? hoveredData.label : defaultLabel;
 
-	// Calculate center area size based on scaled baseInnerRadius
-	// Leave some padding so text doesn't touch the inner ring
+	// Padding so text doesn't touch the inner ring
 	const centerSize = baseInnerRadius * 2 - 16;
 
-	// If custom render function is provided, use it
 	if (children && hoveredData) {
 		return (
 			<div
@@ -90,8 +76,6 @@ export function RingCenter({
 		);
 	}
 
-	// Default center content with NumberFlow animations
-	// Now renders as pure HTML, avoiding Safari's foreignObject bugs
 	return (
 		<div
 			className={cn(

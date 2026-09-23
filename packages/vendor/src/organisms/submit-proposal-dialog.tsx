@@ -63,12 +63,8 @@ function formatNumber(value: string): string {
 const TEXTAREA_CLASS =
 	"w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 
-/**
- * The one place a bid is placed or revised. The two are the same act on the
- * same tender, so they are the same dialog: a vendor that has already bid gets
- * its amount back and a revise action, and the API's duplicate rule never has
- * to answer a second submission.
- */
+/** The one place a bid is placed or revised: placing and revising are the same act on the same tender, so one dialog serves both.
+ * The API's duplicate rule never has to answer a second submission. */
 export function SubmitProposalDialog({
 	project,
 	myProposal,
@@ -82,9 +78,8 @@ export function SubmitProposalDialog({
 		project.tenderDeadlineAt !== "" &&
 		new Date(project.tenderDeadlineAt).getTime() <= Date.now();
 
-	/* The proposal PDF, held outside the form because a file is not a field: the
-	   upload is a second request against the proposal's id, so it is sent after
-	   the bid itself lands. */
+	/* The PDF is held outside the form: a file is not a field, and the upload is a second request
+	   against the proposal's id, sent after the bid itself lands. */
 	const [file, setFile] = useState<File | null>(null);
 	const [fileError, setFileError] = useState<string | null>(null);
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -121,17 +116,15 @@ export function SubmitProposalDialog({
 			const amount = Number(value.amount.replace(/\D/g, ""));
 			if (!Number.isFinite(amount) || amount <= 0) return;
 
-			// The revise path carries the amount alone: the amount is what a live
-			// open-bid ranking is ranked on, and the filed document stays unless a
-			// replacement is chosen.
+			// The revise path carries the amount alone, since that is what a live open-bid ranking is
+			// ranked on; the filed document stays unless a replacement is chosen.
 			if (myProposal) {
 				await onRevise({ proposalId: myProposal.id, amount }, file);
 				onOpenChange(false);
 				return;
 			}
 
-			// A bid is filed with the case for it, so the document is required
-			// here: the request that creates the bid carries the PDF.
+			// A bid is filed with the case for it: the request that creates the bid carries the PDF, so the document is required.
 			if (!file) {
 				setFileError("Attach the proposal PDF. A bid is filed with it.");
 				return;
@@ -153,8 +146,7 @@ export function SubmitProposalDialog({
 		},
 	});
 
-	/* The shared client raises the failure as a toast; the dialog stays open on
-	   it, so a rejected bid is retried here rather than from a closed dialog. */
+	/* The shared client raises the failure as a toast; the dialog stays open on it, so a rejected bid is retried here. */
 	const submissionError = form.state.errorMap.onSubmit;
 
 	return (
@@ -340,10 +332,8 @@ export function SubmitProposalDialog({
 								</p>
 							) : null}
 
-							{/* The bid's written case. One input for both states, so the
-							    picker keeps a single accessible name; the label beside it is
-							    what a pointer sees and the input is what the keyboard
-							    reaches. */}
+							{/* One input for both states, so the picker keeps a single accessible name: the label is
+							    what a pointer sees, the input what the keyboard reaches. */}
 							<div className="space-y-2 border-t border-border pt-4">
 								<Label htmlFor="proposal-pdf" className="text-sm">
 									{revising

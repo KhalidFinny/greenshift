@@ -18,14 +18,12 @@ const factory = createFactory<ApiEnv>();
 
 export const documentsRoutes = new Hono<ApiEnv>();
 
-/** A numeric path segment, or null when it is not a usable id. */
 function numericId(raw: string | undefined): number | null {
 	if (!raw || !/^\d+$/.test(raw)) return null;
 	const value = Number(raw);
 	return Number.isSafeInteger(value) ? value : null;
 }
 
-// ── upload ────────────────────────────────────────────────
 // Multipart rather than JSON: `requireJsonBody` caps bodies at 16 KB, and a
 // scanned document is far larger than that.
 documentsRoutes.post(
@@ -83,7 +81,6 @@ documentsRoutes.post(
 	}),
 );
 
-// ── delete ────────────────────────────────────────────────
 documentsRoutes.delete(
 	"/drafts/:draftId/documents/:docId",
 	mutationRateLimit("business", "document"),
@@ -113,7 +110,6 @@ documentsRoutes.delete(
 	}),
 );
 
-// ── list on a submitted project ───────────────────────────
 documentsRoutes.get(
 	"/projects/:id/documents",
 	...factory.createHandlers(async (c) => {
@@ -133,7 +129,6 @@ documentsRoutes.get(
 	}),
 );
 
-// ── download ──────────────────────────────────────────────
 documentsRoutes.get(
 	"/projects/:id/documents/:docId/download",
 	...factory.createHandlers(async (c) => {

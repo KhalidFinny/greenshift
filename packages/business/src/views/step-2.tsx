@@ -49,8 +49,7 @@ export interface Step2ViewProps {
 	score: CreditScoreResult;
 }
 
-/* The upload rules the API enforces, so the hint cannot promise more than it
-   accepts. */
+/* The upload rules the API enforces, so the hint cannot promise more than it accepts. */
 const UPLOAD_HINT = "PDF, Excel, PNG or JPG, up to 25 MB each";
 
 const SECTION_HEADERS = [
@@ -79,11 +78,8 @@ function fileKind(name: string): string {
 		: name.slice(dot + 1).toUpperCase();
 }
 
-/**
- * A step block's heading. The rule underneath is what reads as the boundary
- * between blocks A, B and C, and its letter is what the score panel names when
- * it points back at the fields that feed it.
- */
+/** A step block's heading: the rule under it is the boundary between blocks A, B and C,
+ * and its letter is what the score panel names when it points back at those fields. */
 function SectionHeader({
 	letter,
 	title,
@@ -103,12 +99,8 @@ function SectionHeader({
 	);
 }
 
-/**
- * The documents attached to the draft. Empty, the picker is the whole block;
- * once a file is in, the list is the state and adding another is its own
- * action, so a second file never means going back through a control named as if
- * it were the first.
- */
+/** The documents attached to the draft. Empty, the picker is the whole block; once a file
+ * is in, the list is the state and adding another is its own action. */
 function FinancialDocuments({
 	files,
 	onFiles,
@@ -121,12 +113,10 @@ function FinancialDocuments({
 	fileError?: string;
 }) {
 	const fileRef = useRef<HTMLInputElement | null>(null);
-	/* The attachments are user-supplied and unbounded, so they page like every
-	   other record list; the picker below stays put under the page. */
+	/* The attachments are user-supplied and unbounded, so they page like every other record list. */
 	const paged = usePagedRows(files);
-	/* One input for both states, so the picker keeps a single accessible name.
-	   Out of the tab order: it is opened by the buttons beside it, and a focus
-	   stop on an invisible control is a trap rather than a path. */
+	/* One input for both states, so the picker keeps a single accessible name. Out of the
+	   tab order: a focus stop on an invisible control is a trap rather than a path. */
 	const input = (
 		<input
 			ref={fileRef}
@@ -143,7 +133,6 @@ function FinancialDocuments({
 		/>
 	);
 
-	/* What the row of actions under the list says about the list itself. */
 	const attachedLabel = `${files.length} ${
 		files.length === 1 ? "file" : "files"
 	} attached, saved with your draft`;
@@ -239,10 +228,8 @@ function FinancialDocuments({
 	);
 }
 
-/**
- * The score is derived from the figures above, so it stays absent until they are
- * in. This says which ones are still open instead of showing a stand-in number.
- */
+/** The score is derived from the figures above, so it stays absent until they are in: this
+ * says which ones are still open instead of showing a stand-in number. */
 function MissingInputs({
 	capex,
 	tenor,
@@ -416,11 +403,8 @@ function ScoreDial({ readout }: { readout: ScoreReadout }) {
 	);
 }
 
-/**
- * The score panel. The model runs once with no documents counted, which leaves
- * the funding part alone, so the document part is what the attachments added on
- * top of it and the two parts always add up to the number on screen.
- */
+/** The score panel: the model runs once with no documents counted, so the document part is
+ * what the attachments added and the two parts add up to the number on screen. */
 function CreditScoringPanel({
 	score,
 	capex,
@@ -490,8 +474,7 @@ export function Step2View({
 
 	return (
 		<div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-			{/* One block per heading, each ruled off and set well apart from the
-			    next: the fields of two blocks are never read as one grid. */}
+			{/* One block per heading, each ruled off and set well apart from the next. */}
 			<div className="min-w-0 space-y-10">
 				<section className="space-y-4">
 					<SectionHeader {...SECTION_HEADERS[0]} />
@@ -599,8 +582,7 @@ export function Step2View({
 				</section>
 			</div>
 
-			{/* The panel moves with the figures it reads, so it stays in view while
-			    the fields that feed it are being filled in. */}
+			{/* The panel moves with the figures it reads, so it stays in view while they are filled in. */}
 			<aside className="min-w-0 xl:sticky xl:top-24">
 				<Card>
 					<CardHeader>

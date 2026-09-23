@@ -1,14 +1,7 @@
 import { useAppForm } from "@greenshift/ui";
 
-/**
- * The wizard's field values.
- *
- * Every numeric entry stays the string the user typed, Indonesian grouping and
- * all, so a resumed value is shown back exactly as it was entered; conversion
- * happens at the edge, where the payload is built. `timeline` starts on a real
- * quarter rather than an empty select, which would otherwise fail its own rule
- * the moment the user looked at it.
- */
+/** The wizard's field values: numbers stay as typed, Indonesian grouping and all, and convert at
+ * the payload edge; `timeline` starts on a real quarter so it passes its own rule. */
 export const WIZARD_VALUES = {
 	namaProyek: "",
 	lokasi: "",
@@ -25,9 +18,7 @@ export const WIZARD_VALUES = {
 	saving: "",
 	pendapatan: "",
 	jaminan: "",
-	/* Step 3 holds two open-ended lists. Each is one entry per line, because the
-	   number of requirements a project has is the project's own, not a fixed
-	   set of fields. */
+	/* Step 3 holds two open-ended lists; each is one entry per line, not a fixed field set. */
 	requirements: "",
 	deliverables: "",
 	consent: false,
@@ -66,18 +57,12 @@ export const STEP3_FIELDS = [
 	"deliverables",
 ] as const satisfies readonly WizardFieldName[];
 
-/**
- * One form for the whole wizard: the three data steps plus the two declarations
- * the review step gates submission on. A single instance means a resume seeds
- * every step at once, and the step views read the same values the shell does.
- */
+/** One form for the whole wizard, three data steps plus the two review declarations, so a resume
+ * seeds every step at once and the step views read the same values the shell does. */
 export function useProjectWizardForm() {
 	return useAppForm({ defaultValues: { ...WIZARD_VALUES } });
 }
 
-/**
- * The form instance the step views render against. `ReturnType` is deliberate:
- * TanStack's own app-form type is generic over fifteen parameters, and this
- * alias is the only place in the package that names the bundle's shape.
- */
+/** The form instance the step views render against; `ReturnType` is deliberate, since TanStack's
+ * app-form type is generic over fifteen parameters and this alias names the shape once. */
 export type WizardForm = ReturnType<typeof useProjectWizardForm>;

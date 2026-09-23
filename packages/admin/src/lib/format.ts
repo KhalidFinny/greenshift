@@ -14,10 +14,7 @@ export function formatDateTime(value: string | null | undefined): string {
 	return Number.isNaN(date.getTime()) ? "-" : dateTime.format(date);
 }
 
-/**
- * Chart axis label for a `YYYY-MM` key from the analytics series. Read as UTC,
- * which is how the backend groups the months.
- */
+/** Chart axis label for a `YYYY-MM` key from the analytics series; read as UTC, which is how the backend groups the months. */
 export function formatMonth(month: string): string {
 	const date = new Date(`${month}-01T00:00:00Z`);
 	return Number.isNaN(date.getTime()) ? month : monthName.format(date);

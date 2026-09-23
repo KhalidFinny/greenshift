@@ -34,7 +34,6 @@ export async function listRoiPayments(
 	return rows;
 }
 
-/** Full payment row, used to evaluate the payout. */
 export async function findRoiPayment(db: GreenShiftDb, id: number) {
 	const [payment] = await db
 		.select()
@@ -45,8 +44,8 @@ export async function findRoiPayment(db: GreenShiftDb, id: number) {
 }
 
 /**
- * Flips a still-scheduled payment to paid. Returns the updated row, or
- * `undefined` when another request already processed it.
+ * Flips a still-scheduled payment to paid; `undefined` when another request
+ * already processed it.
  */
 export async function markRoiPaymentPaid(
 	db: GreenShiftDb,

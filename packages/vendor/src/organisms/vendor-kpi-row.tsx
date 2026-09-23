@@ -18,8 +18,7 @@ interface VendorKpiRowProps {
 }
 
 export function VendorKpiRow({ items, loading = false }: VendorKpiRowProps) {
-	// One frame, two leaf states: the card markup below is shared, so the
-	// skeleton cannot drift from the loaded layout.
+	// One frame, two leaf states: the shared card markup keeps the skeleton from drifting off the loaded layout.
 	const rows: (KpiItem | null)[] = loading
 		? Array.from({ length: 4 }, () => null)
 		: items;

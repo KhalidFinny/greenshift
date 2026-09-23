@@ -1,10 +1,5 @@
-/* A project the company already owns, opened from My Projects: the page that
- * holds its record, rather than the confirmation the wizard hands over to.
- *
- * The header is the project's own identification (what it is, where it stands,
- * and what it was filed under), and everything below it is the same summary the
- * review step showed, read back from the stored project.
- */
+/* A project the company already owns, opened from My Projects: its record, not the
+ * wizard's confirmation. Below the header sits the summary the review step showed. */
 
 import { ApiError, api } from "@greenshift/core";
 import { Button, cn, EmptyState, ShimmerBlock } from "@greenshift/ui";
@@ -29,8 +24,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
 	});
 
 	if (projectQuery.isError) {
-		// A missing project and a failed request are told apart: the first is the
-		// route's own answer, the second is worth retrying.
+		// Missing project vs failed request: the first is the route's own answer, the second retryable.
 		const missing =
 			projectQuery.error instanceof ApiError &&
 			projectQuery.error.status === 404;
@@ -70,8 +64,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
 		);
 	}
 
-	// The record is the page: it takes the whole width the shell gives it, and
-	// lays itself out in columns rather than one narrow stack.
+	// The record is the page: full width, laid out in columns rather than one narrow stack.
 	return (
 		<div className="space-y-8">
 			<div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
@@ -94,9 +87,8 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
 								: ""}
 						</p>
 					</div>
-					{/* What the project is and what it costs, as the submission
-					    recorded them: the summary below reads the money in full, so
-					    this line is the identification rather than the case. */}
+					{/* What the project is and what it costs, as the submission recorded
+					    them: the summary below reads the money in full. */}
 					<div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
 						<span>
 							{project.location ?? "Location not filled in"}
@@ -128,8 +120,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
 
 			<ProjectRecord projectId={projectId} />
 
-			{/* Matchmaking opens with verification, so the route is offered only
-			    once the project has cleared it. */}
+			{/* Matchmaking opens with verification, so the route is offered once it clears. */}
 			{isMatchmakingOpen(project.status) ? (
 				<div className="flex flex-wrap items-center gap-3">
 					<Button variant="outline" asChild>

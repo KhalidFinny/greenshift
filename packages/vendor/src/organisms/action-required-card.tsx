@@ -48,7 +48,7 @@ const URGENCY_STYLES: Record<string, string> = {
 
 const FILTERS = ["all", "urgent", "high", "medium", "low"] as const;
 
-// Value threshold for high-value projects (IDR)
+// Project values are in IDR.
 const HIGH_VALUE_THRESHOLD = 5_000_000_000;
 
 function calculateUrgency(item: {
@@ -56,11 +56,9 @@ function calculateUrgency(item: {
 	urgency: string;
 	projectValue?: number;
 }): "urgent" | "high" | "medium" | "low" {
-	// Manual priority takes precedence
 	if (item.urgency !== "medium")
 		return item.urgency as "urgent" | "high" | "medium" | "low";
 
-	// Upgrade to high if project value is significant
 	if (item.projectValue && item.projectValue >= HIGH_VALUE_THRESHOLD) {
 		return "high";
 	}

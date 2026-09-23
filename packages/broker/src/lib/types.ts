@@ -37,7 +37,7 @@ export interface ExternalBondInfo {
 	bondSerialNumber?: string;
 	totalAmount: number;
 	tenorMonths: number;
-	couponRatePercent: number; // e.g. 8.5%
+	couponRatePercent: number;
 	issuanceDate?: string;
 	maturityDate?: string;
 	brokerRepresentative: string;

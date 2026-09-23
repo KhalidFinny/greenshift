@@ -31,9 +31,8 @@ export async function markNotificationRead(
 }
 
 /**
- * Mark every notification of one account read, so a feed that has been read can
- * be cleared in one move rather than one row at a time. Answers with how many
- * rows it changed, which is 0 when there was nothing unread.
+ * Mark every notification of one account read, answering with how many rows
+ * changed (0 when nothing was unread).
  */
 export async function markAllNotificationsRead(
 	db: GreenShiftDb,

@@ -33,11 +33,8 @@ interface VendorProjectCardProps {
 	variant?: "default" | "recommended";
 }
 
-/**
- * One criterion: its name and score on one line, the score as a bar under them,
- * and what it measures in one sentence. A row rather than a boxed card, because
- * five boxed cards is what made this dialog a column.
- */
+/** One criterion: name and score on one line, the score as a bar under them, and what it measures in one sentence.
+ * A row rather than a boxed card, since five boxed cards made this dialog a column. */
 function MatchBreakdownRow({
 	label,
 	score,
@@ -47,8 +44,7 @@ function MatchBreakdownRow({
 	score: number;
 	explanation: string;
 }) {
-	// The model stores the criteria unrounded, because the total is what it
-	// rounds; a score is shown as a whole percentage.
+	// The model stores criteria unrounded because the total is what it rounds; a score shows as a whole percentage.
 	const pct = Math.round(score);
 	return (
 		<div className="space-y-1.5">
@@ -102,9 +98,7 @@ function MatchmakingDialog({
 					</DialogDescription>
 				</DialogHeader>
 
-				{/* The reading sits beside the breakdown rather than above it: the
-				    score is what the dialog is opened for, and the five criteria are
-				    read against it. */}
+				{/* The reading sits beside the breakdown: the score is what the dialog is opened for, and the criteria are read against it. */}
 				<div className="grid gap-6 pt-2 md:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
 					<div className="flex flex-col justify-center gap-6 rounded-xl bg-[#03442C] p-4 text-white">
 						<div>

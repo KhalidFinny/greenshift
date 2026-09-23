@@ -8,9 +8,7 @@ const factory = createFactory<ApiEnv>();
 
 export const marketRoutes = new Hono<ApiEnv>();
 
-/**
- * No authentication required: this is the landing-adjacent public surface.
- */
+/** Public surface: no authentication required. */
 marketRoutes.get(
 	"/market",
 	...factory.createHandlers(async (c) => {

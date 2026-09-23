@@ -17,7 +17,6 @@ function triggerDownload(filename: string, blob: Blob): void {
 	URL.revokeObjectURL(url);
 }
 
-// ── CSV (Excel-compatible) ─────────────────────────────────
 function csvCell(value: string): string {
 	if (/[",\n\r]/.test(value)) {
 		return `"${value.replace(/"/g, '""')}"`;
@@ -25,6 +24,7 @@ function csvCell(value: string): string {
 	return value;
 }
 
+// Excel-compatible: UTF-8 BOM and CRLF line endings.
 export function downloadCsv(filename: string, sections: ExportSection[]): void {
 	const lines: string[] = [];
 	for (const section of sections) {
@@ -44,7 +44,7 @@ export function downloadCsv(filename: string, sections: ExportSection[]): void {
 	);
 }
 
-// ── Minimal PDF (A4, Helvetica, no dependencies) ───────────
+// Minimal PDF writer: A4, Helvetica, no dependencies.
 const PAGE_WIDTH = 595;
 const PAGE_HEIGHT = 842;
 const MARGIN = 40;

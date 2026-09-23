@@ -35,7 +35,6 @@ export async function listProjects(
 	return rows;
 }
 
-/** Minimal projection used by the status-change guard. */
 export async function findProjectForStatusChange(db: GreenShiftDb, id: number) {
 	const [project] = await db
 		.select({ id: projects.id, status: projects.status })

@@ -35,10 +35,8 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
 	const isHome = useIsHome();
-	// Decide public chrome from the committed route tree, not from pathname +
-	// auth context: during a transition out of an authed page the session is
-	// already cleared while the route is still the old one: a pathname/user
-	// mix would flash the public header for a frame.
+	// Public chrome comes from the committed route tree, not from pathname + auth
+	// context: leaving an authed page clears the session before the route swaps.
 	const activeRouteId = useRouterState({
 		select: (state) => state.matches[state.matches.length - 1]?.routeId,
 	});

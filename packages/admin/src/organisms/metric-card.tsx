@@ -29,8 +29,7 @@ export function MetricCard({
 	subTone = "muted",
 	loading = false,
 }: MetricCardProps) {
-	// One frame, two leaf states: the label and icon are static, so only the
-	// fetched numbers shimmer and the card cannot drift from its loaded layout.
+	// One frame, two leaf states: the label and icon are static, so only the fetched numbers shimmer.
 	return (
 		<Card>
 			<CardContent className="space-y-6">

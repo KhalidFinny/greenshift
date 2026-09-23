@@ -38,8 +38,8 @@ export function validateStep1(v: Step1Values): Record<string, string> {
 	return e;
 }
 
-/* ADR-004.1-3 + 004.5: CAPEX + tenor + penghematan, profil keuangan,
- * >= 1 file. Pola sama seperti Step 1: aria-invalid + pesan inline. */
+/* ADR-004.1-3 + 004.5: CAPEX + tenor + penghematan, financial profile, >= 1 file;
+ * same pattern as Step 1 (aria-invalid + inline message). */
 export interface Step2Values {
 	capex: number | null;
 	tenor: number | null;
@@ -69,8 +69,7 @@ export function validateStep2(v: Step2Values): Record<string, string> {
 	return e;
 }
 
-/* Step 3: the scope of work. Both lists are one entry per line, so the rule
- * counts the entries that carry text. */
+/* Step 3: both scope lists are one entry per line, so the rule counts the entries carrying text. */
 export interface Step3Values {
 	requirements: string[];
 	deliverables: string[];

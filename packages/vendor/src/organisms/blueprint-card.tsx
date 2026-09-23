@@ -37,15 +37,8 @@ function Figure({ label, value }: { label: string; value: string }) {
 	);
 }
 
-/**
- * The Green Project Blueprint, as the bidder on a tender reads it: the funding
- * case, the emission targets the project was cleared on, and the three scenarios
- * behind the projections.
- *
- * The document is written from the figures the company submitted and travels
- * with the tender, so a vendor bids against the same case the company filed
- * rather than a scope of work alone.
- */
+/** The Green Project Blueprint as the bidder on a tender reads it: the funding case, the emission targets the project was cleared on, and the three scenarios behind the projections.
+ * It travels with the tender, so a vendor bids against the same case the company filed rather than a scope of work alone. */
 export function BlueprintCard({
 	blueprint,
 	loading = false,

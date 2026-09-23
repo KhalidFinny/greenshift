@@ -31,11 +31,7 @@ function modelAccuracy(forecast: EnergyForecast): string | null {
 	return parts.length > 0 ? parts.join(" · ") : null;
 }
 
-/**
- * What the predictive model expects the site to consume and save over the
- * coming periods. Forward looking by nature, so it sits next to the reported
- * actuals rather than replacing them.
- */
+/** What the predictive model expects the site to consume and save over the coming periods; forward looking, so it sits beside the reported actuals rather than replacing them. */
 export function EnergyForecastCard({
 	forecasts,
 	loading = false,

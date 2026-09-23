@@ -1,8 +1,5 @@
-/* The ROI forecast the review step shows, for the project as the company has
- * entered it so far. The figures travel, the scenarios come back: the same
- * engine the blueprint is generated with, asked before there is a project to
- * generate one for.
- */
+/* The ROI forecast the review step shows, for the project as entered so far: the
+ * same engine the blueprint uses, asked before a project exists to generate one for. */
 
 import { Hono } from "hono";
 import { createFactory } from "hono/factory";
@@ -21,16 +18,8 @@ const factory = createFactory<ApiEnv>();
 
 export const forecastRoutes = new Hono<ApiEnv>();
 
-// ── the project's own blueprint ───────────────────────────
-/**
- * The Green Project Blueprint the company's own page shows beside its summary.
- * It is written at verification, so a project still waiting on its LVV body
- * answers with null and the page says when it will exist.
- *
- * The vendor read is the one behind a gate: a bidder only sees a validated or
- * published document, while the company reads its own at whatever stage it has
- * reached.
- */
+// The company's own blueprint, written at verification, so a project still waiting
+// on its LVV body answers null. A bidder only sees it once validated or published.
 forecastRoutes.get(
 	"/projects/:id/blueprint",
 	...factory.createHandlers(async (c) => {
@@ -60,7 +49,6 @@ function readNumber(value: unknown, max: number): number | null | undefined {
 	return undefined;
 }
 
-/** The body as this route will read it, or null when it is not one. */
 function readForecastRequest(raw: unknown): BusinessForecastRequest | null {
 	if (typeof raw !== "object" || raw === null) return null;
 	const body = raw as Record<string, unknown>;
@@ -94,12 +82,8 @@ forecastRoutes.post(
 	}),
 );
 
-/**
- * Eleanor's reading of the same forecast, asked for on its own: the scenarios
- * are arithmetic and land at once, so the charts do not wait on a model while
- * she writes about them. The figures travel rather than the scenarios, because
- * the engine and the cache key both read the same inputs the forecast does.
- */
+// Eleanor's reading of the same forecast, asked for separately so the charts do not
+// wait on a model. The figures travel because the cache key reads the same inputs.
 forecastRoutes.post(
 	"/review/forecast/reading",
 	mutationRateLimit("business", "project-forecast-reading"),

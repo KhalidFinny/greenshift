@@ -1,9 +1,5 @@
-/* Where the wizard hands over: the project is submitted, and this says so and
- * says what happens next.
- *
- * The record itself is `ProjectRecord`, the same one the project's own page
- * shows; this page adds the banner and the three ways out of the wizard.
- */
+/* Where the wizard hands over: the project is submitted, and this says so and says
+ * what happens next. The record is `ProjectRecord`, as on the project's own page. */
 
 import { faCircleCheck } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -55,11 +51,9 @@ export function SubmitConfirmation({ projectId }: { projectId: string }) {
 		);
 	}
 
-	// The same width as the project's own page: this is the same record, shown
-	// at the moment the wizard hands it over.
+	// The same width as the project's own page: the same record, at handover.
 	return (
 		<div className="space-y-8">
-			{/* The one thing this page has to say, said first. */}
 			<div className="rounded-xl border border-border bg-muted/50 px-6 py-6">
 				<p className="flex items-center gap-2 text-sm font-medium text-primary">
 					<FontAwesomeIcon icon={faCircleCheck} aria-hidden />
@@ -84,16 +78,13 @@ export function SubmitConfirmation({ projectId }: { projectId: string }) {
 					</p>
 				</div>
 
-				{/* Where to go next, above the record: the submission is done, so the
-				    page leads with the two things a company does afterwards rather
-				    than burying them under the whole summary. Every one is a button:
-				    a text-only action here would read as a note, not a way out. */}
+				{/* Where to go next, above the record, so the next actions are not buried
+				    under the summary. Every one is a button: a text-only action would read as a note. */}
 				<div className="mt-4 flex flex-wrap items-center gap-3">
 					<Button asChild>
 						<Link to="/business/projects">View my projects</Link>
 					</Button>
-					{/* Matchmaking opens with verification, so the route is offered
-					    only once the project has cleared it. */}
+					{/* Matchmaking opens with verification, so the route is offered once it clears. */}
 					{isMatchmakingOpen(project.status) ? (
 						<Button variant="secondary" asChild>
 							<Link to="/business/matchmaking">Go to vendor matchmaking</Link>

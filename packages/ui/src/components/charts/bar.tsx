@@ -21,10 +21,8 @@ type ScaleBand<Domain extends { toString(): string }> = ReturnType<
 export type BarLineCap = "round" | "butt" | number;
 export type BarAnimationType = "grow" | "fade";
 
-// ── Bar-depth perspective trim ───────────────────────────────────────────
-// Uses the SHARED geometry (`bar-depth-geometry.ts`) so a
-// `<Bar perspective>` front face lines up exactly with
-// `<BarDepthBack>`'s lid: the formula lives in one place for both.
+// Shared bar-depth geometry lives in `bar-depth-geometry.ts`: a `<Bar perspective>`
+// front face lines up exactly with `<BarDepthBack>`'s lid.
 
 /** perspectiveRise for a positive bar whose visual top sits at `topY`.
  * Returns 0 for a dead-center bar or a dense chart (degenerate depth). */
@@ -52,7 +50,6 @@ function barDepthPerspectiveRise(
 }
 
 export interface BarProps {
-	/** Key in data to use for y values */
 	dataKey: string;
 	/** Y-scale group id for vertical bars (Recharts `yAxisId`). Default: `"left"`. */
 	yAxisId?: string | number;
@@ -75,13 +72,10 @@ export interface BarProps {
 	/** Gap between grouped bars in pixels. Default: 4 */
 	groupGap?: number;
 	/** Shrink each positive bar's top by its perspective rise so the front face
-	 * lines up with `<BarDepthBack>`'s lid (instead of the lid sitting above the
-	 * front face). Pass `true` whenever the chart also renders the bar-depth 3D
-	 * surfaces. Default: false */
+	 * lines up with `<BarDepthBack>`'s lid. Pass `true` when 3D surfaces render. Default: false */
 	perspective?: boolean;
-	/** Minimum rendered bar height in px (non-stacked, vertical). Floors short or
-	 * zero-value bars so they stay visible. Pair with the same value on
-	 * `<BarDepthProvider minBarHeight>` when using the 3D surfaces. Default: 0 */
+	/** Minimum rendered bar height in px (non-stacked, vertical): floors short or
+	 * zero-value bars so they stay visible. Pair with `<BarDepthProvider minBarHeight>`. Default: 0 */
 	minBarHeight?: number;
 }
 
@@ -209,8 +203,6 @@ const BarInner = memo(function BarInner({
 		revealEpoch = 0,
 	} = useChart();
 
-	// Calculate stagger delay automatically if not provided
-	// Total animation duration is ~1200ms, with 40% for stagger spread and 60% for bar animation
 	const totalAnimDuration = animationDuration || 1100;
 	const staggerSpread = totalAnimDuration * 0.4; // 40% of time for stagger spread
 	const calculatedStaggerDelay =
@@ -219,7 +211,6 @@ const BarInner = memo(function BarInner({
 
 	const isHorizontal = orientation === "horizontal";
 
-	// Find the index of this bar series among all bar series
 	const { hoveredIndex: legendHoveredIndex } = useChartLegendHover();
 
 	const seriesIndex = useMemo(() => {
@@ -236,23 +227,19 @@ const BarInner = memo(function BarInner({
 	const seriesCount = lines.length;
 	const isLastSeries = seriesIndex === seriesCount - 1;
 
-	// Calculate the width for each bar within a group (for non-stacked)
 	const barWidth = useMemo(() => {
 		if (!bandWidth || seriesCount === 0) {
 			return 0;
 		}
 		if (stacked) {
-			// Stacked bars use full band width
 			return bandWidth;
 		}
-		// Leave a gap between grouped bars (controlled by groupGap prop)
 		const effectiveGroupGap = seriesCount > 1 ? groupGap : 0;
 		return (bandWidth - effectiveGroupGap * (seriesCount - 1)) / seriesCount;
 	}, [bandWidth, seriesCount, stacked, groupGap]);
 
-	// Calculate corner radius based on lineCap. Perspective bars force a flat
-	// top (radius 0) so the 3D lid from `<BarDepthBack>` meets the bar with no
-	// gap: rounded corners would leave a wedge, so `perspective` overrides it.
+	// Perspective bars force radius 0: a rounded top would leave a wedge where the
+	// `<BarDepthBack>` lid meets the bar.
 	const cornerRadius = useMemo(() => {
 		if (perspective) {
 			return 0;
@@ -285,7 +272,6 @@ const BarInner = memo(function BarInner({
 				const scale = isHorizontal ? chartYScale : valueScale;
 
 				if (isHorizontal) {
-					// Horizontal bars: category on y-axis, value on x-axis
 					const valuePos = scale(value) ?? 0;
 					barW = valuePos; // Width is the value position (grows from left)
 					barHeight = barWidth;
@@ -294,7 +280,6 @@ const BarInner = memo(function BarInner({
 						const offset = stackOffsets.get(i)?.get(dataKey) ?? 0;
 						x = scale(offset) ?? 0;
 						barW = valuePos - x;
-						// Apply stack gap for horizontal: shift right and reduce width
 						const gapOffset = seriesIndex * stackGap;
 						x += gapOffset;
 						if (!isLastSeries && stackGap > 0) {
@@ -302,7 +287,6 @@ const BarInner = memo(function BarInner({
 						}
 					} else {
 						x = 0;
-						// For grouped bars, offset y position
 						const effectiveGroupGap = seriesCount > 1 ? groupGap : 0;
 						y = bandPos + seriesIndex * (barWidth + effectiveGroupGap);
 					}
@@ -311,7 +295,6 @@ const BarInner = memo(function BarInner({
 						: bandPos +
 							seriesIndex * (barWidth + (seriesCount > 1 ? groupGap : 0));
 				} else {
-					// Vertical bars: category on x-axis, value on y-axis
 					const valuePos = scale(value) ?? 0;
 					barHeight = innerHeight - valuePos;
 					barW = barWidth;
@@ -319,16 +302,13 @@ const BarInner = memo(function BarInner({
 					if (stacked && stackOffsets) {
 						const offset = stackOffsets.get(i)?.get(dataKey) ?? 0;
 						const offsetY = scale(offset) ?? innerHeight;
-						// Apply stack gap: shift up and reduce height
 						const gapOffset = seriesIndex * stackGap;
 						y = offsetY - barHeight - gapOffset;
-						// Reduce height slightly for non-last bars to create visual gap
 						if (!isLastSeries && stackGap > 0) {
 							barHeight = Math.max(0, barHeight - stackGap);
 						}
 					} else {
 						y = valuePos;
-						// For grouped bars, offset x position
 						const effectiveGroupGap = seriesCount > 1 ? groupGap : 0;
 						x = bandPos + seriesIndex * (barWidth + effectiveGroupGap);
 					}
@@ -337,11 +317,8 @@ const BarInner = memo(function BarInner({
 						: bandPos +
 							seriesIndex * (barWidth + (seriesCount > 1 ? groupGap : 0));
 
-					// Minimum visible height: floor short/zero non-stacked bars so a
-					// zero-value data point still reads as a tiny bar instead of
-					// vanishing. Grows up from the baseline. Floored bars skip the
-					// perspective trim (sub-pixel on a 3px bar; keeps the front aligned
-					// with bar-depth, which also skips trim for floored bars).
+					// Floor short/zero non-stacked bars, growing up from the baseline, so a
+					// zero value still reads as a tiny bar. Floored bars skip the perspective trim.
 					let isFloored = false;
 					if (
 						!stacked &&
@@ -355,11 +332,8 @@ const BarInner = memo(function BarInner({
 						isFloored = true;
 					}
 
-					// Perspective trim: shrink the topmost positive bar's front-face
-					// top down by its perspective rise so it meets `<BarDepthBack>`'s
-					// lid back edge. Stacked: only the last (topmost) series; grouped or
-					// single: every positive bar. Clamped to `barHeight - 1` so very
-					// short bars keep a positive height (matches bar-depth's clamp).
+					// Trim the topmost positive bar's front face by its perspective rise to meet
+					// `<BarDepthBack>`'s lid. Stacked: last series only; clamped to `barHeight - 1`.
 					if (
 						perspective &&
 						value > 0 &&
@@ -385,13 +359,8 @@ const BarInner = memo(function BarInner({
 				const isFaded =
 					(hoveredBarIndex !== null && hoveredBarIndex !== i) || isLegendDimmed;
 
-				// Use categoryValue as key since it's the unique identifier from data
 				const barKey = `bar-${dataKey}-${categoryValue}`;
 
-				// Apply rounded corners:
-				// - For non-stacked: always apply
-				// - For stacked with gap: apply to all bars
-				// - For stacked without gap: only apply to the last series
 				const applyRounding = !stacked || stackGap > 0 || isLastSeries;
 				const effectiveRx = applyRounding ? cornerRadius : 0;
 				const effectiveRy = applyRounding ? cornerRadius : 0;
@@ -420,7 +389,6 @@ const BarInner = memo(function BarInner({
 					);
 				}
 
-				// Static bar after animation completes
 				return (
 					<rect
 						fill={fill}

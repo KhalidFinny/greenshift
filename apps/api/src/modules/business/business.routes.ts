@@ -1,6 +1,10 @@
 import { Hono } from "hono";
 import type { ApiEnv } from "../../env";
-import { requireRole, requireSession } from "../../lib/authz";
+import {
+	requireRole,
+	requireSession,
+	requireVerifiedCompany,
+} from "../../lib/authz";
 import { requireCsrf } from "../../lib/csrf";
 import { documentsRoutes } from "./documents/documents.routes";
 import { draftsRoutes } from "./drafts/drafts.routes";
@@ -12,19 +16,18 @@ import { profileRoutes } from "./profile/profile.routes";
 import { projectsRoutes } from "./projects/projects.routes";
 import { readingRoutes } from "./review/reading.routes";
 import { riskRoutes } from "./risk/risk.routes";
+import { verificationRoutes } from "./verification/verification.routes";
 
 export const businessRoutes = new Hono<ApiEnv>();
 
-/**
- * Every business endpoint requires a business session, and CSRF is enforced for
- * unsafe methods only.
- *
- * `requireJsonBody` is deliberately absent here, unlike the other role routers:
- * the document upload is multipart, and that guard rejects any unsafe request
- * that is not JSON. The JSON mutations apply it individually instead, so each
- * route states its own body contract.
- */
+// `requireJsonBody` is absent here (the document upload is multipart, which that
+// guard rejects); JSON mutations apply it individually, each stating its own contract.
 businessRoutes.use("*", requireSession, requireRole("business"), requireCsrf);
+
+// Route order matters: verification mounts first so an unverified account can
+// reach it; everything after `requireVerifiedCompany` waits on an admin verdict.
+businessRoutes.route("/", verificationRoutes);
+businessRoutes.use("*", requireVerifiedCompany);
 
 businessRoutes.route("/", draftsRoutes);
 businessRoutes.route("/", documentsRoutes);

@@ -13,7 +13,6 @@ import {
 	selectUsersByMonth,
 } from "./analytics.repository";
 
-/** Length of the trailing series the dashboard and analytics charts render. */
 const WINDOW_MONTHS = 12;
 
 type MonthRows = { month: string | null; value: number }[];
@@ -30,7 +29,6 @@ function trailingMonths(count: number, now = new Date()): string[] {
 	return months;
 }
 
-/** Grouped rows indexed by month, so the series can be zero-filled. */
 function byMonth(rows: MonthRows): Map<string, number> {
 	const index = new Map<string, number>();
 	for (const row of rows) {

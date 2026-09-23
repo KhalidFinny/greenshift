@@ -10,9 +10,8 @@ export type VerifyBrokerResult =
 	| { ok: false; reason: "not_found" };
 
 /**
- * Applies a broker licence decision. A verified broker clears any previous
- * rejection reason; a rejection stores the trimmed reason and the audit trail
- * keeps the reason exactly as submitted.
+ * Applies a broker licence decision: verifying clears any previous rejection
+ * reason, rejecting stores the trimmed one and audits the reason as submitted.
  */
 export async function verifyBroker(
 	db: GreenShiftDb,

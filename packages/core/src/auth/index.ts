@@ -25,9 +25,8 @@ export const roleNav: Record<UserRole, NavItem[]> = {
 		{ to: "/business/projects", label: "My Projects" },
 		{ to: "/business/matchmaking", label: "Vendor Matchmaking" },
 	],
-	// Origin wired /investor, /investor/portfolio and /investor/market, but none
-	// of those route files exist on either branch. The public bond catalog is
-	// the surface that is actually built, so the nav points there.
+	// Origin wired /investor/* routes that do not exist; the built surface is
+	// the public catalog at /bonds.
 	investor: [{ to: "/bonds", label: "Green Market" }],
 	vendor: [
 		{ to: "/vendor", label: "Dashboard" },
@@ -58,19 +57,36 @@ export function requireRole(role: UserRole) {
 	};
 }
 
-/**
- * Role the dev server is scoped to (bun dev:<role> sets VITE_ROLE).
- * Undefined in full-app mode.
- */
+/** Where an unverified company account is held until it is verified. */
+export const COMPANY_VERIFICATION_PATH = "/business/verification";
+
+/** Client-side mirror of the API gate: an unverified business account may only
+ * reach the verification step, so it is sent there instead of empty panels. */
+export function requireVerifiedCompany({
+	context,
+	location,
+}: {
+	context: { user: AuthUser | null };
+	location: { pathname: string };
+}) {
+	if (
+		context.user?.role === "business" &&
+		context.user.companyVerification !== "VERIFIED" &&
+		location.pathname !== COMPANY_VERIFICATION_PATH
+	) {
+		throw redirect({ to: COMPANY_VERIFICATION_PATH });
+	}
+}
+
+/** Role the dev server is scoped to (bun dev:<role> sets VITE_ROLE); undefined
+ * in full-app mode. */
 export function getDevRole(): UserRole | undefined {
 	const raw = (import.meta.env.VITE_ROLE as string | undefined)?.trim() ?? "";
 	return raw && raw in roleHome ? (raw as UserRole) : undefined;
 }
 
-/**
- * Dev surface scope (bun dev:landing sets VITE_SCOPE=landing).
- * "landing" serves only the public site; everything else redirects home.
- */
+/** Dev surface scope (bun dev:landing sets VITE_SCOPE=landing): landing serves
+ * only the public site, everything else redirects home. */
 export function getDevScope(): "landing" | undefined {
 	const raw = (import.meta.env.VITE_SCOPE as string | undefined)?.trim() ?? "";
 	return raw === "landing" ? "landing" : undefined;

@@ -7,7 +7,6 @@ import type {
 
 export type StatusTone = "default" | "secondary" | "destructive" | "outline";
 
-// ── Procurement Method ───────────────────────────────────────────────────────
 export const PROCUREMENT_METHOD_LABEL: Record<ProcurementMethod, string> = {
 	OPEN_BIDDING: "Open Bidding",
 	CLOSED_BIDDING: "Closed Bidding",
@@ -20,7 +19,6 @@ export const PROCUREMENT_METHOD_TONE: Record<ProcurementMethod, StatusTone> = {
 	DIRECT_SELECTION: "outline",
 };
 
-// ── Proposal Status ──────────────────────────────────────────────────────────
 export const PROPOSAL_STATUS_LABEL: Record<ProposalStatus, string> = {
 	DRAFT: "Draft",
 	SUBMITTED: "Submitted",
@@ -45,7 +43,6 @@ export const PROPOSAL_STATUS_TONE: Record<ProposalStatus, StatusTone> = {
 	CLOSED: "outline",
 };
 
-// ── Milestone Status ─────────────────────────────────────────────────────────
 export const MILESTONE_STATUS_LABEL: Record<MilestoneStatus, string> = {
 	NOT_STARTED: "Not Started",
 	IN_PROGRESS: "In Progress",
@@ -64,7 +61,6 @@ export const MILESTONE_STATUS_TONE: Record<MilestoneStatus, StatusTone> = {
 	COMPLETED: "default",
 };
 
-// ── Verification Status ──────────────────────────────────────────────────────
 export const VERIFICATION_STATUS_LABEL: Record<VerificationStatus, string> = {
 	NOT_VERIFIED: "Unverified",
 	VERIFYING: "Verifying Documents...",

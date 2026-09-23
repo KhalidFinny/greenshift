@@ -1,11 +1,5 @@
-/* The project's funding case, in one place.
- *
- * Two readers need it: the wizard's review step, which asks for the forecast
- * before the project exists, and the verification flow, which writes the
- * forecast into the Green Project Blueprint the moment LVV GRK clears the
- * project. Both go through `roiForecast`, so the scenarios a company was shown
- * are the scenarios the blueprint carries.
- */
+/* The project's funding case in one place: the review step and the verification flow
+ * both go through `roiForecast`, so the blueprint carries the scenarios shown. */
 
 import type {
 	BlueprintDocument,
@@ -19,14 +13,8 @@ import * as repository from "./forecast.repository";
 
 type ProjectRow = typeof projects.$inferSelect;
 
-/**
- * The stored project figures a blueprint document is built from.
- *
- * Narrower than the row on purpose: the verification flow hands it a project
- * row, and the fixture seed hands it the figures it just wrote, so both go
- * through the one builder and the seeded documents are the documents
- * verification would have written.
- */
+// Narrower than the project row on purpose: the verification flow passes a row and
+// the fixture seed passes its figures, so seeded documents match verification's.
 export interface BlueprintInput {
 	capexRp: number | null;
 	tenorTahun: number | null;
@@ -39,14 +27,8 @@ export interface BlueprintInput {
 	targetMwh: number | null;
 }
 
-/**
- * The blueprint document for one project: what it costs and how it is funded,
- * what it promises to cut, and the three scenarios that say whether the
- * saving carries it.
- *
- * Null when the project cannot state a funding case or an emission target:
- * both sections are what the document is for, so a partial one is not written.
- */
+// What the project costs and how it is funded, what it promises to cut, and the
+// three scenarios. Null unless it can state both a funding case and an emission target.
 export function buildBlueprintDocument(
 	row: BlueprintInput,
 ): BlueprintDocument | null {
@@ -98,13 +80,8 @@ export function buildBlueprintDocument(
 	};
 }
 
-/**
- * Generates the project's blueprint now that verification has cleared it, and
- * answers with its id, or null when the project has no funding case to write.
- *
- * A project that already carries a blueprint keeps the one it has: a repeated
- * verification pass must not stack a second document on the same project.
- */
+// Generates the blueprint now verification has cleared the project and answers its
+// id, or null with no funding case. An existing blueprint is kept, never stacked on.
 export async function generateBlueprint(
 	db: GreenShiftDb,
 	row: ProjectRow,
@@ -124,14 +101,8 @@ export async function generateBlueprint(
 	return id;
 }
 
-/**
- * The project's own Green Project Blueprint, or null while it has none.
- *
- * The document is stored as it was written, so its sections are optional and
- * the projections are lifted out of them here: the page that shows the document
- * reads the same `ProjectBlueprintView` a bidder reads, without walking the
- * JSON column itself.
- */
+// The project's own blueprint, or null while it has none. The stored sections are
+// optional, so the projections are lifted out here for the page to read directly.
 export async function readProjectBlueprint(
 	db: GreenShiftDb,
 	projectId: number,

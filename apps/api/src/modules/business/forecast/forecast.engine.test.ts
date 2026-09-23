@@ -68,9 +68,8 @@ describe("roiForecast", () => {
 		const forecast = forecastOf(PROJECT);
 		const irr = forecast.irrPct;
 
-		// 2.4bn repaid out of 600m a year, growing with energy-price inflation
-		// and wearing with the asset: the answer sits in the low teens rather
-		// than at the simple 25% the undiscounted payback would suggest.
+		// 2.4bn repaid from 600m a year, growing with inflation and wearing with the
+		// asset: the answer sits in the low teens, not at the undiscounted 25%.
 		expect(irr).not.toBeNull();
 		if (irr === null) throw new Error("Expected an IRR");
 		expect(irr).toBeGreaterThan(5);

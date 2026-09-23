@@ -2,18 +2,9 @@ import type { Context } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { ApiEnv } from "../env";
 
-/**
- * The single source of truth for every failure the API can return: the HTTP
- * status and the canonical client-facing message per code. Routes pass their
- * own message only when the specific case says more than the generic one
- * (which resource was missing, which state blocked the write).
- *
- * The codes are part of the public contract (`ApiErrorCode` is re-exported
- * from `contracts.ts`), so clients can branch on `error.code` instead of
- * matching message text.
- */
+// Single source of truth for every failure: HTTP status and canonical message per
+// code. Codes are public contract (`ApiErrorCode`), so clients branch on `error.code`.
 export const apiErrorCodes = {
-	// ── request shape ───────────────────────────────────────
 	VALIDATION: { status: 400, message: "Invalid input" },
 	INVALID_ID: { status: 400, message: "Invalid ID" },
 	INVALID_STATUS: { status: 400, message: "Invalid status" },
@@ -27,7 +18,6 @@ export const apiErrorCodes = {
 		message: "Too many attempts, please try again later",
 	},
 
-	// ── authentication and authorization ────────────────────
 	UNAUTHORIZED: { status: 401, message: "Invalid session" },
 	INVALID_CREDENTIALS: {
 		status: 401,
@@ -42,19 +32,22 @@ export const apiErrorCodes = {
 		status: 403,
 		message: "Vendor profile has not been verified by an admin",
 	},
+	COMPANY_NOT_VERIFIED: {
+		status: 403,
+		message:
+			"Your company account is not verified yet. Complete verification before using the platform.",
+	},
 	STEP_UP_REQUIRED: {
 		status: 428,
 		message: "Password confirmation is required for this sensitive action",
 	},
 
-	// ── missing resources ───────────────────────────────────
 	NOT_FOUND: { status: 404, message: "Resource not found" },
 	NOT_READY: {
 		status: 409,
 		message: "The file is still being processed",
 	},
 
-	// ── conflicting state ───────────────────────────────────
 	CONFLICT: { status: 409, message: "Conflict" },
 	INVALID_STATE: {
 		status: 409,
@@ -84,29 +77,20 @@ export const apiErrorCodes = {
 		message: "Blueprint is not yet complete for publication",
 	},
 
-	// ── server ──────────────────────────────────────────────
 	INTERNAL: { status: 500, message: "An internal error occurred" },
 } as const;
 
 export type ApiErrorCode = keyof typeof apiErrorCodes;
 
-/**
- * Extra keys merged into the error body alongside `code` and `message`.
- *
- * `fields` maps a request field name to its message so a form can mark every
- * failing input at once instead of discovering them one round trip at a time.
- * `projectId` lets a conflicting state name the row that already owns it.
- */
+// Extra keys merged into the error body: `fields` maps a request field to its
+// message for forms; `projectId` names the row a conflict already owns.
 export interface ApiErrorDetails {
 	fields?: Record<string, string>;
 	projectId?: number;
 }
 
-/**
- * A failure raised from middleware or from code that cannot return a response.
- * `app.onError` renders it as the same envelope `apiError` produces, so the
- * client sees one contract whether a handler returned or threw.
- */
+// A failure raised from middleware or code that cannot return a response.
+// `app.onError` renders it as the same envelope `apiError` produces.
 export class ApiFailure extends Error {
 	constructor(
 		readonly code: ApiErrorCode,
@@ -119,11 +103,8 @@ export class ApiFailure extends Error {
 	}
 }
 
-/**
- * Error envelope: `{ error: { code, message } }` with the status registered
- * for the code. Pass `message` to describe the specific case, and `details`
- * to add the per-field map or the owning project id.
- */
+// Error envelope `{ error: { code, message } }` with the status registered for
+// the code. `message` describes the specific case, `details` adds the extras.
 export function apiError(
 	c: Context<ApiEnv>,
 	code: ApiErrorCode,
@@ -152,11 +133,8 @@ export function apiNotFound(c: Context<ApiEnv>, resource?: string): Response {
 	);
 }
 
-/**
- * Success body with an optional user-facing message, used by mutations so the
- * toast copy lives with the endpoint that produced it. The message is additive:
- * callers read their payload keys as before.
- */
+// Success body with an optional user-facing message (the toast copy) so it lives
+// with the endpoint that produced it. Additive: callers read payload keys as before.
 export function apiSuccess<TData extends object>(
 	c: Context<ApiEnv>,
 	data: TData,
