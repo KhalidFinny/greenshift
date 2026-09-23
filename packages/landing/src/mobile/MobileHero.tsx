@@ -1,4 +1,4 @@
-import { buttonVariants } from "@greenshift/ui";
+import { buttonVariants, cn } from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
 
 /**
@@ -22,22 +22,19 @@ export default function MobileHero() {
 				<div className="mt-8 flex flex-col gap-3">
 					<Link
 						to="/register"
-						className={buttonVariants({
-							size: "lg",
-							className:
-								"h-12 w-full justify-center bg-white text-base font-semibold text-[#03442C] hover:bg-emerald-50",
-						})}
+						className={cn(
+							buttonVariants({ size: "lg" }),
+							"h-12 w-full justify-center bg-white text-base font-semibold text-[#03442C] hover:bg-emerald-50",
+						)}
 					>
 						Register your company
 					</Link>
 					<Link
 						to="/bonds"
-						className={buttonVariants({
-							variant: "outline",
-							size: "lg",
-							className:
-								"h-12 w-full justify-center border-white/40 bg-transparent text-base font-semibold text-white hover:bg-white/10 hover:text-white",
-						})}
+						className={cn(
+							buttonVariants({ variant: "outline", size: "lg" }),
+							"h-12 w-full justify-center border-white/40 bg-transparent text-base font-semibold text-white hover:bg-white/10 hover:text-white",
+						)}
 					>
 						Browse the bond catalog
 					</Link>

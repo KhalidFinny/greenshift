@@ -4,6 +4,7 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 	buttonVariants,
+	cn,
 } from "@greenshift/ui";
 import { Link } from "@tanstack/react-router";
 import { landingFaqs } from "../content/landing";
@@ -61,21 +62,19 @@ export default function MobileFaq() {
 				<div className="mt-6 flex flex-col gap-3">
 					<Link
 						to="/register"
-						className={buttonVariants({
-							size: "lg",
-							className:
-								"h-12 w-full justify-center bg-[#00712D] text-base font-semibold text-white hover:bg-[#00712D]/90",
-						})}
+						className={cn(
+							buttonVariants({ size: "lg" }),
+							"h-12 w-full justify-center bg-[#00712D] text-base font-semibold text-white hover:bg-[#00712D]/90",
+						)}
 					>
 						Create an account
 					</Link>
 					<Link
 						to="/login"
-						className={buttonVariants({
-							variant: "outline",
-							size: "lg",
-							className: "h-12 w-full justify-center text-base font-semibold",
-						})}
+						className={cn(
+							buttonVariants({ variant: "outline", size: "lg" }),
+							"h-12 w-full justify-center text-base font-semibold",
+						)}
 					>
 						Sign in
 					</Link>
