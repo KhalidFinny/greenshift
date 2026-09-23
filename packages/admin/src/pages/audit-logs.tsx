@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useState } from "react";
 import { formatDateTime } from "../lib/format";
-import { ExportMenu } from "../organisms/export-menu";
+import { ExportMenu } from "../molecules/export-menu";
 import { TableSkeleton } from "../organisms/table-skeleton";
 
 /** Column labels for the loading frame, in table order. */

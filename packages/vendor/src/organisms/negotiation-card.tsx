@@ -28,13 +28,15 @@ import type { NegotiationRequest } from "../lib/types";
 
 interface NegotiationCardProps {
 	negotiation: NegotiationRequest;
-	onSubmitResponse: (
-		negId: string,
-		revisedPrice?: number,
-		revisedWarranty?: number,
-		revisedTimeline?: number,
-		note?: string,
-	) => void;
+	onSubmitResponse: (input: {
+		negotiationId: string;
+		proposalId: string;
+		revisedPrice?: number;
+		revisedWarranty?: number;
+		revisedTimeline?: number;
+		responseNote?: string;
+		file?: File | null;
+	}) => void;
 }
 
 /** Negotiation state as a chip: every state pairs its colour with the word, never colour alone.
@@ -75,16 +77,18 @@ function RespondNegotiationDialog({
 		negotiation.vendorRevisedWarrantyYears?.toString() ?? "",
 	);
 	const [note, setNote] = useState("");
+	const [file, setFile] = useState<File | null>(null);
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		onSubmitResponse(
-			negotiation.id,
-			Number(revisedPrice),
-			Number(revisedWarranty),
-			undefined,
-			note,
-		);
+		onSubmitResponse({
+			negotiationId: negotiation.id,
+			proposalId: negotiation.proposalId,
+			revisedPrice: Number(revisedPrice),
+			revisedWarranty: Number(revisedWarranty),
+			responseNote: note,
+			file,
+		});
 		setOpen(false);
 	};
 
@@ -211,6 +215,24 @@ function RespondNegotiationDialog({
 								onChange={(e) => setNote(e.target.value)}
 								placeholder="What the revised price and warranty cover, and why they changed"
 							/>
+						</div>
+
+						<div className="space-y-1.5">
+							<Label htmlFor="rev-document" className="text-sm font-semibold">
+								Revised Proposal (PDF)
+							</Label>
+							<Input
+								id="rev-document"
+								type="file"
+								accept="application/pdf,.pdf"
+								required
+								onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+							/>
+							<p className="text-sm text-muted-foreground">
+								A revision is a revised offer: this file replaces the PDF on
+								your bid, and it is the case the client reads beside the new
+								figures.
+							</p>
 						</div>
 					</div>
 

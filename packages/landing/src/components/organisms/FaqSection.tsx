@@ -4,39 +4,7 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 } from "@greenshift/ui";
-
-const faqs = [
-	{
-		question: "Does GreenShift offer a free account?",
-		answer:
-			"Yes. Register for free to explore the platform: company profile, basic project assessment, blueprints, ROI simulation, and vendor search with a demo dataset.",
-	},
-	{
-		question: "How do I get started?",
-		answer:
-			"Register for a free account, complete your company profile, and submit your first energy efficiency project. The GreenShift team validates every submission before the project moves to the next stage.",
-	},
-	{
-		question: "Do I need technical data to get started?",
-		answer:
-			"Not at all. Just fill in your company profile and upload supporting documents such as electricity bills or energy audits. The system validates every piece of information automatically so the process stays fast and transparent.",
-	},
-	{
-		question: "How does my project get funded?",
-		answer:
-			"Once the project is validated and its blueprint is prepared, it is ready to attract our investment partners. GreenShift bridges your financing needs with investors committed to the energy transition.",
-	},
-	{
-		question: "How do I monitor a project after it is funded?",
-		answer:
-			"GreenShift reports what the project actually cuts: measured energy saving and carbon reduction, period by period, checked against the baseline it was verified on. The bond itself is issued and held by a licensed securities partner, so the investment is followed in their app.",
-	},
-	{
-		question: "Who is involved in the GreenShift ecosystem?",
-		answer:
-			"Industrial companies, energy vendors, independent validators, OJK-licensed SCF partners, and investors all work within one measurable and transparent ecosystem.",
-	},
-];
+import { landingFaqs as faqs } from "../../content/landing";
 
 export default function FaqSection() {
 	return (

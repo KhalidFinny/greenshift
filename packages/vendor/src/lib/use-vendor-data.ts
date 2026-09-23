@@ -239,18 +239,24 @@ export function useVendorData(options: { projectId?: string } = {}) {
 	});
 
 	const { mutate: respondToNegotiation } = useMutation({
-		mutationFn: ({
-			id,
-			body,
-		}: {
+		mutationFn: async (input: {
 			id: number;
+			proposalId: number;
 			body: {
 				revisedPrice?: number;
 				revisedWarrantyYears?: number;
 				revisedTimelineMonths?: number;
 				note?: string;
 			};
-		}) => api.vendor.respondNegotiation(id, body),
+			file?: File | null;
+		}) => {
+			await api.vendor.respondNegotiation(input.id, input.body);
+			// A revision is a revised offer, so the file goes with the figures: otherwise
+			// the client reads a case that no longer matches the numbers.
+			if (input.file) {
+				await api.vendor.uploadProposalDocument(input.proposalId, input.file);
+			}
+		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["vendor", "negotiations"] });
 			queryClient.invalidateQueries({ queryKey: ["vendor", "proposals"] });
@@ -413,21 +419,25 @@ export function useVendorData(options: { projectId?: string } = {}) {
 		void reviseBid({ proposalId: Number(proposalId), amount: newPrice });
 	};
 
-	const submitNegotiationResponse = (
-		negId: string,
-		revisedPrice?: number,
-		revisedWarranty?: number,
-		revisedTimeline?: number,
-		responseNote?: string,
-	) => {
+	const submitNegotiationResponse = (input: {
+		negotiationId: string;
+		proposalId: string;
+		revisedPrice?: number;
+		revisedWarranty?: number;
+		revisedTimeline?: number;
+		responseNote?: string;
+		file?: File | null;
+	}) => {
 		respondToNegotiation({
-			id: Number(negId),
+			id: Number(input.negotiationId),
+			proposalId: Number(input.proposalId),
 			body: {
-				revisedPrice,
-				revisedWarrantyYears: revisedWarranty,
-				revisedTimelineMonths: revisedTimeline,
-				note: responseNote,
+				revisedPrice: input.revisedPrice,
+				revisedWarrantyYears: input.revisedWarranty,
+				revisedTimelineMonths: input.revisedTimeline,
+				note: input.responseNote,
 			},
+			file: input.file,
 		});
 	};
 

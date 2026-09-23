@@ -4,7 +4,7 @@ import { Badge, EmptyState } from "@greenshift/ui";
 import { formatDate, formatRupiah } from "../lib/format";
 import { MILESTONE_STATUS_LABEL } from "../lib/labels";
 import { useVendorData } from "../lib/use-vendor-data";
-import { DetailHero, DetailShell } from "../organisms/detail-shell";
+import { DetailHero, DetailShell } from "../molecules/detail-shell";
 import { EnergyForecastCard } from "../organisms/energy-forecast-card";
 import { MilestoneTrackerCard } from "../organisms/milestone-tracker-card";
 import { MonthlyEnergyReportCard } from "../organisms/monthly-energy-report-card";

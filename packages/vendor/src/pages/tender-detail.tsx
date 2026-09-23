@@ -7,7 +7,7 @@ import { mapProposalDetail } from "../lib/api-mappers";
 import { formatRupiah, formatShortDate } from "../lib/format";
 import { PROPOSAL_STATUS_LABEL } from "../lib/labels";
 import { useVendorData } from "../lib/use-vendor-data";
-import { DetailHero, DetailShell } from "../organisms/detail-shell";
+import { DetailHero, DetailShell } from "../molecules/detail-shell";
 import { NegotiationCard } from "../organisms/negotiation-card";
 import { TenderCostBreakdownCard } from "../organisms/tender-cost-breakdown-card";
 import { TenderTechnicalProposalCard } from "../organisms/tender-technical-proposal-card";

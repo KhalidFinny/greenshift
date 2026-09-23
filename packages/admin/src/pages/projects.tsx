@@ -32,8 +32,8 @@ import {
 	PROJECT_STATUS_LABELS,
 	PROJECT_STATUS_OPTIONS,
 } from "../lib/project-status";
-import { ExportMenu } from "../organisms/export-menu";
-import { MetricCard } from "../organisms/metric-card";
+import { ExportMenu } from "../molecules/export-menu";
+import { MetricCard } from "../molecules/metric-card";
 import { ProjectDetailDialog } from "../organisms/project-detail-dialog";
 import { TableSkeleton } from "../organisms/table-skeleton";
 

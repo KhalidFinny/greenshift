@@ -6,10 +6,10 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { EmptyState } from "@greenshift/ui";
 import { useVendorData } from "../lib/use-vendor-data";
+import { VendorKpiRow } from "../molecules/vendor-kpi-row";
+import { VerificationBanner } from "../molecules/verification-banner";
 import { ActionRequiredCard } from "../organisms/action-required-card";
 import { RecommendedProjectsPreview } from "../organisms/recommended-projects-preview";
-import { VendorKpiRow } from "../organisms/vendor-kpi-row";
-import { VerificationBanner } from "../organisms/verification-banner";
 
 export function VendorDashboard() {
 	const {

@@ -12,7 +12,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { BondCard, BondCardSkeleton } from "../organisms/market-card";
+import { BondCard, BondCardSkeleton } from "../molecules/market-card";
 
 type BondTab = "verified" | "on_progress";
 

@@ -3,10 +3,12 @@
 	"compilerOptions": {
 		"baseUrl": ".",
 		"paths": {
-			"#/components": ["./src/components"],
-			"#/components/*": ["./src/components/*"],
-			"#/ui": ["./src/components/ui"],
-			"#/ui/*": ["./src/components/ui/*"],
+			"#/atoms": ["./src/atoms"],
+			"#/atoms/*": ["./src/atoms/*"],
+			"#/molecules": ["./src/molecules"],
+			"#/molecules/*": ["./src/molecules/*"],
+			"#/organisms": ["./src/organisms"],
+			"#/organisms/*": ["./src/organisms/*"],
 			"#/lib": ["./src/lib"],
 			"#/lib/*": ["./src/lib/*"],
 			"#/hooks": ["./src/hooks"],

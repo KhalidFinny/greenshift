@@ -26,8 +26,8 @@ import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { ExportSection } from "../lib/export";
 import { formatMonth } from "../lib/format";
-import { ExportMenu } from "../organisms/export-menu";
-import { MetricCard } from "../organisms/metric-card";
+import { ExportMenu } from "../molecules/export-menu";
+import { MetricCard } from "../molecules/metric-card";
 import { TableSkeleton } from "../organisms/table-skeleton";
 
 const idr = new Intl.NumberFormat("en-US", {

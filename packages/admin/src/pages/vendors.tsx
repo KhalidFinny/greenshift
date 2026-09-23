@@ -27,8 +27,8 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { useState } from "react";
 import type { ExportSection } from "../lib/export";
 import { useStepUpAction } from "../lib/use-step-up-action";
-import { ExportMenu } from "../organisms/export-menu";
-import { MetricCard } from "../organisms/metric-card";
+import { ExportMenu } from "../molecules/export-menu";
+import { MetricCard } from "../molecules/metric-card";
 import { StepUpDialog } from "../organisms/step-up-dialog";
 import { TableSkeleton } from "../organisms/table-skeleton";
 import {

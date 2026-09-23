@@ -93,11 +93,21 @@ across banners, badges, headers, and footers removes its meaning.
 
 ```
 ENERGY 1 / RHYTHM 2 / MOTION 1     (app surfaces)
-ENERGY 1 / RHYTHM 2 / MOTION 2     (landing page)
+ENERGY 1 / RHYTHM 2 / MOTION 1     (landing, phone)
+ENERGY 1 / RHYTHM 2 / MOTION 2     (landing, wide canvas)
 ```
 
 The landing carries MOTION 2 by owner decision: its loop animations and parallax
 are intentional. Every signed-in surface stays MOTION 1.
+
+**The landing is two compositions, not one that shrinks.** The wide-canvas hero is
+a single rigid 1920px canvas with parallax and looping pills; squeezed into a
+phone it reads as broken, so the phone gets its own composition
+(`packages/landing/src/mobile`, chosen by `useIsMobile` at 768px) with its own
+dial. Motion drops to MOTION 1 there: the loops exist to fill a wide canvas, and
+on a phone they cost scroll smoothness and battery for no added meaning. Content
+is shared (`packages/landing/src/content/landing.ts`), so the two compositions can
+never tell different stories.
 
 - **ENERGY 1** (calm): restrained. No large type for effect, no full-bleed colour
   beyond the motif band, no ornament that does not carry information.

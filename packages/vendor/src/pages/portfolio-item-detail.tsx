@@ -22,7 +22,7 @@ import {
 } from "../lib/format";
 import { PORTFOLIO_STATUS_LABEL } from "../lib/types";
 import { useVendorData } from "../lib/use-vendor-data";
-import { DetailHero, DetailShell } from "../organisms/detail-shell";
+import { DetailHero, DetailShell } from "../molecules/detail-shell";
 
 const NOT_RECORDED = "Not recorded";
 

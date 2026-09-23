@@ -1,24 +1,15 @@
 import { getDevRole } from "@greenshift/core";
-import {
-	CtaSection,
-	EcosystemSection,
-	FaqSection,
-	HeroSection,
-	HowItWorksSection,
-} from "@greenshift/landing";
+import { LandingPage } from "@greenshift/landing";
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { getIsMobileFn } from "../lib/viewport";
 
 export const Route = createFileRoute("/")({
-	beforeLoad: () => {
+	beforeLoad: async () => {
 		if (getDevRole()) throw redirect({ to: "/login" });
+		return { mobile: await getIsMobileFn() };
 	},
-	component: () => (
-		<main>
-			<HeroSection />
-			<HowItWorksSection />
-			<EcosystemSection />
-			<FaqSection />
-			<CtaSection />
-		</main>
-	),
+	component: () => {
+		const { mobile } = Route.useRouteContext();
+		return <LandingPage initialMobile={mobile} />;
+	},
 });

@@ -1,80 +1,8 @@
+import { howItWorksSteps as steps } from "../../content/landing";
 import { useInView } from "../../hooks/useInView";
 import { useMouseParallax } from "../../hooks/useMouseParallax";
 import { useStepper } from "../../hooks/useStepper";
 import PartnerAppsShowcase from "../molecules/PartnerAppsShowcase";
-
-/** What a step shows beside its copy: a product screen, or the partner apps the
- * step happens with, since the bond is issued and held outside GreenShift. */
-type StepVisual =
-	| {
-			kind: "image";
-			src: string;
-			width: number;
-			height: number;
-			alt: string;
-	  }
-	| { kind: "partners" };
-
-const steps: Array<{
-	id: string;
-	stepLabel: string;
-	title: string;
-	description: string;
-	visual: StepVisual;
-}> = [
-	{
-		id: "01",
-		stepLabel: "Validate",
-		title: "Start with Ease",
-		description:
-			"Simply fill in your company profile and upload supporting documents such as electricity bills, energy audits, and other operational data. Our system validates every piece of information automatically so the process stays fast, transparent, and hassle-free.",
-		// Each step shows the real screen it describes. All three are 16:9, and the size
-		// is declared so the frame keeps its height while a swapped image is still loading.
-		visual: {
-			kind: "image",
-			src: "/wizard-project-profile.webp",
-			width: 1440,
-			height: 810,
-			alt: "Step 1 of the project submission wizard, showing the project profile form, the current energy situation, and the emission reduction target summary.",
-		},
-	},
-	{
-		id: "02",
-		stepLabel: "Prepare",
-		title: "Prepare the Best Strategy",
-		description:
-			"The GreenShift team builds a technical blueprint and financial model tailored to your project's needs. From feasibility analysis to implementation planning, everything is designed to keep the project efficient and deliver real impact.",
-		visual: {
-			kind: "image",
-			src: "/wizard-review-submit.webp",
-			width: 1440,
-			height: 810,
-			alt: "The review and submit step of the wizard, showing the project and financial summary, an analysis by Eleanor, and a chart of CAPEX against annual revenue and saving.",
-		},
-	},
-	{
-		id: "03",
-		stepLabel: "Fund",
-		title: "Secure Funding",
-		description:
-			"Projects that have been validated and well structured are ready to attract our investment partners. We bridge your financing needs with a network of investors committed to a sustainable energy transition.",
-		visual: {
-			kind: "image",
-			src: "/bond-catalog.webp",
-			width: 1440,
-			height: 810,
-			alt: "The public bond catalog, listing verified projects with their risk level, emission target, and the reductions their reporting periods measured.",
-		},
-	},
-	{
-		id: "04",
-		stepLabel: "Monitor",
-		title: "Monitor with Confidence",
-		description:
-			"Every project reports its measured energy saving and carbon reduction period by period, checked against the baseline it was verified on, and flagged the moment a period deviates from it. The bond itself is issued, sold and held by a licensed securities partner, whose app is where the investment is followed.",
-		visual: { kind: "partners" },
-	},
-];
 
 /** Loads the other steps' screenshots so a click does not wait on the network. */
 function preloadStepImages() {
