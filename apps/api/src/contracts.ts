@@ -606,8 +606,25 @@ export const bondStatuses = ["verified", "on_progress"] as const;
 export type BondStatus = (typeof bondStatuses)[number];
 
 /**
+ * The issued bond's own terms, as the platform records them from the broker's
+ * assignment. Every field is optional by stage: the public preview states what is
+ * not recorded yet instead of projecting from nothing.
+ */
+export interface BondTerms {
+	/** The capital the bond raises. */
+	amount: number | null;
+	tenorMonths: number | null;
+	couponRatePercent: number | null;
+	issuanceDate: string | null;
+	maturityDate: string | null;
+	/** The broker's own external issuance status. */
+	status: string | null;
+}
+
+/**
  * A single bond listing: what GreenShift measures, the verified reductions
- * against the blueprint's target. Issuance and money belong to the SCF partner.
+ * against the blueprint's target, and the case behind them. Issuance and money
+ * belong to the SCF partner.
  */
 export interface BondListing {
 	id: number;
@@ -623,6 +640,10 @@ export interface BondListing {
 	status: BondStatus;
 	verifiedAt: string | null;
 	monitoring: BondMonitoring;
+	/** The published blueprint: the funding case, the targets and the projections. */
+	blueprint: ProjectBlueprintView | null;
+	/** The terms behind the listing, or null while nothing has been issued. */
+	bondTerms: BondTerms | null;
 }
 
 export interface BondMarketResponse {

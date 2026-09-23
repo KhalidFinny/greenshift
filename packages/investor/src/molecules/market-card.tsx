@@ -27,6 +27,7 @@ import {
 } from "@greenshift/ui";
 import { formatTonnes, monthLabel, titleCase } from "../lib/format";
 import { riskMeta } from "../lib/labels";
+import { BondDetailDialog } from "./bond-detail-dialog";
 import { BondPurchaseActions } from "./bond-purchase-actions";
 
 interface BondCardProps {
@@ -192,6 +193,9 @@ export function BondCard({ listing }: BondCardProps) {
 			</CardContent>
 
 			<CardFooter className="flex-col items-stretch gap-3">
+				{/* The preview is open to both tabs: a project still in progress has a
+				    risk score, details and its monitoring, and is worth reading too. */}
+				<BondDetailDialog listing={listing} />
 				{verified ? (
 					<>
 						<p className="text-sm text-muted-foreground">

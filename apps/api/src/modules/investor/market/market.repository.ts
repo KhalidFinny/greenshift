@@ -21,7 +21,9 @@ export async function listPublishedBlueprints(db: GreenShiftDb) {
 	return db
 		.select({
 			projectId: blueprints.projectId,
+			status: blueprints.status,
 			document: blueprints.document,
+			validatedAt: blueprints.validatedAt,
 			publishedAt: blueprints.publishedAt,
 		})
 		.from(blueprints)
@@ -45,13 +47,19 @@ export async function listEmissionMonitoring(db: GreenShiftDb) {
 		.groupBy(emissionReports.projectId);
 }
 
-// Bond codes that have actually been issued, keyed by project. A bond with no
-// assignment or no serial has not been issued yet, so it carries no code.
-export async function listIssuedBondCodes(db: GreenShiftDb) {
+// The bond terms the broker recorded for an issued bond, keyed by project. A
+// project with no serial has not been issued, so it carries no terms.
+export async function listIssuedBonds(db: GreenShiftDb) {
 	return db
 		.select({
 			projectId: brokerAssignments.projectId,
 			serial: brokerAssignments.bondSerialNumber,
+			amount: brokerAssignments.bondAmount,
+			tenorMonths: brokerAssignments.tenorMonths,
+			couponRatePercent: brokerAssignments.couponRatePercent,
+			issuanceDate: brokerAssignments.issuanceDate,
+			maturityDate: brokerAssignments.maturityDate,
+			status: brokerAssignments.bondStatus,
 		})
 		.from(brokerAssignments)
 		.where(isNotNull(brokerAssignments.bondSerialNumber));

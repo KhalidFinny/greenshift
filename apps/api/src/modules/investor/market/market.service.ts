@@ -2,11 +2,14 @@ import type {
 	BondListing,
 	BondMonitoring,
 	BondStatus,
+	BondTerms,
+	ProjectBlueprintView,
 } from "../../../contracts";
 import type { GreenShiftDb } from "../../../db";
+import { iso } from "../../../lib/format";
 import {
 	listEmissionMonitoring,
-	listIssuedBondCodes,
+	listIssuedBonds,
 	listProjectRows,
 	listPublishedBlueprints,
 } from "./market.repository";
@@ -18,7 +21,8 @@ export async function listBondListings(
 ): Promise<BondListing[]> {
 	const projectRows = await listProjectRows(db);
 
-	// Latest published blueprint per project is the verification signal.
+	// Latest published blueprint per project is the verification signal, and the
+	// document behind it is what the detail preview reads.
 	const publishedBlueprints = await listPublishedBlueprints(db);
 
 	const publishedByProject = new Map<
@@ -36,16 +40,43 @@ export async function listBondListings(
 		monitoringRows.map((row) => [row.projectId, row]),
 	);
 
-	const issuedCodes = await listIssuedBondCodes(db);
-	const codeByProject = new Map(
-		issuedCodes
-			.filter((row) => row.serial !== null)
-			.map((row) => [row.projectId, row.serial as string]),
+	const issuedBonds = await listIssuedBonds(db);
+	const issuedByProject = new Map(
+		issuedBonds.map((row) => [row.projectId, row]),
 	);
 
 	return projectRows.map(({ project, companyName }) => {
 		const published = publishedByProject.get(project.id);
 		const monitoring = monitoringByProject.get(project.id);
+		const issued = issuedByProject.get(project.id);
+		const document = published?.document;
+		const projections = document?.financialProjections;
+
+		const blueprint: ProjectBlueprintView | null = published
+			? {
+					status: published.status,
+					validatedAt: iso(published.validatedAt),
+					discountRatePct: projections?.discountRatePct ?? null,
+					horizonYears: projections?.horizonYears ?? null,
+					irr: projections?.irr ?? undefined,
+					npv: projections?.npv ?? undefined,
+					paybackPeriod: projections?.paybackPeriod ?? undefined,
+					fundingStructure: document?.fundingStructure ?? null,
+					emissionTargets: document?.emissionTargets ?? null,
+					scenarios: projections?.scenarios ?? [],
+				}
+			: null;
+
+		const bondTerms: BondTerms | null = issued
+			? {
+					amount: issued.amount,
+					tenorMonths: issued.tenorMonths,
+					couponRatePercent: issued.couponRatePercent,
+					issuanceDate: iso(issued.issuanceDate),
+					maturityDate: iso(issued.maturityDate),
+					status: issued.status,
+				}
+			: null;
 
 		const periodStart = monitoring?.latestPeriod ?? null;
 		const monitoringSummary: BondMonitoring = {
@@ -62,7 +93,7 @@ export async function listBondListings(
 			id: project.id,
 			title: project.title,
 			// Only an issued bond carries a code investors can search for.
-			bondCode: codeByProject.get(project.id) ?? null,
+			bondCode: issued?.serial ?? null,
 			companyName,
 			industrySector: project.industrySector,
 			location: project.location,
@@ -72,6 +103,8 @@ export async function listBondListings(
 			status: (published ? "verified" : "on_progress") satisfies BondStatus,
 			verifiedAt: published?.publishedAt?.toISOString() ?? null,
 			monitoring: monitoringSummary,
+			blueprint,
+			bondTerms,
 		};
 	});
 }
