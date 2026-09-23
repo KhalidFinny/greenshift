@@ -263,6 +263,16 @@ export const apiRoutes = {
 		path: "/api/business/notifications/:id",
 	},
 	businessProjects: { method: "GET", path: "/api/business/projects" },
+	/** The verified brokers a company can choose from; verified only. */
+	businessBrokers: { method: "GET", path: "/api/business/brokers" },
+	businessProjectBroker: {
+		method: "GET",
+		path: "/api/business/projects/:id/broker",
+	},
+	businessAssignBroker: {
+		method: "POST",
+		path: "/api/business/projects/:id/broker",
+	},
 	businessProject: {
 		method: "GET",
 		path: "/api/business/projects/:id",

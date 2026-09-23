@@ -6,6 +6,7 @@ import {
 	requireVerifiedCompany,
 } from "../../lib/authz";
 import { requireCsrf } from "../../lib/csrf";
+import { brokersRoutes } from "./brokers/brokers.routes";
 import { documentsRoutes } from "./documents/documents.routes";
 import { draftsRoutes } from "./drafts/drafts.routes";
 import { forecastRoutes } from "./forecast/forecast.routes";
@@ -37,3 +38,4 @@ businessRoutes.route("/", forecastRoutes);
 businessRoutes.route("/", notificationRoutes);
 businessRoutes.route("/", matchmakingRoutes);
 businessRoutes.route("/", procurementRoutes);
+businessRoutes.route("/", brokersRoutes);

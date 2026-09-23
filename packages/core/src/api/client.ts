@@ -26,7 +26,10 @@ import type {
 	BrokerProfileBody,
 	BrokerProjectStatusBody,
 	BusinessAwardBody,
+	BusinessAssignBrokerBody,
+	BusinessAssignBrokerResponse,
 	BusinessBidReviewBody,
+	BusinessBrokersResponse,
 	BusinessDocumentResponse,
 	BusinessDocumentsResponse,
 	BusinessDraftBody,
@@ -44,6 +47,7 @@ import type {
 	BusinessProfileBody,
 	BusinessProfileResponse,
 	BusinessProjectBlueprintResponse,
+	BusinessProjectBrokerResponse,
 	BusinessProjectReadingRequest,
 	BusinessProjectReadingResponse,
 	BusinessProjectRegistryResponse,
@@ -313,6 +317,27 @@ export const api = {
 		projects: (params?: { limit?: number }) =>
 			request<BusinessProjectsResponse>(
 				apiRoutes.businessProjects.path + query(params),
+			),
+		/** The verified brokers a company may pick from. */
+		brokers: () =>
+			request<BusinessBrokersResponse>(apiRoutes.businessBrokers.path),
+		projectBroker: (projectId: number) =>
+			request<BusinessProjectBrokerResponse>(
+				apiRoutes.businessProjectBroker.path.replace(
+					":id",
+					String(projectId),
+				),
+			),
+		assignBroker: (projectId: number, brokerId: number) =>
+			request<BusinessAssignBrokerResponse>(
+				apiRoutes.businessAssignBroker.path.replace(
+					":id",
+					String(projectId),
+				),
+				{
+					method: apiRoutes.businessAssignBroker.method,
+					body: JSON.stringify({ brokerId } satisfies BusinessAssignBrokerBody),
+				},
 			),
 		project: (id: number) =>
 			request<BusinessProjectResponse>(

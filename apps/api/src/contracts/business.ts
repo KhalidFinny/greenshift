@@ -208,3 +208,44 @@ export interface BusinessProfileBody {
 export interface BusinessProfileResponse {
 	profile: BusinessProfile;
 }
+
+/** A verified broker the company may hand an awarded project to. */
+export interface BusinessBrokerOption {
+	/** The broker account (`users.id`), which the assignment names. */
+	id: number;
+	firmName: string;
+	representative: string | null;
+	/** The financial licence the firm filed, and the authority that issued it. */
+	licenseNumber: string | null;
+	licenseAuthority: string | null;
+	address: string | null;
+}
+
+export interface BusinessBrokersResponse {
+	brokers: BusinessBrokerOption[];
+}
+
+/** The project's broker, as the company reads the assignment back. */
+export interface BusinessProjectBroker {
+	brokerId: number;
+	firmName: string;
+	/** One of `brokerWorkflowStatuses`. */
+	status: string;
+	assignedAt: string;
+	/** Set when the broker declined; null otherwise. */
+	declineReason: string | null;
+}
+
+export interface BusinessProjectBrokerResponse {
+	/** False until the project's tender is awarded; a broker can only be chosen after that. */
+	awarded: boolean;
+	assignment: BusinessProjectBroker | null;
+}
+
+export interface BusinessAssignBrokerBody {
+	brokerId: number;
+}
+
+export interface BusinessAssignBrokerResponse {
+	assignment: BusinessProjectBroker;
+}

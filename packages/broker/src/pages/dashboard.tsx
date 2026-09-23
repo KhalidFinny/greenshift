@@ -24,7 +24,6 @@ import { workflowLabel } from "../lib/lifecycle";
 import { useBrokerData } from "../lib/use-broker-data";
 import { KpiRow } from "../molecules/kpi-row";
 import { BrokerLifecycleCard } from "../organisms/broker-lifecycle-card";
-import { BrokerRoleCard } from "../organisms/broker-role-card";
 
 function formatRupiah(amount: number) {
 	return new Intl.NumberFormat("en-US", {
@@ -102,8 +101,6 @@ export function BrokerDashboard() {
 
 	return (
 		<div className="space-y-6">
-			<BrokerRoleCard />
-
 			{!isVerified && (
 				<div className="flex items-start justify-between rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900">
 					<div className="flex items-start gap-3">

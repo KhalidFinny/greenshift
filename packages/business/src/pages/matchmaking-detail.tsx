@@ -344,12 +344,7 @@ function VendorRanking({
 
 	return (
 		<div className="space-y-6">
-			<div>
-				<h1 className="text-xl font-semibold">Vendor Matchmaking</h1>
-				<p className="mt-0.5 text-sm text-muted-foreground">
-					{detail.project.name}
-				</p>
-			</div>
+			<h1 className="text-xl font-semibold">{detail.project.name}</h1>
 
 			<StageBand
 				index={stageIndex(detail.selectedVendorId, tender)}

@@ -8,6 +8,7 @@ import {
 	formatSubmittedAt,
 	STATUS_PILL,
 } from "../lib/project-display";
+import { ChooseBrokerCard } from "../organisms/choose-broker-card";
 import { isMatchmakingOpen, ProjectRecord } from "./project-record";
 
 export function ProjectDetail({ projectId }: { projectId: string }) {
@@ -113,6 +114,8 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
 			</div>
 
 			<ProjectRecord projectId={projectId} />
+
+			<ChooseBrokerCard projectId={id} />
 
 			{/* Matchmaking opens with verification, so the route is offered once it clears. */}
 			{isMatchmakingOpen(project.status) ? (

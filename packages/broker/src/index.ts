@@ -5,7 +5,6 @@ export * from "./lib/types";
 export * from "./lib/use-broker-data";
 export * from "./molecules/kpi-row";
 export * from "./organisms/broker-lifecycle-card";
-export * from "./organisms/broker-role-card";
 export * from "./pages/assigned-projects";
 export * from "./pages/dashboard";
 export * from "./pages/document-requests";
