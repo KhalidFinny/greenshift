@@ -1,8 +1,7 @@
 import { Button } from "@greenshift/ui";
 import { useRouter } from "@tanstack/react-router";
 
-// Full-viewport 404 cover, for unmatched paths and for unmatched subpaths inside the
-// auth shells; the fixed overlay hides the sidebar in both cases.
+// Fixed overlay, so the same cover hides the sidebar on unmatched paths inside the auth shells.
 export function NotFoundComponent() {
 	const router = useRouter();
 

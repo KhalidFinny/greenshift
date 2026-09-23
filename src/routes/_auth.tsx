@@ -7,8 +7,7 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { NotFoundComponent } from "../components/not-found";
 
 function AuthShell() {
-	// Idle timeout: after the window without activity the app logs out to /login; the
-	// server invalidates idle KV sessions too (default 15 min, SESSION_IDLE_MINUTES).
+	// The server expires idle KV sessions too (SESSION_IDLE_MINUTES, default 15).
 	useIdleSessionExpiry();
 	return <Outlet />;
 }

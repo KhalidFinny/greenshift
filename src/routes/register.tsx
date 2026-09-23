@@ -43,9 +43,8 @@ export const Route = createFileRoute("/register")({
 });
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-/** Digits with the separators an Indonesian number is written with. */
 const PHONE_RE = /^[+()\d][+()\d\s-]*$/;
-/** NIB and NPWP as they are written on the document; format is not enforced. */
+/** NIB and NPWP as written on the document; format is not enforced. */
 const LEGAL_ID_RE = /^[\d.\-\s]+$/;
 
 /** The two organizations a person can register; the summary copy is what tells them apart. */
@@ -96,21 +95,18 @@ function RegisterPage() {
 					phone: value.phone,
 					organizationName: value.organizationName,
 					industry: value.industry,
-					// One address on the wire: the street line the user typed, then the
-					// district they picked from the dataset the platform knows.
+					// One string on the wire: the street line, then the district from the platform dataset.
 					address: [value.street.trim(), value.district.trim()]
 						.filter(Boolean)
 						.join(", "),
-					// Blank optionals are left out rather than sent empty, so the
-					// server stores nothing for a field the user skipped.
+					// Blank optionals are omitted, so the server stores nothing for a skipped field.
 					...(value.businessInfo.trim()
 						? { businessInfo: value.businessInfo }
 						: {}),
 					...(value.nib.trim() ? { nib: value.nib } : {}),
 					...(value.npwp.trim() ? { npwp: value.npwp } : {}),
 				});
-				// SPA transition: register() invalidates the router and beforeLoad redirects
-				// to the role home with the fresh session, so the toast survives.
+				// register() invalidates the router and beforeLoad redirects to the role home, so the toast survives.
 			} catch (err) {
 				setError(
 					err instanceof ApiError

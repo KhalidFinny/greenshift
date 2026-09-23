@@ -11,8 +11,7 @@ import { Link } from "@tanstack/react-router";
 import { Eye, EyeOff, FileText, Leaf, LineChart, Shield } from "lucide-react";
 import { type ComponentProps, type ReactNode, useState } from "react";
 
-// Chrome shared by /login and /register: background decoration, brand column, card.
-// Reflows below `lg`: the brand stacks under the card and the building image is dropped.
+// Shared chrome for /login and /register; below `lg` the brand stacks under the card and the image drops.
 
 /** Brand pillars. Static copy: they describe the product, not the current user. */
 const FEATURES = [
@@ -132,7 +131,6 @@ export function AuthLayout({
 	);
 }
 
-/** Shared field chrome, so every auth input matches. */
 const FIELD_CLASS =
 	"h-11 w-full rounded-xl border border-[#82928B] bg-[#FBFCFB] px-4 text-[#123D38] outline-none transition placeholder:text-[#667570] focus:border-[#07815F] focus:ring-2 focus:ring-[#07815F]/10 sm:h-12";
 
@@ -175,7 +173,6 @@ export function AuthInput({ id, label, error, ...props }: AuthInputProps) {
 	);
 }
 
-/** Password input with a visibility toggle, matching `AuthInput`. */
 export function AuthPasswordInput({
 	id,
 	label,
@@ -200,8 +197,7 @@ export function AuthPasswordInput({
 				/>
 				<button
 					type="button"
-					// Not a tab stop: the field is reached with Tab, and the toggle
-					// stays reachable by pointer or by screen-reader navigation.
+					// Not a tab stop: the field takes Tab, the toggle stays reachable by pointer or screen reader.
 					tabIndex={-1}
 					onClick={() => setVisible((current) => !current)}
 					aria-label={visible ? "Hide password" : "Show password"}
@@ -231,7 +227,6 @@ interface AuthSelectProps {
 	disabled?: boolean;
 }
 
-/** Select matching `AuthInput`, for values drawn from a fixed vocabulary. */
 export function AuthSelect({
 	id,
 	label,
@@ -276,7 +271,6 @@ interface AuthTextareaProps extends ComponentProps<"textarea"> {
 	error?: unknown;
 }
 
-/** Multi-line input matching `AuthInput`. */
 export function AuthTextarea({
 	id,
 	label,
@@ -305,7 +299,6 @@ export function AuthTextarea({
 	);
 }
 
-/** The submit button both forms use. */
 export function AuthSubmit({
 	children,
 	pending = false,

@@ -7,8 +7,7 @@ import {
 
 const startHandler = createStartHandler(defaultStreamHandler);
 
-// Applied to every response (API + SSR). Prod must allow inline scripts: TanStack
-// Start's streaming SSR emits a nonce-less stream-barrier script, and React escapes dynamic text.
+// Applied to every response. Prod must allow inline scripts: Start's streaming SSR emits a nonce-less stream-barrier script.
 const SECURITY_HEADERS: Record<string, string> = import.meta.env.DEV
 	? {
 			// Dev relaxes script/style and allows the Vite HMR websocket + devtools.

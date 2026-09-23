@@ -35,8 +35,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
 	const isHome = useIsHome();
-	// Public chrome comes from the committed route tree, not from pathname + auth
-	// context: leaving an authed page clears the session before the route swaps.
+	// Read from the committed route tree, not auth state: leaving an authed page clears the session before the route swaps.
 	const activeRouteId = useRouterState({
 		select: (state) => state.matches[state.matches.length - 1]?.routeId,
 	});
@@ -48,8 +47,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 	// The bonds dashboard is a self-contained public surface: no site footer.
 	const isBondsPage = activeRouteId?.startsWith("/bonds") ?? false;
 
-	// Pick the view-transition variant. Defaults to "fade-through" (no asset
-	// overlap); override live with ?vt=slide-fade|zoom-fade to A/B.
+	// Defaults to "fade-through"; ?vt=slide-fade|zoom-fade overrides it live.
 	useEffect(() => {
 		const variant = new URLSearchParams(window.location.search).get("vt");
 		document.documentElement.dataset.vt = variant ?? "fade-through";

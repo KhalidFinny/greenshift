@@ -1,6 +1,6 @@
 import { hashPassword } from "../apps/api/src/lib/password";
 
-/** Demo accounts shared by the setup scripts (`bun run db:setup`). */
+/** Demo accounts shared by the seed scripts. */
 export const DEMO_PASSWORD = "12345678";
 
 export interface DemoAccount {
@@ -13,24 +13,7 @@ export interface DemoAccount {
 	address?: string;
 }
 
-/**
- * Ten companies, ten vendors, one investor, five brokers and one administrator.
- * The first company and the first vendor carry the curated demo story in
- * `scripts/seed.ts`; the rest give every list a realistic population (admin user
- * and vendor tables, the vendor leaderboard, per-broker dashboards) and, together
- * with the ten vendors, a procurement web in which every company ranks a real
- * field of bidders. The addresses are province-qualified because the matchmaking
- * model compares the vendor's province with the project's.
- *
- * `investor1` is a data placeholder rather than a login the demo hands out: the
- * platform has no investor surface (the bond is bought and held in the partner
- * app), but the investment and ROI fixtures join `users` on `investor_id`, so one
- * row has to exist for the admin's investment and payout screens to have
- * anything in them.
- *
- * A name is the person; `companyName` is the organization they represent, which
- * is what every list shows as the account's company.
- */
+/** `investor1` is a placeholder for the investment/ROI joins (no investor surface); addresses carry the province matchmaking compares. */
 export const DEMO_ACCOUNTS: readonly DemoAccount[] = [
 	{ username: "business1", name: "Rangga Wibisono", role: "business", companyName: "PT Green Nusantara", industrySector: "Textile", address: "Malang, Jawa Timur" },
 	{ username: "business2", name: "Sinta Maharani", role: "business", companyName: "PT Sinar Abadi Textile", industrySector: "Textile", address: "Bandung, Jawa Barat" },
@@ -72,11 +55,7 @@ export function emailFor(username: string): string {
 	return `${username}@greenshift.dev`;
 }
 
-/**
- * The legal identity a seeded company is verified against. Deterministic, so a
- * reseed produces the same numbers, and shaped like the real documents: a
- * 13-digit business identification number and a 15-digit tax number.
- */
+/** Deterministic so a reseed repeats the same numbers: 13-digit NIB, 15-digit NPWP. */
 function legalIdentityFor(account: DemoAccount): { nib: string; npwp: string } {
 	const index = DEMO_ACCOUNTS.indexOf(account) + 1;
 	const nib = `9120${String(index).padStart(4, "0")}${String(100000 + index).slice(-6)}`.slice(
@@ -87,19 +66,7 @@ function legalIdentityFor(account: DemoAccount): { nib: string; npwp: string } {
 	return { nib, npwp };
 }
 
-/**
- * One account row as SQL. Idempotent (`ON CONFLICT(email) DO NOTHING`), so the
- * same statement creates a missing login and never touches an existing one, so the same statement
- * locally through `bun run db:setup`, remotely through
- * `bun scripts/seed-accounts.ts > scripts/accounts.sql` piped into
- * `wrangler d1 execute --remote`.
- *
- * A seeded company is a company that has already been through the gate: its
- * pack is on file and an administrator has verified it, which is what the
- * procurement fixtures behind it assume. A newly registered company starts at
- * the verification step instead, and the platform holds it there until an
- * administrator has looked at the same pack.
- */
+/** Idempotent (`ON CONFLICT(email) DO NOTHING`); a seeded company is already verified, which the procurement fixtures assume. */
 export function accountStatement(account: DemoAccount, hash: string): string {
 	const company = account.role === "business";
 	const identity = company ? legalIdentityFor(account) : null;

@@ -6,8 +6,7 @@ import { NotFoundComponent } from "../components/not-found";
 export const Route = createFileRoute("/_auth/business")({
 	beforeLoad: (options) => {
 		requireRole("business")(options);
-		// A company that has not been verified is held on the verification step:
-		// every other business screen would answer with refused requests.
+		// An unverified company is held here: every other business screen answers with refused requests.
 		requireVerifiedCompany(options);
 	},
 	component: () => (

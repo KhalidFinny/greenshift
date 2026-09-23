@@ -33,8 +33,7 @@ function resolveEmail(input: string): string {
 	return trimmed.includes("@") ? trimmed : `${trimmed}@greenshift.dev`;
 }
 
-// Only ever defined in dev builds; constant-folded to "" in production so
-// the credential never ships in the client bundle.
+// Dev-only; constant-folded to "" in production so the credential never ships.
 const DEV_PASSWORD = import.meta.env.DEV ? "12345678" : "";
 
 function LoginPage() {
